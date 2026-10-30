@@ -10,6 +10,7 @@ class SilverLooted:
         self.tracker=tracker;self.root=tracker.root
         self.scope=tk.StringVar(value='All recorded');self.total=tk.StringVar(value='—');self.detail=tk.StringVar();self.coverage=tk.StringVar()
         self.measurement=tk.StringVar();self._table_values={};self.frame=None;self.tree=None;self.closed=False
+        self.milestone=tk.StringVar();self.canvas=None;self._summary_key=None;self._chart_key=None
         self.root.after(1000,self.tick)
 
     def rows(self):
@@ -28,6 +29,9 @@ class SilverLooted:
         tk.Label(frame,textvariable=self.total,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',34)).pack(anchor='w',pady=(4,0))
         tk.Label(frame,textvariable=self.detail,bg=c['bg'],fg=c['text'],font=('Segoe UI',11)).pack(anchor='w',pady=(0,8))
         tk.Label(frame,textvariable=self.coverage,bg=c['bg'],fg=c['secondary'],wraplength=900,justify='left').pack(anchor='w',pady=(0,12))
+        tk.Label(frame,textvariable=self.milestone,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(0,6))
+        self.canvas=tk.Canvas(frame,height=100,bg=c['panel'],highlightthickness=0);self.canvas.pack(fill='x',pady=(0,10))
+        self.canvas.bind('<Configure>',lambda e:self.draw_contributions(getattr(self,'_summary',{}),force=True))
         box=tk.Frame(frame,bg=c['bg']);box.pack(fill='both',expand=True)
         self.tree=ttk.Treeview(box,columns=('item','id','qty','price','value','group'),show='headings',style='Loot.Treeview',height=5)
         for name,label,width in [('item','MATCHED ITEM',280),('id','ITEM ID',75),('qty','QUANTITY',75),('price','UNIT SILVER',130),('value','TOTAL SILVER',130),('group','GROUP',140)]:self.tree.heading(name,text=label);self.tree.column(name,width=width,minwidth=65,stretch=name=='item')
@@ -37,7 +41,11 @@ class SilverLooted:
 
     def refresh(self):
         if not self.tree or not self.tree.winfo_exists():return
-        result=silver_snapshot(self.rows(),self.tracker.insights.prices.all())
+        prices=self.tracker.insights.prices.all();session=self.tracker.insights.session
+        key=(self.scope.get(),self.tracker.ledger.revision,id(prices),session.id,time.strftime('%Y-%m-%d'))
+        if key!=self._summary_key:
+            self._summary=silver_snapshot(self.rows(),prices);self._summary_key=key
+        result=self._summary
         self.total.set('No market quote yet' if result['market_silver'] is None else f"{result['market_silver']:,}")
         self.detail.set(f"{result['elixir_units']:,} elixirs / draughts  ·  {result['extra_units']:,} extra / other units  ·  {result['rare_units']:,} rare-notice units")
         self.coverage.set(f"{result['priced_types']}/{result['item_types']} item types priced. "+(f"Partial total: {result['unpriced_types']} unpriced types are excluded. " if result['unpriced_types'] else '')+'Matched by market item ID. Sharing is optional; unavailable readings are labeled on the site.')
@@ -48,6 +56,7 @@ class SilverLooted:
         for ident in self.tree.get_children():
             if ident not in wanted:self.tree.delete(ident);self._table_values.pop(ident,None)
         if self.tracker.insights.prices.refreshing:self.coverage.set('Matching items and refreshing Central Market prices… '+self.coverage.get())
+        self.draw_contributions(result)
         for index,entry in enumerate(result['items']):
             values=(entry['item'],entry['market_id'] or '—',f"{entry['quantity']:,}",'Unpriced' if entry['unit_price'] is None else f"{entry['unit_price']:,}",'—' if entry['value'] is None else f"{entry['value']:,}",entry['group']+(' · NPC' if entry.get('price_basis')=='npc_vendor' else ''))
             ident=entry['item']
@@ -56,6 +65,25 @@ class SilverLooted:
                 self.tree.move(ident,'',index)
             else:self.tree.insert('',index,iid=ident,values=values)
             self._table_values[ident]=values
+
+    def draw_contributions(self,result,force=False):
+        if not self.canvas or not self.canvas.winfo_ismapped():return
+        entries=[e for e in result.get('items',[]) if e.get('value')][:3]
+        key=(result.get('market_silver'),tuple((e['item'],e['value']) for e in entries))
+        if not force and self._chart_key==key:return
+        self._chart_key=key;c=self.tracker.app.colors;canvas=self.canvas;canvas.delete('all')
+        value=result.get('market_silver') or 0
+        goal=next((g for g in (1_000_000,10_000_000,100_000_000,1_000_000_000,10_000_000_000) if g>value),max(1,value*2))
+        self.milestone.set(f'NEXT MILESTONE · {value:,} / {goal:,} recorded silver · {min(100,value/goal*100):.1f}%')
+        if not entries:
+            canvas.create_text(12,45,anchor='w',text='Your top captured item values will appear here.',fill=c['muted']);return
+        width=max(250,canvas.winfo_width());peak=max(e['value'] for e in entries)
+        for index,e in enumerate(entries):
+            y=8+index*30;label=e['item'][:32]
+            canvas.create_text(10,y+8,anchor='w',text=label,fill=c['text'],font=('Segoe UI',9))
+            left=min(240,width*.45);right=width-100
+            canvas.create_rectangle(left,y+3,left+max(1,(right-left)*e['value']/peak),y+14,fill=c['bright'],outline='')
+            canvas.create_text(width-10,y+8,anchor='e',text=f"{e['value']:,}",fill=c['text'],font=('Segoe UI',9))
 
     def tick(self):
         if self.closed:return

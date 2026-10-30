@@ -1,2 +1,2 @@
 """Single release identity shared by the desktop, bridge and release package."""
-APP_VERSION='1.9.0-rc.1'
+APP_VERSION='1.10.0-rc.1'

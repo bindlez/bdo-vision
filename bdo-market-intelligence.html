@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Black Desert Online · Central Market</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #070b12; --bg-sidebar: #0a1018; --bg-card: #0f1620; --bg-card-hover: #141d2a;
@@ -19,7 +16,7 @@
       --sidebar-w: 220px; --radius: 12px; --radius-sm: 8px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.45; overflow-x: hidden; }
+    body { font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.45; overflow-x: hidden; }
     .shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
     .sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
     .sidebar-brand { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); }
@@ -361,8 +358,14 @@
 
   .vision-recap-dialog{margin:auto;width:min(1000px,94vw);max-height:94vh;overflow:auto;background:#12101b;color:#ecdfff;border:1px solid #61447d;border-radius:16px;padding:20px}.vision-recap-dialog::backdrop{background:#04030adb;backdrop-filter:blur(5px)}.vision-recap-dialog h2{font-size:1rem;margin:0 0 14px}.vision-recap-dialog img{display:block;width:auto;height:auto;max-width:100%;max-height:65vh;margin:auto;object-fit:contain;border-radius:10px}
   #visionCraftingLoot[hidden]{display:none!important}
+.studio-eyebrow{font-size:.68rem;letter-spacing:.12em;color:#c6a2ff;font-weight:700;margin:8px 0}.studio-muted{font-size:.77rem;line-height:1.65;color:#b2a5bf;margin:10px 0}.studio-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}.studio-field{display:grid;gap:7px;color:#c4b4d5;font-size:.75rem}.studio-field input,.studio-materials input[type=number]{width:100%;min-width:0;padding:10px;border:1px solid #49355d;border-radius:8px;background:#15101e;color:#f3eafa;font:inherit}.studio-check{display:flex;align-items:center;gap:9px;font-size:.82rem;line-height:1.5}.studio-check input{accent-color:#b488f4}.studio-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}.studio-kpis>div{background:linear-gradient(140deg,#251a34,#15121e);border:1px solid #443154;border-radius:12px;padding:16px;min-width:0}.studio-kpis small,.studio-kpis span{display:block;color:#bbaccb;font-size:.67rem;line-height:1.5}.studio-kpis strong{display:block;font-size:clamp(1.1rem,2vw,1.65rem);font-variant-numeric:tabular-nums;color:#f4e9ff;margin:7px 0;overflow-wrap:anywhere}.studio-waterfall{display:grid;gap:9px;margin:18px 0}.studio-waterfall>div{display:grid;grid-template-columns:95px 1fr 100px;align-items:center;gap:10px;font-size:.75rem}.studio-waterfall i{display:block;height:9px;border-radius:3px}.studio-waterfall b{text-align:right;font-variant-numeric:tabular-nums}.studio-table-wrap{overflow:auto}.studio-materials table{width:100%;font-size:.76rem;border-collapse:collapse;margin:12px 0}.studio-materials th,.studio-materials td{padding:10px 7px;text-align:left;border-bottom:1px solid #35253f}.studio-materials input[type=number]{max-width:100px}.studio-materials th{font-size:.65rem;color:#c7b4d9}.studio-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.studio-actions button{flex:1;min-width:135px;margin:0}.studio-warning{padding:12px;border:1px solid #7d6343;border-radius:8px;color:#ebcd92;font-size:.78rem}.studio-good{color:#95dcbd;font-size:.76rem}.studio-live{border-top:1px solid #443154;padding-top:16px;margin-top:16px}.studio-chart{width:100%;height:100px;display:block;margin:12px 0}.studio-milestone{display:grid;gap:8px;font-size:.76rem;color:#c8b4db}.studio-milestone span{font-variant-numeric:tabular-nums}.studio-milestone progress{width:100%;height:8px;accent-color:#b893f2}.studio-forecast{display:grid;gap:6px;background:#21192d;border:1px dashed #a078ca;padding:12px;border-radius:9px;font-size:.78rem}.studio-forecast small{line-height:1.6;color:#c7b5d9}.studio-queue-row,.studio-contribution{display:flex;gap:12px;align-items:center;justify-content:space-between;border-bottom:1px solid #392946;padding:12px 0;font-size:.77rem}.studio-queue-row small{display:block;color:#baa8ce;margin-top:5px}.studio-queue-row button{width:auto;margin:0}.studio-contribution span{overflow-wrap:anywhere}.studio-live details,.studio-materials, #craftDetail>details{font-size:.77rem;line-height:1.7;margin:14px 0}#craftDetail input:focus-visible,#craftDetail button:focus-visible{outline:2px solid #d7b6ff;outline-offset:3px}@media(max-width:520px){.studio-fields,.studio-kpis{grid-template-columns:1fr}.studio-queue-row{flex-wrap:wrap}.studio-waterfall>div{grid-template-columns:75px 1fr 80px}}@media(prefers-reduced-motion:reduce){.timer-bar>div{transition:none!important}}
+
+:root{--bg:#09080f;--bg-sidebar:#0e0c15;--bg-card:#14101d;--bg-card-hover:#1d1728;--bg-elevated:#1a1424;--border:#30243e;--border-light:#49365c;--accent:#bd95f3;--accent-soft:rgba(189,149,243,.12);--blue:#b89bec;--blue-soft:rgba(184,155,236,.12)}
+
+.studio-actions .btn-primary{background:linear-gradient(110deg,#9761df,#c69af6);color:#170d21;box-shadow:0 4px 16px #07040a66}.studio-actions .btn-primary:hover{background:linear-gradient(110deg,#ad7aeb,#d3b2ff)}.craft-layout{align-items:start;grid-template-columns:minmax(240px,.7fr) minmax(0,1.3fr)}@media(max-width:900px){.craft-layout{grid-template-columns:1fr}}.timer-card,.studio-live{scroll-margin-top:105px}
+
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
 </head>
 <body>
   <div class="shell">
@@ -508,7 +511,7 @@
             <div class="card-head"><h2>Saved loot from Vision</h2><span class="meta" id="visionLootState">Optional sharing</span></div>
             <div class="card-body"><div class="vision-summary-grid"><div><span class="vision-eyebrow">ALL RECORDED ITEM VALUE</span><h3 id="visionLootSilver"></h3></div><p id="visionLootCounts"></p></div>
             <p class="meta" id="visionLootCoverage"></p><details class="vision-records"><summary>Inspect recorded items & market matches</summary><div class="vision-records-scroll"><table><thead><tr><th>Recorded item</th><th>Quantity</th><th>Unit silver</th><th>Total silver</th><th>Group</th></tr></thead><tbody id="visionLootItems"></tbody></table></div></details>
-            <p class="vision-footnote">Your saved history stays here across days. Active timers measure only new drops after they attach. Nothing is inferred while capture is unavailable.</p></div>
+            <p class="vision-footnote">Your saved history stays here across days. Active timers measure only new drops after they attach. Recorded totals never include inferred loot. Optional crafting forecasts appear separately on active recipe timers.</p></div>
           </section>
           <div class="craft-layout">
             <section class="card">
@@ -656,6 +659,7 @@
         if (s.selectedRecipeId === "durability_timer") selectedRecipe = DURABILITY_RECIPE;
         else if (s.selectedRecipeId) selectedRecipe = RECIPES.find(function(r){ return r.id === s.selectedRecipeId; }) || null;
         if (Array.isArray(s.activeTimers)) activeTimers = s.activeTimers;
+        activeTimers.forEach(function(t){if(t.vision)t.vision.fetching=false;});
         if (Array.isArray(s.craftHistory)) craftHistory = s.craftHistory.slice(0, 30);
       } catch (e) { console.warn("loadState", e); }
     }
@@ -812,6 +816,7 @@
     var desktopMarketTimer=null;
     async function shareMarketPricesWithDesktop() {
       desktopMarketBatch=desktopMarketBatch.filter(function(item){return item.region===region;});
+      if(!desktopMarketBatch.length)return;
       var pending=desktopMarketBatch.splice(0,1500);
       var requestRegion=region;
       try {
@@ -1030,6 +1035,7 @@
       // Non-tool-timer: chunk large crafts by selected tool capacity (default 3000)
       if (!isDura && amount > 5000) {
         var chunk = getToolChunkSize();
+        if(amount>chunk*256){amount=chunk*256;toast("Timer queue capped", "Limited to 256 chunks to keep the app responsive. Save additional batches as production plans.",false);}
         // If user selected 5000/900/500 tool, that becomes the max continuous run size
         // Default (3000) when nothing special — always chunk >5000 into piece size
         var pieces = [];
@@ -1065,6 +1071,7 @@
         totalSec: durationSec,
         startDurability: opts.startDurability != null ? opts.startDurability : null,
         secPerBatch: recipe.secPerBatch || 1,
+        craftPlan: opts.craftPlan ? Object.assign({},opts.craftPlan,{cost:opts.craftPlan.costPerBatch*amount,output:opts.craftPlan.yield*amount}) : (recipe.mats&&recipe.mats.length?craftStudioSnapshot(recipe,amount):null),
         _queue: opts._queue || null,
         _recipe: opts._recipe || recipe
       };
@@ -1072,6 +1079,7 @@
       attachVisionTimer(timer);
       saveState();
       renderActiveTimers();
+      if(!opts._automatic && currentView==="craft")document.getElementById("activeTimersBody").scrollIntoView({block:"start"});
       updateNavBadge();
       ensureTick();
       toast("Craft started", amount.toLocaleString() + "× " + recipe.name + " · " + fmtTime(durationSec), false);
@@ -1100,7 +1108,7 @@
           t.status = "done";
           changed = true;
           craftHistory.unshift({
-            name: t.name, amount: t.amount, finishedAt: now, recipeId: t.recipeId
+            timerId: t.id, earnings: craftStudioReceipt(t), name: t.name, amount: t.amount, finishedAt: now, recipeId: t.recipeId
           });
           craftHistory = craftHistory.slice(0, 30);
           notifyCraftDone(t);
@@ -1118,7 +1126,7 @@
               restTotal -= n;
             }
             setTimeout(function() {
-              startCraft(t._recipe, nextAmt, { _queue: rest, _recipe: t._recipe, _nextChunk: nextSize });
+              startCraft(t._recipe, nextAmt, { _queue: rest, _recipe: t._recipe, _nextChunk: nextSize, craftPlan: t.craftPlan, _automatic:true });
             }, 800);
           }
         }
@@ -1127,7 +1135,7 @@
         saveState();
         renderHistory();
       }
-      renderActiveTimers();
+      if(!document.hidden&&currentView==="craft")renderActiveTimers();
       updateNavBadge();
     }
 
@@ -1140,7 +1148,7 @@
           clearInterval(tickHandle);
           tickHandle = null;
         }
-      }, 250);
+      }, 1000);
     }
 
     function updateNavBadge() {
@@ -1244,7 +1252,7 @@
       }
       body.innerHTML = craftHistory.slice(0, 12).map(function(h) {
         var when = new Date(h.finishedAt).toLocaleString();
-        return '<div class="modal-row"><div><strong>' + h.amount + '× ' + h.name + '</strong><br><span style="font-size:0.72rem;color:var(--text-dim)">' + when + '</span></div><span class="up">✓</span></div>';
+        return '<div class="modal-row"><div><strong>' + h.amount + '× ' + visionEscape(h.name) + '</strong><br><span style="font-size:0.72rem;color:var(--text-dim)">' + when + '</span>'+(h.earnings?'<p class="studio-muted">'+craftStudioMoney(h.earnings.gross)+' recorded gross · '+craftStudioMoney(h.earnings.net)+' modeled net · '+h.earnings.units.toLocaleString()+' captured units</p>':'')+'</div><span class="up">✓</span></div>';
       }).join("");
     }
 
@@ -1292,9 +1300,13 @@
       return batchesFromDurability() * Math.max(1, Number(durSecPerBatch) || 5);
     }
 
+    var ocrScriptLoading=null;
     async function ensureOcrWorker() {
       if (ocrWorker) return ocrWorker;
-      if (typeof Tesseract === "undefined") throw new Error("Tesseract.js failed to load");
+      if (typeof Tesseract === "undefined") {
+        if(!ocrScriptLoading)ocrScriptLoading=new Promise(function(resolve,reject){var script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';script.onload=resolve;script.onerror=function(){ocrScriptLoading=null;script.remove();reject(Error('Browser screenshot OCR could not load. Native OCR is unaffected.'));};document.head.appendChild(script);});
+        await ocrScriptLoading;
+      }
       ocrWorker = await Tesseract.createWorker("eng");
       await ocrWorker.setParameters({ tessedit_char_whitelist: "0123456789/" });
       return ocrWorker;
@@ -1598,71 +1610,7 @@
         return;
       }
 
-      var r = selectedRecipe;
-      function matCost(m) { return lookupPrice(m.name, m.fallback) * m.qty; }
-      function totalCost(amt) {
-        return r.mats.reduce(function(s, m) { return s + matCost(m) * amt; }, 0);
-      }
-      function render(amt) {
-        lastCraftAmount = amt;
-        var cost = totalCost(amt);
-        var revenue = r.sell * amt;
-        var profit = revenue - cost;
-        var duration = r.secPerBatch * amt;
-        var matRows = r.mats.map(function(m) {
-          var unit = lookupPrice(m.name, m.fallback);
-          return '<div class="mat-row"><span>' + m.name + ' × ' + (m.qty * amt) + '</span><span>' + fmt(unit * m.qty * amt) + '</span></div>';
-        }).join("");
-        el.innerHTML =
-          '<h3>' + r.name + ' <span class="' + (r.type === "alchemy" ? "badge-alc" : "badge-cook") + '">' + r.type + '</span></h3>' +
-          '<div class="bulk-row">' +
-            '<div class="dur-field"><label>Batches / quantity to craft</label><input type="number" id="craftAmt" min="1" max="999999999" value="' + amt + '"></div>' +
-            '<div class="dur-field"><label>Quick set</label><div style="display:flex;gap:6px;flex-wrap:wrap;">' +
-              '<button type="button" class="btn-secondary" style="width:auto;margin:0;padding:8px 10px;" data-qty="100">100</button>' +
-              '<button type="button" class="btn-secondary" style="width:auto;margin:0;padding:8px 10px;" data-qty="1000">1K</button>' +
-              '<button type="button" class="btn-secondary" style="width:auto;margin:0;padding:8px 10px;" data-qty="10000">10K</button>' +
-              '<button type="button" class="btn-secondary" style="width:auto;margin:0;padding:8px 10px;" data-qty="1000000">1M</button>' +
-            '</div></div></div>' +
-          '<div class="tool-size-row">' +
-            '<span style="width:100%;color:var(--text-dim);font-size:0.72rem;">Tool capacity (crafts &gt;5,000 split into chunks of this size; default 3,000)</span>' +
-            '<label><input type="radio" name="toolSize" value="3000" checked /> 3,000 (default)</label>' +
-            '<label><input type="radio" name="toolSize" value="500" /> 500 tool</label>' +
-            '<label><input type="radio" name="toolSize" value="900" /> 900 tool</label>' +
-            '<label><input type="radio" name="toolSize" value="5000" /> 5,000 tool</label>' +
-          '</div>' +
-          '<div class="progress-wrap" id="craftProgressWrap" style="display:none;">' +
-            '<div class="progress-bar-bg"><div id="craftProgressBar" style="width:0%"></div></div>' +
-            '<div class="progress-labels"><span id="craftProgressLabel">0 / 0</span><span id="craftProgressPct">0%</span></div>' +
-          '</div>' +
-          '<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;">Materials needed</div>' +
-          matRows +
-          '<div class="craft-summary">' +
-            '<div class="row"><span>Material cost</span><span>' + fmt(cost) + '</span></div>' +
-            '<div class="row"><span>Sell revenue</span><span>' + fmt(revenue) + '</span></div>' +
-            '<div class="row"><span>Est. craft time</span><span>' + fmtTime(duration) + ' <span style="color:var(--text-dim);font-weight:400">(' + r.secPerBatch + 's × ' + amt + ')</span></span></div>' +
-            '<div class="row total"><span>Est. profit</span><span class="' + (profit >= 0 ? "profit" : "loss") + '">' + (profit >= 0 ? "+" : "") + fmt(profit) + '</span></div>' +
-          '</div>' +
-          '<button class="btn-primary" id="btnStartCraft">▶ Start Craft — ' + fmtTime(duration) + '</button>' +
-          '<p class="sec-hint">Press Start, then begin crafting on your character. You’ll get a notification when this timer ends so it matches your in-game batch.</p>';
-        var inp = document.getElementById("craftAmt");
-        inp.addEventListener("input", function() {
-          var v = Math.max(1, Math.min(9999, Number(inp.value) || 1));
-          render(v);
-        });
-        document.getElementById("btnStartCraft").onclick = function() {
-          var v = Math.max(1, Math.min(999999999, Number(document.getElementById("craftAmt").value) || 1));
-          startCraft(r, v);
-          saveState();
-        };
-        document.querySelectorAll("[data-qty]").forEach(function(btn) {
-          btn.onclick = function() {
-            var q = Number(btn.getAttribute("data-qty"));
-            document.getElementById("craftAmt").value = q;
-            render(q);
-          };
-        });
-      }
-      render(lastCraftAmount || 1);
+      craftStudioRender(selectedRecipe,lastCraftAmount||1);
     }
 
 
@@ -2006,9 +1954,7 @@
     document.querySelectorAll(".nav-item").forEach(function(n) {
       n.classList.toggle("active", n.dataset.view === "market" && n.dataset.cat === activeCat);
     });
-    processTimers();
-    ensureTick();
-    updateNavBadge();
+    /* Timers resume after the optional crafting modules initialize. */
 
     document.addEventListener("paste", function(e) {
       if (!selectedRecipe || selectedRecipe.id !== "durability_timer") return;
@@ -2051,7 +1997,9 @@
       var controller = new AbortController();
       var timeout = setTimeout(function(){controller.abort();},1200);
       try {
-        var response = await fetch(base + "/durability", {cache:"no-store",signal:controller.signal});
+        var last=visionLootLast&&visionLootLast.crafting_loot;
+        var revision=last&&last.summary_revision;
+        var response = await fetch(base + "/durability"+(revision?'?loot_revision='+encodeURIComponent(revision):''), {cache:"no-store",signal:controller.signal});
         if (!response.ok) throw new Error("HTTP " + response.status);
         var data = await response.json();
         if (!data || !Number.isFinite(Number(data.current)) ||
@@ -2062,8 +2010,9 @@
     }
     async function findActiveBridge() {
       var origins = bridgeOrigins();
-      if (bridgeSelectedOrigin && origins.indexOf(bridgeSelectedOrigin) !== -1)
-        origins = [bridgeSelectedOrigin].concat(origins.filter(function(o){return o !== bridgeSelectedOrigin;}));
+      if (bridgeSelectedOrigin && origins.indexOf(bridgeSelectedOrigin) !== -1){
+        try{return await fetchBridgeAt(bridgeSelectedOrigin);}catch(e){bridgeSelectedOrigin="";}
+      }
       if (origins.length === 1) return fetchBridgeAt(origins[0]);
       // Parallel discovery prevents 10 unreachable ports from delaying sync.
       var results = await Promise.all(origins.map(async function(base){
@@ -2121,6 +2070,154 @@ function renderVisionCraftingLoot(reading){
   document.getElementById('visionLootCoverage').textContent=unpriced?'Partial total: '+unpriced+' unmatched / unpriced item types excluded.':'Quantity × market or verified NPC sell value. No costs or fees deducted.';
 }
 
+
+/* Small, dependency-free planning math. No OCR guesses are written to history. */
+(function(root){
+'use strict';
+const key=value=>String(value||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+const bounded=(v,min,max,fallback)=>Number.isFinite(Number(v))?Math.max(min,Math.min(max,Number(v))):fallback;
+function settings(raw={}){return {yield:bounded(raw.yield,.01,100,1),seconds:bounded(raw.seconds,.1,3600,5),retention:bounded(raw.retention,0,100,100),extra:bounded(raw.extra,0,1e12,0),estimate:raw.estimate===true,goal:bounded(raw.goal,1,1e15,1e7)};}
+function plan(recipe,batches,options,context){
+ const cfg=settings(options),count=Math.floor(bounded(batches,1,1e9,1)),inventory={...(context.inventory||{})};
+ const purchases=new Map(),steps=[],warnings=new Set(),economics=[];
+ let totalCost=0,missing=false;
+ const quote=(name,fallback)=>{
+   const q=context.quote(name),live=q&&Number.isFinite(q.price)&&q.price>0;
+   if(!live){warnings.add('Bundled estimate: '+name);if(!(fallback>0))missing=true;}
+   return {price:live?q.price:Math.max(0,Number(fallback)||0),basis:live?'Central Market':'Bundled estimate'};
+ };
+ function material(name,qty,fallback,trail){
+   const k=key(name),owned=Math.min(qty,Math.max(0,Number(inventory[k])||0));inventory[k]=Math.max(0,(inventory[k]||0)-owned);
+   const needed=Math.max(0,qty-owned),p=quote(name,fallback);
+   // Owned inputs still have an economic cost, separately from cash to buy.
+   economics.push({name,quantity:qty,owned,unit:p.price,basis:p.basis});totalCost+=owned*p.price;
+   const sub=context.recipes.find(r=>key(r.name)===k);
+   if(needed>0&&context.make&&context.make[k]&&sub&&!trail.has(k)){
+     const subCfg=settings(context.configFor?context.configFor(sub):{seconds:sub.secPerBatch}),runs=Math.ceil(needed/subCfg.yield);
+     sub.mats.forEach(m=>material(m.name,m.qty*runs,m.fallback,new Set([...trail,k])));
+     totalCost+=subCfg.extra*runs;steps.push({name:sub.name,batches:runs,seconds:runs*subCfg.seconds});
+   }else if(needed>0){
+     if(context.make&&context.make[k]&&trail.has(k))warnings.add('Recipe cycle: buy '+name);
+     const row=purchases.get(k)||{name,quantity:0,unit:p.price,basis:p.basis};row.quantity+=needed;purchases.set(k,row);totalCost+=needed*p.price;
+   }
+ }
+ recipe.mats.forEach(m=>material(m.name,m.qty*count,m.fallback,new Set([key(recipe.name)])));
+ totalCost+=cfg.extra*count;
+ const sell=quote(recipe.name,recipe.sell),output=count*cfg.yield,revenue=output*sell.price,proceeds=revenue*cfg.retention/100,profit=proceeds-totalCost;
+ steps.push({name:recipe.name,batches:count,seconds:count*cfg.seconds});
+ const seconds=steps.reduce((sum,s)=>sum+s.seconds,0);
+ return {count,cfg,output,revenue,proceeds,cost:totalCost,profit,seconds,perHour:seconds?profit*3600/seconds:0,unitPrice:sell.price,breakEven:output&&cfg.retention?totalCost/(output*cfg.retention/100):null,missing,purchases:[...purchases.values()],cash:purchases.size?[...purchases.values()].reduce((s,p)=>s+p.quantity*p.unit,0):0,steps,warnings:[...warnings],economics};
+}
+function projection(timer,reading,now){
+ const v=timer.vision,c=timer.craftPlan;
+ if(!v||!c||!c.estimate||!['cooking','alchemy'].includes(c.type)||timer.status!=='running'||now>=timer.endAt||!reading||!Number.isFinite(Number(reading.updated_at))||reading.crafting_mode!==true||reading.available!==false||now-Number(reading.updated_at)*1000>15000||now-Number(reading.updated_at)*1000< -2000){if(v){v.gapAt=null;v.gapLast=null;}return {seconds:0,units:0,value:0};}
+ // Only an actively connected, deliberately blocked game is eligible. Errors,
+ // stopping recording, or stale OCR are not proof that crafting continued.
+ if(!/covered by|must be visible, not minimized|in the tray/i.test(reading.reason||'')||/off|stale|unreadable|failed|error/i.test(reading.reason||'')){v.gapAt=null;v.gapLast=null;return {seconds:0,units:0,value:0};}
+ if(v.gapAt==null||v.gapLast==null||now-v.gapLast>20000)v.gapAt=now;
+ v.gapLast=now;
+ const seconds=Math.max(0,Math.min(now,timer.endAt)-Math.max(v.gapAt,timer.startAt))/1000,batches=Math.min(timer.amount,seconds/c.seconds),units=batches*c.yield;
+ return {seconds,units,value:units*c.unitPrice,cost:batches*c.costPerBatch};
+}
+function series(points,limit=48){if(points.length<=limit)return points;return Array.from({length:limit},(_,i)=>points[Math.round(i*(points.length-1)/(limit-1))]);}
+root.VisionCraft={key,settings,plan,projection,series};
+if(typeof module!=='undefined'&&module.exports)module.exports=root.VisionCraft;
+})(typeof globalThis!=='undefined'?globalThis:this);
+
+/* Crafting Studio: market-backed plans, saved queues and small SVG progress views. */
+var craftStudioPriceRequests=new Map();
+var craftStudioState=(function(){try{return JSON.parse(localStorage.getItem('vision.craft.studio.v1'))||{};}catch(e){return {};}})();
+craftStudioState.config=craftStudioState.config||{};craftStudioState.inventory=craftStudioState.inventory||{};craftStudioState.make=craftStudioState.make||{};craftStudioState.queue=craftStudioState.queue||[];
+function craftStudioSave(){try{localStorage.setItem('vision.craft.studio.v1',JSON.stringify(craftStudioState));}catch(e){toast('Storage full','Export or free browser storage to keep plans.',false);}}
+function craftStudioConfig(r){return VisionCraft.settings(Object.assign({seconds:r.secPerBatch||5},craftStudioState.config[r.id]||{}));}
+function craftStudioQuote(name){var price=visionMarketByName[String(region).toLowerCase()+':'+visionName(name)];return price>0?{price:price}:null;}
+function craftStudioPlan(r,amount){return VisionCraft.plan(r,amount,craftStudioConfig(r),{quote:craftStudioQuote,recipes:RECIPES,inventory:craftStudioState.inventory,make:craftStudioState.make,configFor:craftStudioConfig});}
+function craftStudioMoney(n){return Number.isFinite(n)?Math.round(n).toLocaleString():'Unavailable';}
+function craftStudioSnapshot(r,amount){var p=craftStudioPlan(r,amount);return {type:r.type,yield:p.cfg.yield,seconds:p.cfg.seconds,retention:p.cfg.retention,estimate:p.cfg.estimate,goal:p.cfg.goal,unitPrice:p.unitPrice,costPerBatch:p.cost/p.count,cost:p.cost,output:p.output,warnings:p.warnings,region:region,createdAt:Date.now()};}
+function craftStudioGraph(points,label){
+ var samples=VisionCraft.series(points||[],48);if(!samples.length)samples=[[0,0],[1,0]];if(samples.length===1)samples=[[samples[0][0]-1000,0],samples[0]];var values=samples.map(function(p){return Number(p[1])||0;});var first=samples[0][0],last=samples[samples.length-1][0];
+ var low=Math.min(0,...values),high=Math.max(1,...values),span=high-low;
+ var xy=values.map(function(v,i){return (8+(samples[i][0]-first)*384/Math.max(1,last-first)).toFixed(1)+','+(84-(v-low)*72/span).toFixed(1);}).join(' ');
+ return '<svg class="studio-chart" viewBox="0 0 400 96" role="img" aria-label="'+visionEscape(label)+'"><title>'+visionEscape(label)+'</title><path d="M8 12H392 M8 48H392 M8 84H392" stroke="#383044" fill="none"/><polyline points="'+xy+'" stroke="#c6a2ff" stroke-width="2.5" fill="none" stroke-linejoin="round"/></svg>';
+}
+async function craftStudioLoadPrices(recipe,force){
+ var requestRegion=String(region).toUpperCase(),key=requestRegion+':'+recipe.id;
+ if(!force&&Date.now()-(craftStudioPriceRequests.get(key)||0)<300000)return;
+ craftStudioPriceRequests.set(key,Date.now());if(craftStudioPriceRequests.size>128)craftStudioPriceRequests.delete(craftStudioPriceRequests.keys().next().value);
+ var names=new Set([recipe.name]),seen=new Set();
+ function collect(r){if(seen.has(r.id)||names.size>=60)return;seen.add(r.id);r.mats.forEach(function(m){names.add(m.name);if(craftStudioState.make[VisionCraft.key(m.name)]){var sub=RECIPES.find(function(x){return VisionCraft.key(x.name)===VisionCraft.key(m.name);});if(sub)collect(sub);}});}
+ collect(recipe);
+ var label=document.getElementById('studioMarketState');if(label)label.textContent='Refreshing exact recipe prices…';
+ try{
+   var base=location.protocol==='http:'&&/^(127\.0\.0\.1|localhost)$/.test(location.hostname)?location.origin:bridgeSelectedOrigin;
+   if(!base)throw Error('Open the local Windows planner to fetch recipe prices');
+   var response=await fetch(base+'/craft-quotes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({names:[...names].slice(0,64),region:requestRegion}),signal:AbortSignal.timeout(60000)});
+   if(!response.ok)throw Error('Market lookup unavailable');var data=await response.json();
+   visionRememberMarketQuotes((data.items||[]).map(function(i){return Object.assign({},i,{marketRegion:requestRegion});}));
+   if(String(region).toUpperCase()===requestRegion&&selectedRecipe&&selectedRecipe.id===recipe.id&&!document.activeElement.matches('#craftDetail input'))craftStudioRender(recipe,lastCraftAmount||1);
+   label=document.getElementById('studioMarketState');if(label)label.textContent='Recipe quotes refreshed · '+new Date().toLocaleTimeString()+'. Unmatched items stay labeled.';
+ }catch(e){label=document.getElementById('studioMarketState');if(label)label.textContent='Market lookup unavailable · labeled cached / bundled assumptions retained.';}
+}
+function craftStudioRender(recipe,amount){
+ var el=document.getElementById('craftDetail'),p=craftStudioPlan(recipe,amount),c=p.cfg,esc=visionEscape;
+ var field=function(id,label,value,step,min,max){return '<label class="studio-field">'+label+'<input id="'+id+'" type="number" min="'+min+'" max="'+max+'" step="'+step+'" value="'+value+'"></label>';};
+ el.innerHTML='<div class="studio-eyebrow">CRAFTING STUDIO · '+esc(String(region).toUpperCase())+'</div><h3>'+esc(recipe.name)+' <span class="badge-alc">'+esc(recipe.type)+'</span></h3>'+
+ '<p class="studio-muted">Plan → prepare → craft → measure. Uses the existing recipe book and Central Market.</p><div class="studio-fields">'+
+ field('craftAmt','Batches',amount,1,1,1000000000)+field('studioYield','Expected main output / batch',c.yield,.01,.01,100)+field('studioSeconds','Seconds / batch',c.seconds,.1,.1,3600)+field('studioRetention','Sale proceeds retained (%)',c.retention,.1,0,100)+field('studioExtra','Extra cost / batch (silver)',c.extra,1,0,1e12)+field('studioGoal','Recorded silver goal',c.goal,1,1,1e15)+'</div>'+
+ '<label class="studio-check"><input type="checkbox" id="studioEstimate" '+(c.estimate?'checked':'')+'> Project main output while crafting capture is blocked</label><p class="studio-muted">Optional forecast only. Requires Vision crafting mode and a live connection. Resets when capture returns; rare extras are never forecast.</p>'+
+ '<div class="studio-kpis"><div><small>PROJECTED PROFIT</small><strong class="'+(p.profit>=0?'profit':'loss')+'">'+craftStudioMoney(p.profit)+'</strong><span>after inputs and configured sale deduction</span></div><div><small>PROJECTED PROFIT / HOUR</small><strong>'+craftStudioMoney(p.perHour)+'</strong><span>'+fmtTime(p.seconds)+' planned production</span></div><div><small>SHOPPING CASH</small><strong>'+craftStudioMoney(p.cash)+'</strong><span>inventory reduces purchases, not input value</span></div><div><small>EXPECTED MAIN OUTPUT</small><strong>'+p.output.toLocaleString(undefined,{maximumFractionDigits:2})+'</strong><span>'+c.yield+' per batch · editable assumption</span></div></div>'+
+ '<div class="studio-waterfall" role="img" aria-label="Planned proceeds '+craftStudioMoney(p.proceeds)+', input cost '+craftStudioMoney(p.cost)+', profit '+craftStudioMoney(p.profit)+'">'+[['Sale proceeds',p.proceeds],['Input cost',p.cost],['Profit',p.profit]].map(function(e){return '<div><span>'+e[0]+'</span><i style="width:'+Math.max(1,Math.min(100,Math.abs(e[1])/Math.max(1,p.proceeds,p.cost)*100))+'%;background:'+(e[1]<0?'#f38b9b':'#aa7be8')+'"></i><b>'+craftStudioMoney(e[1])+'</b></div>';}).join('')+'</div>'+
+ '<p class="studio-muted">Craftable from owned direct inputs: '+Math.floor(Math.min(...recipe.mats.map(function(m){return (craftStudioState.inventory[VisionCraft.key(m.name)]||0)/m.qty;}))).toLocaleString()+' batches. Break-even sale price: '+craftStudioMoney(p.breakEven)+' / main item. Sale deduction: '+(100-c.retention).toFixed(1)+'%. Material cost '+craftStudioMoney(p.cost)+'. Main-output proceeds '+craftStudioMoney(p.proceeds)+'. Byproducts excluded from forecast.</p>'+
+ (p.warnings.length?'<details class="studio-warning"><summary>'+p.warnings.length+' bundled / missing price assumptions · review before crafting</summary>'+p.warnings.map(function(w){return '<p>'+esc(w)+'</p>';}).join('')+'</details>':'<p class="studio-good">All plan prices matched to the selected region’s market cache.</p>')+
+ '<details class="studio-materials" open><summary>Ingredients · inventory · buy or make</summary><div class="studio-table-wrap"><table><thead><tr><th>Ingredient</th><th>Required</th><th>Owned units</th><th>Source</th></tr></thead><tbody>'+recipe.mats.map(function(m,i){var k=VisionCraft.key(m.name),sub=RECIPES.find(function(r){return VisionCraft.key(r.name)===k&&r.id!==recipe.id;});return '<tr><td>'+esc(m.name)+'</td><td>'+craftStudioMoney(m.qty*amount)+'</td><td><input aria-label="Owned '+esc(m.name)+'" type="number" min="0" max="1000000000" value="'+(craftStudioState.inventory[k]||0)+'" data-studio-stock="'+i+'"></td><td>'+(sub?'<label><input type="checkbox" data-studio-make="'+i+'" '+(craftStudioState.make[k]?'checked':'')+'> Make intermediate</label>':'Buy / owned')+'</td></tr>';}).join('')+'</tbody></table></div></details>'+
+ '<details><summary>Shopping list & production order ('+p.steps.length+' steps)</summary>'+p.purchases.map(function(m){return '<p>'+esc(m.name)+' × '+craftStudioMoney(m.quantity)+' · '+craftStudioMoney(m.quantity*m.unit)+' silver · '+esc(m.basis)+'</p>';}).join('')+'<ol>'+p.steps.map(function(s){return '<li>'+esc(s.name)+' · '+s.batches.toLocaleString()+' batches · '+fmtTime(s.seconds)+'</li>';}).join('')+'</ol><p class="studio-muted">Ingredient groups retain the existing recipe definition. Choose a concrete ingredient in the recipe book when a group has no exact market price.</p></details>'+
+ '<div class="studio-actions"><button class="btn-primary" id="btnStartCraft">Start '+amount.toLocaleString()+' batches · '+fmtTime(amount*c.seconds)+'</button><button class="btn-secondary" id="studioQueue">Add to production queue</button><button class="btn-secondary" id="studioExport">Export shopping list</button></div><p class="studio-muted">This starts a planning timer. Begin crafting in game yourself. Start intermediate recipes separately in the listed order. Timer input costs are locked when started.</p><button class="btn-secondary" id="studioCompare">Compare recipe opportunities</button><button class="btn-secondary" id="studioBackup">Export saved plans & assumptions</button><button class="btn-secondary" id="studioRefreshPrices">Refresh plan market prices</button><p id="studioMarketState" class="studio-muted">Prices are matched by exact item identity, in this region.</p><section id="studioQueuePanel"></section>';
+ function update(){var cfg={yield:Number(document.getElementById('studioYield').value),seconds:Number(document.getElementById('studioSeconds').value),retention:Number(document.getElementById('studioRetention').value),extra:Number(document.getElementById('studioExtra').value),goal:Number(document.getElementById('studioGoal').value),estimate:document.getElementById('studioEstimate').checked};craftStudioState.config[recipe.id]=VisionCraft.settings(cfg);lastCraftAmount=Math.max(1,Math.floor(Number(document.getElementById('craftAmt').value)||1));craftStudioSave();saveState();craftStudioRender(recipe,lastCraftAmount);}
+ ['craftAmt','studioYield','studioSeconds','studioRetention','studioExtra','studioGoal','studioEstimate'].forEach(function(id){document.getElementById(id).addEventListener('change',update);});
+ el.querySelectorAll('[data-studio-stock]').forEach(function(input){input.onchange=function(){craftStudioState.inventory[VisionCraft.key(recipe.mats[Number(input.dataset.studioStock)].name)]=Math.max(0,Number(input.value)||0);craftStudioSave();craftStudioRender(recipe,amount);};});
+ el.querySelectorAll('[data-studio-make]').forEach(function(input){input.onchange=function(){craftStudioState.make[VisionCraft.key(recipe.mats[Number(input.dataset.studioMake)].name)]=input.checked;craftStudioSave();craftStudioRender(recipe,amount);};});
+ document.getElementById('btnStartCraft').onclick=function(){startCraft(Object.assign({},recipe,{secPerBatch:c.seconds}),amount,{craftPlan:craftStudioSnapshot(recipe,amount)});};
+ document.getElementById('studioQueue').onclick=function(){if(craftStudioState.queue.length>=100){toast('Queue full','Finish or remove a plan first.',false);return;}craftStudioState.queue.push({id:'plan_'+Date.now(),recipeId:recipe.id,amount,config:c,region});craftStudioSave();craftStudioRenderQueue();};
+ document.getElementById('studioExport').onclick=craftStudioExport;
+ document.getElementById('studioCompare').onclick=craftStudioCompare;
+ document.getElementById('studioBackup').onclick=function(){intelDownload('bdo-vision-crafting-plans.json',JSON.stringify({schema:'bdo-vision-crafting/v1',exportedAt:new Date().toISOString(),region:region,data:craftStudioState},null,2));};
+ document.getElementById('studioRefreshPrices').onclick=function(){craftStudioLoadPrices(recipe,true);};
+ craftStudioLoadPrices(recipe,false);
+ craftStudioRenderQueue();
+}
+function craftStudioQueuePlans(){return craftStudioState.queue.map(function(q){var r=RECIPES.find(function(r){return r.id===q.recipeId;});return r?{q,r,p:VisionCraft.plan(r,q.amount,q.config,{quote:craftStudioQuote,recipes:RECIPES,inventory:{},make:craftStudioState.make,configFor:craftStudioConfig})}:null;}).filter(Boolean);}
+function craftStudioRenderQueue(){
+ var panel=document.getElementById('studioQueuePanel');if(!panel)return;var plans=craftStudioQueuePlans(),total=plans.reduce(function(s,x){return s+x.p.profit;},0);
+ panel.innerHTML='<h3>Production queue <span class="badge-alc">'+plans.length+' plans</span></h3><p class="studio-muted">Projected profit '+craftStudioMoney(total)+' · '+fmtTime(plans.reduce(function(s,x){return s+x.p.seconds;},0))+' · recalculated in '+visionEscape(String(region).toUpperCase())+'. Queue totals value all inputs at market; inventory is applied to the selected plan only.</p>'+plans.map(function(x){return '<div class="studio-queue-row"><span>'+visionEscape(x.r.name)+'<small>'+x.q.amount.toLocaleString()+' batches · '+craftStudioMoney(x.p.profit)+' projected profit</small></span><button type="button" class="btn-secondary" data-studio-open="'+visionEscape(x.q.id)+'">Open plan</button><button type="button" class="btn-danger" data-studio-remove="'+visionEscape(x.q.id)+'">Remove</button></div>';}).join('');
+ panel.querySelectorAll('[data-studio-open]').forEach(function(b){b.onclick=function(){var q=craftStudioState.queue.find(function(q){return q.id===b.dataset.studioOpen;});craftStudioState.config[q.recipeId]=q.config;lastCraftAmount=q.amount;craftStudioSave();selectRecipe(q.recipeId);};});
+ panel.querySelectorAll('[data-studio-remove]').forEach(function(b){b.onclick=function(){craftStudioState.queue=craftStudioState.queue.filter(function(q){return q.id!==b.dataset.studioRemove;});craftStudioSave();craftStudioRenderQueue();};});
+}
+function craftStudioExport(){
+ var plans=craftStudioQueuePlans();if(!plans.length&&selectedRecipe&&selectedRecipe.mats)plans=[{r:selectedRecipe,p:craftStudioPlan(selectedRecipe,lastCraftAmount||1)}];
+ var rows=new Map();plans.forEach(function(x){x.p.purchases.forEach(function(m){var k=VisionCraft.key(m.name),old=rows.get(k)||{...m,quantity:0};old.quantity+=m.quantity;rows.set(k,old);});});
+ var text='BDO Vision · '+String(region).toUpperCase()+' · '+new Date().toISOString()+'\nPlanning estimates, not recorded loot.\n'+[...rows.values()].map(function(m){return m.name+' × '+m.quantity+' · '+Math.round(m.quantity*m.unit)+' silver · '+m.basis;}).join('\n');
+ var url=URL.createObjectURL(new Blob([text],{type:'text/plain'})),a=document.createElement('a');a.href=url;a.download='bdo-vision-shopping.txt';a.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function craftStudioTimerHTML(t){
+ var v=t.vision,c=t.craftPlan;if(!v||!c)return '';var forecast=VisionCraft.projection(t,visionLootLast&&visionLootLast.crafting_loot,Date.now());
+ var main=(v.items||[]).find(function(i){return VisionCraft.key(i.item)===VisionCraft.key(t._recipe&&t._recipe.name||t.name);}),batches=main?main.quantity/c.yield:0,cost=Math.min(t.amount,batches)*c.costPerBatch;
+ var proceeds=Number(v.total||0)*c.retention/100,net=String(v.region).toUpperCase()===String(c.region).toUpperCase()?proceeds-cost:NaN,goal=c.goal||1e7,pct=Math.min(100,Number(v.total||0)/goal*100),stage=pct>=100?'Goal reached':pct>=75?'Final stretch':pct>=50?'Halfway there':pct>=25?'Momentum':'Building momentum';
+ return '<section class="studio-live"><div class="studio-eyebrow">CRAFT ECONOMY · MODEL + RECORDED OUTPUT</div><div class="vision-metrics"><div><span>MODELED INPUT COST</span><strong>'+craftStudioMoney(cost)+'</strong><small>main captured output ÷ '+c.yield+' assumed yield × input cost/batch</small></div><div><span>MODELED NET FROM CAPTURED OUTPUT</span><strong class="'+(net>=0?'profit':'loss')+'">'+craftStudioMoney(net)+'</strong><small>recorded value × '+c.retention+'% − modeled inputs</small></div></div><p class="studio-muted">Consumption and completed batches are inferred, not measured. Unpriced drops / rare-only batches can make this incomplete. Full plan inputs: '+craftStudioMoney(c.cost)+'. '+(c.warnings.length?'Contains '+c.warnings.length+' labeled price assumptions. ':'')+' Input prices locked at start; output uses current quotes ('+visionEscape(String(c.region).toUpperCase())+').</p>'+
+ (c.estimate?'<div class="studio-forecast"><b>'+(forecast.seconds?'Blocked-capture projection':'Blocked-capture projection standing by')+'</b><span>'+forecast.units.toLocaleString(undefined,{maximumFractionDigits:2})+' expected main items · '+craftStudioMoney(forecast.value)+' expected gross silver</span><small>Only this connected blocked interval. Assumes continuous crafting at '+c.seconds+'s/batch and '+c.yield+' main items/batch. Added to neither recorded totals nor graphs. Stops at timer end; resets when capture returns.</small></div>':'')+
+ craftStudioGraph(v.points||[], 'Recorded gross silver over this timer; projections excluded')+'<div class="studio-milestone"><b>'+stage+'</b><span>'+craftStudioMoney(Number(v.total||0))+' / '+craftStudioMoney(goal)+' recorded silver</span><progress max="100" value="'+pct+'" aria-label="Recorded silver goal">'+pct.toFixed(0)+'%</progress></div><details><summary>Recorded item contribution</summary>'+(v.items||[]).slice(0,8).map(function(i){return '<div class="studio-contribution"><span>'+visionEscape(i.item)+' × '+Number(i.quantity).toLocaleString()+'</span><b>'+craftStudioMoney((i.unit_price||0)*i.quantity)+'</b></div>';}).join('')+'</details></section>';
+}
+
+function craftStudioCompare(){
+ var rows=RECIPES.filter(function(r){return r.mats&&r.mats.length;}).map(function(r){return {r:r,p:craftStudioPlan(r,100)};}).sort(function(a,b){return (a.p.missing-b.p.missing)||(a.p.warnings.length-b.p.warnings.length)||(b.p.perHour-a.p.perHour);}).slice(0,20);
+ openModal('Recipe opportunities · '+String(region).toUpperCase(),'<p class="studio-muted">100 batches each. Uses saved yields, timing and sale deductions per recipe; defaults are 1 main output per batch and 100% proceeds. Fully matched plans rank before bundled estimates. This comparison does not assume mastery bonuses or forecast rare procs.</p>'+rows.map(function(x){return '<div class="studio-queue-row"><span>'+visionEscape(x.r.name)+'<small>'+craftStudioMoney(x.p.perHour)+' projected profit/hour · '+x.p.warnings.length+' price assumptions</small></span><button class="btn-secondary" data-studio-recipe="'+visionEscape(x.r.id)+'">Plan</button></div>';}).join(''));
+ document.querySelectorAll('[data-studio-recipe]').forEach(function(b){b.onclick=function(){closeModal();lastCraftAmount=100;selectRecipe(b.dataset.studioRecipe);};});
+}
+
+function craftStudioReceipt(t){
+ if(!t.vision||!t.craftPlan)return null;var v=t.vision,c=t.craftPlan,main=(v.items||[]).find(function(i){return VisionCraft.key(i.item)===VisionCraft.key(t._recipe&&t._recipe.name||t.name);}),cost=Math.min(t.amount,main?main.quantity/c.yield:0)*c.costPerBatch,gross=Number(v.total||0);
+ return {gross:gross,units:v.units||0,cost:cost,net:gross*c.retention/100-cost,region:v.region,model:'Captured main quantity / assumed yield × locked input cost. Rare-only batches may be incomplete.'};
+}
+
 /* Optional recorded earnings for one active timer. A craft ETA is a separate estimate. */
 var visionLastTimerSave=0;
 function visionEscape(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -2133,7 +2230,7 @@ function attachVisionTimer(timer){
   activeTimers.forEach(function(other){if(other.vision&&other.vision.tracking){other.vision.tracking=false;other.vision.status='Tracking moved to another timer';}});
   timer.vision={historyId:data.history_id,afterId:data.last_event_id||0,attachedAt:Date.now(),
     baseObserved:data.capture_clock.observed_seconds,basePaused:data.capture_clock.paused_seconds,
-    observed:0,paused:0,tracking:true,status:'Waiting for the next captured drop',region:region,
+    kindFilter:timer.craftPlan?'craft':'',observed:0,paused:0,tracking:true,status:'Waiting for the next captured drop',region:region,
     total:'0',units:0,unpriced:0,items:[],updatedAt:Date.now(),hadResult:false};
   saveState();return true;
 }
@@ -2155,9 +2252,11 @@ async function refreshVisionTimerEarnings(base,reading){
     v.paused=Math.max(0,(Number(clock.paused_seconds)||0)-v.basePaused);
   }
   v.captureAvailable=data.available===true;v.updatedAt=Date.now();
-  v.status=v.captureAvailable?'Observing · new recorded drops count here':'Measurement paused · '+(data.reason||'capture unavailable');
-  if(v.finalized)return;
+  v.status=owner.craftPlan&&data.crafting_mode!==true?'Enable Vision crafting mode to record crafted output':v.captureAvailable?'Observing · new recorded drops count here':'Measurement paused · '+(data.reason||'capture unavailable');
+  if(v.finalized||v.fetching||Date.now()-(v.lastFetchAt||0)<2000)return;
+  v.fetching=true;v.lastFetchAt=Date.now();
   var url=base+'/timer-earnings?after='+encodeURIComponent(v.afterId)+'&history='+encodeURIComponent(v.historyId)+'&region='+encodeURIComponent(region)+'&since='+encodeURIComponent(v.attachedAt/1000);
+  if(v.kindFilter==='craft')url+='&kind=craft';
   if(owner.status==='done')url+='&before='+encodeURIComponent(owner.endAt/1000);
   try{
     var response=await fetch(url,{cache:'no-store'});
@@ -2168,15 +2267,16 @@ async function refreshVisionTimerEarnings(base,reading){
     v.items=result.items||[];v.total=visionSumItems(v.items).toString();v.units=result.units||0;
     v.unpriced=result.unpriced_types||0;v.priced=result.priced_types||0;v.events=result.event_count||0;
     v.region=region;v.hadResult=true;
-    if(owner.status==='done'){v.finalized=true;v.tracking=false;v.status='Completed · recorded results';}
+    v.points=v.points||[];var point=[Date.now(),Number(v.total)||0];if(!v.points.length||v.points[v.points.length-1][1]!==point[1]){v.points.push(point);if(v.points.length>48)v.points=VisionCraft.series(v.points,48);}
+    if(owner.status==='done'){v.finalized=true;v.tracking=false;v.status='Completed · recorded results';var receipt=craftHistory.find(function(h){return h.timerId===owner.id;});if(receipt){receipt.earnings=craftStudioReceipt(owner);renderHistory();}}
     if(Date.now()-visionLastTimerSave>5000||v.finalized){saveState();visionLastTimerSave=Date.now();}
-  }catch(error){v.status='Earnings update paused · retained recorded results';v.captureAvailable=false;}
+  }catch(error){v.status='Earnings update paused · retained recorded results';v.captureAvailable=false;}finally{v.fetching=false;}
 }
 
 function visionTimerEarningsHTML(timer){
   var v=timer.vision;
   if(!v)return '<div class="vision-earnings optional"><span>Optional live earnings</span><p>Enable “Share recorded loot with planner” in Vision to measure drops during this timer.</p></div>';
-  var stale=Date.now()-(v.updatedAt||0)>5000;
+  var stale=Date.now()-(v.updatedAt||0)>15000;
   var active=v.tracking&&v.captureAvailable&&!stale&&timer.status==='running';
   var total=BigInt(v.total||'0');
   var rate=v.observed<60?'Measuring…':v.priced||v.events===0?Math.round(Number(total)*3600/v.observed).toLocaleString():'Unpriced';
@@ -2188,7 +2288,7 @@ function visionTimerEarningsHTML(timer){
     '<div><span>SILVER / OBSERVED HOUR</span><strong>'+rate+'</strong><small>'+visionDuration(v.observed)+' observed · '+visionDuration(v.paused)+' excluded</small></div></div>'+
     '<div class="vision-coverage"><span style="width:'+coverage+'%"></span></div>'+
     '<p class="vision-earnings-note">'+(v.unpriced?'<b>Partial value:</b> '+v.unpriced+' unpriced item types excluded. ':'')+'Captured since this timer attached. '+coverage+'% observed coverage. Costs and fees are not deducted.</p>'+
-    '<details class="vision-formula"><summary>How this is calculated</summary><p>Recorded value = Σ (new captured quantity × matching market or verified NPC unit value).</p><p>Silver/hour = recorded value ÷ observed seconds × 3,600. Rates appear after 60 observed seconds.</p><p>Blocked, minimized, stale and unreadable capture time is excluded. Readable periods with no drops still count. Missing loot is never estimated. The craft countdown remains an estimate of game progress.</p><p>Tracking attached '+new Date(v.attachedAt).toLocaleTimeString()+'. Earlier loot is excluded.</p></details></section>';
+    '<details class="vision-formula"><summary>How this is calculated</summary><p>Recorded value = Σ (new captured quantity × matching market or verified NPC unit value).</p><p>Silver/hour = recorded value ÷ observed seconds × 3,600. Rates appear after 60 observed seconds.</p><p>Blocked, minimized, stale and unreadable capture time is excluded. Readable periods with no drops still count. The recorded ledger never includes estimated drops. Optional crafting projections are displayed separately and are cleared when capture returns. The craft countdown remains an estimate of game progress.</p><p>Tracking attached '+new Date(v.attachedAt).toLocaleTimeString()+'. Earlier loot is excluded.</p></details>'+craftStudioTimerHTML(timer)+'</section>';
 }
 
 /* Keep focused controls, expanded formulas and scroll positions across live updates. */
@@ -2367,7 +2467,7 @@ function visionGrindSaveRecap(){
           startAt < Date.now()-86400000) startAt = Date.now();
       var endAt = startAt + next*seconds*1000;
       durCurrent=next; durMax=max; durPerBatch=1; durSecPerBatch=seconds;
-      selectedRecipe=DURABILITY_RECIPE;
+      if(!selectedRecipe||selectedRecipe.id==="durability_timer")selectedRecipe=DURABILITY_RECIPE;
 
       // One active durability timer per tool. Re-readings update it instead
       // of accumulating timers. Changing tool session replaces that timer.
@@ -2392,7 +2492,7 @@ function visionGrindSaveRecap(){
       // Background OCR should never pull users out of market browsing or
       // interrupt them with a toast every few seconds. First send can open the
       // crafting tab; subsequent samples only refresh the active timer.
-      if (currentView === "craft") { renderRecipeList();renderCraftDetail(); }
+      if (currentView === "craft" && selectedRecipe && selectedRecipe.id === "durability_timer") { renderCraftDetail(); }
       renderActiveTimers();updateNavBadge();ensureTick();
       var isFirstSend = !old;
       if (isFirstSend && currentView !== "craft") showView("craft");
@@ -2421,9 +2521,12 @@ function visionGrindSaveRecap(){
         bridgeSelectedOrigin=result.base;
         bridgeStatus(true,"Connected to " + result.base + " (local browser bridge)");
         bridgeWasConnected=true;
+        var shared=result.data.crafting_loot;
+        if(shared&&shared.items_unchanged&&visionLootLast&&visionLootLast.crafting_loot&&shared.summary_revision===visionLootLast.crafting_loot.summary_revision)shared.items=visionLootLast.crafting_loot.items;
         renderVisionCraftingLoot(result.data);
         renderVisionGrind(result.data);
         await refreshVisionTimerEarnings(result.base,result.data);
+        if(currentView==="craft"&&activeTimers.length)renderActiveTimers();
         var event=applyBridgeReading(result.data);
         if (event) await ackBridge(result.base,result.data);
       } catch(e) {
@@ -2436,7 +2539,11 @@ function visionGrindSaveRecap(){
         bridgeSelectedOrigin="";
       } finally {bridgePolling=false;}
     }
-    setInterval(pollBridge,1100);
+    var bridgePollHandle=null;
+    function scheduleBridgePoll(delay){clearTimeout(bridgePollHandle);bridgePollHandle=setTimeout(async function(){if(!document.hidden)await pollBridge();scheduleBridgePoll(document.hidden?15000:!bridgeWasConnected?15000:['craft','grind'].includes(currentView)?2000:8000);},delay);}
+    document.addEventListener('visibilitychange',function(){if(!document.hidden){pollBridge();processTimers();}scheduleBridgePoll(document.hidden?15000:2000);});
+    processTimers();ensureTick();updateNavBadge();
+    scheduleBridgePoll(2000);
     if (location.hash === "#craft") showView("craft");
     if (location.hash === "#grind") showView("grind");
     window.addEventListener("hashchange",function(){var view=location.hash.slice(1);if(["craft","grind","intel"].includes(view))showView(view);});

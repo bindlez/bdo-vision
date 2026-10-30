@@ -1,4 +1,4 @@
-# BDO Vision · friend test · 1.9.0-rc.1
+# BDO Vision · friend test · 1.10.0-rc.1
 
 This is an unsigned Windows test candidate. No Python installation is needed. Extract the whole ZIP before opening **OPEN-BDO-VISION.bat** or **desktop/BDO-Vision.exe**. Keep the accompanying folders beside the EXE.
 
@@ -21,3 +21,13 @@ Please report the version, scan time/capture gap, one clearly missed item and bo
 ## Browser demo
 
 The browser demo uses simulated drops and fixed example prices. It demonstrates session timing, capture pauses and valuation. Native screen capture, tray restoration and global shortcuts require the Windows application.
+
+## Crafting Studio
+
+Enable **Crafting mode** and optional **Share recorded loot with planner** in Windows Vision, then open the paired planner. Select your existing cooking/alchemy recipe. Set batches, your expected main output per batch, actual seconds per batch and the percentage of sale proceeds you retain. Defaults are planning assumptions; review any bundled or unmatched prices. Input prices are locked when a recipe timer starts.
+
+Use owned inventory and **Make intermediate** to prepare a shopping list and production order. **Add to production queue** saves plans; it does not control the game. Start the timer when crafting starts in BDO. Recorded gross, modeled cost/net, item contributions and goal progress appear in the active timer. Costs are inferred from captured main output and the assumed yield; material consumption is not directly observed.
+
+Optionally check **Project main output while crafting capture is blocked** before starting a recipe timer. It requires a live connection and native Crafting mode, and assumes uninterrupted crafting during that gap. It clears on capture recovery, excludes rare extras and never changes saved loot or grind totals. Pause/cancel the planning timer if game crafting stops.
+
+Export saved plans and assumptions before changing browser/port. Loot history remains protected separately. The new standalone crafting demo is https://bindlez.github.io/bdo-vision-crafting-demo.html ; its prices and drops are explicitly synthetic.

@@ -47,7 +47,7 @@ class PlannerBridge:
             'seconds_per_craft': float(seconds_per_craft),
             'signal': 0, 'sent_at': 0,
             'observed_at': 0, 'instance_id': self.instance_id,
-            'session_id': '', 'bridge_version': 12,
+            'session_id': '', 'bridge_version': 13,
         }
         self.server = None
         self.port = None
@@ -105,11 +105,16 @@ class PlannerBridge:
                 elif route == '/durability':
                     with bridge._lock:
                         value = dict(bridge.data)
+                    shared=value.get('crafting_loot')
+                    revision=parse_qs(urlsplit(self.path).query).get('loot_revision',[''])[0]
+                    if shared and revision and revision==shared.get('summary_revision'):
+                        value['crafting_loot']={k:v for k,v in shared.items() if k!='items'}
+                        value['crafting_loot']['items_unchanged']=True
                     self._send(value)
                 elif route == '/health':
                     with bridge._lock:
                         self._send({
-                            'ok': True, 'bridge_version': 12, 'app_version':APP_VERSION,'instance_id': bridge.instance_id,
+                            'ok': True, 'bridge_version': 13, 'app_version':APP_VERSION,'instance_id': bridge.instance_id,
                             'signal': bridge.signal, 'last_ack_signal': bridge.ack_signal,
                             'last_ack_at': bridge.ack_at, 'port': bridge.port,
                             'planner_exists': bridge.html_path.is_file(),
@@ -121,7 +126,7 @@ class PlannerBridge:
                         self._send({'prices':bridge.price_book.all()})
                     else:self._send({'error':'Price book unavailable'},503)
                 elif route == '/timer-earnings':
-                    with bridge._lock:shared=copy.deepcopy(bridge.data.get('crafting_loot'))
+                    with bridge._lock:shared=bridge.data.get('crafting_loot')
                     if not shared or not bridge.price_book:
                         self._send({'error':'Optional loot sharing is off'},403);return
                     try:
@@ -133,11 +138,12 @@ class PlannerBridge:
                         region=query.get('region',['NA'])[0].upper()
                         if region not in ('NA','EU'):raise ValueError('Unknown market region')
                         since=query.get('since',[None])[0]
-                        value=timer_earnings(bridge.price_book.path,bridge.price_book.all(region),after,before,since)
+                        kind=query.get('kind',[None])[0]
+                        value=timer_earnings(bridge.price_book.path,bridge.price_book.all(region),after,before,since,kind)
                         self._send({'history_id':shared['history_id'],**value})
                     except (ValueError,OverflowError):self._send({'error':'Invalid timer range'},400)
                 elif route == '/grind-session':
-                    with bridge._lock:shared=copy.deepcopy(bridge.data.get('crafting_loot'))
+                    with bridge._lock:shared=bridge.data.get('crafting_loot')
                     if not shared or not bridge.price_book:self._send({'error':'Optional loot sharing is off'},403);return
                     query=parse_qs(urlsplit(self.path).query);session=query.get('id',[''])[0]
                     if len(session)>64:self._send({'error':'Invalid session'},400);return
@@ -150,7 +156,7 @@ class PlannerBridge:
 
             def do_POST(self):
                 route=urlsplit(self.path).path
-                if route not in ('/ack','/market-prices','/show','/grind-command'):
+                if route not in ('/ack','/market-prices','/craft-quotes','/show','/grind-command'):
                     self._send({'error': 'Unknown endpoint'}, 404)
                     return
                 if self.headers.get('Origin', '') not in ('', 'null', bridge.base_url, f'http://localhost:{bridge.port}'):
@@ -161,9 +167,14 @@ class PlannerBridge:
                     return
                 try:
                     length = int(self.headers.get('Content-Length', 0))
-                    if length <= 0 or length > (250000 if route=='/market-prices' else 4096):
+                    if length <= 0 or length > (250000 if route=='/market-prices' else 16384 if route=='/craft-quotes' else 4096):
                         raise ValueError('Invalid body length')
                     body = json.loads(self.rfile.read(length).decode('utf-8'))
+                    if route=='/craft-quotes':
+                        if not bridge.price_book:self._send({'error':'Price book unavailable'},503);return
+                        try:items=bridge.price_book.recipe_quotes(body['names'],str(body['region']).upper())
+                        except (OSError,RuntimeError):self._send({'error':'Market lookup unavailable; cached values retained'},503);return
+                        self._send({'items':items,'region':str(body['region']).upper()});return
                     if not isinstance(body,dict):raise ValueError('JSON object required')
                     if route=='/grind-command':
                         if body.get('instance_id')!=bridge.instance_id:

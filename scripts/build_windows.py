@@ -8,7 +8,7 @@ root=Path(__file__).resolve().parents[1];version=(root/'VERSION').read_text().st
 build=root/'build';out=root/'dist';out.mkdir(exist_ok=True);build.mkdir(exist_ok=True)
 safe=build/'generated-release-assets';generate(safe)
 assets=safe/'desktop/assets'
-for pattern in ('*.json','*.js'):
+for pattern in ('*.json','*.js','*.css'):
     for path in (root/'desktop/assets').glob(pattern):shutil.copy2(path,assets/path.name)
 subprocess.run([sys.executable,'-m','PyInstaller','--noconfirm','--clean','--onedir','--windowed',
     '--name','BDO-Vision','--icon',str(assets/'bdo-lite.ico'),'--paths',str(root/'desktop'),

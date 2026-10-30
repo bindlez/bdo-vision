@@ -46,6 +46,18 @@ class RecordingTests(unittest.TestCase):
             self.assertEqual(rows.call_count,1)
             self.assertEqual(first,t.ledger.db.execute('SELECT saved_at FROM notification_baselines').fetchone()[0])
 
+    def test_shared_summary_reuses_history_until_loot_or_prices_change(self):
+        t=self.tracker
+        with patch.object(t.grind,'snapshot',return_value={}),patch.object(t,'capture_availability',return_value=(True,'')),patch.object(t.ledger,'rows',wraps=t.ledger.rows) as rows:
+            first=t.planner_loot_snapshot();t.planner_loot_snapshot()
+            self.assertEqual(rows.call_count,1)
+            t.ledger.add('Milk',2,kind='Crafted');second=t.planner_loot_snapshot()
+            self.assertEqual(rows.call_count,2);self.assertEqual(second['units'],2)
+            t.insights.prices.update_market([{'name':'Milk','price':99}],'NA')
+            self.assertEqual(t.planner_loot_snapshot()['market_silver'],198)
+            self.assertEqual(rows.call_count,3)
+            self.assertIn('crafting_mode',first)
+
     def test_preview_without_recording_and_switch_to_saved_history(self):
         t=self.tracker;t.recording.set(False)
         e=ItemEvent('Milk',3,'Drop')

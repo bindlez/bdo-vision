@@ -79,7 +79,9 @@ def item_regions_visible(regions):
         user32.WindowFromPoint.restype=wintypes.HWND
         user32.GetAncestor.argtypes=[wintypes.HWND,wintypes.UINT]
         user32.GetAncestor.restype=wintypes.HWND
-        windows=[h for h in find_bdo_windows() if user32.IsWindowVisible(h) and not user32.IsIconic(h)]
+        game_windows=find_bdo_windows()
+        if not game_windows:return False,'BDO game window not found'
+        windows=[h for h in game_windows if user32.IsWindowVisible(h) and not user32.IsIconic(h)]
         if not windows:return False,'BDO must be visible, not minimized or in the tray'
         if not regions:return False,'Select an item capture area'
         for x,y,width,height in regions:

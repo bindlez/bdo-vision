@@ -17,6 +17,8 @@ class PriceBook:
         self._item_database=None
         self._resolved_names={}
         self._noticed_items=set()
+        self.revision=0;self._quote_cache={};self._quote_lock=threading.RLock()
+        self._catalog_lock=threading.Lock();self._recipe_lock=threading.Lock();self._recipe_cache={}
         with closing(sqlite3.connect(self.path)) as db,db:
             db.execute('CREATE TABLE IF NOT EXISTS market_quotes (region TEXT NOT NULL, item TEXT NOT NULL, unit_price INTEGER NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(region,item))')
             db.execute('CREATE TABLE IF NOT EXISTS market_context (id INTEGER PRIMARY KEY CHECK(id=1), region TEXT NOT NULL)')
@@ -26,6 +28,21 @@ class PriceBook:
             db.execute('CREATE TABLE IF NOT EXISTS vendor_checks (id INTEGER PRIMARY KEY,checked_at REAL NOT NULL)')
 
     def all(self,region=None):
+        # Callers treat snapshots as immutable. Own writes invalidate immediately;
+        # the short TTL also picks up other connections without a resident watcher.
+        cache_key=str(region or '').upper();now=time.monotonic()
+        with self._quote_lock:
+            generation=self.revision
+            cached=self._quote_cache.get(cache_key)
+            if cached and now-cached[0]<2:return cached[1]
+        result=self._all_uncached(region)
+        with self._quote_lock:
+            if generation==self.revision:
+                if cached and result==cached[1]:result=cached[1]
+                self._quote_cache[cache_key]=(now,result)
+        return result
+
+    def _all_uncached(self,region=None):
         with closing(sqlite3.connect(self.path)) as db:
             region=(str(region).upper() if region else db.execute('SELECT region FROM market_context WHERE id=1').fetchone()[0])
             quotes={r[0]:{'unit_price':r[1],'source':'Central Market ('+region+')','updated_at':r[2],'market_name':r[0],'region':region} for r in db.execute('SELECT item,unit_price,updated_at FROM market_quotes WHERE region=? ORDER BY item',(region,))}
@@ -65,6 +82,7 @@ class PriceBook:
             db.executemany('INSERT INTO market_quotes VALUES (?, ?, ?, ?) ON CONFLICT(region,item) DO UPDATE SET unit_price=excluded.unit_price,updated_at=excluded.updated_at',quotes)
             if activate:db.execute('UPDATE market_context SET region=? WHERE id=1',(region,))
             db.executemany('INSERT INTO market_items VALUES (?, ?, ?, ?) ON CONFLICT(region,id) DO UPDATE SET name=excluded.name,category=excluded.category',identities)
+        with self._quote_lock:self._quote_cache.clear();self.revision+=1
         return len(quotes)
 
     def refresh_async(self,force=False):
@@ -78,9 +96,7 @@ class PriceBook:
             with closing(sqlite3.connect(self.path)) as db:
                 region=db.execute('SELECT region FROM market_context WHERE id=1').fetchone()[0]
                 names=[r[0] for r in db.execute('SELECT DISTINCT item FROM loot')] if db.execute("SELECT 1 FROM sqlite_master WHERE name='loot'").fetchone() else []
-            if self._item_database is None:
-                self._item_database=self._load_catalog()
-                set_exact_resolver(self._item_database.exact_name)
+            self.ensure_catalog()
             if not names:return
             ids=sorted({item['id'] for name in names for item in self._item_database.candidates(name)})
             received=[]
@@ -137,6 +153,33 @@ class PriceBook:
         if name not in self._noticed_items:
             if len(self._noticed_items)>=512:self._noticed_items.clear()
             self._noticed_items.add(name);self.last_attempt=0
+
+    def ensure_catalog(self):
+        with self._catalog_lock:
+            if self._item_database is None:
+                self._item_database=self._load_catalog()
+                set_exact_resolver(self._item_database.exact_name)
+
+    def recipe_quotes(self,names,region):
+        """On-demand exact recipe identities; bounded and cached, never OCR fuzzy matches."""
+        if region not in ('NA','EU') or not isinstance(names,list) or not 1<=len(names)<=64:raise ValueError('Invalid recipe lookup')
+        if any(not isinstance(n,str) or not 1<=len(n)<=100 for n in names):raise ValueError('Invalid item names')
+        key=(region,tuple(sorted(set(names))))
+        with self._recipe_lock:
+            cached=self._recipe_cache.get(key)
+            if cached and time.monotonic()-cached[0]<300:return cached[1]
+            self.ensure_catalog();ids=set()
+            for name in key[1]:
+                exact=[i for i in self._item_database.candidates(name) if market_name_key(i['name'])==market_name_key(name)]
+                identities={i['id'] for i in exact}
+                if len(identities)==1:ids.update(identities)
+            items=[];ordered=sorted(ids)
+            for start in range(0,len(ordered),40):
+                batch=ordered[start:start+40];items.extend(self._base_quotes(self._fetch_quotes(region,batch),set(batch)))
+            self.update_market(items,region,activate=False)
+            if len(self._recipe_cache)>=16:self._recipe_cache.clear()
+            self._recipe_cache[key]=(time.monotonic(),items)
+            return items
 
     def _refresh_vendor_values(self,names,region):
         quotes=self.all(region);now=time.time();candidates={}

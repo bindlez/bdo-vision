@@ -347,15 +347,21 @@ class LootTracker:
         self.closed=True;self.generation+=1;self.capture_clock.save();self.silver.close();self.insights.close();self.ledger.close()
 
     def planner_loot_snapshot(self):
-        rows=self.ledger.rows()
-        result=silver_snapshot(rows,self.insights.prices.all())
+        prices=self.insights.prices
+        quotes=prices.all()
+        key=(self.ledger.revision,prices.revision,id(quotes))
+        if getattr(self,'_shared_summary_key',None)!=key:
+            rows=self.ledger.rows()
+            self._shared_summary={**silver_snapshot(rows,quotes),
+                'last_event_id':max((r[0] for r in rows),default=0),'captured_items_available':bool(rows),
+                'crafted_units':sum(r[3] for r in rows if r[6] in ('Crafted','Rare craft'))}
+            self._shared_summary_key=key
+            self._shared_summary['summary_revision']=str(time.monotonic_ns())
         fresh,reason=self.capture_availability()
-        all_rows=self.ledger.rows()
         return {'scope':'All recorded loot','available':fresh,'status':'current' if fresh else 'paused','reason':reason,
                 'updated_at':time.time(),'last_capture_at':self.last_scan_finished or None,
-                'history_id':self.capture_clock.history_id,'last_event_id':max((r[0] for r in all_rows),default=0),
-                'capture_clock':self.capture_clock.snapshot(),'grind':self.grind.snapshot(),'captured_items_available':bool(rows),
-                'crafted_units':sum(r[3] for r in rows if r[6] in ('Crafted','Rare craft')),**result}
+                'history_id':self.capture_clock.history_id,'crafting_mode':self.crafting.get(),
+                'capture_clock':self.capture_clock.snapshot(),'grind':self.grind.snapshot(),**self._shared_summary}
 
     def refresh_shared_loot(self):
         bridge=getattr(self.app,'bridge',None)

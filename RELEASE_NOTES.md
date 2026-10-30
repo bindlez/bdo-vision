@@ -1,3 +1,13 @@
+# BDO Vision 1.10.0-rc.1 — Crafting Studio
+
+Adds material costs and modeled net profit, yield/timing assumptions, exact recipe market quotes, inventory-aware recursive shopping, production plans, comparisons, graphs and recorded-silver goals. Optional blocked-capture projections stay separate from confirmed loot and apply only to crafting.
+
+The Windows app keeps the existing OCR, tray controls and protected history. No new runtime or chart dependencies. Timer valuation was about 79% faster on a synthetic 100,000-event ledger; this is not a live OCR accuracy or whole-app memory claim. See [features, measurements and deeper code review](docs/CRAFTING-STUDIO-REVIEW.md).
+
+127 Windows regression tests, JavaScript checks and an extracted-EXE OCR check are required for this unsigned friend-test candidate. The public crafting demo uses example data and no live screen access.
+
+## Previous release: 1.9.0-rc.1
+
 # BDO Vision 1.9.0-rc.1 — efficiency and friend demo
 
 Moves the full item catalog to a bounded-memory disk index, preserves exact item identities, reuses pixel-color classification, skips unnecessary hidden preview/history work, and reduces unchanged-baseline writes. Adds a one-directory Windows application, generated-art packaging, checksums and an extracted-application OCR check. The browser demo uses labeled simulated data.
