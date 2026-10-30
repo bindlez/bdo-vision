@@ -9,7 +9,7 @@ from pathlib import Path
 from tkinter import ttk, messagebox, filedialog
 from PIL import ImageGrab, ImageTk
 from dataclasses import replace
-from loot_tracker import LootLedger, LootSnapshots
+from loot_tracker import LootLedger, LootSnapshots,TextFeedSnapshots
 from item_events import PopupSnapshots, ItemEvent
 from loot_capture import recognize_feed
 from windows_bdo import item_regions_visible
@@ -43,7 +43,7 @@ class LootTracker:
         self.summary=tk.StringVar();self.raw=tk.StringVar(value='No item notifications read yet.')
         self.last_read=tk.StringVar(value='Last read: no item identified yet')
         self.last_saved=tk.StringVar(value='Recording is ON — item names, quantities and times save locally.' if self.recording.get() else 'Preview only — recording is OFF.')
-        self.last_scan_finished=0;self.capture_time=None;self.visible_tree=None
+        self.last_scan_finished=0;self.capture_time=None;self.visible_tree=None;self.last_ocr_duration=0;self.scan_count=0;self.last_capture_gap=0
         self.tabs=None;self.window=None;self.tree=None;self.totals_tree=None;self.crafts_tree=None;self.preview=None;self.photo=None;self.debug_text=None
         self.closed=False;self.busy=False;self.generation=0;self.last_scan=0
         self.snapshots=LootSnapshots();self.channels={};self.empty_counts={};self.recent=[]
@@ -56,7 +56,7 @@ class LootTracker:
         return {'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get()}
 
     def safe_interval(self):
-        try:return max(1,min(30,float(self.interval.get())))
+        try:return max(.5,min(30,float(self.interval.get())))
         except ValueError:return 2
 
     def open(self):
@@ -85,8 +85,8 @@ class LootTracker:
         ttk.Combobox(options,style='Vision.TCombobox',textvariable=self.feed,values=('Item Drop logs','Text feed'),state='readonly',width=17).pack(side='left')
         options.winfo_children()[-1].bind('<<ComboboxSelected>>',lambda e:self.toggle())
         tk.Label(options,text='Scan seconds',bg=c['bg'],fg=c['secondary']).pack(side='left',padx=(12,5))
-        picker=ttk.Combobox(options,style='Vision.TCombobox',textvariable=self.interval,values=('1','2','3','5','10'),state='readonly',width=4);picker.pack(side='left');picker.bind('<<ComboboxSelected>>',lambda e:self.toggle())
-        tk.Label(self.setup_frame,text='Crafting mode records obtained items as craft output. Select only notification text, not chat + popups together.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=880,justify='left').pack(anchor='w',pady=(10,5))
+        picker=ttk.Combobox(options,style='Vision.TCombobox',textvariable=self.interval,values=('0.5','1','2','3','5','10'),state='readonly',width=4);picker.pack(side='left');picker.bind('<<ComboboxSelected>>',lambda e:self.toggle())
+        tk.Label(self.setup_frame,text='For grinding, Text feed + the personal “You have obtained…” panel retains drops longer. Select one feed only. Keep at least 6–8 complete rows visible. Crafting mode labels captured items as craft output.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=880,justify='left').pack(anchor='w',pady=(10,5))
         if self.region:self.setup_frame.pack_forget()
         tk.Label(main,textvariable=self.capture_state,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10)).pack(anchor='w')
         tk.Label(main,textvariable=self.status,bg=c['bg'],fg=c['secondary'],wraplength=880,justify='left').pack(anchor='w',pady=(5,12))
@@ -204,7 +204,7 @@ class LootTracker:
                 elif self.app.selecting_region:self.capture_state.set('Tracking ON · selecting capture area')
                 else:
                     delay=max(0,self.safe_interval()-(time.monotonic()-self.last_scan))
-                    if delay<=0 and not self.app.busy:
+                    if delay<=0:
                         ready,reason=self.can_capture()
                         if ready:self.scan()
                         else:self.capture_state.set('Tracking ON · '+reason)
@@ -217,7 +217,8 @@ class LootTracker:
         if self.closed or self.busy or not self.enabled.get() or not self.region:return
         ready,reason=self.can_capture()
         if not ready:self.capture_state.set(reason);return
-        self.last_scan=time.monotonic();tess=self.app.tess.get().strip().strip(chr(34))
+        started=time.monotonic();self.last_capture_gap=started-self.last_scan if self.last_scan else 0
+        self.last_scan=started;tess=self.app.tess.get().strip().strip(chr(34))
         if not (shutil.which(tess) or Path(tess).is_file()):self.status.set('Tesseract missing. Set its path in Settings.');return
         try:
             feeds=self.capture_regions()
@@ -231,10 +232,11 @@ class LootTracker:
         except Exception as exc:self.busy=False;self.status.set('Item capture failed: '+str(exc))
 
     def recognize(self,images,tess,generation,crafting):
+        started=time.monotonic()
         try:
             results={}
             for name,image in images.items():
-                try:results[name]=recognize_feed(image,tess,name,crafting,self.path/'loot-diagnostics'/name)
+                try:results[name]=recognize_feed(image,tess,name,crafting,self.path/'loot-diagnostics'/name,resolve_name=self.insights.prices.resolve_name)
                 except Exception as exc:
                     # A rare-panel failure must not discard normal loot already read.
                     results[name]={'events':[],'empty':False,'recognized':0,'error':str(exc),'debug':'OCR error: '+str(exc)}
@@ -247,7 +249,8 @@ class LootTracker:
                     else:unresolved.append(event)
                 result['events']=valid;result['unresolved']=unresolved
                 if unresolved:result['debug']+='\nUNMATCHED OCR (excluded automatically): '+repr(unresolved)
-            if not self.closed:self.root.after(0,lambda:self.finish(results,generation))
+            duration=time.monotonic()-started
+            if not self.closed:self.root.after(0,lambda:self.finish(results,generation,duration))
         except Exception as exc:
             error=str(exc)
             if not self.closed:self.root.after(0,lambda:self.failed(error,generation))
@@ -273,12 +276,13 @@ class LootTracker:
         self.recent.append({'id':ident,'key':key,'feed':feed,'at':now,'paired':False})
         return True
 
-    def finish(self,results,generation):
+    def finish(self,results,generation,duration=0):
         self.busy=False
         if self.closed or not self.enabled.get() or generation!=self.generation:return
         # Compatibility with the pre-1.3 text snapshot tests and imported feeds.
         if isinstance(results,list):results={'chat':{'events':[ItemEvent(i,q,'Drop') for i,q in results],'empty':False,'debug':'','recognized':len(results)}}
         self.last_scan_finished=time.time()
+        self.last_ocr_duration=duration;self.scan_count+=1
         primary=results.get('normal',results.get('chat',next(iter(results.values()),{})))
         self.last_scan_ok=bool(primary.get('events') or primary.get('empty'))
         self.capture_reason='OCR uncertain; waiting for a readable notification' if not primary.get('error') else 'OCR error; automatic retry pending'
@@ -288,30 +292,33 @@ class LootTracker:
             accepted=', '.join(f'{e.item} ×{e.quantity}' for e in rows) or 'No agreed item name + quantity'
             messages.append(name.upper()+' — IDENTIFIED: '+accepted+'\n\n'+result['debug'])
             if name not in self.channels:
-                tracker=LootSnapshots() if name=='chat' else PopupSnapshots(record_initial=True)
+                tracker=TextFeedSnapshots() if name=='chat' else PopupSnapshots(record_initial=True)
                 stored=self.ledger.db.execute('SELECT items,saved_at FROM notification_baselines WHERE feed=?',(name,)).fetchone()
                 if self.restore_baselines and stored and 0<=time.time()-stored[1]<=120:
-                    try:tracker.previous=[ItemEvent(**event) for event in json.loads(stored[0])]
+                    try:tracker.previous=[ItemEvent(**event) if event else None for event in json.loads(stored[0])]
                     except (ValueError,TypeError):pass
                 self.channels[name]=tracker
             tracker=self.channels[name]
             baseline=tracker.previous is None
             if result['empty']:self.empty_counts[name]=self.empty_counts.get(name,0)+1
             else:self.empty_counts[name]=0
-            fresh,ambiguous=tracker.ingest(rows) if name=='chat' else tracker.ingest(rows,empty=self.empty_counts[name]>=2)
+            if name=='chat' and result.get('slots') is not None:
+                fresh,ambiguous=tracker.ingest_slots(result['slots'])
+            else:fresh,ambiguous=tracker.ingest(rows) if name=='chat' else tracker.ingest(rows,empty=self.empty_counts[name]>=2)
             if tracker.previous is not None:
-                data=[{'item':e.item,'quantity':e.quantity,'kind':e.kind,'stamp':e.stamp,'quantity_explicit':e.quantity_explicit} for e in tracker.previous]
+                data=[{'item':e.item,'quantity':e.quantity,'kind':e.kind,'stamp':e.stamp,'quantity_explicit':e.quantity_explicit} if e else None for e in tracker.previous]
                 with self.ledger.db:self.ledger.db.execute('INSERT INTO notification_baselines VALUES (?,?,?) ON CONFLICT(feed) DO UPDATE SET items=excluded.items,saved_at=excluded.saved_at',(name,json.dumps(data),time.time()))
             for event in result.get('unresolved',[]):
                 with self.ledger.db:self.ledger.db.execute('INSERT INTO uncertain_observations VALUES (?,?,?,?,?,1) ON CONFLICT(item,quantity,feed) DO UPDATE SET last_seen=excluded.last_seen,sightings=sightings+1',(event.item,event.quantity,name,time.time(),time.time()))
             if baseline and rows:baselines+=1
-            if ambiguous:skipped+=len(fresh)
+            if ambiguous:skipped+=len(rows)
             else:
                 for event in fresh:
                     if self.commit(event,name):saved+=1;saved_items.append(f'{event.item} ×{event.quantity}')
         self.last_read.set('Read at '+time.strftime('%H:%M:%S')+': '+('; '.join(f'{e.item} ×{e.quantity}' for e,_ in visible) or 'No item identified — see Live OCR reader.'))
         if saved_items:self.last_saved.set('Saved: '+', '.join(saved_items))
         elif not self.recording.get():self.last_saved.set('Preview only — recording is OFF.')
+        elif skipped:self.last_saved.set('Feed overlap lost — uncertain rows skipped. Keep more complete message rows visible.')
         elif visible:self.last_saved.set('Already recorded / unchanged notification — not counted again.')
         if self.visible_tree and self.visible_tree.winfo_exists():
             self.visible_tree.delete(*self.visible_tree.get_children())
@@ -324,6 +331,10 @@ class LootTracker:
         if unresolved:self.status.set(self.status.get()+f' · {unresolved} unmatched OCR observations excluded automatically')
         errors=[name for name,result in results.items() if result.get('error')]
         if errors:self.status.set(self.status.get()+' · '+', '.join(errors)+' OCR error: see reader')
+        if duration:self.status.set(self.status.get()+f' · OCR {duration:.2f}s · capture gap {self.last_capture_gap:.2f}s')
+        holes=sum(sum(event is None for event in r.get('slots') or []) for r in results.values())
+        if holes:self.status.set(self.status.get()+f' · {holes} unreadable message rows; retrying automatically')
+        if skipped:self.status.set(self.status.get()+' · feed overlap lost; some drops could not be counted safely')
         self.refresh()
 
     def close(self):

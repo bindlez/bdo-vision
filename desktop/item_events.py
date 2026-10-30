@@ -36,7 +36,8 @@ def joined_messages(text):
 def parse_events(text, crafting=False, rare_feed=False, bare_items=False):
     events=[]
     for raw in joined_messages(text):
-        line=' '.join(raw.replace('×','x').split()).strip()
+        line=' '.join(raw.replace('×','x').replace('’',"'").replace('‘',"'").split()).strip()
+        line=re.sub(r'^[^\w]{1,3}(?=you\s*(?:have|obtained|received))','',line,flags=re.I)
         # Notification fonts commonly turn a trailing 1 into a vertical stroke.
         # Apply this only to the quantity field, before testing the bare-item form.
         line=re.sub(r'([xX])\s*[|Il](?=[.!:\s]*$)',r'\1 1',line)
@@ -77,7 +78,12 @@ def parse_events(text, crafting=False, rare_feed=False, bare_items=False):
         elif after:
             explicit=True
             qty=int(next(value for value in after.groups() if value).replace(',',''));line=line[:after.start()].strip()
-        elif re.search(r'\s[xX]\s*[-\d,]+$|\([-\d,]+\)$',line):continue
+        elif re.search(r'(?:\]|\s)[xX]\s*\S*|\([-\d,]+\)$',line):continue
+        # Outlined text sometimes leaves a trailing dot/dash after an item with
+        # no quantity (a genuine single drop). Never interpret a broken xN as 1.
+        if line.startswith('[') and ']' in line:
+            end=line.rfind(']')
+            if re.fullmatch(r'[\s.!,:;—–-]*',line[end+1:]):line=line[:end+1]
         if line.startswith('[') and line.endswith(']'):line=line[1:-1].strip()
         line=canonical_item(line)
         if not 0<qty<=1_000_000 or not 1<=len(line)<=100 or not any(ch.isalpha() for ch in line):continue

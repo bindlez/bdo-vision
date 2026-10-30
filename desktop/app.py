@@ -4,6 +4,7 @@ import time, threading, subprocess, os, re, json, ctypes, winsound, webbrowser, 
 from planner_bridge import PlannerBridge,PORTS
 from loot_ui import LootTracker
 from storage import prepare_storage,backup_profile,InstanceLock,focus_existing
+from version import APP_VERSION
 from pathlib import Path
 from PIL import ImageGrab, Image, ImageOps, ImageEnhance, ImageFilter, ImageTk
 from windows_bdo import is_bdo_foreground, send_ctrl_v_if_bdo_foreground, restore_bdo, super_restore_bdo, inspect_bdo_visibility
@@ -24,7 +25,7 @@ if config.get('scan_interval')==5:config['scan_interval']=10
 class App:
  def __init__(self,root):
   self.root=root
-  root.title('BDO Vision Lite 1.7  •  Saved history')
+  root.title(f'BDO Vision Lite {APP_VERSION}  •  Saved history')
   root.geometry('600x860')
   root.minsize(600,860)
   root.configure(bg='#08070d')
@@ -91,7 +92,7 @@ class App:
   tk.Label(brand,text='✦',bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',25)).pack(side='left',padx=(0,9))
   titles=tk.Frame(brand,bg=c['bg']);titles.pack(side='left')
   tk.Label(titles,text='BDO VISION',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',20)).pack(anchor='w')
-  tk.Label(titles,text='LITE  /  CRAFT COMPANION  /  1.7',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',8)).pack(anchor='w')
+  tk.Label(titles,text=f'LITE  /  CRAFT COMPANION  /  {APP_VERSION}',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',8)).pack(anchor='w')
   self.text_button(head,'⚙  SETTINGS',self.open_settings).pack(side='right',pady=(7,0))
 
   hero=tk.Frame(main,bg=c['panel'],highlightbackground=c['line'],highlightthickness=1,padx=22,pady=20)

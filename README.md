@@ -1,4 +1,10 @@
-# BDO Vision 1.7.1 — protected history, live earnings and grind sessions
+# BDO Vision 1.8.1 — grinding test build
+
+This release improves reading of the personal obtained-item message feed during grinding. Use Text feed, select 6–8 complete personal loot-message rows, and keep that part of the game visible. The target scan interval can be set to 0.5 seconds; actual OCR time and capture gap are displayed. Uncertain quantities and lost scrolling overlap are shown and excluded automatically. No manual loot corrections are required.
+
+This source release requires Python, Pillow and Tesseract; it is not a standalone executable. See [release findings and improvements](docs/RELEASE-1.8.1.md) and [version control and recovery](docs/VERSION-CONTROL.md). Public source generates branding and synthetic OCR fixtures with `python scripts/generate_assets.py`.
+
+For 1.8.1, 113 isolated native Windows regressions and the planner JavaScript syntax check passed locally. The previous release's validation details below remain historical evidence; GitHub CI results are reported separately.
 
 ## Open the app
 Use the BDO Vision desktop shortcut. INSTALL.bat installs the application files and creates that shortcut. RUN.bat also works from the project. Opening another updated copy restores the same running app rather than creating another ledger.

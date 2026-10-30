@@ -42,6 +42,44 @@ class LootSnapshots:
         return rows, True
 
 
+class TextFeedSnapshots(LootSnapshots):
+    """Keep unreadable message slots in place and retry newly arrived rows.
+
+    Requires at least three known overlapping rows for an eight-row feed.
+    Unreadable rows are holes, never inferred loot. Stable recovered holes count
+    only when that row arrived after the initial baseline.
+    """
+    def __init__(self):
+        super().__init__();self.pending=[]
+
+    def ingest_slots(self,rows):
+        rows=list(rows)
+        if not any(row is not None for row in rows):return [],False
+        old=self.previous
+        if old is None:
+            self.previous=rows;self.pending=[False]*len(rows)
+            return [],False
+        pending=self.pending if len(self.pending)==len(old) else [False]*len(old)
+        overlap=0
+        minimum=min(3,len(old),len(rows))
+        for size in range(min(len(old),len(rows)),minimum-1,-1):
+            pairs=list(zip(old[-size:],rows[:size]))
+            known=[(a,b) for a,b in pairs if a is not None and b is not None]
+            if len(known)>=minimum and all(a==b for a,b in known):
+                overlap=size;break
+        if not overlap:
+            self.previous=rows;self.pending=[False]*len(rows)
+            return [],True
+        flags=pending[-overlap:]+[True]*(len(rows)-overlap)
+        previous=old[-overlap:]+[None]*(len(rows)-overlap)
+        fresh=[]
+        for index,event in enumerate(rows):
+            if event is not None and flags[index]:fresh.append(event);flags[index]=False
+        self.previous=[event if event is not None else previous[i] for i,event in enumerate(rows)]
+        self.pending=flags
+        return fresh,False
+
+
 class LootLedger:
     def __init__(self, path):
         self.db = sqlite3.connect(str(path))

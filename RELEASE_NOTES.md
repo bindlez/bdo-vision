@@ -1,4 +1,10 @@
-# BDO Vision 1.7.1 — protected history, live earnings and grind sessions
+# BDO Vision 1.8.1 — grinding test build
+
+Improves outlined loot-message OCR on moving scenery, ordered message agreement, unreadable-row recovery and broken-quantity rejection. Loot scans no longer wait for durability OCR. A 0.5-second target is available, with actual capture/processing timing shown. Existing silver valuation, planner sharing, sessions, history and tray controls are preserved.
+
+113 Windows regressions passed locally. See docs/RELEASE-1.8.1.md for findings, evidence and remaining limitations. Source packages include generated assets, a release manifest and SHA-256 checksum; personal captures and databases are excluded.
+
+## Previous release: 1.7.1
 
 ## Open the app
 Use the BDO Vision desktop shortcut. INSTALL.bat installs the application files and creates that shortcut. RUN.bat also works from the project. Opening another updated copy restores the same running app rather than creating another ledger.

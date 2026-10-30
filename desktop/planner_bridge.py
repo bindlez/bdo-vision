@@ -15,6 +15,7 @@ import uuid
 import copy
 from urllib.parse import urlsplit,parse_qs
 from activity_data import timer_earnings,grind_session_detail
+from version import APP_VERSION
 
 PORTS = tuple(range(7283, 7293))
 
@@ -108,7 +109,7 @@ class PlannerBridge:
                 elif route == '/health':
                     with bridge._lock:
                         self._send({
-                            'ok': True, 'bridge_version': 12, 'instance_id': bridge.instance_id,
+                            'ok': True, 'bridge_version': 12, 'app_version':APP_VERSION,'instance_id': bridge.instance_id,
                             'signal': bridge.signal, 'last_ack_signal': bridge.ack_signal,
                             'last_ack_at': bridge.ack_at, 'port': bridge.port,
                             'planner_exists': bridge.html_path.is_file(),

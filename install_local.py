@@ -15,6 +15,10 @@ def ps_string(value):return "'"+str(value).replace("'","''")+"'"
 
 
 def install():
+    if not (SOURCE/'desktop/assets/bdo-lite.ico').exists():
+        sys.path.insert(0,str(SOURCE/'scripts'))
+        from generate_assets import generate
+        generate(SOURCE)
     profile=data_root();profile.mkdir(parents=True,exist_ok=True)
     backup=backup_profile(profile,'before-update')
     target=profile/'app'
@@ -22,7 +26,7 @@ def install():
         saved=profile/'backups'/('app-files-'+datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
         shutil.copytree(target,saved,ignore=shutil.ignore_patterns('__pycache__','*.sqlite3*','settings.json','runtime-status.json'))
     target.mkdir(exist_ok=True)
-    for name in ('bdo-market-intelligence.html','README.md','RELEASE_NOTES.md','requirements.txt','RUN.bat'):
+    for name in ('bdo-market-intelligence.html','README.md','RELEASE_NOTES.md','requirements.txt','RUN.bat','VERSION'):
         shutil.copy2(SOURCE/name,target/name)
     desktop=target/'desktop';desktop.mkdir(exist_ok=True)
     for source in (SOURCE/'desktop').glob('*.py'):shutil.copy2(source,desktop/source.name)
