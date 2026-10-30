@@ -1,4 +1,10 @@
-# BDO Vision 1.8.1 — grinding test build
+# BDO Vision 1.9.0-rc.1 — efficiency and friend demo
+
+Moves the full item catalog to a bounded-memory disk index, preserves exact item identities, reuses pixel-color classification, skips unnecessary hidden preview/history work, and reduces unchanged-baseline writes. Adds a one-directory Windows application, generated-art packaging, checksums and an extracted-application OCR check. The browser demo uses labeled simulated data.
+
+See docs/FRIEND-TEST.md for setup and docs/PERFORMANCE-RC1.md for measured results. Tesseract is installed separately. This is an unsigned release candidate; remaining missed-loot cases require labeled live comparison.
+
+## Previous release: 1.8.1
 
 Improves outlined loot-message OCR on moving scenery, ordered message agreement, unreadable-row recovery and broken-quantity rejection. Loot scans no longer wait for durability OCR. A 0.5-second target is available, with actual capture/processing timing shown. Existing silver valuation, planner sharing, sessions, history and tray controls are preserved.
 

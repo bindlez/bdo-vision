@@ -16,6 +16,7 @@ for directory,pattern in [('desktop','*.py'),('desktop','*.bat'),('desktop/asset
                           ('desktop/assets','*.js'),('tests','*.py'),('scripts','*.py'),('docs','*.md'),
                           ('.github/workflows','*.yml')]:
     allowed.extend((root/directory).glob(pattern))
+if (root/'demo').exists():allowed.extend((root/'demo').glob('*.html'))
 revision=subprocess.run(['git','rev-parse','HEAD'],cwd=root,capture_output=True,text=True)
 dirty=subprocess.run(['git','status','--porcelain'],cwd=root,capture_output=True,text=True)
 with tempfile.TemporaryDirectory(prefix='vision-release-',dir=out) as temporary:

@@ -46,7 +46,7 @@ class LootTracker:
         self.last_scan_finished=0;self.capture_time=None;self.visible_tree=None;self.last_ocr_duration=0;self.scan_count=0;self.last_capture_gap=0
         self.tabs=None;self.window=None;self.tree=None;self.totals_tree=None;self.crafts_tree=None;self.preview=None;self.photo=None;self.debug_text=None
         self.closed=False;self.busy=False;self.generation=0;self.last_scan=0
-        self.snapshots=LootSnapshots();self.channels={};self.empty_counts={};self.recent=[]
+        self.snapshots=LootSnapshots();self.channels={};self.empty_counts={};self.recent=[];self._baseline_persisted={}
         self.insights=LootInsights(self)
         self.silver=SilverLooted(self)
         self.grind=GrindTracker(self)
@@ -64,7 +64,7 @@ class LootTracker:
             self.window.deiconify();self.window.lift()
             if self.tabs and self.silver.frame:self.tabs.select(self.silver.frame)
             return
-        self._history_display_cache={};self._totals_cache=None;self._crafts_cache=None
+        self._history_display_cache={};self._totals_cache=None;self._crafts_cache=None;self._last_refresh_key=None
         c=self.app.colors
         win=self.window=tk.Toplevel(self.root);win.title('BDO Vision • Silver, Grind & saved history');win.geometry('1000x900+20+20');win.minsize(940,820);win.configure(bg=c['bg'])
         main=tk.Frame(win,bg=c['bg'],padx=24,pady=20);main.pack(fill='both',expand=True)
@@ -121,6 +121,9 @@ class LootTracker:
         else:self.setup_frame.pack(fill='x',pady=(0,12))
 
     def refresh(self):
+        key=(self.ledger.revision,time.strftime('%Y-%m-%d'))
+        if getattr(self,'_last_refresh_key',None)==key:return
+        self._last_refresh_key=key
         rows=self.ledger.rows();today=time.strftime('%Y-%m-%d');current=[r for r in rows if r[1][:10]==today];totals={};crafts={}
         for row in current:
             key=(row[2],row[6]);totals[key]=totals.get(key,0)+row[3]
@@ -225,7 +228,7 @@ class LootTracker:
             images={}
             self.capture_time=time.time()
             for name,(x,y,w,h) in feeds.items():images[name]=ImageGrab.grab(bbox=(x,y,x+w,y+h),all_screens=True)
-            if self.preview and self.preview.winfo_exists():
+            if self.preview and self.preview.winfo_exists() and self.preview.winfo_ismapped():
                 preview=images[next(iter(images))].copy();preview.thumbnail((820,180));self.photo=ImageTk.PhotoImage(preview);self.preview.configure(image=self.photo,text='')
             self.busy=True;self.status.set('Reading '+', '.join(feeds)+' notifications…')
             threading.Thread(target=self.recognize,args=(images,tess,self.generation,self.crafting.get()),daemon=True).start()
@@ -306,8 +309,11 @@ class LootTracker:
                 fresh,ambiguous=tracker.ingest_slots(result['slots'])
             else:fresh,ambiguous=tracker.ingest(rows) if name=='chat' else tracker.ingest(rows,empty=self.empty_counts[name]>=2)
             if tracker.previous is not None:
-                data=[{'item':e.item,'quantity':e.quantity,'kind':e.kind,'stamp':e.stamp,'quantity_explicit':e.quantity_explicit} if e else None for e in tracker.previous]
-                with self.ledger.db:self.ledger.db.execute('INSERT INTO notification_baselines VALUES (?,?,?) ON CONFLICT(feed) DO UPDATE SET items=excluded.items,saved_at=excluded.saved_at',(name,json.dumps(data),time.time()))
+                baseline_key=tuple(tracker.previous);persisted=self._baseline_persisted.get(name);saved_at=time.time()
+                if not persisted or persisted[0]!=baseline_key or saved_at-persisted[1]>=30:
+                    data=[{'item':e.item,'quantity':e.quantity,'kind':e.kind,'stamp':e.stamp,'quantity_explicit':e.quantity_explicit} if e else None for e in tracker.previous]
+                    with self.ledger.db:self.ledger.db.execute('INSERT INTO notification_baselines VALUES (?,?,?) ON CONFLICT(feed) DO UPDATE SET items=excluded.items,saved_at=excluded.saved_at',(name,json.dumps(data),saved_at))
+                    self._baseline_persisted[name]=(baseline_key,saved_at)
             for event in result.get('unresolved',[]):
                 with self.ledger.db:self.ledger.db.execute('INSERT INTO uncertain_observations VALUES (?,?,?,?,?,1) ON CONFLICT(item,quantity,feed) DO UPDATE SET last_seen=excluded.last_seen,sightings=sightings+1',(event.item,event.quantity,name,time.time(),time.time()))
             if baseline and rows:baselines+=1
@@ -324,7 +330,7 @@ class LootTracker:
             self.visible_tree.delete(*self.visible_tree.get_children())
             for event,name in visible:self.visible_tree.insert('','end',values=(event.item,f'{event.quantity:,}',event.kind,name))
         self.raw.set('\n\n'.join(messages))
-        if self.debug_text and self.debug_text.winfo_exists():self.debug_text.configure(state='normal');self.debug_text.delete('1.0','end');self.debug_text.insert('1.0',self.raw.get());self.debug_text.configure(state='disabled')
+        if self.debug_text and self.debug_text.winfo_exists() and self.debug_text.winfo_ismapped():self.debug_text.configure(state='normal');self.debug_text.delete('1.0','end');self.debug_text.insert('1.0',self.raw.get());self.debug_text.configure(state='disabled')
         recognized=sum(len(r['events']) for r in results.values())
         unresolved=sum(len(r.get('unresolved',[])) for r in results.values())
         self.status.set(f'{saved} new events saved · {recognized} agreed notifications · {skipped} uncertain skipped'+(' · baseline set' if baselines else '')+(' · no readable item yet: check Live OCR reader and capture area' if not recognized else ''))

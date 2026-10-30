@@ -1,4 +1,12 @@
-# BDO Vision 1.8.1 — grinding test build
+# BDO Vision 1.9.0-rc.1 — lean friend-test candidate
+
+The Windows ZIP includes the application and Python runtime. Extract it, open **OPEN-BDO-VISION.bat**, and follow **START-HERE.md**. Tesseract English is required separately. The build is unsigned and intended for a friend test before a stable release.
+
+Measured changes reduce private app memory by about 49% in a controlled same-history idle test and mask preprocessing total time by about 36% on a saved-frame replay, with identical masks. See [measurement details and limits](docs/PERFORMANCE-RC1.md). The browser demo uses simulated data and does not perform native OCR.
+
+118 local regression tests pass. History remains in the protected profile. The 1.8.1 baseline is preserved in Git and its prior ZIP.
+
+## Previous release: 1.8.1
 
 This release improves reading of the personal obtained-item message feed during grinding. Use Text feed, select 6–8 complete personal loot-message rows, and keep that part of the game visible. The target scan interval can be set to 0.5 seconds; actual OCR time and capture gap are displayed. Uncertain quantities and lost scrolling overlap are shown and excluded automatically. No manual loot corrections are required.
 

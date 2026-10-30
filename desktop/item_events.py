@@ -2,7 +2,7 @@
 import re
 from dataclasses import dataclass,field
 from collections import Counter
-from item_names import canonical_item,EXACT
+from item_names import canonical_item,EXACT,known_item
 
 
 @dataclass(frozen=True)
@@ -59,7 +59,7 @@ def parse_events(text, crafting=False, rare_feed=False, bare_items=False):
         if verb:
             if any(word in verb[0].lower() for word in ('produc','craft','creat')):kind='Crafted'
             line=line[verb.end():]
-        elif not tagged and not (bare_items and (re.search(r'\s[xX]\s*[\d,]+\b',line) or canonical_item(line.rstrip('.! ')).casefold() in EXACT)):
+        elif not tagged and not (bare_items and (re.search(r'\s[xX]\s*[\d,]+\b',line) or known_item(canonical_item(line.rstrip('.! '))))):
             continue
         # No verbs naming other players or an arbitrary chat speaker are accepted.
         if not line or re.search(r'\b(?:has obtained|says|selling|failed|failure)\b',line,re.I):continue

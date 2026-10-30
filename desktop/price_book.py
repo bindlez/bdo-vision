@@ -5,7 +5,8 @@ from datetime import datetime
 import threading,time,json,urllib.request,urllib.error
 from pathlib import Path
 from market_match import match_item,ItemDatabase,market_name_key
-from item_names import canonical_item,EXACT
+from item_names import canonical_item,EXACT,set_exact_resolver
+from item_catalog import DiskItemDatabase
 from vendor_prices import fetch_vendor_quote
 
 class PriceBook:
@@ -78,15 +79,8 @@ class PriceBook:
                 region=db.execute('SELECT region FROM market_context WHERE id=1').fetchone()[0]
                 names=[r[0] for r in db.execute('SELECT DISTINCT item FROM loot')] if db.execute("SELECT 1 FROM sqlite_master WHERE name='loot'").fetchone() else []
             if self._item_database is None:
-                cache=Path(self.path).parent/'market-item-database.json'
-                try:data=json.loads(cache.read_text(encoding='utf-8'))
-                except (OSError,ValueError):
-                    data=self._get_json('https://api.arsha.io/util/db?lang=en')
-                    if not isinstance(data,list):raise ValueError('Item database unavailable')
-                    temporary=cache.with_suffix('.tmp');temporary.write_text(json.dumps(data,ensure_ascii=False),encoding='utf-8');temporary.replace(cache)
-                self._item_database=ItemDatabase(data)
-                EXACT.update({item['name'].casefold():item['name'] for item in data if isinstance(item,dict) and item.get('name')})
-                canonical_item.cache_clear()
+                self._item_database=self._load_catalog()
+                set_exact_resolver(self._item_database.exact_name)
             if not names:return
             ids=sorted({item['id'] for name in names for item in self._item_database.candidates(name)})
             received=[]
@@ -106,6 +100,28 @@ class PriceBook:
         except Exception as exc:self.last_error=str(exc)
         finally:self.refreshing=False
 
+    def _load_catalog(self):
+        cache=Path(self.path).parent/'market-item-database.json'
+        index=cache.with_name('item-catalog.sqlite3')
+        if cache.is_file():
+            try:return DiskItemDatabase.from_json(cache,index)
+            except (OSError,ValueError,sqlite3.Error):pass
+        temporary=cache.with_suffix('.download')
+        try:
+            total=0
+            with urllib.request.urlopen('https://api.arsha.io/util/db?lang=en',timeout=12) as response,temporary.open('wb') as output:
+                while True:
+                    chunk=response.read(65536)
+                    if not chunk:break
+                    total+=len(chunk)
+                    if total>32*1024*1024:raise ValueError('Item database exceeds download budget')
+                    output.write(chunk)
+            catalog=DiskItemDatabase.from_json(temporary,index)
+            temporary.replace(cache)
+            return catalog
+        finally:
+            if temporary.exists():temporary.unlink()
+
     def resolve_name(self,name):
         if name in self._resolved_names:return self._resolved_names[name]
         observed=canonical_item(name)
@@ -113,12 +129,14 @@ class PriceBook:
         candidates=self._item_database.candidates(observed)
         names={item['name'] for item in candidates}
         result=next(iter(names)) if len(names)==1 else None
-        if len(self._resolved_names)>4096:self._resolved_names.clear()
+        if len(self._resolved_names)>=512:self._resolved_names.clear()
         self._resolved_names[name]=result
         return result
 
     def notice_item(self,name):
-        if name not in self._noticed_items:self._noticed_items.add(name);self.last_attempt=0
+        if name not in self._noticed_items:
+            if len(self._noticed_items)>=512:self._noticed_items.clear()
+            self._noticed_items.add(name);self.last_attempt=0
 
     def _refresh_vendor_values(self,names,region):
         quotes=self.all(region);now=time.time();candidates={}

@@ -9,12 +9,29 @@ try:
 except (OSError,ValueError):
     NAMES=[]
 EXACT={name.casefold():name for name in NAMES}
+_catalog_exact=None
 
 
-@lru_cache(maxsize=4096)
+def set_exact_resolver(resolver):
+    global _catalog_exact
+    _catalog_exact=resolver
+    canonical_item.cache_clear()
+
+
+def known_item(name):
+    known=EXACT.get(name.casefold())
+    if known:return known
+    if _catalog_exact:
+        try:return _catalog_exact(name)
+        except Exception:return None  # A missing rebuildable index cannot stop OCR.
+    return None
+
+
+@lru_cache(maxsize=512)
 def canonical_item(name):
     name=name.lstrip(' .,:;~—–<>\\|™�').strip()
-    if name.casefold() in EXACT:return EXACT[name.casefold()]
+    known=known_item(name)
+    if known:return known
     # OCR sometimes reads the item icon as one or two letters before the name.
     suffixes=[n for n in NAMES if name.casefold().endswith(' '+n.casefold()) and len(name)-len(n)<=5]
     if len(suffixes)==1:return suffixes[0]

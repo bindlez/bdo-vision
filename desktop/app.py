@@ -742,6 +742,10 @@ class App:
   self.root.destroy()
 
 if __name__=='__main__':
+ if '--self-check' in sys.argv:
+  from self_check import run_self_check
+  run_self_check(App,ROOT,DATA_ROOT)
+  raise SystemExit(0)
  try:ctypes.windll.shcore.SetProcessDpiAwareness(2)
  except Exception:pass
  instance=InstanceLock(DATA_ROOT)

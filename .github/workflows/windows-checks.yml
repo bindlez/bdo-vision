@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: '22'
       - name: Install dependencies
-        run: python -m pip install -r requirements.txt
+        run: python -m pip install -r requirements.txt pyinstaller pywinauto
       - name: Install Tesseract
         run: choco install tesseract --yes --no-progress
       - name: Generate safe branding and synthetic test images
@@ -31,12 +31,39 @@ jobs:
         run: python -m compileall -q desktop scripts tests
       - name: Build source release with checksums
         run: python scripts/package_release.py
+      - name: Build lean Windows application
+        run: python scripts/build_windows.py
+      - name: Verify extracted Windows application
+        run: python scripts/check_windows.py
       - uses: actions/upload-artifact@v4
         with:
-          name: BDO-Vision-Windows-Source
+          name: BDO-Vision-Release-Packages
           path: dist/BDO-Vision-*.zip*
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Windows-test-report
           path: build/test-report.txt
+  prerelease:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: BDO-Vision-Release-Packages
+          path: release-packages
+      - name: Publish verified friend test candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(cat VERSION)"
+          case "$version" in *-rc.*) ;; *) echo 'Only explicit release candidates publish here.'; exit 0;; esac
+          if gh release view "v$version" >/dev/null 2>&1; then
+            echo 'Release already exists; refusing to overwrite it.'
+            exit 1
+          fi
+          gh release create "v$version" release-packages/*.zip release-packages/*.sha256 --target "$GITHUB_SHA" --prerelease --title "BDO Vision $version · friend test" --notes-file docs/FRIEND-TEST.md

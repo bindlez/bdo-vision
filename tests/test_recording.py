@@ -37,6 +37,15 @@ class RecordingTests(unittest.TestCase):
         self.assertEqual(len(t.ledger.rows()),1)
         self.assertIn('unchanged',t.last_saved.get())
 
+    def test_unchanged_capture_avoids_history_reload_and_baseline_write(self):
+        t=self.tracker;e=ItemEvent('Milk',3,'Drop')
+        with patch.object(t.ledger,'rows',wraps=t.ledger.rows) as rows:
+            t.finish(self.result([e]),t.generation)
+            first=t.ledger.db.execute('SELECT saved_at FROM notification_baselines').fetchone()[0]
+            t.finish(self.result([e]),t.generation)
+            self.assertEqual(rows.call_count,1)
+            self.assertEqual(first,t.ledger.db.execute('SELECT saved_at FROM notification_baselines').fetchone()[0])
+
     def test_preview_without_recording_and_switch_to_saved_history(self):
         t=self.tracker;t.recording.set(False)
         e=ItemEvent('Milk',3,'Drop')

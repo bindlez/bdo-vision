@@ -28,12 +28,13 @@ def notification_ink(image, threshold=80, colors=True):
                  if count>=18 and max(color)>100 and max(color)-min(color)>45]
         if palette:
             tolerance=8 if threshold<100 else 16
-            pixels=[]
-            for color in rgb.getdata():
+            decisions={}
+            for color in counts:
                 peak=max(color)
                 colored=peak>65 and any(max(abs(value-peak*p[i]/max(p))
                     for i,value in enumerate(color))<=tolerance for p in palette)
-                pixels.append(255 if colored else 0)
+                decisions[color]=255 if colored else 0
+            pixels=[decisions[color] for color in rgb.getdata()]
             quality=Image.new('L',image.size);quality.putdata(pixels)
             neutral=ImageChops.lighter(neutral,quality)
     return ImageOps.invert(neutral).resize((image.width*3,image.height*3))

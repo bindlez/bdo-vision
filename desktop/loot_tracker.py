@@ -82,6 +82,7 @@ class TextFeedSnapshots(LootSnapshots):
 
 class LootLedger:
     def __init__(self, path):
+        self.revision=0
         self.db = sqlite3.connect(str(path))
         self.db.execute('CREATE TABLE IF NOT EXISTS loot (id INTEGER PRIMARY KEY, recorded_at TEXT NOT NULL, session TEXT NOT NULL, item TEXT NOT NULL, quantity INTEGER NOT NULL, source TEXT NOT NULL)')
         if 'kind' not in {r[1] for r in self.db.execute('PRAGMA table_info(loot)')}:
@@ -95,6 +96,7 @@ class LootLedger:
             raise ValueError('Enter an item name and quantity between 1 and 1,000,000.')
         with self.db:
             cursor = self.db.execute('INSERT INTO loot(recorded_at, session, item, quantity, source, kind) VALUES (?, ?, ?, ?, ?, ?)', (recorded_at or datetime.now().astimezone().isoformat(timespec='milliseconds'), session, item, quantity, source, kind))
+        self.revision+=1
         return cursor.lastrowid
 
     def rows(self):
@@ -102,6 +104,7 @@ class LootLedger:
 
     def mark_rare(self,row_id,kind="Rare drop"):
         with self.db:self.db.execute("UPDATE loot SET kind=? WHERE id=?",(kind,row_id))
+        self.revision+=1
 
     def export(self, path):
         with open(path, 'w', newline='', encoding='utf-8-sig') as stream:
