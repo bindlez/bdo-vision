@@ -1,4 +1,4 @@
-# Crafting Studio and efficiency review · 1.10.0-rc.1
+# Crafting Studio and efficiency review · 1.10.0-rc.2
 
 The release adds planning and separate, opt-in blocked-capture projections without changing the OCR consensus, quantities, overlap handling or loot ledger. Existing recipes are retained; this is not a newly verified comprehensive recipe or mastery database.
 
@@ -46,4 +46,4 @@ The timer query is about 78.7% faster in this specific large-history fixture. Th
 
 ## Accuracy and release checks
 
-127 isolated Windows regressions cover existing OCR, tray, history, exact market matching, timer spans and new crafting math/forecast boundaries. Additional checks include inline-script syntax for the real planner and both demos, actual browser interactions, generated fixture OCR in the packaged EXE and release manifest checks. The UI demo explicitly uses synthetic prices/drops and blocks all network connections through its policy. Screen OCR is only in the Windows app. Perfect live OCR recall is not established by these checks; covered or lost feed rows remain unrecorded.
+128 isolated Windows regressions cover existing OCR, tray, history, exact market matching, timer spans and new crafting math/forecast boundaries. Additional checks include inline-script syntax for the real planner and both demos, actual browser interactions, generated fixture OCR in the packaged EXE and release manifest checks. The UI demo explicitly uses synthetic prices/drops and blocks all network connections through its policy. Screen OCR is only in the Windows app. Perfect live OCR recall is not established by these checks; covered or lost feed rows remain unrecorded.

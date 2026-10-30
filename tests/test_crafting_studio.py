@@ -73,10 +73,20 @@ t.status='running';assert.equal(C.projection(t,d,t.endAt).value,0);delete d.upda
                 book.update_market([{'id':1,'name':'Milk','price':12}],'NA');self.assertEqual(book.all()['Milk']['unit_price'],12)
             book._item_database=ItemDatabase([{'id':1,'name':'Milk'},{'id':2,'name':'Milk Tea'},{'id':3,'name':'Oil'},{'id':4,'name':'Oil'}])
             with patch.object(book,'_fetch_quotes',return_value=[{'id':1,'sid':0,'name':'Milk','basePrice':15}]) as fetch:
-                self.assertEqual(book.recipe_quotes(['Milk','Mil','Oil'],'NA'),[{'id':1,'name':'Milk','price':15}]);self.assertEqual(fetch.call_args.args,('NA',[1]))
+                self.assertEqual(book.recipe_quotes(['Milk','Mil','Oil'],'NA'),[{'id':1,'name':'Milk','price':15}]);self.assertEqual(fetch.call_args.args,('NA',[1,3,4]))
                 book.recipe_quotes(['Milk','Mil','Oil'],'NA');self.assertEqual(fetch.call_count,1)
             for names in ([],['a']*65,[None]):
                 with self.assertRaises(ValueError):book.recipe_quotes(names,'NA')
+
+    def test_recipe_quote_event_namesakes_need_one_verified_tradable_identity(self):
+        with tempfile.TemporaryDirectory() as folder:
+            book=PriceBook(Path(folder)/'prices.db')
+            book._item_database=ItemDatabase([{'id':678,'name':'Elixir'},{'id':37193,'name':'Elixir'},{'id':1,'name':'Oil'},{'id':2,'name':'Oil'}])
+            payload=[{'id':678,'sid':0,'name':'Elixir','basePrice':68000},{'id':1,'sid':0,'name':'Oil','basePrice':10},{'id':2,'sid':0,'name':'Oil','basePrice':10}]
+            with patch.object(book,'_fetch_quotes',return_value=payload):
+                result=book.recipe_quotes(['Elixir','Oil'],'NA')
+                self.assertEqual(result,[{'id':678,'name':'Elixir','price':68000}])
+                self.assertNotIn('Oil',book.all())
 
     def test_embedded_assets_match_production_sources(self):
         html=(ROOT/'bdo-market-intelligence.html').read_text(encoding='utf-8')

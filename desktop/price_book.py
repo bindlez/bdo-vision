@@ -171,11 +171,18 @@ class PriceBook:
             self.ensure_catalog();ids=set()
             for name in key[1]:
                 exact=[i for i in self._item_database.candidates(name) if market_name_key(i['name'])==market_name_key(name)]
+                # Event-only catalog entries can share a normal item's name.
+                # Query exact IDs, then let verified tradable responses disambiguate.
                 identities={i['id'] for i in exact}
-                if len(identities)==1:ids.update(identities)
+                if len(identities)<=8:ids.update(identities)
             items=[];ordered=sorted(ids)
             for start in range(0,len(ordered),40):
                 batch=ordered[start:start+40];items.extend(self._base_quotes(self._fetch_quotes(region,batch),set(batch)))
+            wanted={market_name_key(n) for n in names};groups={}
+            for item in items:
+                identity=market_name_key(item['name'])
+                if identity in wanted:groups.setdefault(identity,[]).append(item)
+            items=[group[0] for group in groups.values() if len({i['id'] for i in group})==1]
             self.update_market(items,region,activate=False)
             if len(self._recipe_cache)>=16:self._recipe_cache.clear()
             self._recipe_cache[key]=(time.monotonic(),items)
