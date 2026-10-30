@@ -1,0 +1,3218 @@
+[
+  {
+    "id": "alc_antidote_elixir_0",
+    "type": "alchemy",
+    "name": "Antidote Elixir",
+    "sell": 25000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 1,
+        "fallback": 14000
+      },
+      {
+        "name": "Weeds",
+        "qty": 1,
+        "fallback": 500
+      },
+      {
+        "name": "Blood 2",
+        "qty": 2,
+        "fallback": 8000
+      },
+      {
+        "name": "Olive Oil",
+        "qty": 3,
+        "fallback": 8000
+      }
+    ]
+  },
+  {
+    "id": "alc_clear_liquid_reagent_1",
+    "type": "alchemy",
+    "name": "Clear Liquid Reagent",
+    "sell": 12000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Salt",
+        "qty": 1,
+        "fallback": 400
+      },
+      {
+        "name": "Sunrise Herb",
+        "qty": 1,
+        "fallback": 1200
+      },
+      {
+        "name": "Weeds",
+        "qty": 1,
+        "fallback": 500
+      },
+      {
+        "name": "Purified Water",
+        "qty": 1,
+        "fallback": 200
+      }
+    ]
+  },
+  {
+    "id": "alc_clown_s_blood_2",
+    "type": "alchemy",
+    "name": "Clown's Blood",
+    "sell": 35000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Spirit's Leaf",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Powder of Darkness",
+        "qty": 1,
+        "fallback": 7000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 1,
+        "fallback": 12000
+      },
+      {
+        "name": "Blood 1",
+        "qty": 2,
+        "fallback": 6000
+      }
+    ]
+  },
+  {
+    "id": "alc_defense_elixir_3",
+    "type": "alchemy",
+    "name": "Defense Elixir",
+    "sell": 42000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 1,
+        "fallback": 12000
+      },
+      {
+        "name": "Ash Sap",
+        "qty": 6,
+        "fallback": 2500
+      },
+      {
+        "name": "Blood 2",
+        "qty": 5,
+        "fallback": 8000
+      },
+      {
+        "name": "Purified Water",
+        "qty": 3,
+        "fallback": 200
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_amity_4",
+    "type": "alchemy",
+    "name": "Elixir of Amity",
+    "sell": 55000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Legendary Beast's Blood",
+        "qty": 1,
+        "fallback": 95000
+      },
+      {
+        "name": "Fire Flake Flower",
+        "qty": 5,
+        "fallback": 2500
+      },
+      {
+        "name": "Ash Sap",
+        "qty": 6,
+        "fallback": 2500
+      },
+      {
+        "name": "Black Stone Powder",
+        "qty": 3,
+        "fallback": 2000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_armor_5",
+    "type": "alchemy",
+    "name": "Elixir of Armor",
+    "sell": 88000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Fortitude",
+        "qty": 3,
+        "fallback": 45000
+      },
+      {
+        "name": "Refined Delotia Reagent",
+        "qty": 3,
+        "fallback": 28000
+      },
+      {
+        "name": "Thornwood Sap",
+        "qty": 5,
+        "fallback": 3200
+      },
+      {
+        "name": "Thick Turo Blood",
+        "qty": 1,
+        "fallback": 120000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_assassination_6",
+    "type": "alchemy",
+    "name": "Elixir of Assassination",
+    "sell": 192000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Regeneration",
+        "qty": 1,
+        "fallback": 55000
+      },
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 5,
+        "fallback": 14000
+      },
+      {
+        "name": "Bloody Tree Knot",
+        "qty": 5,
+        "fallback": 9000
+      },
+      {
+        "name": "Powder of Flame",
+        "qty": 6,
+        "fallback": 8000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_carnage_7",
+    "type": "alchemy",
+    "name": "Elixir of Carnage",
+    "sell": 72000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Corruption",
+        "qty": 1,
+        "fallback": 45000
+      },
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 5,
+        "fallback": 14000
+      },
+      {
+        "name": "Trace of Violence",
+        "qty": 3,
+        "fallback": 22000
+      },
+      {
+        "name": "Powder of Flame",
+        "qty": 4,
+        "fallback": 8000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_death_8",
+    "type": "alchemy",
+    "name": "Elixir of Death",
+    "sell": 95000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Corruption",
+        "qty": 2,
+        "fallback": 45000
+      },
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 4,
+        "fallback": 14000
+      },
+      {
+        "name": "Powder of Darkness",
+        "qty": 5,
+        "fallback": 7000
+      },
+      {
+        "name": "Bloody Tree Knot",
+        "qty": 4,
+        "fallback": 9000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_demihuman_hunt_9",
+    "type": "alchemy",
+    "name": "Elixir of Demihuman Hunt",
+    "sell": 68000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Storms",
+        "qty": 1,
+        "fallback": 48000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 4,
+        "fallback": 12000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 3,
+        "fallback": 6000
+      },
+      {
+        "name": "Ash Sap",
+        "qty": 5,
+        "fallback": 2500
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_detection_10",
+    "type": "alchemy",
+    "name": "Elixir of Detection",
+    "sell": 61000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Tranquility",
+        "qty": 1,
+        "fallback": 42000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 3,
+        "fallback": 12000
+      },
+      {
+        "name": "Powder of Earth",
+        "qty": 4,
+        "fallback": 5500
+      },
+      {
+        "name": "Monk's Branch",
+        "qty": 3,
+        "fallback": 5000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_endurance_11",
+    "type": "alchemy",
+    "name": "Elixir of Endurance",
+    "sell": 72000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Trace of Nature",
+        "qty": 2,
+        "fallback": 18000
+      },
+      {
+        "name": "Powder of Earth",
+        "qty": 3,
+        "fallback": 5500
+      },
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 1,
+        "fallback": 14000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_energy_12",
+    "type": "alchemy",
+    "name": "Elixir of Energy",
+    "sell": 48000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 2,
+        "fallback": 12000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 3,
+        "fallback": 6000
+      },
+      {
+        "name": "Maple Sap",
+        "qty": 5,
+        "fallback": 2200
+      },
+      {
+        "name": "Blood 2",
+        "qty": 2,
+        "fallback": 8000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_frenzy_13",
+    "type": "alchemy",
+    "name": "Elixir of Frenzy",
+    "sell": 89000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Storms",
+        "qty": 1,
+        "fallback": 48000
+      },
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 4,
+        "fallback": 14000
+      },
+      {
+        "name": "Powder of Flame",
+        "qty": 5,
+        "fallback": 8000
+      },
+      {
+        "name": "Trace of Ascension",
+        "qty": 2,
+        "fallback": 95000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_fury_14",
+    "type": "alchemy",
+    "name": "Elixir of Fury",
+    "sell": 91000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Regeneration",
+        "qty": 1,
+        "fallback": 55000
+      },
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 4,
+        "fallback": 14000
+      },
+      {
+        "name": "Powder of Flame",
+        "qty": 5,
+        "fallback": 8000
+      },
+      {
+        "name": "Trace of Violence",
+        "qty": 2,
+        "fallback": 22000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_human_hunt_15",
+    "type": "alchemy",
+    "name": "Elixir of Human Hunt",
+    "sell": 64000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Fortitude",
+        "qty": 1,
+        "fallback": 45000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 4,
+        "fallback": 12000
+      },
+      {
+        "name": "Powder of Darkness",
+        "qty": 3,
+        "fallback": 7000
+      },
+      {
+        "name": "Birch Sap",
+        "qty": 5,
+        "fallback": 2400
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_labor_16",
+    "type": "alchemy",
+    "name": "Elixir of Labor",
+    "sell": 38000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Sinner's Blood",
+        "qty": 2,
+        "fallback": 45000
+      },
+      {
+        "name": "Refined Delotia Reagent",
+        "qty": 2,
+        "fallback": 28000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 2,
+        "fallback": 6000
+      },
+      {
+        "name": "Thornwood Sap",
+        "qty": 4,
+        "fallback": 3200
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_life_17",
+    "type": "alchemy",
+    "name": "Elixir of Life",
+    "sell": 85000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Blood of the Sinner",
+        "qty": 1,
+        "fallback": 45000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 2,
+        "fallback": 6000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 1,
+        "fallback": 12000
+      },
+      {
+        "name": "Monk's Branch",
+        "qty": 2,
+        "fallback": 5000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_ment_18",
+    "type": "alchemy",
+    "name": "Elixir of Ment",
+    "sell": 52000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Wise Man's Blood",
+        "qty": 1,
+        "fallback": 90000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 2,
+        "fallback": 6000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 2,
+        "fallback": 12000
+      },
+      {
+        "name": "Fir Sap",
+        "qty": 4,
+        "fallback": 2300
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_penetration_19",
+    "type": "alchemy",
+    "name": "Elixir of Penetration",
+    "sell": 98000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Corruption",
+        "qty": 1,
+        "fallback": 45000
+      },
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 5,
+        "fallback": 14000
+      },
+      {
+        "name": "Powder of Darkness",
+        "qty": 4,
+        "fallback": 7000
+      },
+      {
+        "name": "Trace of Death",
+        "qty": 2,
+        "fallback": 25000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_persistence_20",
+    "type": "alchemy",
+    "name": "Elixir of Persistence",
+    "sell": 44000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Tranquility",
+        "qty": 1,
+        "fallback": 42000
+      },
+      {
+        "name": "Trace of Forest",
+        "qty": 2,
+        "fallback": 18000
+      },
+      {
+        "name": "Red-spotted Amanita",
+        "qty": 3,
+        "fallback": 12000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 5,
+        "fallback": 12000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 7,
+        "fallback": 6000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_regeneration_21",
+    "type": "alchemy",
+    "name": "Elixir of Regeneration",
+    "sell": 105000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Regeneration",
+        "qty": 2,
+        "fallback": 55000
+      },
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 4,
+        "fallback": 14000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 3,
+        "fallback": 6000
+      },
+      {
+        "name": "Trace of Life",
+        "qty": 2,
+        "fallback": 20000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_resistance_22",
+    "type": "alchemy",
+    "name": "Elixir of Resistance",
+    "sell": 56000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 2,
+        "fallback": 12000
+      },
+      {
+        "name": "Powder of Earth",
+        "qty": 4,
+        "fallback": 5500
+      },
+      {
+        "name": "Ash Sap",
+        "qty": 5,
+        "fallback": 2500
+      },
+      {
+        "name": "Blood 3",
+        "qty": 3,
+        "fallback": 10000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_resurrection_23",
+    "type": "alchemy",
+    "name": "Elixir of Resurrection",
+    "sell": 45000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Blood of the Sinner",
+        "qty": 1,
+        "fallback": 45000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 2,
+        "fallback": 6000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 1,
+        "fallback": 12000
+      },
+      {
+        "name": "Fire Flake Flower",
+        "qty": 3,
+        "fallback": 2500
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_seal_24",
+    "type": "alchemy",
+    "name": "Elixir of Seal",
+    "sell": 77000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Tranquility",
+        "qty": 1,
+        "fallback": 42000
+      },
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 3,
+        "fallback": 14000
+      },
+      {
+        "name": "Powder of Earth",
+        "qty": 4,
+        "fallback": 5500
+      },
+      {
+        "name": "Trace of Origin",
+        "qty": 2,
+        "fallback": 28000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_shock_25",
+    "type": "alchemy",
+    "name": "Elixir of Shock",
+    "sell": 70000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Clown's Blood",
+        "qty": 1,
+        "fallback": 35000
+      },
+      {
+        "name": "Tiger Mushroom",
+        "qty": 5,
+        "fallback": 9000
+      },
+      {
+        "name": "Cedar Sap",
+        "qty": 7,
+        "fallback": 2600
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 3,
+        "fallback": 6000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_skill_26",
+    "type": "alchemy",
+    "name": "Elixir of Skill",
+    "sell": 82000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Wise Man's Blood",
+        "qty": 2,
+        "fallback": 90000
+      },
+      {
+        "name": "Delotia",
+        "qty": 5,
+        "fallback": 15000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 2,
+        "fallback": 6000
+      },
+      {
+        "name": "Thornwood Sap",
+        "qty": 5,
+        "fallback": 3200
+      },
+      {
+        "name": "Trace of Chaos",
+        "qty": 2,
+        "fallback": 30000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_sky_27",
+    "type": "alchemy",
+    "name": "Elixir of Sky",
+    "sell": 93000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Storms",
+        "qty": 1,
+        "fallback": 48000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 4,
+        "fallback": 12000
+      },
+      {
+        "name": "Powder of Rifts",
+        "qty": 3,
+        "fallback": 7500
+      },
+      {
+        "name": "Fir Sap",
+        "qty": 6,
+        "fallback": 2300
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_spells_28",
+    "type": "alchemy",
+    "name": "Elixir of Spells",
+    "sell": 86000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Wise Man's Blood",
+        "qty": 1,
+        "fallback": 90000
+      },
+      {
+        "name": "Powder of Darkness",
+        "qty": 4,
+        "fallback": 7000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 3,
+        "fallback": 12000
+      },
+      {
+        "name": "Maple Sap",
+        "qty": 5,
+        "fallback": 2200
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_swiftness_29",
+    "type": "alchemy",
+    "name": "Elixir of Swiftness",
+    "sell": 58000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 2,
+        "fallback": 12000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 4,
+        "fallback": 6000
+      },
+      {
+        "name": "Birch Sap",
+        "qty": 5,
+        "fallback": 2400
+      },
+      {
+        "name": "Blood 2",
+        "qty": 2,
+        "fallback": 8000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_the_wise_30",
+    "type": "alchemy",
+    "name": "Elixir of the Wise",
+    "sell": 110000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Trace of Ascension",
+        "qty": 1,
+        "fallback": 95000
+      },
+      {
+        "name": "Powder of Darkness",
+        "qty": 2,
+        "fallback": 7000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 1,
+        "fallback": 12000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_time_31",
+    "type": "alchemy",
+    "name": "Elixir of Time",
+    "sell": 62000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Wise Man's Blood",
+        "qty": 1,
+        "fallback": 90000
+      },
+      {
+        "name": "Fire Flake Flower",
+        "qty": 6,
+        "fallback": 2500
+      },
+      {
+        "name": "Maple Sap",
+        "qty": 5,
+        "fallback": 2200
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 2,
+        "fallback": 6000
+      }
+    ]
+  },
+  {
+    "id": "alc_elixir_of_will_32",
+    "type": "alchemy",
+    "name": "Elixir of Will",
+    "sell": 74000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Fortitude",
+        "qty": 1,
+        "fallback": 45000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 3,
+        "fallback": 12000
+      },
+      {
+        "name": "Powder of Earth",
+        "qty": 3,
+        "fallback": 5500
+      },
+      {
+        "name": "Monk's Branch",
+        "qty": 4,
+        "fallback": 5000
+      }
+    ]
+  },
+  {
+    "id": "alc_exp_elixir_33",
+    "type": "alchemy",
+    "name": "EXP Elixir",
+    "sell": 69000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Wise Man's Blood",
+        "qty": 1,
+        "fallback": 90000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 3,
+        "fallback": 6000
+      },
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 2,
+        "fallback": 12000
+      },
+      {
+        "name": "Delotia",
+        "qty": 4,
+        "fallback": 15000
+      }
+    ]
+  },
+  {
+    "id": "alc_gem_polisher_34",
+    "type": "alchemy",
+    "name": "Gem Polisher",
+    "sell": 32000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 1,
+        "fallback": 14000
+      },
+      {
+        "name": "Processed Coal",
+        "qty": 4,
+        "fallback": 3000
+      },
+      {
+        "name": "Purified Water",
+        "qty": 6,
+        "fallback": 200
+      },
+      {
+        "name": "Trace of Origin",
+        "qty": 2,
+        "fallback": 28000
+      }
+    ]
+  },
+  {
+    "id": "alc_golden_hand_elixir_35",
+    "type": "alchemy",
+    "name": "Golden Hand Elixir",
+    "sell": 54000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 2,
+        "fallback": 12000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 3,
+        "fallback": 6000
+      },
+      {
+        "name": "Gold Ingot",
+        "qty": 1,
+        "fallback": 45000
+      },
+      {
+        "name": "Ash Sap",
+        "qty": 4,
+        "fallback": 2500
+      }
+    ]
+  },
+  {
+    "id": "alc_grim_reaper_s_elixir_36",
+    "type": "alchemy",
+    "name": "Grim Reaper's Elixir",
+    "sell": 99000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Oil of Corruption",
+        "qty": 2,
+        "fallback": 45000
+      },
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 4,
+        "fallback": 14000
+      },
+      {
+        "name": "Powder of Darkness",
+        "qty": 5,
+        "fallback": 7000
+      },
+      {
+        "name": "Trace of Death",
+        "qty": 3,
+        "fallback": 25000
+      }
+    ]
+  },
+  {
+    "id": "alc_leather_glaze_37",
+    "type": "alchemy",
+    "name": "Leather Glaze",
+    "sell": 28000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 1,
+        "fallback": 12000
+      },
+      {
+        "name": "Powder of Darkness",
+        "qty": 2,
+        "fallback": 7000
+      },
+      {
+        "name": "Maple Sap",
+        "qty": 3,
+        "fallback": 2200
+      },
+      {
+        "name": "Trace of Ascension",
+        "qty": 3,
+        "fallback": 95000
+      }
+    ]
+  },
+  {
+    "id": "alc_legendary_beast_s_blood_38",
+    "type": "alchemy",
+    "name": "Legendary Beast's Blood",
+    "sell": 95000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 1,
+        "fallback": 14000
+      },
+      {
+        "name": "Blood 5",
+        "qty": 2,
+        "fallback": 12000
+      },
+      {
+        "name": "Trace of the Earth",
+        "qty": 1,
+        "fallback": 18000
+      },
+      {
+        "name": "Spirit's Leaf",
+        "qty": 1,
+        "fallback": 8000
+      }
+    ]
+  },
+  {
+    "id": "alc_metal_solvent_39",
+    "type": "alchemy",
+    "name": "Metal Solvent",
+    "sell": 26000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 1,
+        "fallback": 12000
+      },
+      {
+        "name": "Rough Stone",
+        "qty": 4,
+        "fallback": 800
+      },
+      {
+        "name": "Melted Iron Shard",
+        "qty": 3,
+        "fallback": 2500
+      },
+      {
+        "name": "Trace of Savagery",
+        "qty": 2,
+        "fallback": 22000
+      }
+    ]
+  },
+  {
+    "id": "alc_oil_of_corruption_40",
+    "type": "alchemy",
+    "name": "Oil of Corruption",
+    "sell": 45000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Fruit of the Sun",
+        "qty": 1,
+        "fallback": 18000
+      },
+      {
+        "name": "Powder of Darkness",
+        "qty": 1,
+        "fallback": 7000
+      },
+      {
+        "name": "Spirit's Leaf",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Sinner's Blood",
+        "qty": 1,
+        "fallback": 45000
+      }
+    ]
+  },
+  {
+    "id": "alc_oil_of_fortitude_41",
+    "type": "alchemy",
+    "name": "Oil of Fortitude",
+    "sell": 45000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Fruit of Nature",
+        "qty": 1,
+        "fallback": 16000
+      },
+      {
+        "name": "Monk's Branch",
+        "qty": 1,
+        "fallback": 5000
+      },
+      {
+        "name": "Powder of Flame",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Clown's Blood",
+        "qty": 1,
+        "fallback": 35000
+      }
+    ]
+  },
+  {
+    "id": "alc_oil_of_regeneration_42",
+    "type": "alchemy",
+    "name": "Oil of Regeneration",
+    "sell": 55000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Fruit of Crimson Flame",
+        "qty": 1,
+        "fallback": 20000
+      },
+      {
+        "name": "Legendary Beast's Blood",
+        "qty": 1,
+        "fallback": 95000
+      },
+      {
+        "name": "Red Tree Lump",
+        "qty": 1,
+        "fallback": 11000
+      },
+      {
+        "name": "Powder of Crevice",
+        "qty": 1,
+        "fallback": 9000
+      }
+    ]
+  },
+  {
+    "id": "alc_oil_of_storms_43",
+    "type": "alchemy",
+    "name": "Oil of Storms",
+    "sell": 48000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Fruit of Abundance",
+        "qty": 1,
+        "fallback": 17000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 1,
+        "fallback": 6000
+      },
+      {
+        "name": "Old Tree Bark",
+        "qty": 1,
+        "fallback": 7500
+      },
+      {
+        "name": "Tyrant's Blood",
+        "qty": 1,
+        "fallback": 88000
+      }
+    ]
+  },
+  {
+    "id": "alc_oil_of_tranquility_44",
+    "type": "alchemy",
+    "name": "Oil of Tranquility",
+    "sell": 42000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Fruit of Magic Power",
+        "qty": 1,
+        "fallback": 19000
+      },
+      {
+        "name": "Powder of Earth",
+        "qty": 1,
+        "fallback": 5500
+      },
+      {
+        "name": "Bloody Tree Knot",
+        "qty": 1,
+        "fallback": 9000
+      },
+      {
+        "name": "Wise Man's Blood",
+        "qty": 1,
+        "fallback": 90000
+      }
+    ]
+  },
+  {
+    "id": "alc_plywood_hardener_45",
+    "type": "alchemy",
+    "name": "Plywood Hardener",
+    "sell": 30000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 1,
+        "fallback": 14000
+      },
+      {
+        "name": "Fir Sap",
+        "qty": 4,
+        "fallback": 2300
+      },
+      {
+        "name": "Bloody Tree Knot",
+        "qty": 3,
+        "fallback": 9000
+      },
+      {
+        "name": "Trace of the Earth",
+        "qty": 3,
+        "fallback": 18000
+      }
+    ]
+  },
+  {
+    "id": "alc_pure_powder_reagent_46",
+    "type": "alchemy",
+    "name": "Pure Powder Reagent",
+    "sell": 14000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Sugar",
+        "qty": 1,
+        "fallback": 500
+      },
+      {
+        "name": "Silver Azalea",
+        "qty": 1,
+        "fallback": 1500
+      },
+      {
+        "name": "Weeds",
+        "qty": 1,
+        "fallback": 500
+      },
+      {
+        "name": "Purified Water",
+        "qty": 1,
+        "fallback": 200
+      }
+    ]
+  },
+  {
+    "id": "alc_sinner_s_blood_47",
+    "type": "alchemy",
+    "name": "Sinner's Blood",
+    "sell": 45000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 1,
+        "fallback": 12000
+      },
+      {
+        "name": "Blood 2",
+        "qty": 2,
+        "fallback": 8000
+      },
+      {
+        "name": "Powder of Flame",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Bloody Tree Knot",
+        "qty": 1,
+        "fallback": 9000
+      }
+    ]
+  },
+  {
+    "id": "alc_spirit_perfume_elixir_48",
+    "type": "alchemy",
+    "name": "Spirit Perfume Elixir",
+    "sell": 280000,
+    "secPerBatch": 6,
+    "mats": [
+      {
+        "name": "Blood of the Sinner",
+        "qty": 3,
+        "fallback": 45000
+      },
+      {
+        "name": "Powder of Flame",
+        "qty": 4,
+        "fallback": 8000
+      },
+      {
+        "name": "Oil of Corruption",
+        "qty": 2,
+        "fallback": 45000
+      },
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 1,
+        "fallback": 14000
+      }
+    ]
+  },
+  {
+    "id": "alc_tyrant_s_blood_49",
+    "type": "alchemy",
+    "name": "Tyrant's Blood",
+    "sell": 88000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Pure Powder Reagent",
+        "qty": 1,
+        "fallback": 14000
+      },
+      {
+        "name": "Blood 4",
+        "qty": 2,
+        "fallback": 15000
+      },
+      {
+        "name": "Trace of Savagery",
+        "qty": 1,
+        "fallback": 22000
+      },
+      {
+        "name": "Monk's Branch",
+        "qty": 1,
+        "fallback": 5000
+      }
+    ]
+  },
+  {
+    "id": "alc_wise_man_s_blood_50",
+    "type": "alchemy",
+    "name": "Wise Man's Blood",
+    "sell": 90000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 1,
+        "fallback": 12000
+      },
+      {
+        "name": "Blood 3",
+        "qty": 2,
+        "fallback": 10000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 1,
+        "fallback": 6000
+      },
+      {
+        "name": "Trace of Ascension",
+        "qty": 1,
+        "fallback": 95000
+      }
+    ]
+  },
+  {
+    "id": "alc_worker_s_elixir_51",
+    "type": "alchemy",
+    "name": "Worker's Elixir",
+    "sell": 41000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Clear Liquid Reagent",
+        "qty": 2,
+        "fallback": 12000
+      },
+      {
+        "name": "Powder of Time",
+        "qty": 3,
+        "fallback": 6000
+      },
+      {
+        "name": "Fir Sap",
+        "qty": 5,
+        "fallback": 2300
+      },
+      {
+        "name": "Blood 2",
+        "qty": 2,
+        "fallback": 8000
+      }
+    ]
+  },
+  {
+    "id": "coo_aloe_cookie_1000",
+    "type": "cooking",
+    "name": "Aloe Cookie",
+    "sell": 12000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Dough",
+        "qty": 2,
+        "fallback": 2000
+      },
+      {
+        "name": "Aloe",
+        "qty": 3,
+        "fallback": 1500
+      },
+      {
+        "name": "Sugar",
+        "qty": 2,
+        "fallback": 500
+      },
+      {
+        "name": "Egg",
+        "qty": 2,
+        "fallback": 2000
+      }
+    ]
+  },
+  {
+    "id": "coo_aloe_yogurt_1001",
+    "type": "cooking",
+    "name": "Aloe Yogurt",
+    "sell": 15000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Milk",
+        "qty": 2,
+        "fallback": 3500
+      },
+      {
+        "name": "Aloe",
+        "qty": 3,
+        "fallback": 1500
+      },
+      {
+        "name": "Sugar",
+        "qty": 1,
+        "fallback": 500
+      },
+      {
+        "name": "Leavening Agent",
+        "qty": 1,
+        "fallback": 800
+      }
+    ]
+  },
+  {
+    "id": "coo_assorted_side_dishes_1002",
+    "type": "cooking",
+    "name": "Assorted Side Dishes",
+    "sell": 22000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Fried Fish",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Meat",
+        "qty": 2,
+        "fallback": 2200
+      },
+      {
+        "name": "Egg",
+        "qty": 2,
+        "fallback": 2000
+      },
+      {
+        "name": "Onion",
+        "qty": 1,
+        "fallback": 1200
+      }
+    ]
+  },
+  {
+    "id": "coo_balenos_meal_1003",
+    "type": "cooking",
+    "name": "Balenos Meal",
+    "sell": 85000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Cheese Gratin",
+        "qty": 1,
+        "fallback": 35000
+      },
+      {
+        "name": "Meat Stew",
+        "qty": 1,
+        "fallback": 28000
+      },
+      {
+        "name": "Fried Fish",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Beer",
+        "qty": 1,
+        "fallback": 5000
+      }
+    ]
+  },
+  {
+    "id": "coo_beer_1004",
+    "type": "cooking",
+    "name": "Beer",
+    "sell": 5000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Flour",
+        "qty": 2,
+        "fallback": 1500
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 3,
+        "fallback": 800
+      },
+      {
+        "name": "Sugar",
+        "qty": 1,
+        "fallback": 500
+      },
+      {
+        "name": "Leavening Agent",
+        "qty": 2,
+        "fallback": 800
+      }
+    ]
+  },
+  {
+    "id": "coo_blood_altar_cupcake_1005",
+    "type": "cooking",
+    "name": "Blood Altar Cupcake",
+    "sell": 45000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Dough",
+        "qty": 3,
+        "fallback": 2000
+      },
+      {
+        "name": "Fruit",
+        "qty": 2,
+        "fallback": 3000
+      },
+      {
+        "name": "Sugar",
+        "qty": 3,
+        "fallback": 500
+      },
+      {
+        "name": "Milk",
+        "qty": 2,
+        "fallback": 3500
+      }
+    ]
+  },
+  {
+    "id": "coo_boiled_bird_egg_1006",
+    "type": "cooking",
+    "name": "Boiled Bird Egg",
+    "sell": 8000,
+    "secPerBatch": 2,
+    "mats": [
+      {
+        "name": "Egg",
+        "qty": 3,
+        "fallback": 2000
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 2,
+        "fallback": 800
+      }
+    ]
+  },
+  {
+    "id": "coo_calpheon_meal_1007",
+    "type": "cooking",
+    "name": "Calpheon Meal",
+    "sell": 120000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Soft Bread",
+        "qty": 1,
+        "fallback": 18000
+      },
+      {
+        "name": "Cheese Pie",
+        "qty": 1,
+        "fallback": 28000
+      },
+      {
+        "name": "Meat Sandwich",
+        "qty": 1,
+        "fallback": 32000
+      },
+      {
+        "name": "Wine",
+        "qty": 1,
+        "fallback": 15000
+      }
+    ]
+  },
+  {
+    "id": "coo_cheese_gratin_1008",
+    "type": "cooking",
+    "name": "Cheese Gratin",
+    "sell": 35000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Cheese",
+        "qty": 2,
+        "fallback": 8000
+      },
+      {
+        "name": "Milk",
+        "qty": 2,
+        "fallback": 3500
+      },
+      {
+        "name": "Dough",
+        "qty": 2,
+        "fallback": 2000
+      },
+      {
+        "name": "Meat",
+        "qty": 3,
+        "fallback": 2200
+      }
+    ]
+  },
+  {
+    "id": "coo_cheese_pie_1009",
+    "type": "cooking",
+    "name": "Cheese Pie",
+    "sell": 28000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Dough",
+        "qty": 3,
+        "fallback": 2000
+      },
+      {
+        "name": "Cheese",
+        "qty": 2,
+        "fallback": 8000
+      },
+      {
+        "name": "Egg",
+        "qty": 2,
+        "fallback": 2000
+      },
+      {
+        "name": "Butter",
+        "qty": 1,
+        "fallback": 4000
+      }
+    ]
+  },
+  {
+    "id": "coo_chicken_breast_salad_1010",
+    "type": "cooking",
+    "name": "Chicken Breast Salad",
+    "sell": 24000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Chicken Meat",
+        "qty": 3,
+        "fallback": 2500
+      },
+      {
+        "name": "Olive Oil",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Vinegar",
+        "qty": 1,
+        "fallback": 6000
+      },
+      {
+        "name": "Egg",
+        "qty": 1,
+        "fallback": 2000
+      }
+    ]
+  },
+  {
+    "id": "coo_coconut_cocktail_1011",
+    "type": "cooking",
+    "name": "Coconut Cocktail",
+    "sell": 18000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Coconut",
+        "qty": 2,
+        "fallback": 4000
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 2,
+        "fallback": 800
+      },
+      {
+        "name": "Sugar",
+        "qty": 2,
+        "fallback": 500
+      },
+      {
+        "name": "Fruit",
+        "qty": 1,
+        "fallback": 3000
+      }
+    ]
+  },
+  {
+    "id": "coo_coconut_fried_fish_1012",
+    "type": "cooking",
+    "name": "Coconut Fried Fish",
+    "sell": 26000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Fish",
+        "qty": 2,
+        "fallback": 3500
+      },
+      {
+        "name": "Coconut",
+        "qty": 1,
+        "fallback": 4000
+      },
+      {
+        "name": "Flour",
+        "qty": 2,
+        "fallback": 1500
+      },
+      {
+        "name": "Egg",
+        "qty": 1,
+        "fallback": 2000
+      }
+    ]
+  },
+  {
+    "id": "coo_dark_pudding_1013",
+    "type": "cooking",
+    "name": "Dark Pudding",
+    "sell": 95000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Ogre Blood",
+        "qty": 1,
+        "fallback": 25000
+      },
+      {
+        "name": "Dried Bird Meat",
+        "qty": 2,
+        "fallback": 5000
+      },
+      {
+        "name": "Deer Blood",
+        "qty": 3,
+        "fallback": 8000
+      },
+      {
+        "name": "Dough",
+        "qty": 2,
+        "fallback": 2000
+      }
+    ]
+  },
+  {
+    "id": "coo_desert_dumpling_1014",
+    "type": "cooking",
+    "name": "Desert Dumpling",
+    "sell": 20000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Dough",
+        "qty": 3,
+        "fallback": 2000
+      },
+      {
+        "name": "Meat",
+        "qty": 3,
+        "fallback": 2200
+      },
+      {
+        "name": "Onion",
+        "qty": 2,
+        "fallback": 1200
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 1,
+        "fallback": 800
+      }
+    ]
+  },
+  {
+    "id": "coo_exotic_herbal_wine_1015",
+    "type": "cooking",
+    "name": "Exotic Herbal Wine",
+    "sell": 16000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Fruit",
+        "qty": 3,
+        "fallback": 3000
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 2,
+        "fallback": 800
+      },
+      {
+        "name": "Sugar",
+        "qty": 2,
+        "fallback": 500
+      }
+    ]
+  },
+  {
+    "id": "coo_fig_pie_1016",
+    "type": "cooking",
+    "name": "Fig Pie",
+    "sell": 14000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Dough",
+        "qty": 2,
+        "fallback": 2000
+      },
+      {
+        "name": "Fig",
+        "qty": 3,
+        "fallback": 2500
+      },
+      {
+        "name": "Sugar",
+        "qty": 2,
+        "fallback": 500
+      }
+    ]
+  },
+  {
+    "id": "coo_fish_fillet_salad_1017",
+    "type": "cooking",
+    "name": "Fish Fillet Salad",
+    "sell": 19000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Fish",
+        "qty": 3,
+        "fallback": 3500
+      },
+      {
+        "name": "Olive Oil",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Dressing",
+        "qty": 1,
+        "fallback": 5000
+      },
+      {
+        "name": "Onion",
+        "qty": 1,
+        "fallback": 1200
+      }
+    ]
+  },
+  {
+    "id": "coo_freekeh_snake_stew_1018",
+    "type": "cooking",
+    "name": "Freekeh Snake Stew",
+    "sell": 72000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Snake Meat",
+        "qty": 3,
+        "fallback": 12000
+      },
+      {
+        "name": "Freekeh",
+        "qty": 2,
+        "fallback": 8000
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 3,
+        "fallback": 800
+      },
+      {
+        "name": "Olive Oil",
+        "qty": 1,
+        "fallback": 8000
+      }
+    ]
+  },
+  {
+    "id": "coo_fried_fish_1019",
+    "type": "cooking",
+    "name": "Fried Fish",
+    "sell": 8000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Fish",
+        "qty": 2,
+        "fallback": 3500
+      },
+      {
+        "name": "Flour",
+        "qty": 1,
+        "fallback": 1500
+      }
+    ]
+  },
+  {
+    "id": "coo_fruit_juice_1020",
+    "type": "cooking",
+    "name": "Fruit Juice",
+    "sell": 6000,
+    "secPerBatch": 2,
+    "mats": [
+      {
+        "name": "Fruit",
+        "qty": 3,
+        "fallback": 3000
+      },
+      {
+        "name": "Sugar",
+        "qty": 1,
+        "fallback": 500
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 2,
+        "fallback": 800
+      }
+    ]
+  },
+  {
+    "id": "coo_fruit_pudding_1021",
+    "type": "cooking",
+    "name": "Fruit Pudding",
+    "sell": 11000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Fruit",
+        "qty": 3,
+        "fallback": 3000
+      },
+      {
+        "name": "Milk",
+        "qty": 1,
+        "fallback": 3500
+      },
+      {
+        "name": "Sugar",
+        "qty": 2,
+        "fallback": 500
+      }
+    ]
+  },
+  {
+    "id": "coo_fruit_wine_1022",
+    "type": "cooking",
+    "name": "Fruit Wine",
+    "sell": 9000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Fruit",
+        "qty": 3,
+        "fallback": 3000
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 2,
+        "fallback": 800
+      },
+      {
+        "name": "Sugar",
+        "qty": 2,
+        "fallback": 500
+      }
+    ]
+  },
+  {
+    "id": "coo_grape_juice_1023",
+    "type": "cooking",
+    "name": "Grape Juice",
+    "sell": 7000,
+    "secPerBatch": 2,
+    "mats": [
+      {
+        "name": "Grape",
+        "qty": 4,
+        "fallback": 2200
+      },
+      {
+        "name": "Sugar",
+        "qty": 1,
+        "fallback": 500
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 1,
+        "fallback": 800
+      }
+    ]
+  },
+  {
+    "id": "coo_grilled_bird_meat_1024",
+    "type": "cooking",
+    "name": "Grilled Bird Meat",
+    "sell": 10000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Bird Meat",
+        "qty": 3,
+        "fallback": 2800
+      },
+      {
+        "name": "Salt",
+        "qty": 1,
+        "fallback": 400
+      },
+      {
+        "name": "Hot Pepper",
+        "qty": 1,
+        "fallback": 1500
+      }
+    ]
+  },
+  {
+    "id": "coo_grilled_fish_1025",
+    "type": "cooking",
+    "name": "Grilled Fish",
+    "sell": 9000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Fish",
+        "qty": 2,
+        "fallback": 3500
+      },
+      {
+        "name": "Salt",
+        "qty": 1,
+        "fallback": 400
+      },
+      {
+        "name": "Hot Pepper",
+        "qty": 1,
+        "fallback": 1500
+      }
+    ]
+  },
+  {
+    "id": "coo_honey_wine_1026",
+    "type": "cooking",
+    "name": "Honey Wine",
+    "sell": 13000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Honey",
+        "qty": 2,
+        "fallback": 4500
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 2,
+        "fallback": 800
+      },
+      {
+        "name": "Sugar",
+        "qty": 1,
+        "fallback": 500
+      }
+    ]
+  },
+  {
+    "id": "coo_honeycomb_cookie_1027",
+    "type": "cooking",
+    "name": "Honeycomb Cookie",
+    "sell": 16000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Honey",
+        "qty": 2,
+        "fallback": 4500
+      },
+      {
+        "name": "Dough",
+        "qty": 2,
+        "fallback": 2000
+      },
+      {
+        "name": "Egg",
+        "qty": 1,
+        "fallback": 2000
+      },
+      {
+        "name": "Sugar",
+        "qty": 1,
+        "fallback": 500
+      }
+    ]
+  },
+  {
+    "id": "coo_hunter_s_salad_1028",
+    "type": "cooking",
+    "name": "Hunter's Salad",
+    "sell": 17000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Deer Meat",
+        "qty": 2,
+        "fallback": 2200
+      },
+      {
+        "name": "Dressing",
+        "qty": 1,
+        "fallback": 5000
+      },
+      {
+        "name": "Garlic",
+        "qty": 2,
+        "fallback": 2500
+      }
+    ]
+  },
+  {
+    "id": "coo_kamasylvia_meal_1029",
+    "type": "cooking",
+    "name": "Kamasylvia Meal",
+    "sell": 140000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Rainbow Button Mushroom Cheese Melt",
+        "qty": 1,
+        "fallback": 55000
+      },
+      {
+        "name": "Fruit Wine",
+        "qty": 1,
+        "fallback": 9000
+      },
+      {
+        "name": "Special Arehaza Meal",
+        "qty": 1,
+        "fallback": 0
+      },
+      {
+        "name": "Meat Pie",
+        "qty": 1,
+        "fallback": 25000
+      }
+    ]
+  },
+  {
+    "id": "coo_knight_combat_rations_1030",
+    "type": "cooking",
+    "name": "Knight Combat Rations",
+    "sell": 110000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Dark Pudding",
+        "qty": 1,
+        "fallback": 95000
+      },
+      {
+        "name": "Roast Meat",
+        "qty": 1,
+        "fallback": 12000
+      },
+      {
+        "name": "Soft Bread",
+        "qty": 1,
+        "fallback": 18000
+      },
+      {
+        "name": "Beer",
+        "qty": 1,
+        "fallback": 5000
+      }
+    ]
+  },
+  {
+    "id": "coo_lean_meatball_1031",
+    "type": "cooking",
+    "name": "Lean Meatball",
+    "sell": 21000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Meat",
+        "qty": 4,
+        "fallback": 2200
+      },
+      {
+        "name": "Dough",
+        "qty": 2,
+        "fallback": 2000
+      },
+      {
+        "name": "Onion",
+        "qty": 1,
+        "fallback": 1200
+      },
+      {
+        "name": "Egg",
+        "qty": 1,
+        "fallback": 2000
+      }
+    ]
+  },
+  {
+    "id": "coo_meat_croquette_1032",
+    "type": "cooking",
+    "name": "Meat Croquette",
+    "sell": 23000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Meat",
+        "qty": 3,
+        "fallback": 2200
+      },
+      {
+        "name": "Flour",
+        "qty": 2,
+        "fallback": 1500
+      },
+      {
+        "name": "Egg",
+        "qty": 2,
+        "fallback": 2000
+      },
+      {
+        "name": "Cheese",
+        "qty": 1,
+        "fallback": 8000
+      }
+    ]
+  },
+  {
+    "id": "coo_meat_pasta_1033",
+    "type": "cooking",
+    "name": "Meat Pasta",
+    "sell": 27000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Dough",
+        "qty": 3,
+        "fallback": 2000
+      },
+      {
+        "name": "Meat",
+        "qty": 3,
+        "fallback": 2200
+      },
+      {
+        "name": "Garlic",
+        "qty": 2,
+        "fallback": 2500
+      },
+      {
+        "name": "Olive Oil",
+        "qty": 1,
+        "fallback": 8000
+      }
+    ]
+  },
+  {
+    "id": "coo_meat_pie_1034",
+    "type": "cooking",
+    "name": "Meat Pie",
+    "sell": 25000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Dough",
+        "qty": 3,
+        "fallback": 2000
+      },
+      {
+        "name": "Meat",
+        "qty": 3,
+        "fallback": 2200
+      },
+      {
+        "name": "Egg",
+        "qty": 1,
+        "fallback": 2000
+      },
+      {
+        "name": "Salt",
+        "qty": 1,
+        "fallback": 400
+      }
+    ]
+  },
+  {
+    "id": "coo_meat_sandwich_1035",
+    "type": "cooking",
+    "name": "Meat Sandwich",
+    "sell": 32000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Soft Bread",
+        "qty": 1,
+        "fallback": 18000
+      },
+      {
+        "name": "Meat",
+        "qty": 3,
+        "fallback": 2200
+      },
+      {
+        "name": "Cheese",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Vegetables",
+        "qty": 2,
+        "fallback": 1800
+      }
+    ]
+  },
+  {
+    "id": "coo_meat_soup_1036",
+    "type": "cooking",
+    "name": "Meat Soup",
+    "sell": 15000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Meat",
+        "qty": 3,
+        "fallback": 2200
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 3,
+        "fallback": 800
+      },
+      {
+        "name": "Pepper",
+        "qty": 1,
+        "fallback": 1200
+      },
+      {
+        "name": "Onion",
+        "qty": 1,
+        "fallback": 1200
+      }
+    ]
+  },
+  {
+    "id": "coo_meat_stew_1037",
+    "type": "cooking",
+    "name": "Meat Stew",
+    "sell": 28000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Deer Meat",
+        "qty": 5,
+        "fallback": 2200
+      },
+      {
+        "name": "Flour",
+        "qty": 2,
+        "fallback": 1500
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 3,
+        "fallback": 800
+      },
+      {
+        "name": "Onion",
+        "qty": 2,
+        "fallback": 1200
+      }
+    ]
+  },
+  {
+    "id": "coo_mediah_meal_1038",
+    "type": "cooking",
+    "name": "Mediah Meal",
+    "sell": 130000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Dark Pudding",
+        "qty": 1,
+        "fallback": 95000
+      },
+      {
+        "name": "Omelet",
+        "qty": 1,
+        "fallback": 18000
+      },
+      {
+        "name": "Pickled Vegetables",
+        "qty": 1,
+        "fallback": 12000
+      },
+      {
+        "name": "Exotic Herbal Wine",
+        "qty": 1,
+        "fallback": 16000
+      }
+    ]
+  },
+  {
+    "id": "coo_milk_tea_1039",
+    "type": "cooking",
+    "name": "Milk Tea",
+    "sell": 14000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Milk",
+        "qty": 2,
+        "fallback": 3500
+      },
+      {
+        "name": "Tea",
+        "qty": 1,
+        "fallback": 3000
+      },
+      {
+        "name": "Sugar",
+        "qty": 1,
+        "fallback": 500
+      }
+    ]
+  },
+  {
+    "id": "coo_oatmeal_1040",
+    "type": "cooking",
+    "name": "Oatmeal",
+    "sell": 10000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Flour",
+        "qty": 2,
+        "fallback": 1500
+      },
+      {
+        "name": "Milk",
+        "qty": 1,
+        "fallback": 3500
+      },
+      {
+        "name": "Onion",
+        "qty": 1,
+        "fallback": 1200
+      },
+      {
+        "name": "Butter",
+        "qty": 1,
+        "fallback": 4000
+      }
+    ]
+  },
+  {
+    "id": "coo_omelet_1041",
+    "type": "cooking",
+    "name": "Omelet",
+    "sell": 18000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Egg",
+        "qty": 3,
+        "fallback": 2000
+      },
+      {
+        "name": "Olive Oil",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Salt",
+        "qty": 1,
+        "fallback": 400
+      },
+      {
+        "name": "Hot Pepper",
+        "qty": 1,
+        "fallback": 1500
+      }
+    ]
+  },
+  {
+    "id": "coo_pickled_vegetables_1042",
+    "type": "cooking",
+    "name": "Pickled Vegetables",
+    "sell": 12000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Vegetables",
+        "qty": 3,
+        "fallback": 1800
+      },
+      {
+        "name": "Vinegar",
+        "qty": 2,
+        "fallback": 6000
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 1,
+        "fallback": 800
+      }
+    ]
+  },
+  {
+    "id": "coo_prawn_salad_1043",
+    "type": "cooking",
+    "name": "Prawn Salad",
+    "sell": 35700,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Shrimp",
+        "qty": 4,
+        "fallback": 4500
+      },
+      {
+        "name": "Olive Oil",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Vinegar",
+        "qty": 1,
+        "fallback": 6000
+      },
+      {
+        "name": "Garlic",
+        "qty": 2,
+        "fallback": 2500
+      }
+    ]
+  },
+  {
+    "id": "coo_rainbow_button_mushroom_cheese_melt_1044",
+    "type": "cooking",
+    "name": "Rainbow Button Mushroom Cheese Melt",
+    "sell": 55000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Rainbow Button Mushroom",
+        "qty": 2,
+        "fallback": 18000
+      },
+      {
+        "name": "Cheese",
+        "qty": 2,
+        "fallback": 8000
+      },
+      {
+        "name": "Butter",
+        "qty": 1,
+        "fallback": 4000
+      },
+      {
+        "name": "Dough",
+        "qty": 2,
+        "fallback": 2000
+      }
+    ]
+  },
+  {
+    "id": "coo_red_sauce_1045",
+    "type": "cooking",
+    "name": "Red Sauce",
+    "sell": 11000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Base Sauce",
+        "qty": 1,
+        "fallback": 4000
+      },
+      {
+        "name": "Hot Pepper",
+        "qty": 2,
+        "fallback": 1500
+      },
+      {
+        "name": "Sugar",
+        "qty": 1,
+        "fallback": 500
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 1,
+        "fallback": 800
+      }
+    ]
+  },
+  {
+    "id": "coo_roast_meat_1046",
+    "type": "cooking",
+    "name": "Roast Meat",
+    "sell": 12000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Meat",
+        "qty": 3,
+        "fallback": 2200
+      },
+      {
+        "name": "Salt",
+        "qty": 1,
+        "fallback": 400
+      },
+      {
+        "name": "Hot Pepper",
+        "qty": 1,
+        "fallback": 1500
+      }
+    ]
+  },
+  {
+    "id": "coo_seafood_gratin_1047",
+    "type": "cooking",
+    "name": "Seafood Gratin",
+    "sell": 95000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Octopus",
+        "qty": 2,
+        "fallback": 12000
+      },
+      {
+        "name": "Shrimp",
+        "qty": 3,
+        "fallback": 4500
+      },
+      {
+        "name": "Cheese",
+        "qty": 2,
+        "fallback": 8000
+      },
+      {
+        "name": "Milk",
+        "qty": 3,
+        "fallback": 3500
+      }
+    ]
+  },
+  {
+    "id": "coo_seafood_pasta_1048",
+    "type": "cooking",
+    "name": "Seafood Pasta",
+    "sell": 38000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Dough",
+        "qty": 3,
+        "fallback": 2000
+      },
+      {
+        "name": "Seafood",
+        "qty": 3,
+        "fallback": 6000
+      },
+      {
+        "name": "Garlic",
+        "qty": 2,
+        "fallback": 2500
+      },
+      {
+        "name": "Olive Oil",
+        "qty": 1,
+        "fallback": 8000
+      }
+    ]
+  },
+  {
+    "id": "coo_serendia_meal_1049",
+    "type": "cooking",
+    "name": "Serendia Meal",
+    "sell": 100000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "Meat Stew",
+        "qty": 1,
+        "fallback": 28000
+      },
+      {
+        "name": "Cheese Gratin",
+        "qty": 1,
+        "fallback": 35000
+      },
+      {
+        "name": "Boiled Bird Egg",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Beer",
+        "qty": 1,
+        "fallback": 5000
+      }
+    ]
+  },
+  {
+    "id": "coo_soft_bread_1050",
+    "type": "cooking",
+    "name": "Soft Bread",
+    "sell": 18000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Dough",
+        "qty": 3,
+        "fallback": 2000
+      },
+      {
+        "name": "Egg",
+        "qty": 1,
+        "fallback": 2000
+      },
+      {
+        "name": "Milk",
+        "qty": 1,
+        "fallback": 3500
+      },
+      {
+        "name": "Leavening Agent",
+        "qty": 2,
+        "fallback": 800
+      }
+    ]
+  },
+  {
+    "id": "coo_special_teff_sandwich_1051",
+    "type": "cooking",
+    "name": "Special Teff Sandwich",
+    "sell": 165000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Teff Bread",
+        "qty": 2,
+        "fallback": 25000
+      },
+      {
+        "name": "Free-range Chicken",
+        "qty": 3,
+        "fallback": 8000
+      },
+      {
+        "name": "Olive Oil",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Egg",
+        "qty": 4,
+        "fallback": 2000
+      }
+    ]
+  },
+  {
+    "id": "coo_steak_1052",
+    "type": "cooking",
+    "name": "Steak",
+    "sell": 30000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Meat",
+        "qty": 4,
+        "fallback": 2200
+      },
+      {
+        "name": "Salt",
+        "qty": 1,
+        "fallback": 400
+      },
+      {
+        "name": "Garlic",
+        "qty": 2,
+        "fallback": 2500
+      },
+      {
+        "name": "Red Sauce",
+        "qty": 1,
+        "fallback": 11000
+      }
+    ]
+  },
+  {
+    "id": "coo_steamed_fish_1053",
+    "type": "cooking",
+    "name": "Steamed Fish",
+    "sell": 11000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Fish",
+        "qty": 2,
+        "fallback": 3500
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 2,
+        "fallback": 800
+      },
+      {
+        "name": "Salt",
+        "qty": 1,
+        "fallback": 400
+      },
+      {
+        "name": "Garlic",
+        "qty": 1,
+        "fallback": 2500
+      }
+    ]
+  },
+  {
+    "id": "coo_steamed_seafood_1054",
+    "type": "cooking",
+    "name": "Steamed Seafood",
+    "sell": 29000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Seafood",
+        "qty": 3,
+        "fallback": 6000
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 2,
+        "fallback": 800
+      },
+      {
+        "name": "Salt",
+        "qty": 1,
+        "fallback": 400
+      },
+      {
+        "name": "Hot Pepper",
+        "qty": 1,
+        "fallback": 1500
+      }
+    ]
+  },
+  {
+    "id": "coo_stir_fried_seafood_1055",
+    "type": "cooking",
+    "name": "Stir-Fried Seafood",
+    "sell": 31000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Seafood",
+        "qty": 3,
+        "fallback": 6000
+      },
+      {
+        "name": "Vegetables",
+        "qty": 2,
+        "fallback": 1800
+      },
+      {
+        "name": "Hot Pepper",
+        "qty": 1,
+        "fallback": 1500
+      },
+      {
+        "name": "Olive Oil",
+        "qty": 1,
+        "fallback": 8000
+      }
+    ]
+  },
+  {
+    "id": "coo_tea_with_fine_scent_1056",
+    "type": "cooking",
+    "name": "Tea With Fine Scent",
+    "sell": 20000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Tea",
+        "qty": 2,
+        "fallback": 3000
+      },
+      {
+        "name": "Fruit",
+        "qty": 2,
+        "fallback": 3000
+      },
+      {
+        "name": "Honey",
+        "qty": 1,
+        "fallback": 4500
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 1,
+        "fallback": 800
+      }
+    ]
+  },
+  {
+    "id": "coo_teff_bread_1057",
+    "type": "cooking",
+    "name": "Teff Bread",
+    "sell": 25000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Teff Flour",
+        "qty": 3,
+        "fallback": 6000
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 2,
+        "fallback": 800
+      },
+      {
+        "name": "Leavening Agent",
+        "qty": 2,
+        "fallback": 800
+      },
+      {
+        "name": "Salt",
+        "qty": 1,
+        "fallback": 400
+      }
+    ]
+  },
+  {
+    "id": "coo_teff_sandwich_1058",
+    "type": "cooking",
+    "name": "Teff Sandwich",
+    "sell": 48000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Teff Bread",
+        "qty": 1,
+        "fallback": 25000
+      },
+      {
+        "name": "Meat",
+        "qty": 2,
+        "fallback": 2200
+      },
+      {
+        "name": "Cheese",
+        "qty": 1,
+        "fallback": 8000
+      },
+      {
+        "name": "Vegetables",
+        "qty": 1,
+        "fallback": 1800
+      }
+    ]
+  },
+  {
+    "id": "coo_valencia_meal_1059",
+    "type": "cooking",
+    "name": "Valencia Meal",
+    "sell": 150000,
+    "secPerBatch": 5,
+    "mats": [
+      {
+        "name": "King of the Jungle Hamburg",
+        "qty": 1,
+        "fallback": 80000
+      },
+      {
+        "name": "Date Palm Wine",
+        "qty": 1,
+        "fallback": 20000
+      },
+      {
+        "name": "Fruit Pudding",
+        "qty": 1,
+        "fallback": 11000
+      },
+      {
+        "name": "Teff Sandwich",
+        "qty": 1,
+        "fallback": 48000
+      }
+    ]
+  },
+  {
+    "id": "coo_whale_meat_salad_1060",
+    "type": "cooking",
+    "name": "Whale Meat Salad",
+    "sell": 340000,
+    "secPerBatch": 4,
+    "mats": [
+      {
+        "name": "Whale Meat",
+        "qty": 1,
+        "fallback": 180000
+      },
+      {
+        "name": "Olive Oil",
+        "qty": 2,
+        "fallback": 8000
+      },
+      {
+        "name": "Vinegar",
+        "qty": 2,
+        "fallback": 6000
+      },
+      {
+        "name": "Garlic",
+        "qty": 3,
+        "fallback": 2500
+      }
+    ]
+  },
+  {
+    "id": "coo_wine_1061",
+    "type": "cooking",
+    "name": "Wine",
+    "sell": 15000,
+    "secPerBatch": 3,
+    "mats": [
+      {
+        "name": "Grape",
+        "qty": 5,
+        "fallback": 2200
+      },
+      {
+        "name": "Mineral Water",
+        "qty": 2,
+        "fallback": 800
+      },
+      {
+        "name": "Sugar",
+        "qty": 2,
+        "fallback": 500
+      }
+    ]
+  }
+]
