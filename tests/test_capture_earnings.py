@@ -86,8 +86,10 @@ class CaptureEarningsTests(unittest.TestCase):
             (first/'settings.json').write_text('{"share_crafting_loot":true}')
             empty=LootLedger(fresh/'loot-history.sqlite3');empty.close()
             with patch.dict(os.environ,{'BDO_VISION_DATA_DIR':str(shared)}):
-                self.assertEqual(prepare_storage(first),shared)
-                self.assertEqual(prepare_storage(fresh),shared)
+                # Windows runners may return a DOS short-name temp directory.
+                # Compare the resolved physical target, as data_root does.
+                self.assertEqual(prepare_storage(first),shared.resolve())
+                self.assertEqual(prepare_storage(fresh),shared.resolve())
             with closing(sqlite3.connect(shared/'loot-history.sqlite3')) as db:self.assertEqual(db.execute('select sum(quantity) from loot').fetchone()[0],4)
             saved=backup_profile(shared)
             with closing(sqlite3.connect(saved/'loot-history.sqlite3')) as db:self.assertEqual(db.execute('pragma integrity_check').fetchone()[0],'ok')
