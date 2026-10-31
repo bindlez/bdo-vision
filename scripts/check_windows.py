@@ -29,5 +29,6 @@ with tempfile.TemporaryDirectory(prefix='vision-portable-check-') as folder:
     assert result.returncode==0,'Executable self-check failed'
     details=json.loads(report.read_text());assert details['ok'],details
     details['seconds']=round(time.monotonic()-started,3);details['zip_bytes']=archive.stat().st_size
+    details['git_commit']=manifest['git_commit'];details['archive_sha256']=expected
     (root/'build/windows-check.json').write_text(json.dumps(details,indent=2))
     print(json.dumps(details,indent=2))

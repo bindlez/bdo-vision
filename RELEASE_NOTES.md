@@ -1,3 +1,7 @@
+# BDO Vision 1.11.0-rc.3 — accessible Windows release and version library
+
+Adds an on-demand local release library with downloadable packages, committed source identities, SHA-256 and complete manifest verification, clean-source checkpoints, testing instructions and profile-safe recovery guidance. Preserves the full tracker and reviewed tooltip Gear Studio. Icon-only equipment recognition remains an experiment outside this release. Tesseract English is still installed separately.
+
 # BDO Vision 1.11.0-rc.2 — equipment import fixes
 
 Removes the first-150-lines parser cutoff, accepts rank words without parentheses and Slumbering Origin adjective ranks, ignores description-only item mentions, and adds a focused tooltip-header retry. Edge-aware sweep captures preserve a full-height tooltip area at common resolutions, bounded to twelve 1280×1440 grayscale frames. A small verified Kharazad supplement uses exact local catalog IDs, retains 0–10 enhancement choices and remains explicitly unpriced. Named Slumbering Origin levels can remain editable during quote outages. No changes to loot OCR, counting, silver history, sessions, crafting or grind logic.
