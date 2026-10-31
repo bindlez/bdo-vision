@@ -1,3 +1,11 @@
+# BDO Vision 1.10.0-rc.3 — item extraction audit fixes
+
+A wider extraction audit found and fixed malformed quantity handling, mixed-message omissions, bundle names containing xN, failure words inside valid item names, and harmless OCR punctuation around personal notifications. Existing captures, OCR masks, consensus rules, crafting tools and protected history remain unchanged.
+
+141 Windows regression tests include matrix and scrolling checks. The full audit additionally checks 59,372 catalog names and 83 saved frames. Image recognition still has measurable misses: see [the extraction audit and its limits](docs/EXTRACTION-AUDIT.md). This candidate does not claim perfect OCR.
+
+## Previous release: 1.10.0-rc.2
+
 # BDO Vision 1.10.0-rc.2 — Crafting Studio
 
 Adds material costs and modeled net profit, yield/timing assumptions, exact recipe market quotes, inventory-aware recursive shopping, production plans, comparisons, graphs and recorded-silver goals. Optional blocked-capture projections stay separate from confirmed loot and apply only to crafting.

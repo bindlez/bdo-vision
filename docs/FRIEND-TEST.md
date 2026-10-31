@@ -1,4 +1,4 @@
-# BDO Vision · friend test · 1.10.0-rc.2
+# BDO Vision · friend test · 1.10.0-rc.3
 
 This is an unsigned Windows test candidate. No Python installation is needed. Extract the whole ZIP before opening **OPEN-BDO-VISION.bat** or **desktop/BDO-Vision.exe**. Keep the accompanying folders beside the EXE.
 
@@ -31,3 +31,5 @@ Use owned inventory and **Make intermediate** to prepare a shopping list and pro
 Optionally check **Project main output while crafting capture is blocked** before starting a recipe timer. It requires a live connection and native Crafting mode, and assumes uninterrupted crafting during that gap. It clears on capture recovery, excludes rare extras and never changes saved loot or grind totals. Cancel the planning timer if game crafting stops.
 
 Export saved plans and assumptions before changing browser/port. Loot history remains protected separately. The new standalone crafting demo is https://bindlez.github.io/bdo-vision-crafting-demo.html ; its prices and drops are explicitly synthetic.
+
+The rc.3 extraction audit fixes quantity/name parsing without guessing missing drops. See docs/EXTRACTION-AUDIT.md for measured remaining image misses; keep 6–8 complete personal message rows visible.
