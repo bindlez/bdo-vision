@@ -79,7 +79,10 @@ def item_regions_visible(regions):
         user32.WindowFromPoint.restype=wintypes.HWND
         user32.GetAncestor.argtypes=[wintypes.HWND,wintypes.UINT]
         user32.GetAncestor.restype=wintypes.HWND
-        game_windows=find_bdo_windows()
+        # Normal grinding has BDO in front. Avoid enumerating/querying every
+        # other desktop process on that common path; coverage checks still run.
+        foreground=user32.GetForegroundWindow()
+        game_windows=[foreground] if is_bdo_window(foreground) else find_bdo_windows()
         if not game_windows:return False,'BDO game window not found'
         windows=[h for h in game_windows if user32.IsWindowVisible(h) and not user32.IsIconic(h)]
         if not windows:return False,'BDO must be visible, not minimized or in the tray'

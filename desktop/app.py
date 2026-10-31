@@ -12,6 +12,7 @@ from ocr_parser import choose_reading, reading_is_plausible, extract_pairs
 from scan_engine import select_ocr_passes, should_publish, candidate_is_stable, SpeedEstimator
 from tracking_core import ReadingGate, remaining_at, align_to_capture, estimate_send
 from spatial_ocr import tsv_candidates, choose_spatial_pair
+from ocr_runtime import run_ocr
 
 ROOT=(Path(sys.executable).resolve().parent if getattr(sys,'frozen',False)
       else Path(__file__).resolve().parent)
@@ -25,7 +26,7 @@ if config.get('scan_interval')==5:config['scan_interval']=10
 class App:
  def __init__(self,root):
   self.root=root
-  root.title(f'BDO Vision Lite {APP_VERSION}  •  Saved history')
+  root.title(f'BDO Vision {APP_VERSION}  •  Saved history')
   root.geometry('600x860')
   root.minsize(600,860)
   root.configure(bg='#08070d')
@@ -469,6 +470,8 @@ class App:
    if not self.auto_enabled.get():self.auto_health.set('Auto OCR: OFF')
    elif self.selecting_region:self.auto_health.set('Auto OCR: selecting capture area')
    elif not self.region_confirmed:self.auto_health.set('Auto OCR: select your craft area in Settings')
+   elif getattr(self.loot,'enabled',None) is not None and self.loot.enabled.get() and not self.loot.crafting.get() and not self.running:
+    self.auto_health.set('Tool OCR idle during grinding · enable Crafting mode when needed')
    elif not self.bdo_foreground():self.auto_health.set('Auto OCR: waiting for BDO in front')
    elif self.busy or self.loot.busy:self.auto_health.set('Auto OCR: scan in progress')
    else:
@@ -624,7 +627,7 @@ class App:
          '-c','tessedit_char_whitelist=0123456789/(),|']
     try:
      flags=getattr(subprocess,'CREATE_NO_WINDOW',0)
-     proc=subprocess.run(cmd,input=png.getvalue(),capture_output=True,timeout=5,creationflags=flags)
+     proc=run_ocr(cmd,input=png.getvalue(),capture_output=True,timeout=5,creationflags=flags)
      proc_stdout=proc.stdout.decode('utf-8','replace');proc_stderr=proc.stderr.decode('utf-8','replace')
      raw=proc_stdout.strip()
      lines.append(f'{name} psm={psm} exit={proc.returncode}: {raw!r} {proc_stderr.strip()[:100]}')
@@ -647,7 +650,7 @@ class App:
      png=io.BytesIO();imagewide.save(png,format='PNG')
      flags=getattr(subprocess,'CREATE_NO_WINDOW',0)
      cmd=[tess,'stdin','stdout','--psm','11','-l','eng','tsv']
-     proc=subprocess.run(cmd,input=png.getvalue(),capture_output=True,timeout=6,creationflags=flags)
+     proc=run_ocr(cmd,input=png.getvalue(),capture_output=True,timeout=6,creationflags=flags)
      positioned=tsv_candidates(proc.stdout.decode('utf-8','replace'),x_offset=left,y_offset=top,scale=scale)
      spatial=choose_spatial_pair(positioned,anchor_x,expected=expected,expected_max=maximum,anchor_y=anchor_y)
      lines.append('Wide fallback: '+str(len(positioned))+' positioned candidates; picked '+str(spatial))

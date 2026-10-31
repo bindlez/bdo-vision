@@ -23,7 +23,14 @@ shutil.copytree(build/'frozen/BDO-Vision',desktop,dirs_exist_ok=True)
 shutil.copytree(assets,desktop/'assets',dirs_exist_ok=True)
 for name in ('bdo-market-intelligence.html','VERSION','README.md','RELEASE_NOTES.md'):
     shutil.copy2(root/name,stage/name)
-if (root/'docs/FRIEND-TEST.md').is_file():shutil.copy2(root/'docs/FRIEND-TEST.md',stage/'START-HERE.md')
+guide=root/'docs/QUICK-START.md'
+if not guide.is_file():guide=root/'docs/FRIEND-TEST.md'
+if guide.is_file():shutil.copy2(guide,stage/'START-HERE.md')
+for name in ('FRIEND-TEST.md','PERFORMANCE-AND-SECURITY.md','RELEASE-SYSTEM.md'):
+    if (root/'docs'/name).is_file():shutil.copy2(root/'docs'/name,stage/name)
+evidence=stage/'CHECKS';evidence.mkdir(exist_ok=True)
+for name in ('test-report.txt','test-results.json'):
+    if (build/name).is_file():shutil.copy2(build/name,evidence/name)
 licenses=stage/'LICENSES';licenses.mkdir(exist_ok=True);third_party=[]
 for name in ('Pillow','pywinauto','comtypes','pywin32','pyinstaller'):
     try:distribution=metadata.distribution(name)
@@ -41,6 +48,7 @@ revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).
 files={str(path.relative_to(stage)).replace('\\','/'):hashlib.sha256(path.read_bytes()).hexdigest()
        for path in stage.rglob('*') if path.is_file() and path.name!='release-manifest.json'}
 (stage/'release-manifest.json').write_text(json.dumps({'version':version,'git_commit':revision,
+    'git_tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=root,text=True).strip(),
     'uncommitted_source':bool(subprocess.check_output(['git','status','--porcelain'],cwd=root,text=True).strip()),
     'entrypoint':'OPEN-BDO-VISION.bat','ocr_requirement':'Tesseract English required separately','files':files},indent=2))
 archive=out/f'BDO-Vision-{version}-Windows.zip'

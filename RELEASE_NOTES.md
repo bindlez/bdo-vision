@@ -1,3 +1,9 @@
+# BDO Vision 1.11.1 — grind/craft performance and local security
+
+Keeps the complete tracker and Gear Studio. Shares text-mask analysis, caps each OCR worker to one thread at below-normal priority, reuses only complete identical text reads briefly, makes screenshot diagnostics opt-in, rejects oversized capture selections and suppresses unrelated tool OCR while grinding. Tightens localhost origins and Host checks, bounds request workers/timeouts, rejects malformed bodies and escapes market text. Includes a short start guide, protected history and release evidence.
+
+See docs/PERFORMANCE-AND-SECURITY.md for measured results and limits; no zero-overhead, perfect OCR or icon-only import claim.
+
 # BDO Vision 1.11.0-rc.3 — accessible Windows release and version library
 
 Adds an on-demand local release library with downloadable packages, committed source identities, SHA-256 and complete manifest verification, clean-source checkpoints, testing instructions and profile-safe recovery guidance. Preserves the full tracker and reviewed tooltip Gear Studio. Icon-only equipment recognition remains an experiment outside this release. Tesseract English is still installed separately.

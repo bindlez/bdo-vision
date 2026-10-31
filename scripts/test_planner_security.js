@@ -1,0 +1,28 @@
+// Exercise actual rendering functions with hostile item text, without a browser.
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const source=fs.readFileSync(require('path').join(__dirname,'../bdo-market-intelligence.html'),'utf8');
+function body(name){
+ const start=source.indexOf('function '+name+'(');assert(start>=0,name);
+ const next=source.indexOf('\n    function ',start+1);
+ return source.slice(start,next<0?source.indexOf('\nfunction ',start+1):next);
+}
+const escaped=source.match(/function visionEscape\(value\)\{[^\n]+/)[0];
+const elements=new Map(),created=[];
+function element(){return {innerHTML:'',textContent:'',classList:{remove(){},add(){}},scrollIntoView(){},appendChild(){},offsetWidth:0};}
+const context={document:{getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);},createElement(){const node=element();created.push(node);return node;}},
+ fmt:String,stockClass:()=>'',changeHtml:()=>'',updateHeroStats(){},CATEGORIES:{},activeCat:0,setTimeout(){}};
+vm.createContext(context);
+vm.runInContext(escaped+'\n'+['renderPopular','renderListings','renderHotSidebar','toast'].map(body).join('\n'),context);
+const hostile='"><img src=x onerror="globalThis.injected=true"> & loot';
+context.item={name:hostile,price:123,stock:1,trades:1,changeDir:0};
+context.getFiltered=()=>[context.item];
+vm.runInContext('renderPopular([item]);renderListings();renderHotSidebar([item]);toast(item.name,item.name,false)',context);
+for(const id of ['popularGrid','listingsBody','hotList']){
+ const rendered=elements.get(id).innerHTML;
+ assert(!rendered.includes('<img'),id+' allows an element injection');
+ assert(rendered.includes('&lt;img'),id+' does not preserve escaped text');
+ assert(rendered.includes('&quot;'),id+' does not escape attribute quotes');
+}
+assert.strictEqual(context.injected,undefined);
+assert(created[0].innerHTML.includes('&lt;img')&&!created[0].innerHTML.includes('<img'),'toast allows markup injection');
+console.log('Planner security: market names render as text in popular, listings, sidebar and toast functions.');

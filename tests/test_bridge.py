@@ -62,15 +62,15 @@ class BridgeTests(unittest.TestCase):
             self.post('/ack',{'instance_id':'different','signal':event['signal']})
         self.assertEqual(caught.exception.code,409)
 
-    def test_legacy_file_cors_and_private_network_preflight(self):
+    def test_opaque_file_and_sandbox_origins_cannot_read_personal_bridge(self):
         req=urllib.request.Request(self.bridge.base_url+'/durability',method='OPTIONS',
                                    headers={'Origin':'null',
                                             'Access-Control-Request-Private-Network':'true',
                                             'Access-Control-Request-Method':'GET'})
-        with urllib.request.urlopen(req, timeout=3) as response:
-            self.assertEqual(response.status,204)
-            self.assertEqual(response.headers['Access-Control-Allow-Origin'],'null')
-            self.assertEqual(response.headers['Access-Control-Allow-Private-Network'],'true')
+        with self.assertRaises(urllib.error.HTTPError) as response:
+            urllib.request.urlopen(req,timeout=3)
+        self.assertEqual(response.exception.code,403)
+        self.assertIsNone(response.exception.headers.get('Access-Control-Allow-Origin'))
 
     def test_fallback_port_when_original_port_busy(self):
         first=PlannerBridge(ROOT/'bdo-market-intelligence.html',ports=(7355,))

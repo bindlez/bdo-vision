@@ -39,3 +39,12 @@ class AutoOCRTests(unittest.TestCase):
         import time
         app.last_scan_started=time.monotonic()
         App.poll_auto_ocr(app);app.read_ocr.assert_not_called()
+
+    def test_grinding_does_not_launch_unrelated_tool_ocr(self):
+        app=self.app();app.running=False
+        app.loot.enabled=types.SimpleNamespace(get=lambda:True)
+        app.loot.crafting=types.SimpleNamespace(get=lambda:False)
+        App.poll_auto_ocr(app);app.read_ocr.assert_not_called()
+        self.assertIn('grinding',app.auto_health.set.call_args.args[0])
+        app.loot.crafting.get=lambda:True
+        App.poll_auto_ocr(app);app.read_ocr.assert_called_once()

@@ -90,11 +90,12 @@ def read_equipment(body, tesseract):
 
 
 def recognize_image(image,catalog,tesseract):
+    from ocr_runtime import run_ocr
     from PIL import ImageOps,ImageStat
     image.thumbnail((1800,1800));gray=ImageOps.autocontrast(ImageOps.grayscale(image));gray=gray.resize((gray.width*2,gray.height*2))
     def run(pixels,psm,tsv=False):
         png=io.BytesIO();pixels.save(png,format='PNG')
-        result=subprocess.run([str(tesseract),'stdin','stdout','--psm',str(psm),'-l','eng']+(['tsv'] if tsv else []),input=png.getvalue(),capture_output=True,timeout=10,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0),env=dict(os.environ,OMP_THREAD_LIMIT='1',OMP_NUM_THREADS='1'))
+        result=run_ocr([str(tesseract),'stdin','stdout','--psm',str(psm),'-l','eng']+(['tsv'] if tsv else []),input=png.getvalue(),capture_output=True,timeout=10)
         if result.returncode:raise RuntimeError('Equipment OCR could not read this image')
         return result.stdout.decode('utf-8','replace')
     grouped={}

@@ -21,5 +21,8 @@ for module in sorted((project/'tests').glob('test_*.py')):
         print(('PASS' if okay else 'FAIL'),module.name,flush=True)
 folder=project/'build';folder.mkdir(exist_ok=True)
 (folder/'test-report.txt').write_text('\n'.join(report),encoding='utf-8')
+identity=subprocess.run(['git','rev-parse','HEAD'],cwd=project,capture_output=True,text=True)
+(folder/'test-results.json').write_text(json.dumps({'version':(project/'VERSION').read_text().strip(),
+    'git_commit':identity.stdout.strip(),'tests':total,'failed_modules':failed},indent=2),encoding='utf-8')
 print(f'TOTAL: {total} tests; {len(failed)} failed modules',flush=True)
 raise SystemExit(bool(failed))

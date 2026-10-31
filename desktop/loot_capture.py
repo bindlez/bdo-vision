@@ -7,50 +7,87 @@ from pathlib import Path
 from PIL import ImageOps,Image,ImageChops
 from item_events import parse_events,agreed_events,joined_messages
 from collections import Counter
+from ocr_runtime import run_ocr
 
 
-def notification_ink(image, threshold=80, colors=True):
+def capture_budget(regions):
+    """Reject accidental full-screen feeds rather than allocating huge OCR masks."""
+    if not regions:return False,'Select an item capture area'
+    total=0
+    for region in regions:
+        if not isinstance(region,(list,tuple)) or len(region)!=4 or any(type(n) is not int for n in region):
+            return False,'Select a valid rectangular item capture area'
+        x,y,width,height=region
+        if min(width,height)<8:return False,'Select a larger item capture area'
+        total+=width*height
+        if width*height>750_000 or total>1_000_000:
+            return False,'Capture area too large; select only 6–8 complete personal loot rows'
+    return True,''
+
+
+def prepare_ink(image, colors=True):
+    """Share the expensive palette/color decisions across consensus passes."""
+    rgb=image.convert('RGB')
+    red,green,blue=rgb.split()
+    low=ImageChops.darker(ImageChops.darker(red,green),blue)
+    high=ImageChops.lighter(ImageChops.lighter(red,green),blue)
+    counts=Counter(rgb.getdata()) if colors else Counter()
+    palette=[color for color,count in counts.most_common(60)
+             if count>=18 and max(color)>100 and max(color)-min(color)>45]
+    qualities={}
+    if palette:
+        decisions={8:{},16:{}}
+        for color in counts:
+            peak=max(color);distance=256
+            if peak>65:
+                for p in palette:
+                    distance=min(distance,max(abs(value-peak*p[i]/max(p))
+                                              for i,value in enumerate(color)))
+                    if distance<=8:break
+            for tolerance in decisions:
+                decisions[tolerance][color]=255 if distance<=tolerance else 0
+        for tolerance in decisions:
+            quality=Image.new('L',image.size)
+            quality.putdata([decisions[tolerance][color] for color in rgb.getdata()])
+            qualities[tolerance]=quality
+    return low,ImageChops.subtract(high,low),qualities
+
+
+def notification_ink(image, threshold=80, colors=True, prepared=None):
     """Keep the neutral/colored letter fills; discard most moving brown scenery.
 
     Operate at source resolution so the game's dark text outline stays separate
     from its bright fill. Resize only after masking.
     """
-    red,green,blue=image.convert('RGB').split()
-    low=ImageChops.darker(ImageChops.darker(red,green),blue)
-    high=ImageChops.lighter(ImageChops.lighter(red,green),blue)
+    low,spread,qualities=prepared if prepared is not None else prepare_ink(image,colors)
     neutral=ImageChops.multiply(low.point(lambda p:255 if p>threshold else 0),
-        ImageChops.subtract(high,low).point(lambda p:255 if p<18 else 0))
+        spread.point(lambda p:255 if p<18 else 0))
     if colors:
         # UI letter fills repeat the exact same color many times. Learn those
         # colors from this frame instead of retaining every green/brown plant.
-        rgb=image.convert('RGB');counts=Counter(rgb.getdata())
-        palette=[color for color,count in counts.most_common(60)
-                 if count>=18 and max(color)>100 and max(color)-min(color)>45]
-        if palette:
+        if qualities:
             tolerance=8 if threshold<100 else 16
-            decisions={}
-            for color in counts:
-                peak=max(color)
-                colored=peak>65 and any(max(abs(value-peak*p[i]/max(p))
-                    for i,value in enumerate(color))<=tolerance for p in palette)
-                decisions[color]=255 if colored else 0
-            pixels=[decisions[color] for color in rgb.getdata()]
-            quality=Image.new('L',image.size);quality.putdata(pixels)
-            neutral=ImageChops.lighter(neutral,quality)
+            neutral=ImageChops.lighter(neutral,qualities[tolerance])
     return ImageOps.invert(neutral).resize((image.width*3,image.height*3))
 
 
-def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None):
-    folder=Path(folder);folder.mkdir(parents=True,exist_ok=True)
-    image.save(folder/'last_capture.png')
-    scaled=image.resize((image.width*3,image.height*3))
-    gray=ImageOps.autocontrast(ImageOps.grayscale(scaled))
-    passes=([(notification_ink(image,80),6),(notification_ink(image,110),6),(notification_ink(image,95,False),6)]
-            if kind=='chat' else [(gray,6),(ImageOps.invert(gray),6),(gray,11)])
+def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics=True):
+    folder=Path(folder)
+    if diagnostics:
+        folder.mkdir(parents=True,exist_ok=True)
+        image.save(folder/'last_capture.png')
+    if kind=='chat':
+        prepared=prepare_ink(image)
+        passes=[(notification_ink(image,80,prepared=prepared),6),
+                (notification_ink(image,110,prepared=prepared),6),
+                (notification_ink(image,95,False,prepared=prepared),6)]
+    else:
+        gray=ImageOps.autocontrast(ImageOps.grayscale(image.resize((image.width*3,image.height*3))))
+        passes=[(gray,6),(ImageOps.invert(gray),6),(gray,11)]
     readings=[];logs=[];raws=[];slots=[]
     for variant,psm in passes:
         blob=io.BytesIO();variant.save(blob,format='PNG')
-        result=subprocess.run([tess,'stdin','stdout','--psm',str(psm),'-l','eng'],input=blob.getvalue(),capture_output=True,timeout=4,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+        result=run_ocr([tess,'stdin','stdout','--psm',str(psm),'-l','eng'],input=blob.getvalue(),capture_output=True,timeout=4)
         raw=result.stdout.decode('utf-8','replace');raws.append(raw)
         if result.returncode:raise RuntimeError(result.stderr.decode('utf-8','replace')[:160])
         rows=parse_events(raw,crafting=crafting,rare_feed=kind=='rare',bare_items=kind!='chat')
@@ -92,7 +129,7 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None):
     verified_events=[]
     if kind!='chat' and max(map(len,readings),default=0)>0:
         blob=io.BytesIO();gray.save(blob,format='PNG')
-        tsv=subprocess.run([tess,'stdin','stdout','--psm','11','-l','eng','tsv'],input=blob.getvalue(),capture_output=True,timeout=4,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+        tsv=run_ocr([tess,'stdin','stdout','--psm','11','-l','eng','tsv'],input=blob.getvalue(),capture_output=True,timeout=4)
         groups=defaultdict(list)
         for word in csv.DictReader(io.StringIO(tsv.stdout.decode('utf-8','replace')),delimiter='\t'):
             if word.get('text','').strip() and word.get('level')=='5':
@@ -107,7 +144,7 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None):
             crop=gray.crop((left,top,right,bottom))
             for index,variant in enumerate((crop,ImageOps.invert(crop))):
                 blob=io.BytesIO();variant.save(blob,format='PNG')
-                result=subprocess.run([tess,'stdin','stdout','--psm','7','-l','eng'],input=blob.getvalue(),capture_output=True,timeout=3,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                result=run_ocr([tess,'stdin','stdout','--psm','7','-l','eng'],input=blob.getvalue(),capture_output=True,timeout=3)
                 raw=result.stdout.decode('utf-8','replace')
                 verified[index].extend(parse_events(raw,crafting=crafting,rare_feed=kind=='rare',bare_items=True))
                 logs.append('Notification line: '+raw)
@@ -130,7 +167,7 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None):
     events.sort(key=lambda e:order.get(e.item,999))
     if agreed_slots is not None:events=wide_events
     debug='\n'.join(logs)+f'\nAGREED: {events!r}'
-    (folder/'ocr_log.txt').write_text(debug,encoding='utf-8')
+    if diagnostics:(folder/'ocr_log.txt').write_text(debug,encoding='utf-8')
     # Empty text on all passes is only a candidate empty panel. UI requires two
     # consecutive empty captures before allowing identical notifications again.
     empty=all(not raw.strip() for raw in raws)

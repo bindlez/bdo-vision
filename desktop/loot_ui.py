@@ -11,13 +11,14 @@ from PIL import ImageGrab, ImageTk
 from dataclasses import replace
 from loot_tracker import LootLedger, LootSnapshots,TextFeedSnapshots
 from item_events import PopupSnapshots, ItemEvent
-from loot_capture import recognize_feed
+from loot_capture import recognize_feed,capture_budget
 from windows_bdo import item_regions_visible
 from insights_ui import LootInsights
 from silver_ui import SilverLooted
 from silver_loot import silver_snapshot
 from capture_clock import CaptureClock
 from grind_ui import GrindTracker
+from frame_cache import FeedCache
 
 
 class LootTracker:
@@ -38,6 +39,8 @@ class LootTracker:
         self.enabled=tk.BooleanVar(value=bool(settings.get('loot_enabled',False) and self.region))
         self.recording=tk.BooleanVar(value=bool(settings.get('record_loot',True)))
         self.share_loot=tk.BooleanVar(value=bool(settings.get('share_crafting_loot',False)))
+        self.diagnostics=tk.BooleanVar(value=bool(settings.get('loot_diagnostics',False)))
+        self.frame_cache=FeedCache()
         self.status=tk.StringVar(value='Select Item Drop Log. Optionally select Rare Item Drop Log above it. Then turn tracking ON.')
         self.capture_state=tk.StringVar(value='Item tracking: ON' if self.enabled.get() else 'Item tracking: OFF')
         self.summary=tk.StringVar();self.raw=tk.StringVar(value='No item notifications read yet.')
@@ -53,7 +56,7 @@ class LootTracker:
         self.root.after(250,self.poll)
 
     def settings(self):
-        return {'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get()}
+        return {'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get()}
 
     def safe_interval(self):
         try:return max(.5,min(30,float(self.interval.get())))
@@ -87,6 +90,7 @@ class LootTracker:
         tk.Label(options,text='Scan seconds',bg=c['bg'],fg=c['secondary']).pack(side='left',padx=(12,5))
         picker=ttk.Combobox(options,style='Vision.TCombobox',textvariable=self.interval,values=('0.5','1','2','3','5','10'),state='readonly',width=4);picker.pack(side='left');picker.bind('<<ComboboxSelected>>',lambda e:self.toggle())
         tk.Label(self.setup_frame,text='For grinding, Text feed + the personal “You have obtained…” panel retains drops longer. Select one feed only. Keep at least 6–8 complete rows visible. Crafting mode labels captured items as craft output.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=880,justify='left').pack(anchor='w',pady=(10,5))
+        ttk.Checkbutton(self.setup_frame,text='Save OCR diagnostic images locally (for troubleshooting)',variable=self.diagnostics,command=self.app.save_quietly,style='Vision.TCheckbutton').pack(anchor='w',pady=(0,8))
         if self.region:self.setup_frame.pack_forget()
         tk.Label(main,textvariable=self.capture_state,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10)).pack(anchor='w')
         tk.Label(main,textvariable=self.status,bg=c['bg'],fg=c['secondary'],wraplength=880,justify='left').pack(anchor='w',pady=(5,12))
@@ -176,7 +180,9 @@ class LootTracker:
         return feeds
 
     def can_capture(self):
-        return item_regions_visible(list(self.capture_regions().values()))
+        regions=list(self.capture_regions().values())
+        ready,reason=capture_budget(regions)
+        return item_regions_visible(regions) if ready else (False,reason)
 
     def capture_availability(self):
         if not self.enabled.get():return False,'Loot tracking is off'
@@ -201,8 +207,10 @@ class LootTracker:
 
     def poll(self):
         if self.closed:return
+        next_poll=1000
         try:
             if self.enabled.get():
+                next_poll=250
                 if self.busy:self.capture_state.set('Tracking ON · reading item notifications')
                 elif self.app.selecting_region:self.capture_state.set('Tracking ON · selecting capture area')
                 else:
@@ -210,11 +218,13 @@ class LootTracker:
                     if delay<=0:
                         ready,reason=self.can_capture()
                         if ready:self.scan()
-                        else:self.capture_state.set('Tracking ON · '+reason)
+                        else:
+                            self.capture_state.set('Tracking ON · '+reason)
+                            next_poll=1000
                     else:self.capture_state.set('Tracking ON · next scan in %.1fs'%delay)
         except Exception as exc:self.status.set('Item OCR retry pending: '+str(exc))
         finally:
-            if not self.closed:self.root.after(250,self.poll)
+            if not self.closed:self.root.after(next_poll,self.poll)
 
     def scan(self):
         if self.closed or self.busy or not self.enabled.get() or not self.region:return
@@ -231,15 +241,22 @@ class LootTracker:
             if self.preview and self.preview.winfo_exists() and self.preview.winfo_ismapped():
                 preview=images[next(iter(images))].copy();preview.thumbnail((820,180));self.photo=ImageTk.PhotoImage(preview);self.preview.configure(image=self.photo,text='')
             self.busy=True;self.status.set('Reading '+', '.join(feeds)+' notifications…')
-            threading.Thread(target=self.recognize,args=(images,tess,self.generation,self.crafting.get()),daemon=True).start()
+            threading.Thread(target=self.recognize,args=(images,tess,self.generation,self.crafting.get(),self.diagnostics.get()),daemon=True).start()
         except Exception as exc:self.busy=False;self.status.set('Item capture failed: '+str(exc))
 
-    def recognize(self,images,tess,generation,crafting):
+    def recognize(self,images,tess,generation,crafting,diagnostics=False):
         started=time.monotonic()
         try:
             results={}
             for name,image in images.items():
-                try:results[name]=recognize_feed(image,tess,name,crafting,self.path/'loot-diagnostics'/name,resolve_name=self.insights.prices.resolve_name)
+                try:
+                    cache=getattr(self,'frame_cache',None)
+                    key=FeedCache.key(image,tess,name,crafting)+(generation,) if cache and name=='chat' and not diagnostics else None
+                    result=cache.get(key) if key else None
+                    if result is None:
+                        result=recognize_feed(image,tess,name,crafting,self.path/'loot-diagnostics'/name,resolve_name=self.insights.prices.resolve_name,diagnostics=diagnostics)
+                        if key:cache.put(key,result)
+                    results[name]=result
                 except Exception as exc:
                     # A rare-panel failure must not discard normal loot already read.
                     results[name]={'events':[],'empty':False,'recognized':0,'error':str(exc),'debug':'OCR error: '+str(exc)}
@@ -260,7 +277,10 @@ class LootTracker:
 
     def failed(self,error,generation):
         self.busy=False
-        if not self.closed and self.enabled.get() and generation==self.generation:self.status.set('Item OCR failed: '+error)
+        if not self.closed and self.enabled.get() and generation==self.generation:
+            self.last_scan_ok=False
+            self.capture_reason='OCR error; automatic retry pending'
+            self.status.set('Item OCR failed: '+error)
 
     def commit(self,event,feed):
         if not self.recording.get():return False
@@ -337,7 +357,9 @@ class LootTracker:
         if unresolved:self.status.set(self.status.get()+f' · {unresolved} unmatched OCR observations excluded automatically')
         errors=[name for name,result in results.items() if result.get('error')]
         if errors:self.status.set(self.status.get()+' · '+', '.join(errors)+' OCR error: see reader')
-        if duration:self.status.set(self.status.get()+f' · OCR {duration:.2f}s · capture gap {self.last_capture_gap:.2f}s')
+        if duration:self.status.set(self.status.get()+f' · reader {duration:.2f}s · capture gap {self.last_capture_gap:.2f}s')
+        cached=sum(bool(r.get('cache_hit')) for r in results.values())
+        if cached:self.status.set(self.status.get()+f' · {cached} unchanged feed reused; no extra OCR')
         holes=sum(sum(event is None for event in r.get('slots') or []) for r in results.values())
         if holes:self.status.set(self.status.get()+f' · {holes} unreadable message rows; retrying automatically')
         if skipped:self.status.set(self.status.get()+' · feed overlap lost; some drops could not be counted safely')

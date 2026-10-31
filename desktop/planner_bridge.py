@@ -23,6 +23,28 @@ PORTS = tuple(range(7283, 7293))
 class ExclusiveHTTPServer(ThreadingHTTPServer):
     # Windows SO_REUSEADDR allows competing listeners; reserve one app per port.
     allow_reuse_address = False
+    request_queue_size = 8
+
+    def __init__(self,*args,**kwargs):
+        self.request_slots=BoundedSemaphore(8)
+        super().__init__(*args,**kwargs)
+
+    def process_request(self,request,address):
+        if not self.request_slots.acquire(blocking=False):
+            try:
+                request.settimeout(.5)
+                request.sendall(b'HTTP/1.0 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n')
+            except OSError:pass
+            finally:self.shutdown_request(request)
+            return
+        try:super().process_request(request,address)
+        except BaseException:
+            self.request_slots.release()
+            raise
+
+    def process_request_thread(self,request,address):
+        try:super().process_request_thread(request,address)
+        finally:self.request_slots.release()
 
     def server_bind(self):
         if os.name == 'nt':
@@ -68,6 +90,25 @@ class PlannerBridge:
         bridge = self
 
         class Handler(BaseHTTPRequestHandler):
+            server_version='BDOVision'
+            sys_version=''
+
+            def setup(self):
+                self.request.settimeout(3)
+                super().setup()
+
+            def _origin_allowed(self):
+                return self.headers.get('Origin','') in ('',bridge.base_url,f'http://localhost:{bridge.port}')
+
+            def parse_request(self):
+                if not super().parse_request():return False
+                hosts=self.headers.get_all('Host',[])
+                if len(hosts)!=1 or hosts[0].lower() not in (f'127.0.0.1:{bridge.port}',f'localhost:{bridge.port}'):
+                    self._send({'error':'Use the paired localhost planner'},403);return False
+                if not self._origin_allowed() or self.headers.get('Sec-Fetch-Site','')=='cross-site':
+                    self._send({'error':'Origin not allowed; open the planner from Vision'},403);return False
+                return True
+
             def log_message(self, *args):
                 pass
 
@@ -76,9 +117,14 @@ class PlannerBridge:
                 self.send_header('Content-Type', content_type)
                 self.send_header('Content-Length', str(length))
                 self.send_header('Cache-Control', 'no-store')
-                # Allow standalone local file:// planner as a fallback, but not
-                # arbitrary internet origins accessing the user's local bridge.
-                if origin == 'null' or origin.startswith(('http://127.0.0.1:', 'http://localhost:')):
+                self.send_header('X-Content-Type-Options','nosniff')
+                self.send_header('X-Frame-Options','DENY')
+                self.send_header('Referrer-Policy','no-referrer')
+                self.send_header('Cross-Origin-Resource-Policy','same-origin')
+                self.send_header('Content-Security-Policy',"frame-ancestors 'none'; object-src 'none'; base-uri 'none'")
+                # Opaque/sandboxed origins cannot be distinguished from file://.
+                # Keep personal APIs on the paired local planner's exact origin.
+                if origin and self._origin_allowed():
                     self.send_header('Access-Control-Allow-Origin', origin)
                     self.send_header('Vary', 'Origin')
                     self.send_header('Access-Control-Allow-Private-Network', 'true')
@@ -180,17 +226,22 @@ class PlannerBridge:
                 if route not in ('/ack','/market-prices','/craft-quotes','/show','/grind-command','/gear/ocr','/gear/sweep','/gear/builds'):
                     self._send({'error': 'Unknown endpoint'}, 404)
                     return
-                if self.headers.get('Origin', '') not in ('', 'null', bridge.base_url, f'http://localhost:{bridge.port}'):
+                if not self._origin_allowed():
                     self._send({'error': 'Origin not allowed'}, 403)
                     return
                 if self.headers.get('Content-Type', '').split(';')[0].strip() != 'application/json':
                     self._send({'error': 'JSON required'}, 415)
                     return
                 try:
+                    if self.headers.get('Transfer-Encoding') or len(self.headers.get_all('Content-Length',[]))!=1:
+                        raise ValueError('Unambiguous content length required')
+                    if self.headers.get('Content-Encoding','identity')!='identity':
+                        raise ValueError('Encoded request bodies are not supported')
                     length = int(self.headers.get('Content-Length', 0))
                     if length <= 0 or length > (3500000 if route=='/gear/ocr' else 900000 if route=='/gear/sweep' else 300000 if route=='/gear/builds' else 250000 if route=='/market-prices' else 16384 if route=='/craft-quotes' else 4096):
                         raise ValueError('Invalid body length')
-                    body = json.loads(self.rfile.read(length).decode('utf-8'))
+                    def reject_constant(value):raise ValueError('Finite JSON values required')
+                    body = json.loads(self.rfile.read(length).decode('utf-8'),parse_constant=reject_constant)
                     if not isinstance(body,dict):raise ValueError('JSON object required')
                     if route=='/gear/builds':
                         if not bridge.price_book:self._send({'error':'Windows profile unavailable'},503);return
@@ -268,7 +319,10 @@ class PlannerBridge:
                         self._send({'ok':True,'quotes_received':count});return
                     signal = int(body['signal'])
                     instance_id = str(body['instance_id'])
-                except (TypeError, ValueError, KeyError, UnicodeError):
+                except TimeoutError:
+                    self._send({'error':'Request body timed out'},408)
+                    return
+                except (TypeError, ValueError, KeyError, UnicodeError, RecursionError):
                     self._send({'error': 'Invalid price or acknowledgment'}, 400)
                     return
                 with bridge._lock:

@@ -1,3 +1,11 @@
+# BDO Vision 1.11.1 — ready to grind and craft
+
+The complete Windows tracker: saved loot and silver, grind sessions, crafting intelligence, tray tools and Gear Studio. Start with [the short setup guide](docs/QUICK-START.md); see [measured performance and security changes](docs/PERFORMANCE-AND-SECURITY.md) and [releases, checkpoints and recovery](docs/RELEASE-SYSTEM.md). The Windows ZIP includes Python; live OCR still requires Tesseract English.
+
+This maintenance release preserves the existing protected profile. Normal operation no longer writes OCR screenshots to disk, unrelated tool OCR stays idle during grinding, and the local planner uses a bounded, origin-checked connection. No zero-FPS-impact or perfect OCR guarantee is made.
+
+## Previous equipment-import candidate
+
 # BDO Vision 1.11.0-rc.2 — clearer equipment import
 
 Fixes from the first real sweep: read titles beyond sparse-OCR scene noise; understand `PEN: Item` and named Slumbering Origin ranks; preserve complete tooltip headers near screen edges; and retry uncertain reads on the tooltip header itself. Verified Kharazad identities from the local item index can now be imported and edited without pretending they have Central Market prices. All changes stay in gear import/planning; the working loot reader and existing tracker features are preserved. See [the rc.2 import audit](docs/GEAR-IMPORT-RC2.md).

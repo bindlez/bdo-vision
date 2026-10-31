@@ -750,7 +750,7 @@
       var wrap = document.getElementById("toastWrap");
       var el = document.createElement("div");
       el.className = "toast" + (success ? " success" : "") + (opts.donePop ? " done-pop" : "");
-      el.innerHTML = "<strong>" + title + "</strong>" + (body || "");
+      el.innerHTML = "<strong>" + visionEscape(title) + "</strong>" + visionEscape(body || "");
       if (opts.onClick) {
         el.style.cursor = "pointer";
         el.onclick = function() { opts.onClick(); el.remove(); };
@@ -903,7 +903,7 @@
         var chg = p.changeDir === 2 ? '<span class="pop-change up">+' + fmt(p.changeVal) + '</span>'
           : p.changeDir === 1 ? '<span class="pop-change down">−' + fmt(p.changeVal) + '</span>'
           : '<span class="pop-change flat">—</span>';
-        return '<div class="pop-item" data-name="' + p.name.replace(/"/g,'') + '"><div class="pop-icon">📦</div><div class="pop-name" title="' + p.name + '">' + p.name + '</div><div class="pop-price">🪙 ' + fmt(p.price) + '</div>' + chg + '</div>';
+        return '<div class="pop-item" data-name="' + visionEscape(p.name) + '"><div class="pop-icon">📦</div><div class="pop-name" title="' + visionEscape(p.name) + '">' + visionEscape(p.name) + '</div><div class="pop-price">🪙 ' + fmt(p.price) + '</div>' + chg + '</div>';
       }).join("");
     }
 
@@ -919,7 +919,7 @@
         return;
       }
       body.innerHTML = list.map(function(i) {
-        return '<tr><td><div class="item-row"><div class="ico">📦</div><span title="' + i.name + '">' + i.name + '</span></div></td><td class="price-cell">' + fmt(i.price) + '</td><td class="' + stockClass(i.stock) + '">' + fmt(i.stock) + '</td><td style="color:var(--text-muted)">' + fmt(i.trades) + '</td><td>' + changeHtml(i) + '</td></tr>';
+        return '<tr><td><div class="item-row"><div class="ico">📦</div><span title="' + visionEscape(i.name) + '">' + visionEscape(i.name) + '</span></div></td><td class="price-cell">' + fmt(i.price) + '</td><td class="' + stockClass(i.stock) + '">' + fmt(i.stock) + '</td><td style="color:var(--text-muted)">' + fmt(i.trades) + '</td><td>' + changeHtml(i) + '</td></tr>';
       }).join("");
       var card = document.getElementById("listingsCard");
       card.classList.remove("flash"); void card.offsetWidth; card.classList.add("flash");
@@ -935,7 +935,7 @@
       document.getElementById("hotList").innerHTML = top.map(function(h) {
         var chgCls = h.changeDir === 2 ? "up" : h.changeDir === 1 ? "down" : "flat";
         var chgTxt = h.changeDir === 2 ? "+" + fmt(h.changeVal) : h.changeDir === 1 ? "−" + fmt(h.changeVal) : "—";
-        return '<div class="hot-row" data-name="' + h.name.replace(/"/g,'') + '"><div class="ico">📦</div><div class="info"><div class="name" title="' + h.name + '">' + h.name + '</div><div class="meta">' + fmt(h.price) + '</div></div><div class="chg ' + chgCls + '">' + chgTxt + '</div></div>';
+        return '<div class="hot-row" data-name="' + visionEscape(h.name) + '"><div class="ico">📦</div><div class="info"><div class="name" title="' + visionEscape(h.name) + '">' + visionEscape(h.name) + '</div><div class="meta">' + fmt(h.price) + '</div></div><div class="chg ' + chgCls + '">' + chgTxt + '</div></div>';
       }).join("");
     }
 
