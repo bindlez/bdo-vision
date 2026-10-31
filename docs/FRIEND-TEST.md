@@ -1,4 +1,4 @@
-# BDO Vision · friend test · 1.11.0-rc.1
+# BDO Vision · friend test · 1.11.0-rc.2
 
 New: open GEAR STUDIO for current/target equipment builds and enhancement-specific market quotes. For equipment import, open BDO's equipment window, start a tooltip sweep, switch to BDO within the three-second lead-in and hover clockwise over gear. Review all recognized slots and levels before applying. Repeat for missed pieces. This candidate preserves the full tracker; native reader-only experiments are not the app. See GEAR-STUDIO.md for scope and limitations.
 

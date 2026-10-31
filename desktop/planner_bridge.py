@@ -105,6 +105,12 @@ class PlannerBridge:
                         self._send({'error': 'Planner HTML not found beside the app'}, 404)
                         return
                     self._send(content, 200, 'text/html; charset=utf-8')
+                elif route == '/gear/extras':
+                    if not bridge.price_book:self._send({'items':[]});return
+                    try:
+                        from gear_catalog import equipment_extras
+                        self._send({'items':equipment_extras(Path(bridge.price_book.path).parent)})
+                    except (OSError,ValueError):self._send({'items':[],'notice':'Local equipment index unavailable'})
                 elif route == '/gear/builds':
                     if not bridge.price_book:self._send({'error':'Windows profile unavailable'},503);return
                     try:

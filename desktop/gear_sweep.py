@@ -5,6 +5,14 @@ from ctypes import wintypes
 from gear_ocr import recognize_image
 
 
+def tooltip_box(rect,point):
+    """Keep the complete tooltip header when the pointer is near an edge."""
+    width=min(1280,rect.right-rect.left);height=min(1440,rect.bottom-rect.top)
+    left=max(rect.left,min(point.x-width//2,rect.right-width))
+    top=max(rect.top,min(point.y-height//2,rect.bottom-height))
+    return (left,top,left+width,top+height)
+
+
 def tooltip_sweep(catalog,tesseract,update,stop):
     from PIL import ImageGrab
     from windows_bdo import is_bdo_foreground,_user32
@@ -17,14 +25,16 @@ def tooltip_sweep(catalog,tesseract,update,stop):
         if stop.wait(.1):return None
     update(stage='capturing',message='Move clockwise over gear now. Pause briefly on each item.',captured=0)
     frames=[];started=time.monotonic()
-    # At most twelve grayscale crops (~9 MiB); never save game images to disk.
+    # At most twelve grayscale crops (<=22 MiB for this short, user-triggered
+    # job); never save game images. Full vertical coverage prevents tall
+    # tooltips from losing their titles when hovering lower equipment slots.
     for index in range(12):
         wait=max(0,started+index*.25-time.monotonic())
         if stop.wait(wait):return None
         if not is_bdo_foreground():break
         point=wintypes.POINT();rect=wintypes.RECT()
         if not user32.GetCursorPos(ctypes.byref(point)) or not user32.GetWindowRect(user32.GetForegroundWindow(),ctypes.byref(rect)):continue
-        box=(max(rect.left,point.x-520),max(rect.top,point.y-400),min(rect.right,point.x+520),min(rect.bottom,point.y+320))
+        box=tooltip_box(rect,point)
         if box[2]-box[0]<50 or box[3]-box[1]<50:continue
         image=ImageGrab.grab(bbox=box,all_screens=True).convert('L')
         # A stationary hover needs its latest frame, after the tooltip settles.

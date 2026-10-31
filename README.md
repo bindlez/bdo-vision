@@ -1,4 +1,8 @@
-# BDO Vision 1.11.0-rc.1 — Gear Studio
+# BDO Vision 1.11.0-rc.2 — clearer equipment import
+
+Fixes from the first real sweep: read titles beyond sparse-OCR scene noise; understand `PEN: Item` and named Slumbering Origin ranks; preserve complete tooltip headers near screen edges; and retry uncertain reads on the tooltip header itself. Verified Kharazad identities from the local item index can now be imported and edited without pretending they have Central Market prices. All changes stay in gear import/planning; the working loot reader and existing tracker features are preserved. See [the rc.2 import audit](docs/GEAR-IMPORT-RC2.md).
+
+## Previous candidate: 1.11.0-rc.1 — Gear Studio
 
 The full app now includes Gear Studio: real market equipment, separate equipped/target sets, enhancement-specific quotes, independent accessory slots, upgrade budgets, saved builds and Windows/JSON backups. Open GEAR STUDIO from the native app or planner sidebar. Existing silver, crafting, sessions, grind, loot OCR and tray features remain available.
 

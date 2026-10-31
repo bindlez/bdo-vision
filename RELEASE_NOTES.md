@@ -1,4 +1,8 @@
-# BDO Vision 1.11.0-rc.1 — Gear Studio candidate
+# BDO Vision 1.11.0-rc.2 — equipment import fixes
+
+Removes the first-150-lines parser cutoff, accepts rank words without parentheses and Slumbering Origin adjective ranks, ignores description-only item mentions, and adds a focused tooltip-header retry. Edge-aware sweep captures preserve a full-height tooltip area at common resolutions, bounded to twelve 1280×1440 grayscale frames. A small verified Kharazad supplement uses exact local catalog IDs, retains 0–10 enhancement choices and remains explicitly unpriced. Named Slumbering Origin levels can remain editable during quote outages. No changes to loot OCR, counting, silver history, sessions, crafting or grind logic.
+
+## Previous candidate: 1.11.0-rc.1 — Gear Studio
 
 Adds a market-backed equipment builder to the existing full app, without replacing its loot, silver, session, crafting, grind or tray features. Equipment and target sets are separately editable; quotes use actual item IDs and enhancement intervals. Builds can be exported and explicitly backed up in the protected Windows profile, retaining a previous copy.
 

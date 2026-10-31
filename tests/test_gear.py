@@ -13,9 +13,60 @@ from planner_bridge import PlannerBridge
 CAT=[{'id':11013,'name':"Giath's Helmet",'mainCategory':15,'subCategory':1},
      {'id':12001,'name':'Yuria Ring','mainCategory':20,'subCategory':1},
      {'id':10101,'name':'Vangertz Shield','mainCategory':5,'subCategory':1}]
+ENDGAME=[{'id':719897,'name':"Labreska's Helmet",'mainCategory':15,'subCategory':1},
+         {'id':12294,'name':'Kharazad Belt','mainCategory':20,'subCategory':4},
+         {'id':719899,'name':"Dahn's Gloves",'mainCategory':15,'subCategory':3}]
 
 
 class GearTests(unittest.TestCase):
+    def test_named_rank_without_roman_and_origin_title_after_scene_noise(self):
+        text=('Unrelated scene text\n\n'*300)+"PEN: Kharazad Belt\nDistorted Labreskats Helmet"
+        result=parse_equipment(text,CAT+ENDGAME)['candidates']
+        self.assertEqual([(x['id'],x['enhancement']['value'],x['enhancement']['kind']) for x in result],[(12294,5,'roman'),(719897,2,'numeric')])
+
+    def test_description_references_are_not_equipped_item_titles(self):
+        text="Cron Stones can be used when enhancing Labreska's Helmet.\nused when enhancing Dahn's Gloves\n- Description: Kharazad Belt"
+        self.assertEqual(parse_equipment(text,ENDGAME)['candidates'],[])
+
+    def test_named_prefix_is_only_accepted_for_the_verified_armor_family(self):
+        self.assertEqual(parse_equipment('Distorted Yuria Ring',CAT)['candidates'],[])
+        self.assertEqual(parse_equipment("PEN (IV): Giath's Helmet",CAT)['candidates'],[])
+
+    def test_level_on_separate_header_line(self):
+        result=parse_equipment('PEN (V):\nKharazad Belt',ENDGAME)['candidates'][0]
+        self.assertEqual(result['enhancement']['value'],5)
+
+    def test_tooltip_capture_preserves_full_panel_at_screen_edges(self):
+        from gear_sweep import tooltip_box
+        rect=SimpleNamespace(left=0,top=0,right=1920,bottom=1080)
+        for x,y in [(0,0),(1850,900),(1850,150),(900,500)]:
+            box=tooltip_box(rect,SimpleNamespace(x=x,y=y))
+            self.assertEqual(box[3]-box[1],1080)
+            self.assertEqual(box[2]-box[0],1280)
+            self.assertTrue(0<=box[0]<box[2]<=1920)
+
+    def test_uncertain_scene_reads_retry_only_the_tooltip_header(self):
+        from gear_ocr import recognize_image
+        from PIL import Image
+        tsv='level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext\n5\t1\t1\t1\t1\t1\t700\t400\t260\t30\t95\tEquipment(Helmet)\n'
+        results=[SimpleNamespace(returncode=0,stdout=tsv.encode()),SimpleNamespace(returncode=0,stdout=b'Distorted Labreskats Helmet')]
+        with patch('gear_ocr.subprocess.run',side_effect=results) as execute:
+            report=recognize_image(Image.new('RGB',(800,600),'black'),ENDGAME,'unused')
+        self.assertEqual(report['candidates'][0]['id'],719897)
+        self.assertEqual(report['focused_passes'],1)
+        self.assertEqual(execute.call_args_list[0].args[0][-1],'tsv')
+        self.assertEqual(execute.call_args_list[1].args[0][4],'6')
+
+    def test_nonmarket_supplement_requires_unique_index_identity(self):
+        from item_catalog import DiskItemDatabase
+        from gear_catalog import equipment_extras
+        with tempfile.TemporaryDirectory() as directory:
+            source=Path(directory,'public.json');source.write_text(json.dumps([{'id':12294,'name':'Kharazad Belt'},{'id':12140,'name':'Kharazad Ring'},{'id':999999,'name':'Kharazad Ring'}]),encoding='utf8')
+            DiskItemDatabase.from_json(source,Path(directory,'item-catalog.sqlite3'))
+            rows=equipment_extras(directory)
+            self.assertEqual([r['id'] for r in rows],[12294])
+            self.assertFalse(rows[0]['marketListed']);self.assertEqual(rows[0]['maxEnhance'],10)
+
     def test_level_and_identity_remain_separate(self):
         r=parse_equipment("PEN (V): Giath's Helmet\nDP: 80",CAT)
         self.assertEqual(r['candidates'][0]['id'],11013)

@@ -2571,6 +2571,7 @@ function visionGrindSaveRecap(){
     ['lightstone1','Lightstone 1',85,0],['lightstone2','Lightstone 2',85,0],['lightstone3','Lightstone 3',85,0],['lightstone4','Lightstone 4',85,0]
   ];
   const categories=[1,5,10,15,20,40,45,85];
+  const originNames=new Set(["labreska's helmet","fallen god's armor","dahn's gloves","ator's shoes"]);
   const number=(v,max=1e15)=>(typeof v==='number'||typeof v==='string'&&v.trim()!=='')&&Number.isSafeInteger(Number(v))&&Number(v)>=0&&Number(v)<=max?Number(v):null;
   const clean=s=>String(s||'').slice(0,150);
   function fits(item,slot){return item.mainCategory===slot[2]&&
@@ -2579,8 +2580,9 @@ function visionGrindSaveRecap(){
     if(!v||typeof v!=='object'||!clean(v.name).trim())return null;
     const id=number(v.id,1e7),enhance=number(v.enhance,30);
     if(id===null||id===0||enhance===null||!categories.includes(v.mainCategory))return null;
-    return {id,name:clean(v.name),mainCategory:v.mainCategory,subCategory:number(v.subCategory,100)||0,enhance,caphras:number(v.caphras,20)||0};
+    return {id,name:clean(v.name),mainCategory:v.mainCategory,subCategory:number(v.subCategory,100)||0,enhance,caphras:number(v.caphras,20)||0,marketListed:v.marketListed!==false,maxEnhance:originNames.has(clean(v.name).toLowerCase().replace(/’/g,"'"))?5:number(v.maxEnhance,30)};
   }
+  function catalogItem(v){const item=sanitizeItem({...v,enhance:0,caphras:0});if(!item)return null;const {enhance,caphras,...result}=item;return result;}
   function sanitizeState(raw){
     const blank={version:1,active:'starter',builds:[{id:'starter',name:'My equipment',character:'',current:{},target:{},sheet:{ap:null,aap:null,dp:null},budget:0}]};
     if(!raw||!Array.isArray(raw.builds))return blank;
@@ -2606,14 +2608,14 @@ function visionGrindSaveRecap(){
     return level!==null&&rows.some(r=>level>=r.minEnhance&&level<=r.maxEnhance)?level:null;
   }
   function totals(build,quote){
-    let current=0,target=0,buy=0,missing=0,changed=0;
+    let current=0,target=0,buy=0,missing=0,changed=0,buyMissing=0;
     for(const [slot] of slots){const a=build.current[slot],b=build.target[slot]||a;
       const av=a?quote(a):0,bv=b?quote(b):0;
       if(a&&av===null)missing++;if(b&&bv===null&&b!==a)missing++;
       current+=av||0;target+=bv||0;
-      if(b&&(!a||a.id!==b.id||a.enhance!==b.enhance)){changed++;buy+=bv||0;}
+      if(b&&(!a||a.id!==b.id||a.enhance!==b.enhance)){changed++;buy+=bv||0;if(bv===null)buyMissing++;}
     }
-    return {current,target,buy,missing,changed};
+    return {current,target,buy,missing,changed,buyMissing};
   }
   const core={slots,fits,sanitizeState,priceFor,enhancementLabel,importEnhancement,totals};
   if(typeof module!=='undefined'&&module.exports)module.exports=core;
@@ -2621,7 +2623,7 @@ function visionGrindSaveRecap(){
   window.VisionGear=core;
   const KEY='vision-gear-v1';let state;try{state=sanitizeState(JSON.parse(localStorage.getItem(KEY)||'null'));}catch(_){state=sanitizeState(null);}
   let side='current',selected='main',catalog=[],catalogRegion='',catalogAt=0,loading=null,search='',message='',busy=false;
-  const quoteCache=new Map(),inflight=new Map();let imports=[],importReport=null,importTarget=null,saveTimer=0,renderTimer=0;
+  const quoteCache=new Map(),inflight=new Map();let imports=[],importReport=null,importTarget=null,saveTimer=0,renderTimer=0,extraPromise=null,extras=[];
   const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money=n=>n===null?'Unpriced':Math.round(n).toLocaleString();
   const current=()=>state.builds.find(b=>b.id===state.active)||state.builds[0];
@@ -2629,22 +2631,34 @@ function visionGrindSaveRecap(){
   const localBase=()=>location.protocol==='http:'&&/^(127\.0\.0\.1|localhost)$/.test(location.hostname)?location.origin:typeof bridgeSelectedOrigin!=='undefined'?bridgeSelectedOrigin:null;
   function persist(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(state));}catch(_){message='Browser storage is full. Export a backup to keep this build.';render();}},250);}
   function schedule(){clearTimeout(renderTimer);renderTimer=setTimeout(()=>{if(currentView==='gear')render();},60);}
-  function quote(item){const entry=quoteCache.get(marketRegion()+':'+item.id);return entry?priceFor(entry.rows,item.enhance):null;}
+  function quote(item){if(item.marketListed===false)return null;const entry=quoteCache.get(marketRegion()+':'+item.id);return entry?priceFor(entry.rows,item.enhance):null;}
+  async function loadExtras(){
+    if(!extraPromise)extraPromise=localBase()?fetch(localBase()+'/gear/extras',{signal:AbortSignal.timeout(3000)}).then(r=>r.ok?r.json():{items:[]}).then(data=>{extras=(Array.isArray(data.items)?data.items:[]).slice(0,32).map(catalogItem).filter(Boolean);}).catch(()=>{}):Promise.resolve();
+    await extraPromise;
+  }
+  function withExtras(rows){const indexed=new Map(rows.map(x=>[x.id,x]));for(const item of extras)if(!indexed.has(item.id))indexed.set(item.id,item);return [...indexed.values()];}
   async function variants(item){
     const r=marketRegion(),key=r+':'+item.id,existing=quoteCache.get(key);
     if(existing&&Date.now()-existing.at<300000)return existing.rows;
+    if(item.marketListed===false){const rows=[{id:item.id,minEnhance:0,maxEnhance:item.maxEnhance||0,basePrice:0}];if(quoteCache.size>=128)quoteCache.delete(quoteCache.keys().next().value);quoteCache.set(key,{rows,at:Date.now()});schedule();return rows;}
     if(inflight.has(key))return inflight.get(key);
     const request=(async()=>{const response=await fetch('https://api.arsha.io/v2/'+r+'/GetWorldMarketSubList?id='+item.id+'&lang=en');if(!response.ok)throw Error('Equipment prices unavailable');
-      const rows=await response.json();if(!Array.isArray(rows)||rows.some(x=>x.id!==item.id))throw Error('Invalid equipment identity in market response');
+      let rows=await response.json();if(!Array.isArray(rows)||rows.some(x=>x.id!==item.id))throw Error('Invalid equipment identity in market response');
+      if(!rows.length&&item.maxEnhance!==null&&item.maxEnhance!==undefined)rows=[{id:item.id,minEnhance:0,maxEnhance:item.maxEnhance,basePrice:0}];
       if(quoteCache.size>=128)quoteCache.delete(quoteCache.keys().next().value);quoteCache.set(key,{rows,at:Date.now()});schedule();return rows;
-    })();inflight.set(key,request);try{return await request;}finally{inflight.delete(key);}
+    })();inflight.set(key,request);try{return await request;}catch(error){
+      if(item.maxEnhance===null||item.maxEnhance===undefined)throw error;
+      const rows=[{id:item.id,minEnhance:0,maxEnhance:item.maxEnhance,basePrice:0}];if(quoteCache.size>=128)quoteCache.delete(quoteCache.keys().next().value);quoteCache.set(key,{rows,at:Date.now()});schedule();return rows;
+    }finally{inflight.delete(key);}
   }
   async function loadCatalog(force=false){
     const r=marketRegion();if(loading)return loading;
+    await loadExtras();
     if(catalogRegion!==r){catalog=[];catalogAt=0;catalogRegion=r;try{
       const saved=JSON.parse(localStorage.getItem('vision-gear-catalog-v1-'+r)||'null');
-      if(saved&&Array.isArray(saved.items)&&saved.items.length<=5000){catalog=saved.items.filter(x=>number(x.id,1e7)>0&&categories.includes(x.mainCategory)&&typeof x.name==='string').map(x=>({id:x.id,name:clean(x.name),mainCategory:x.mainCategory,subCategory:Number(x.subCategory)||0}));catalogAt=Number(saved.at)||0;}
+      if(saved&&Array.isArray(saved.items)&&saved.items.length<=5000){catalog=saved.items.map(catalogItem).filter(Boolean);catalogAt=Number(saved.at)||0;}
     }catch(_){} }
+    catalog=withExtras(catalog);
     if(!force&&catalog.length&&Date.now()-catalogAt<86400000){message=catalog.length.toLocaleString()+' cached equipment records · '+r.toUpperCase()+' · catalog '+new Date(catalogAt).toLocaleString();return catalog;}
     loading=(async()=>{
       const collected=[],failed=[];message='Loading equipment from '+r.toUpperCase()+' Central Market…';schedule();
@@ -2657,7 +2671,7 @@ function visionGrindSaveRecap(){
       }));collected.push(...groups.flat());}
       if(marketRegion()!==r)throw Error('Region changed. Reopen Gear Studio to load the selected region.');
       if(!collected.length)throw Error('Market catalog unavailable. Saved builds are safe; try refresh.');
-      catalog=collected;catalogRegion=r;if(!failed.length)catalogAt=Date.now();
+      catalog=withExtras(collected);catalogRegion=r;if(!failed.length)catalogAt=Date.now();
       try{localStorage.setItem('vision-gear-catalog-v1-'+r,JSON.stringify({at:catalogAt,items:catalog}));}catch(_){}
       message=catalog.length.toLocaleString()+' equipment records · '+r.toUpperCase()+' · '+(failed.length?failed.length+' categories unavailable or cached; refresh later':'loaded '+new Date().toLocaleTimeString());return catalog;
     })();try{return await loading;}finally{loading=null;schedule();}
@@ -2675,7 +2689,7 @@ function visionGrindSaveRecap(){
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n===nav));history.replaceState(null,'','#gear');render();loadCatalog().then(refreshBuild).catch(e=>{message=e.message;schedule();});
   }};
   nav.addEventListener('click',e=>{e.stopPropagation();showView('gear');});
-  function itemName(item){if(!item)return 'Choose equipment';const cached=quoteCache.get(marketRegion()+':'+item.id);const max=cached?Math.max(...cached.rows.map(x=>Number(x.maxEnhance)||0)):20;return enhancementLabel(item.enhance,max)+' · '+item.name;}
+  function itemName(item){if(!item)return 'Choose equipment';const cached=quoteCache.get(marketRegion()+':'+item.id);const max=cached?Math.max(...cached.rows.map(x=>Number(x.maxEnhance)||0)):item.maxEnhance||20;return enhancementLabel(item.enhance,max)+' · '+item.name;}
   function render(){
     const b=current(),slot=slots.find(s=>s[0]===selected),item=b[side][selected],summary=totals(b,quote);
     const q=item&&quoteCache.get(marketRegion()+':'+item.id),rows=q?q.rows:[],max=Math.max(0,...rows.map(r=>Number(r.maxEnhance)||0));
@@ -2683,14 +2697,14 @@ function visionGrindSaveRecap(){
     const filtered=catalog.filter(i=>fits(i,slot)&&(!search||i.name.toLowerCase().includes(search.toLowerCase())));
     view.innerHTML='<div class="gear-head"><div><div class="gear-eyebrow">BDO VISION / GEAR STUDIO</div><h1>Your next upgrade,<br><span>made tangible.</span></h1><p>Build your loadout. Map your next piece. Keep your silver goal in sight.</p></div><div class="gear-local">LOCAL FIRST<span>Saved in this browser · no account needed</span></div></div>'+
       '<div class="gear-toolbar"><label>Build<select id="gearBuild">'+state.builds.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===b.id?'selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label><label>Build name<input id="gearName" value="'+esc(b.name)+'" maxlength="80"></label><label>Character / class<input id="gearCharacter" value="'+esc(b.character)+'" placeholder="Optional" maxlength="80"></label><button id="gearNew">New build</button><button id="gearDuplicate">Duplicate</button><button id="gearExport">Export builds</button><label class="gear-file">Import backup<input id="gearBackup" type="file" accept="application/json,.json"></label></div>'+
-      '<div class="gear-kpis"><div><small>CURRENT MARKET VALUE</small><strong>'+money(summary.current)+'</strong><span>'+marketRegion().toUpperCase()+' silver · '+(summary.missing?'partial / unpriced pieces':'loaded quotes')+'</span></div><div><small>BUY YOUR PLANNED UPGRADES</small><strong>'+money(summary.buy)+'</strong><span>'+summary.changed+' changed slots · before selling current gear</span></div><div><small>SAVINGS GOAL</small><strong>'+money(Math.max(0,summary.buy-b.budget))+'</strong><span>remaining silver · enter saved budget below</span></div></div>'+
+      '<div class="gear-kpis"><div><small>CURRENT MARKET VALUE</small><strong>'+money(summary.current)+'</strong><span>'+marketRegion().toUpperCase()+' silver · '+(summary.missing?'partial / unpriced pieces':'loaded quotes')+'</span></div><div><small>BUY YOUR PLANNED UPGRADES</small><strong>'+(summary.buyMissing?'At least ':'')+money(summary.buy)+'</strong><span>'+summary.changed+' changed slots · '+(summary.buyMissing?summary.buyMissing+' unpriced upgrades excluded':'before selling current gear')+'</span></div><div><small>SAVINGS GOAL</small><strong>'+(summary.buyMissing?'At least ':'')+money(Math.max(0,summary.buy-b.budget))+'</strong><span>remaining silver · '+(summary.buyMissing?'incomplete quotes':'enter saved budget below')+'</span></div></div>'+
       '<div class="gear-controls"><div role="group" aria-label="Equipment loadout"><button data-side="current" aria-pressed="'+(side==='current')+'">Equipped now</button><button data-side="target" aria-pressed="'+(side==='target')+'">Upgrade plan</button></div><label>Saved silver<input id="gearBudget" type="number" min="0" max="1000000000000000" value="'+b.budget+'"></label><button id="gearCopy">Copy current → upgrade plan</button><button id="gearRefresh">Refresh market</button><button id="gearSaveWindows">Save Windows backup</button><button id="gearRestoreWindows">Restore Windows backup</button></div>'+
-      '<div class="gear-progress"><progress max="100" value="'+(summary.buy?Math.min(100,b.budget/summary.buy*100):0)+'"></progress><p>'+esc(message||'Equipment catalog loads only when you open this tab. Prices refresh on demand.')+'</p><button id="gearSweepTop" '+(busy?'disabled':'')+'>Import from BDO · 3-second sweep</button><p id="gearTopStatus" role="status">'+(busy?'Equipment import in progress…':'Open equipment in game, then start your clockwise tooltip sweep.')+'</p></div>'+
+      '<div class="gear-progress"><progress max="100" value="'+(summary.buy?Math.min(100,b.budget/summary.buy*100):0)+'"></progress><p>'+esc(message||'Equipment catalog loads only when you open this tab. Prices refresh on demand.')+'</p><button id="gearSweepTop" '+(busy||loading?'disabled':'')+'>Import from BDO · 3-second sweep</button><p id="gearTopStatus" role="status">'+(busy?'Equipment import in progress…':loading?'Loading equipment catalog; import will enable when ready.':'Open equipment in game, then start your clockwise tooltip sweep.')+'</p></div>'+
       '<div class="gear-layout"><section class="gear-board"><div class="gear-section-title"><h2>'+ (side==='current'?'Equipped now':'Your upgrade plan')+'</h2><span>'+Object.keys(b[side]).length+' / '+slots.length+' slots</span></div><div class="gear-slots">'+slots.map(s=>{const v=b[side][s[0]],inherited=side==='target'&&!v&&b.current[s[0]];return '<button class="gear-slot '+(selected===s[0]?'chosen':'')+' '+(v?'filled':'')+'" data-slot="'+s[0]+'" aria-pressed="'+(selected===s[0])+'"><small>'+esc(s[1])+'</small><span class="gear-glyph" aria-hidden="true">'+(s[2]===20?'◈':s[2]===15?'⬡':s[2]===85?'✦':'◇')+'</span><b>'+esc(v?itemName(v):inherited?'Keep current item':'Choose equipment')+'</b><em>'+esc(v?money(quote(v))+' silver':inherited?'Inherited in cost comparison':'Empty')+'</em></button>';}).join('')+'</div></section>'+
       '<aside class="gear-editor"><div class="gear-section-title"><h2>'+esc(slot[1])+'</h2><span>'+esc(side==='current'?'CURRENT':'TARGET')+'</span></div>'+
-      (item?'<div class="gear-selected"><b>'+esc(item.name)+'</b><small>Market ID '+item.id+' · '+marketRegion().toUpperCase()+'</small><label>Enhancement<select id="gearEnhance" '+(!levels.length?'disabled':'')+'>'+(levels.length?levels:[item.enhance]).map(n=>'<option value="'+n+'" '+(n===item.enhance?'selected':'')+'>'+esc(enhancementLabel(n,max))+'</option>').join('')+'</select></label><label>Caphras level · note only<input id="gearCaphras" type="number" min="0" max="20" value="'+item.caphras+'"></label><p>'+money(quote(item))+' silver · '+(q?'quote loaded '+new Date(q.at).toLocaleTimeString():'quote pending')+'</p><button id="gearClear">Clear this slot</button></div>':'<p class="gear-note">Choose equipment from the real market catalog below.</p>')+
-      '<label class="gear-search">Find '+esc(slot[1].toLowerCase())+'<input id="gearSearch" type="search" placeholder="Search equipment…" value="'+esc(search)+'" autocomplete="off"></label><div class="gear-results">'+filtered.slice(0,80).map(x=>'<button data-item="'+x.id+'"><b>'+esc(x.name)+'</b><small>#'+x.id+'</small></button>').join('')+'</div><p class="gear-note">'+filtered.length+' matches'+(filtered.length>80?' · refine search to see more':'')+'. All market-listed equipment is included. Untradeable items may be absent.</p></aside></div>'+
-      '<section class="gear-import"><div><div class="gear-eyebrow">FROM GAME TO YOUR BUILD</div><h2>Three seconds. One clockwise sweep.</h2><p>Open equipment in BDO. Start a sweep, switch to the game, then move clockwise over each item so its tooltip appears. Review the recognized names and levels before applying.</p><p class="gear-note">Captures start 3 seconds after you click and wait briefly for BDO. About 12 tooltip frames are read afterward; a fast sweep can miss items. Images stay on this PC and are discarded after reading.</p></div><div class="gear-import-actions"><button id="gearSweep" '+(busy?'disabled':'')+'>Start 3-second tooltip sweep</button><label class="gear-file">Read equipment screenshot<input id="gearImage" type="file" accept="image/png,image/jpeg" '+(busy?'disabled':'')+'></label><span id="gearImportStatus" role="status">'+(busy?'Import in progress…':'Uses your paired Windows reader · nothing runs while idle')+'</span></div><div id="gearImportReview" class="gear-review"></div></section>'+
+      (item?'<div class="gear-selected"><b>'+esc(item.name)+'</b><small>Item ID '+item.id+' · '+marketRegion().toUpperCase()+(item.marketListed===false?' · Untradeable':'')+'</small><label>Enhancement<select id="gearEnhance" '+(!levels.length?'disabled':'')+'>'+(levels.length?levels:[item.enhance]).map(n=>'<option value="'+n+'" '+(n===item.enhance?'selected':'')+'>'+esc(enhancementLabel(n,max))+'</option>').join('')+'</select></label><label>Caphras level · note only<input id="gearCaphras" type="number" min="0" max="20" value="'+item.caphras+'"></label><p>'+(item.marketListed===false?'No Central Market price · excluded from silver totals':money(quote(item))+' silver · '+(q?'quote loaded '+new Date(q.at).toLocaleTimeString():'quote pending'))+'</p><button id="gearClear">Clear this slot</button></div>':'<p class="gear-note">Choose equipment from the real market catalog below.</p>')+
+      '<label class="gear-search">Find '+esc(slot[1].toLowerCase())+'<input id="gearSearch" type="search" placeholder="Search equipment…" value="'+esc(search)+'" autocomplete="off"></label><div class="gear-results">'+filtered.slice(0,80).map(x=>'<button data-item="'+x.id+'"><b>'+esc(x.name)+'</b><small>#'+x.id+'</small></button>').join('')+'</div><p class="gear-note">'+filtered.length+' matches'+(filtered.length>80?' · refine search to see more':'')+'. Market catalog plus verified local equipment. Any unavailable market categories are labeled above.</p></aside></div>'+
+      '<section class="gear-import"><div><div class="gear-eyebrow">FROM GAME TO YOUR BUILD</div><h2>Three seconds. One clockwise sweep.</h2><p>Open equipment in BDO. Start a sweep, switch to the game, then move clockwise over each item so its tooltip appears. Review the recognized names and levels before applying.</p><p class="gear-note">Captures start 3 seconds after you click and wait briefly for BDO. About 12 tooltip frames are read afterward; a fast sweep can miss items. Images stay on this PC and are discarded after reading.</p></div><div class="gear-import-actions"><button id="gearSweep" '+(busy||loading?'disabled':'')+'>Start 3-second tooltip sweep</button><label class="gear-file">Read equipment screenshot<input id="gearImage" type="file" accept="image/png,image/jpeg" '+(busy||loading?'disabled':'')+'></label><span id="gearImportStatus" role="status">'+(busy?'Import in progress…':'Uses your paired Windows reader · nothing runs while idle')+'</span></div><div id="gearImportReview" class="gear-review"></div></section>'+
       '<details class="gear-details"><summary>Sheet stats and valuation details</summary><p>Market prices do not contain verified AP / DP stats. Record the sheet values shown in game here; they are never fabricated from prices. Caphras is saved as a planning note and is excluded from valuation. Quotes may group several enhancement levels into one market listing. This is item value and an upgrade shopping budget, not enhancement cost or guaranteed sale proceeds.</p><div class="gear-sheet">'+['ap','aap','dp'].map(k=>'<label>'+k.toUpperCase()+' · entered sheet value<input data-sheet="'+k+'" type="number" min="0" max="2000" value="'+(b.sheet[k]===null?'':b.sheet[k])+'"></label>').join('')+'</div><p>'+summary.missing+' unpriced loadout entries excluded. Target set value: '+money(summary.target)+' silver. '+(summary.missing?'Refresh prices before trusting the totals.':'')+' Stats, bonuses, journals and crystals are not simulated yet.</p></details>';
     bind();renderReview();
   }
@@ -2718,7 +2732,7 @@ function visionGrindSaveRecap(){
     on('gearImage','change',e=>readScreenshot(e.target.files[0]));on('gearSweep','click',startSweep);on('gearSweepTop','click',startSweep);
   }
   function apiCatalog(){return catalog.map(({id,name,mainCategory,subCategory})=>({id,name,mainCategory,subCategory}));}
-  async function prepareImport(){if(busy)throw Error('An import is already running');if(!localBase())throw Error('Open Gear Studio from your paired Windows app for OCR import.');busy=true;importTarget={buildId:current().id,side};render();try{await loadCatalog();}catch(e){busy=false;throw e;}render();}
+  async function prepareImport(){if(busy)throw Error('An import is already running');if(!localBase())throw Error('Open Gear Studio from your paired Windows app for OCR import.');busy=true;importTarget={buildId:current().id,side};render();try{if(!catalog.length||catalogRegion!==marketRegion())await loadCatalog();}catch(e){busy=false;throw e;}render();}
   function status(text){for(const id of ['gearImportStatus','gearTopStatus']){const el=document.getElementById(id);if(el)el.textContent=text;}}
   async function review(report){
     importReport=report;imports=[];
