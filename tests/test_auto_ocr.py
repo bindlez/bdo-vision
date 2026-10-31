@@ -19,6 +19,12 @@ class AutoOCRTests(unittest.TestCase):
         self.assertGreater(app.last_scan_started,0)
         app.root.after.assert_called_once()
 
+    def test_automatic_tool_finder_needs_no_initial_region(self):
+        app=self.app();app.region_confirmed=False
+        app.auto_tools=types.SimpleNamespace(get=lambda:True)
+        app.tool_reader=types.SimpleNamespace(next_due=0)
+        App.poll_auto_ocr(app);app.read_ocr.assert_called_once_with(delayed=False,automatic=True)
+
     def test_foreground_and_setup_gates(self):
         app=self.app();app.bdo_foreground=lambda:False
         App.poll_auto_ocr(app);app.read_ocr.assert_not_called()

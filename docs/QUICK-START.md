@@ -22,3 +22,7 @@ Recorded silver is captured quantity × market/NPC unit value before costs and f
 Move covering windows away, return to BDO and check the **OCR reader** tab. Your capture area may need adjusting after a resolution/UI-scale change. Save diagnostic images only when troubleshooting: enable that checkbox in Capture Setup, reproduce the issue, then open OCR diagnostics. Normal recording does not write screenshots to disk.
 
 Your history remains in `%USERPROFILE%/.bdo-vision`. Use the app's history backup and CSV export before major changes. Never replace the live database with an older one just to switch app versions. Gear Studio's reviewed tooltip import remains available; icon-only import is still experimental.
+
+## Automatic durability
+
+No box is needed for cooking/alchemy tool durability. Keep BDO in front with tool labels visible. Open NEARBY TOOLS to inspect what was read. The reader confirms active use after two separate decreases and reacquires after camera motion. If labels leave the screen, measurements wait until they are visible again. Existing manual area selection is optional.

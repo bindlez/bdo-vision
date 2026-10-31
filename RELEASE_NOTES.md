@@ -1,3 +1,7 @@
+# BDO Vision 1.12.0-rc.1 — automatic durability and active tools
+
+Adds automatic discovery of visible cooking/alchemy labels without drawing a region, a nearby-tools window, focused numeric consensus and active-tool evidence from repeated durability loss. Uses a character-based search prior and Place Mode fallback; reacquires after camera movement. Names and active identities remain unresolved when visual evidence is insufficient. New per-pass work bounds preserve the existing lightweight worker policy. Stable 1.11.1 remains available as a fallback.
+
 # BDO Vision 1.11.1 — grind/craft performance and local security
 
 Keeps the complete tracker and Gear Studio. Shares text-mask analysis, caps each OCR worker to one thread at below-normal priority, reuses only complete identical text reads briefly, makes screenshot diagnostics opt-in, rejects oversized capture selections and suppresses unrelated tool OCR while grinding. Tightens localhost origins and Host checks, bounds request workers/timeouts, rejects malformed bodies and escapes market text. Includes a short start guide, protected history and release evidence.

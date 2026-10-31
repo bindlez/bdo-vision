@@ -1,3 +1,9 @@
+# BDO Vision 1.12.0-rc.1 — automatic tool discovery
+
+Cooking/alchemy durability no longer needs an initial capture box. The character anchor prioritizes visible labels, Place Mode is a fallback, focused numeric OCR verifies counters, and repeated durability use identifies the active tool. Camera movement triggers reacquisition. See [automatic tools and limits](docs/AUTOMATIC-TOOLS.md). The complete loot, silver, crafting, grind, gear and history product remains included.
+
+## Previous release
+
 # BDO Vision 1.11.1 — ready to grind and craft
 
 The complete Windows tracker: saved loot and silver, grind sessions, crafting intelligence, tray tools and Gear Studio. Start with [the short setup guide](docs/QUICK-START.md); see [measured performance and security changes](docs/PERFORMANCE-AND-SECURITY.md) and [releases, checkpoints and recovery](docs/RELEASE-SYSTEM.md). The Windows ZIP includes Python; live OCR still requires Tesseract English.

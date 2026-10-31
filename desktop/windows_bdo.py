@@ -68,6 +68,19 @@ def is_bdo_foreground():
     return is_bdo_window(_user32().GetForegroundWindow())
 
 
+def foreground_bdo_capture_bounds():
+    """Verified game client bounds for automatic read-only screen discovery."""
+    user32=_user32();hwnd=user32.GetForegroundWindow()
+    exe=_process_name(hwnd) if hwnd else ''
+    if not exe or 'launcher' in exe or not any(hint in exe for hint in GAME_EXE_HINTS):return None
+    if not user32.IsWindowVisible(hwnd) or user32.IsIconic(hwnd):return None
+    user32.GetClientRect.argtypes=[wintypes.HWND,ctypes.POINTER(wintypes.RECT)]
+    user32.ClientToScreen.argtypes=[wintypes.HWND,ctypes.POINTER(wintypes.POINT)]
+    rect=wintypes.RECT();origin=wintypes.POINT(0,0)
+    if not user32.GetClientRect(hwnd,ctypes.byref(rect)) or not user32.ClientToScreen(hwnd,ctypes.byref(origin)):return None
+    return (int(hwnd),origin.x,origin.y,origin.x+rect.right,origin.y+rect.bottom)
+
+
 def item_regions_visible(regions):
     """Allow read-only screen OCR behind our UI only for uncovered game regions.
 

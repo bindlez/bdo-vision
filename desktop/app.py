@@ -13,6 +13,8 @@ from scan_engine import select_ocr_passes, should_publish, candidate_is_stable, 
 from tracking_core import ReadingGate, remaining_at, align_to_capture, estimate_send
 from spatial_ocr import tsv_candidates, choose_spatial_pair
 from ocr_runtime import run_ocr
+from tool_reader import AutomaticToolReader
+from windows_bdo import foreground_bdo_capture_bounds
 
 ROOT=(Path(sys.executable).resolve().parent if getattr(sys,'frozen',False)
       else Path(__file__).resolve().parent)
@@ -27,7 +29,7 @@ class App:
  def __init__(self,root):
   self.root=root
   root.title(f'BDO Vision {APP_VERSION}  •  Saved history')
-  root.geometry('600x860')
+  root.geometry('600x900')
   root.minsize(600,860)
   root.configure(bg='#08070d')
   try:
@@ -45,6 +47,9 @@ class App:
   self.reading_gate=ReadingGate();self.has_reading=False;self.sync_armed=False;self.last_ocr_at=0.0;self.wide_tracking=tk.BooleanVar(value=bool(config.get('wide_tracking',True)))
   self.first_run=not CFG.exists();self.scan_button=None;self.auto_toggle=None
   self.region_confirmed=bool(config.get('region_confirmed',not self.first_run))
+  self.auto_tools=tk.BooleanVar(value=bool(config.get('auto_tool_discovery',True)))
+  self.tool_reader=AutomaticToolReader();self.tool_report=None;self.tool_window=None;self.tool_tree=None;self._active_tool_key=None
+  self.tool_health=tk.StringVar(value='Automatic tool finder · no area selection needed')
   self.region_target='craft'
   self.selecting_region=False
   self.auto_health=tk.StringVar(value='Auto OCR: waiting for setup')
@@ -57,7 +62,7 @@ class App:
   self.dur=tk.StringVar(value=str(config['durability']))
   self.maximum=tk.StringVar(value=str(config['maximum']))
   self.tess=tk.StringVar(value=config['tesseract'])
-  self.status=tk.StringVar(value=('First run: choose your OCR area in Settings, then scan BDO.' if self.first_run else 'Ready to scan. Readings stay local until you click Send.'))
+  self.status=tk.StringVar(value=('Show your cooking/alchemy labels in BDO. Tool discovery needs no selected area.' if self.auto_tools.get() else 'Ready to scan. Readings stay local until you click Send.'))
   self.count=tk.StringVar(value='--:--:--')
   self.alarm_in=tk.StringVar(value='--:--:--')
   self.ocr_text=tk.StringVar(value='Waiting for first OCR reading')
@@ -145,6 +150,8 @@ class App:
   health=tk.Frame(main,bg=c['panel'],padx=14,pady=12,highlightbackground=c['line'],highlightthickness=1)
   health.pack(fill='x',pady=(16,0))
   tk.Label(health,textvariable=self.scan_health,bg=c['panel'],fg=c['secondary'],font=('Segoe UI',9)).pack(anchor='w')
+  self.text_button(health,'NEARBY TOOLS',self.open_tools).pack(side='right')
+  tk.Label(health,textvariable=self.tool_health,bg=c['panel'],fg=c['muted'],font=('Segoe UI',9),wraplength=400,justify='left').pack(anchor='w')
   tk.Label(health,text='LOCAL CAPTURE  /  MANUAL PLANNER SYNC',bg=c['panel'],fg=c['muted'],font=('Segoe UI Semibold',8)).pack(anchor='w',pady=(5,0))
   self.send_button.configure(state='disabled')
   self.tray_button.configure(state='disabled')
@@ -182,6 +189,76 @@ class App:
  def open_gear_planner(self):
   if self.bridge and self.bridge.server:webbrowser.open(self.bridge.base_url+'/planner#gear')
   else:self.status.set('Local planner is unavailable. Check the connection in Settings.')
+
+ def tool_mode_changed(self):
+  self.tool_reader=AutomaticToolReader();self.last_scan_started=0
+  self.save_quietly()
+
+ def open_tools(self):
+  if self.tool_window and self.tool_window.winfo_exists():self.tool_window.deiconify();self.tool_window.lift();return
+  c=self.colors;win=self.tool_window=tk.Toplevel(self.root)
+  win.title('BDO Vision • Nearby tools');win.geometry('820x420');win.configure(bg=c['bg'])
+  tk.Label(win,text='NEARBY TOOLS',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',18)).pack(anchor='w',padx=20,pady=(18,8))
+  tk.Label(win,textvariable=self.tool_health,bg=c['bg'],fg=c['bright'],wraplength=760,justify='left').pack(anchor='w',padx=20,pady=(0,12))
+  style=ttk.Style();style.configure('Tools.Treeview',background=c['panel'],fieldbackground=c['panel'],foreground=c['text'],rowheight=28)
+  style.configure('Tools.Treeview.Heading',background=c['panel2'],foreground=c['text'])
+  self.tool_tree=ttk.Treeview(win,columns=('name','durability','percent','state','pace'),show='headings',height=8,style='Tools.Treeview')
+  for name,label,width in [('name','VISIBLE TOOL',240),('durability','DURABILITY',130),('percent','LEFT',60),('state','EVIDENCE',220),('pace','SEC / USE',90)]:
+   self.tool_tree.heading(name,text=label);self.tool_tree.column(name,width=width,minwidth=55,stretch=name=='name')
+  self.tool_tree.pack(fill='both',expand=True,padx=20)
+  tk.Label(win,text='Visible cooking/alchemy labels only · Active requires repeated durability decreases. Camera movement triggers reacquisition; uncertain identities are not selected.',bg=c['bg'],fg=c['muted'],wraplength=760,justify='left').pack(anchor='w',padx=20,pady=12)
+  self.refresh_tools()
+
+ def refresh_tools(self):
+  if not self.tool_tree or not self.tool_tree.winfo_exists():return
+  self.tool_tree.delete(*self.tool_tree.get_children())
+  for row in (self.tool_report or {}).get('tools',[]):
+   self.tool_tree.insert('','end',values=(row['name'],f"{row['current']:,} / {row['maximum']:,}",f"{row['percent']:g}%",row['state'],'—' if row['seconds_per_use'] is None else f"{row['seconds_per_use']:.2f}"))
+
+ def capture_tools(self,tess,automatic=False):
+  reader=self.tool_reader;interval=self.safe_scan_interval()
+  def work():
+   try:
+    bounds=foreground_bdo_capture_bounds()
+    if bounds is None:raise RuntimeError('Bring BDO to the front with cooking/alchemy tool labels visible')
+    def grab(box):
+     if foreground_bdo_capture_bounds()!=bounds:raise RuntimeError('BDO moved or lost focus; waiting to reacquire tool labels')
+     return ImageGrab.grab(bbox=box,all_screens=True)
+    captured_at=time.time();captured_mono=time.monotonic()
+    report=reader.read(tess,bounds,grab,interval=interval)
+    self.root.after(0,lambda:self.finish_tools(report,reader,automatic,captured_at,captured_mono))
+   except Exception as exc:
+    message=str(exc);reader.next_due=time.monotonic()+10
+    self.root.after(0,lambda:self.tool_failed(message,reader))
+  threading.Thread(target=work,name='vision-tool-finder',daemon=True).start()
+
+ def tool_failed(self,message,reader):
+  self.busy=False
+  if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
+  if reader is self.tool_reader:self.tool_health.set(message)
+
+ def finish_tools(self,report,reader,automatic,captured_at,captured_mono):
+  self.busy=False
+  if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
+  if reader is not self.tool_reader or not self.auto_tools.get():return
+  captured_at=report.get('captured_at',captured_at);captured_mono=report.get('captured_mono',captured_mono)
+  self.tool_report=report;rows=report['tools'];self.refresh_tools()
+  self.tool_health.set(f"{len(rows)} verified visible tool(s) · "+report['reason'])
+  active=next((r for r in rows if r['id']==report['active_id']),None)
+  if not active:
+   if self._active_tool_key is not None:
+    self.update_value();self.running=False;self.anchor=None;self.source.set('ACTIVE TOOL UNCONFIRMED · estimate paused')
+   self.scan_health.set(f"Tool finder · {report['duration']:.1f}s · {report['ocr_calls']} OCR passes")
+   self.status.set(report['reason']+'. No durability is chosen until use is confirmed.')
+   return
+  if report['active_key']!=self._active_tool_key:
+   self._active_tool_key=report['active_key'];self.has_reading=False;self.reading_gate=ReadingGate()
+   self.session_id=uuid.uuid4().hex;self.speed_estimator.reset();self.last_good_ocr=None
+  a,b=active['current'],active['maximum']
+  self.finish_ocr([(a,b),(a,b)],[],[],automatic,captured_at,captured_mono,report['duration'])
+  if self.reading_gate.pending is not None:reader.next_due=min(reader.next_due,time.monotonic()+3)
+  self.tool_health.set(f"Active: {active['name']} · {a:,}/{b:,} · repeated durability use")
+  self.status.set('Automatic tool lock · '+active['name']+'. Other visible tools remain listed in NEARBY TOOLS.')
 
  def open_planner(self):
   """Serve the paired planner from our own bridge; no cross-origin file permissions."""
@@ -308,7 +385,9 @@ class App:
   heading('OCR HEALTH')
   tk.Label(main,textvariable=self.scan_health,bg=c['bg'],fg=c['muted']).pack(anchor='w')
   tk.Label(main,textvariable=self.speed_health,bg=c['bg'],fg=c['muted']).pack(anchor='w')
-  heading('OCR REGION  •  X / Y / WIDTH / HEIGHT')
+  ttk.Checkbutton(main,text='Automatically find tools · no area selection',variable=self.auto_tools,command=self.tool_mode_changed,style='Vision.TCheckbutton').pack(anchor='w',pady=(8,0))
+  self.text_button(main,'SHOW NEARBY TOOLS',self.open_tools).pack(anchor='w')
+  heading('OPTIONAL MANUAL AREA  •  X / Y / WIDTH / HEIGHT')
   fields([(name,var,6) for name,var in zip(('X','Y','W','H'),self.region)])
   row=tk.Frame(main,bg=c['bg']);row.pack(fill='x',pady=(7,0))
   self.action(row,'SELECT REGION',self.select_region).pack(side='left',fill='x',expand=True,padx=(0,5))
@@ -321,7 +400,7 @@ class App:
   heading('TESSERACT OCR')
   ttk.Entry(main,textvariable=self.tess,style='Vision.TEntry').pack(fill='x')
   heading('OCR PREVIEW')
-  self.preview=tk.Label(main,text='Select a region and scan to preview',bg=c['panel'],fg=c['muted'],height=3,font=('Segoe UI',9))
+  self.preview=tk.Label(main,text='Automatic readings appear in NEARBY TOOLS.\nManual area preview is optional.',bg=c['panel'],fg=c['muted'],height=3,font=('Segoe UI',9))
   self.preview.pack(fill='x',pady=(0,4))
   if self.last_image:self.show_preview(self.last_image)
   row=tk.Frame(footer,bg=c['bg']);row.pack(fill='x',pady=(0,6))
@@ -397,7 +476,7 @@ class App:
    d,m,s,w=self.parse_inputs();r=[int(v.get()) for v in self.region]
    if r[2]<=0 or r[3]<=0:raise ValueError('Region width and height must be positive.')
    if not (2<=float(self.scan_interval.get())<=600 and 1<=int(self.alarm_repeats.get())<=20):raise ValueError('Auto scan interval must be 2–600 seconds and alarm beeps 1–20.')
-   CFG.write_text(json.dumps({**self.loot.settings(),'region_confirmed':self.region_confirmed,'region':r,'seconds_per_craft':s,'warning':w,'durability':d,'maximum':m,'tesseract':self.tess.get(),'auto_scan':self.auto_enabled.get(),'scan_interval':float(self.scan_interval.get()),'alarm_repeats':int(self.alarm_repeats.get()),'wide_tracking':self.wide_tracking.get()},indent=2));self.status.set('Settings saved')
+   CFG.write_text(json.dumps({**self.loot.settings(),'auto_tool_discovery':self.auto_tools.get(),'region_confirmed':self.region_confirmed,'region':r,'seconds_per_craft':s,'warning':w,'durability':d,'maximum':m,'tesseract':self.tess.get(),'auto_scan':self.auto_enabled.get(),'scan_interval':float(self.scan_interval.get()),'alarm_repeats':int(self.alarm_repeats.get()),'wide_tracking':self.wide_tracking.get()},indent=2));self.status.set('Settings saved')
   except Exception as e:messagebox.showerror('Settings',str(e))
  def refresh_auto_scan_label(self):
   if self.auto_toggle:
@@ -466,16 +545,17 @@ class App:
   self.root.after(400,self.tick)
  def poll_auto_ocr(self):
   # Keep scanning alive independently of timer / planner update failures.
+  finder=bool(getattr(self,'auto_tools',None) and self.auto_tools.get())
   try:
    if not self.auto_enabled.get():self.auto_health.set('Auto OCR: OFF')
    elif self.selecting_region:self.auto_health.set('Auto OCR: selecting capture area')
-   elif not self.region_confirmed:self.auto_health.set('Auto OCR: select your craft area in Settings')
-   elif getattr(self.loot,'enabled',None) is not None and self.loot.enabled.get() and not self.loot.crafting.get() and not self.running:
+   elif not finder and not self.region_confirmed:self.auto_health.set('Auto OCR: select your craft area in Settings')
+   elif not finder and getattr(self.loot,'enabled',None) is not None and self.loot.enabled.get() and not self.loot.crafting.get() and not self.running:
     self.auto_health.set('Tool OCR idle during grinding · enable Crafting mode when needed')
    elif not self.bdo_foreground():self.auto_health.set('Auto OCR: waiting for BDO in front')
    elif self.busy or self.loot.busy:self.auto_health.set('Auto OCR: scan in progress')
    else:
-    remaining=max(0,self.safe_scan_interval()-(time.monotonic()-self.last_scan_started))
+    remaining=max(0,self.tool_reader.next_due-time.monotonic()) if finder else max(0,self.safe_scan_interval()-(time.monotonic()-self.last_scan_started))
     self.auto_health.set('Auto OCR: next scan in %ds'%int(remaining+.999))
     if remaining<=0:
      self.last_scan_started=time.monotonic()
@@ -546,6 +626,12 @@ class App:
    if not (Path(tess).is_file() or shutil.which(tess)):
     if not automatic:self.status.set('Tesseract OCR not found. Install it or set its location in Settings.')
     else:self.scan_health.set('OCR unavailable · check Tesseract path in Settings')
+    return
+   if self.auto_tools.get():
+    self.busy=True;self.last_scan_started=time.monotonic()
+    if delayed:self.status.set('Switch to BDO now — finding visible tools in 3 seconds…')
+    if self.scan_button:self.scan_button.configure(state='disabled',text='FINDING TOOLS…')
+    self.root.after(3000 if delayed else 1,lambda:self.capture_tools(tess,automatic))
     return
    x,y,w,h=[int(v.get()) for v in self.region]
    if w<3 or h<3:raise ValueError('Select a valid capture region.')
