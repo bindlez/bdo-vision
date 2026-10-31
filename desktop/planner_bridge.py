@@ -6,7 +6,7 @@ this avoids file:// -> localhost browser restrictions and stale mismatched files
 """
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from threading import Lock, Thread
+from threading import Lock, Thread, BoundedSemaphore, Event
 import socket
 import os
 import json
@@ -42,6 +42,9 @@ class PlannerBridge:
         self.last_error = ''
         self.show_requested=False
         self.commands=[]
+        self.gear_ocr_gate=BoundedSemaphore(1)
+        self.gear_job=None;self.gear_stop=Event()
+        self.gear_store_lock=Lock()
         self.data = {
             'current': int(current), 'maximum': int(maximum),
             'seconds_per_craft': float(seconds_per_craft),
@@ -102,6 +105,18 @@ class PlannerBridge:
                         self._send({'error': 'Planner HTML not found beside the app'}, 404)
                         return
                     self._send(content, 200, 'text/html; charset=utf-8')
+                elif route == '/gear/builds':
+                    if not bridge.price_book:self._send({'error':'Windows profile unavailable'},503);return
+                    try:
+                        from gear_store import load
+                        with bridge.gear_store_lock:payload=load(Path(bridge.price_book.path).parent)
+                        self._send(payload if payload else {'error':'No Windows gear backup yet'},200 if payload else 404)
+                    except (OSError,ValueError,KeyError):self._send({'error':'Gear backup could not be read; current browser builds are safe'},503)
+                elif route == '/gear/sweep':
+                    ident=parse_qs(urlsplit(self.path).query).get('id',[''])[0]
+                    with bridge._lock:job=copy.deepcopy(bridge.gear_job)
+                    if not job or ident!=job['id']:self._send({'error':'Import not found'},404);return
+                    self._send(job)
                 elif route == '/durability':
                     with bridge._lock:
                         value = dict(bridge.data)
@@ -156,7 +171,7 @@ class PlannerBridge:
 
             def do_POST(self):
                 route=urlsplit(self.path).path
-                if route not in ('/ack','/market-prices','/craft-quotes','/show','/grind-command'):
+                if route not in ('/ack','/market-prices','/craft-quotes','/show','/grind-command','/gear/ocr','/gear/sweep','/gear/builds'):
                     self._send({'error': 'Unknown endpoint'}, 404)
                     return
                 if self.headers.get('Origin', '') not in ('', 'null', bridge.base_url, f'http://localhost:{bridge.port}'):
@@ -167,9 +182,53 @@ class PlannerBridge:
                     return
                 try:
                     length = int(self.headers.get('Content-Length', 0))
-                    if length <= 0 or length > (250000 if route=='/market-prices' else 16384 if route=='/craft-quotes' else 4096):
+                    if length <= 0 or length > (3500000 if route=='/gear/ocr' else 900000 if route=='/gear/sweep' else 300000 if route=='/gear/builds' else 250000 if route=='/market-prices' else 16384 if route=='/craft-quotes' else 4096):
                         raise ValueError('Invalid body length')
                     body = json.loads(self.rfile.read(length).decode('utf-8'))
+                    if not isinstance(body,dict):raise ValueError('JSON object required')
+                    if route=='/gear/builds':
+                        if not bridge.price_book:self._send({'error':'Windows profile unavailable'},503);return
+                        from gear_store import save
+                        try:
+                            with bridge.gear_store_lock:result=save(Path(bridge.price_book.path).parent,body)
+                            self._send(result)
+                        except OSError:self._send({'error':'Could not save Windows backup; export a JSON backup instead'},503)
+                        return
+                    if route in ('/gear/ocr','/gear/sweep'):
+                        if not bridge.price_book:self._send({'error':'Open the paired Windows app for equipment OCR'},503);return
+                        if not bridge.gear_ocr_gate.acquire(blocking=False):self._send({'error':'Equipment reader is busy'},429);return
+                        handed_off=False
+                        try:
+                            from gear_ocr import read_equipment
+                            settings=Path(bridge.price_book.path).parent/'settings.json'
+                            config=json.loads(settings.read_text(encoding='utf-8')) if settings.exists() else {}
+                            if route=='/gear/sweep':
+                                from gear_ocr import parse_equipment
+                                catalog=body.get('catalog')
+                                if not isinstance(catalog,list) or not catalog or len(catalog)>5000:raise ValueError('Invalid catalog')
+                                parse_equipment('',catalog)
+                                job={'id':uuid.uuid4().hex,'stage':'waiting','message':'Bring BDO to the front with equipment open.'}
+                                with bridge._lock:bridge.gear_job=job
+                                def sweep():
+                                    def update(**fields):
+                                        with bridge._lock:bridge.gear_job.update(fields)
+                                    try:
+                                        from gear_sweep import tooltip_sweep
+                                        result=tooltip_sweep(catalog,config.get('tesseract',r'C:\Program Files\Tesseract-OCR\tesseract.exe'),update,bridge.gear_stop)
+                                        update(stage='review' if result else 'cancelled',result=result,message='Review recognized equipment' if result else 'Import cancelled')
+                                    except Exception as exc:update(stage='error',message=str(exc)[:180])
+                                    finally:bridge.gear_ocr_gate.release()
+                                Thread(target=sweep,name='vision-gear-import',daemon=True).start()
+                                handed_off=True
+                                self._send({'id':job['id'],'stage':'waiting'},202)
+                                return
+                            result=read_equipment(body,config.get('tesseract',r'C:\Program Files\Tesseract-OCR\tesseract.exe'))
+                            self._send(result)
+                        except (ValueError,TypeError,KeyError):self._send({'error':'Use a valid cropped equipment image and loaded gear catalog'},400)
+                        except Exception:self._send({'error':'Equipment OCR unavailable. Check the reader in Windows settings or try a clearer tooltip capture.'},503)
+                        finally:
+                            if not handed_off:bridge.gear_ocr_gate.release()
+                        return
                     if route=='/craft-quotes':
                         if not bridge.price_book:self._send({'error':'Price book unavailable'},503);return
                         try:items=bridge.price_book.recipe_quotes(body['names'],str(body['region']).upper())
@@ -260,6 +319,7 @@ class PlannerBridge:
         with self._lock:self.data['crafting_loot']=copy.deepcopy(snapshot)
 
     def close(self):
+        self.gear_stop.set()
         if self.server:
             self.server.shutdown()
             self.server.server_close()

@@ -1,4 +1,10 @@
-# BDO Vision 1.10.0-rc.3 — item extraction audit fixes
+# BDO Vision 1.11.0-rc.1 — Gear Studio candidate
+
+Adds a market-backed equipment builder to the existing full app, without replacing its loot, silver, session, crafting, grind or tray features. Equipment and target sets are separately editable; quotes use actual item IDs and enhancement intervals. Builds can be exported and explicitly backed up in the protected Windows profile, retaining a previous copy.
+
+User-operated three-second tooltip sweeps capture a bounded set of pointer-adjacent frames, then run one on-demand OCR worker and show a mandatory review list. No automatic game input, screenshot upload or idle OCR polling is added. The separate native-reader lab is not the installed app. Live sweep coverage is still being tested; icon-only import and full AP/DP simulation are not claimed. Cloudflare Worker + D1 backend design is documented, not deployed.
+
+## Previous candidate: 1.10.0-rc.3 — item extraction audit fixes
 
 A wider extraction audit found and fixed malformed quantity handling, mixed-message omissions, bundle names containing xN, failure words inside valid item names, and harmless OCR punctuation around personal notifications. Existing captures, OCR masks, consensus rules, crafting tools and protected history remain unchanged.
 

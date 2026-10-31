@@ -13,7 +13,7 @@ for name in ('VERSION','README.md','RELEASE_NOTES.md','requirements.txt','requir
     path=root/name
     if path.is_file():allowed.append(path)
 for directory,pattern in [('desktop','*.py'),('desktop','*.bat'),('desktop/assets','*.json'),
-                          ('desktop/assets','*.js'),('desktop/assets','*.css'),('tests','*.py'),('scripts','*.py'),('docs','*.md'),
+                          ('desktop/assets','*.js'),('desktop/assets','*.css'),('tests','*.py'),('scripts','*.py'),('scripts','*.js'),('docs','*.md'),
                           ('.github/workflows','*.yml')]:
     allowed.extend((root/directory).glob(pattern))
 if (root/'demo').exists():allowed.extend((root/'demo').glob('*.html'))

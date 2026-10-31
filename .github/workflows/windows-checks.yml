@@ -27,6 +27,8 @@ jobs:
         run: python scripts/run_tests.py
       - name: Check planner JavaScript
         run: python scripts/check_planner.py
+      - name: Check equipment planner rules
+        run: node scripts/test_gear_core.js
       - name: Compile sources
         run: python -m compileall -q desktop scripts tests
       - name: Build source release with checksums

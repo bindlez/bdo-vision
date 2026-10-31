@@ -6,6 +6,8 @@ __pycache__/
 *.db
 *.db-*
 settings.json
+gear-builds.json
+gear-builds.previous.json
 runtime-status.json
 market-item-database.json
 market-item-database.tmp

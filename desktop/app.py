@@ -130,7 +130,9 @@ class App:
   self.refresh_auto_scan_label()
   self.text_button(row,'TEST LINK',self.test_connection).pack(side='right')
 
-  self.action(main,'SILVER & LOOT HISTORY',self.loot.open,flat=True).pack(fill='x',pady=(12,0))
+  gear_row=tk.Frame(main,bg=c['bg']);gear_row.pack(fill='x',pady=(12,0))
+  self.action(gear_row,'SILVER & LOOT HISTORY',self.loot.open,flat=True).pack(side='left',fill='x',expand=True,padx=(0,5))
+  self.action(gear_row,'GEAR STUDIO',self.open_gear_planner,flat=True).pack(side='left',fill='x',expand=True,padx=(5,0))
   tk.Label(main,textvariable=self.auto_health,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9)).pack(anchor='w',pady=(8,0))
 
   tk.Frame(main,bg=c['line'],height=1).pack(fill='x',pady=(12,9))
@@ -175,6 +177,10 @@ class App:
  def text_button(self,parent,text,command):
   c=self.colors
   return tk.Button(parent,text=text,command=command,bg=c['bg'],fg=c['bright'],activebackground=c['panel'],activeforeground='#ffffff',font=('Segoe UI Semibold',8),borderwidth=0,relief='flat',highlightthickness=1,highlightbackground=c['bg'],highlightcolor=c['bright'],takefocus=True,cursor='hand2')
+
+ def open_gear_planner(self):
+  if self.bridge and self.bridge.server:webbrowser.open(self.bridge.base_url+'/planner#gear')
+  else:self.status.set('Local planner is unavailable. Check the connection in Settings.')
 
  def open_planner(self):
   """Serve the paired planner from our own bridge; no cross-origin file permissions."""

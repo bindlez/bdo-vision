@@ -1,4 +1,10 @@
-# BDO Vision 1.10.0-rc.3 — item extraction audit fixes
+# BDO Vision 1.11.0-rc.1 — Gear Studio
+
+The full app now includes Gear Studio: real market equipment, separate equipped/target sets, enhancement-specific quotes, independent accessory slots, upgrade budgets, saved builds and Windows/JSON backups. Open GEAR STUDIO from the native app or planner sidebar. Existing silver, crafting, sessions, grind, loot OCR and tray features remain available.
+
+Start a three-second clockwise tooltip sweep, switch to BDO and hover over your items. Review names, enhancement levels and slots before applying; unknown items stay unresolved. Capture and OCR run locally only when requested. A generated tooltip image passes real OCR testing; live sweep validation across real equipment layouts is pending. See [Gear Studio](docs/GEAR-STUDIO.md) and the [Cloudflare backend plan](docs/BACKEND-PLAN.md). Market prices do not provide verified AP/DP curves; full stat simulation is not claimed.
+
+## Previous extraction audit candidate: 1.10.0-rc.3
 
 A wider extraction audit found and fixed malformed quantity handling, mixed-message omissions, bundle names containing xN, failure words inside valid item names, and harmless OCR punctuation around personal notifications. Existing captures, OCR masks, consensus rules, crafting tools and protected history remain unchanged.
 
