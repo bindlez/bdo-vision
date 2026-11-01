@@ -21,7 +21,7 @@ ROOT=(Path(sys.executable).resolve().parent if getattr(sys,'frozen',False)
       else Path(__file__).resolve().parent)
 DATA_ROOT=prepare_storage(ROOT)
 CFG=DATA_ROOT/'settings.json'
-DEFAULT={'region':[520,210,520,55],'seconds_per_craft':1.0,'warning':30,'durability':1000,'maximum':3000,'tesseract':r'C:\Program Files\Tesseract-OCR\tesseract.exe','auto_scan':True,'scan_interval':10,'alarm_repeats':5,'quiet_mode':True,'wide_tracking':True}
+DEFAULT={'region':[520,210,520,55],'seconds_per_craft':1.0,'warning':10,'durability':1000,'maximum':3000,'tesseract':r'C:\Program Files\Tesseract-OCR\tesseract.exe','auto_scan':True,'scan_interval':10,'alarm_repeats':5,'quiet_mode':True,'wide_tracking':True}
 try: config={**DEFAULT,**json.loads(CFG.read_text())}
 except Exception: config=DEFAULT.copy()
 if config.get('scan_interval')==5:config['scan_interval']=10

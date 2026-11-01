@@ -2,7 +2,7 @@
 
 Open **GUILD QUEST** from the native home window or its activity tabs. Enable **Track alchemy guild quest** and return to BDO with the current alchemy guild objective visible in the right-hand quest widget. The default crop follows the game client window; no initial rectangle is needed for the standard layout. Use **CUSTOM AREA** if the widget was moved or the display is unusually large. Include the guild heading and its current objective; avoid the mission browser/list.
 
-The tracker shows verified current/target, percent, units remaining and the age of the last reading. Recent observed pace appears after enough increasing samples. The default near-finish warning is 90%, editable to 80/85/90/95/99%. It beeps and keeps a visible message once near the threshold and once at completion. **TEST ALERT** changes no counts. **READ NOW** gives three seconds to return to BDO.
+The tracker shows verified current/target, percent, units remaining and the age of the last reading. Recent observed pace appears after enough increasing samples. The default near-finish warning is 95%, editable to 80/85/90/95/99%. It beeps and keeps a visible message once near the threshold and once at completion. **TEST ALERT** changes no counts. **READ NOW** gives three seconds to return to BDO.
 
 Progress and delivered-alert flags persist in the protected profile database. **NEXT QUEST** archives the previous snapshot and rearms alerts. After a completed objective, a reset/lower counter needs two separate readings before it is treated as a new quest. An unexpected decrease or different goal during an unfinished quest stays uncertain.
 

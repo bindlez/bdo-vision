@@ -5,7 +5,7 @@ from PIL import ImageOps,Image,ImageChops
 from ocr_runtime import run_ocr
 
 NUMBER=r'(?:[1-9]\d{0,2}(?:,\d{3})+|0|[1-9]\d{0,7})'
-PAIR=re.compile(r'(?<![\w,.?])('+NUMBER+r')\s*/\s*('+NUMBER+r')(?![\w,.?])')
+PAIR=re.compile(r"(?<![\w,.?])("+NUMBER+r")\s*[:;]?\s*['‘’]?\s*/\s*/?\s*['‘’]?\s*("+NUMBER+r")(?![\w,.?])")
 
 
 def parse_quest_text(text):
@@ -118,7 +118,7 @@ class GuildQuestProgress:
     def pause(self,reason):
         self.available=False;self.reason=str(reason)[:180];self.samples.clear()
 
-    def accept(self,reading,threshold=90,at=None):
+    def accept(self,reading,threshold=95,at=None):
         at=time.time() if at is None else at;a,b=reading['current'],reading['target']
         if type(a) is not int or type(b) is not int or not 0<=a<=b<=10_000_000 or not b:return []
         if self.current is not None and (b!=self.target or a<self.current):

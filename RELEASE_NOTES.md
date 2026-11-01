@@ -1,3 +1,9 @@
+# BDO Vision 1.12.0-rc.8 — right-side guild counter punctuation
+
+Warnings default closer to completion: guild quest at 95%, tool timer at 10 seconds remaining. Both remain editable.
+
+The follow-up live test showed 525/600 on both the yellow notice and the right-side objective. OCR of the white counter produced an unmatched opening quote after the slash. The scoped counter pattern now accepts that separator punctuation while retaining literal digits, strict numeric boundaries and the existing two-pass consensus. Captured 362/600 and 525/600 both read successfully; damaged goal digits remain rejected. The estimate column, durability reader, timer and loot behavior are unchanged from rc.7. No separate yellow-notice scanner is added: it duplicates the right-side polling and has not shown a measured benefit worth more capture work.
+
 # BDO Vision 1.12.0-rc.7 — tool-reader estimate column
 
 Adds a clearly labeled estimated-durability column beside the verified value. For the confirmed active tool it subtracts whole uses since the existing last-read timestamp, using observed seconds/use or the configured craft speed. At one use/second this is verified durability minus integer seconds since read. Other tools retain their verified count. The estimate assumes crafting continues, including while capture is paused, clamps at zero and never becomes an OCR measurement or recorded loot. It uses the existing visible-window refresh and adds no scan, worker, polling timer or dependency. Tool recognition and the working crafting timer are unchanged. Includes the rc.6 guild separator fix.

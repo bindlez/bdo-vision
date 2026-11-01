@@ -42,6 +42,11 @@ class QuestParsingTests(unittest.TestCase):
         for counter in ("?62'//600", "362'//60?", "362'//-600", "362'///600"):
             self.assertIsNone(parse_quest_text('[Alchemy] Guild Supply Mission\nObtain Catalyst ('+counter+')'),counter)
 
+    def test_live_unpaired_goal_quote_keeps_525_and_rejects_damaged_digits(self):
+        result=parse_quest_text("[Alchemy] Glorious Guild Supply Mission\nObtain Mysterious Catalyst via Alchemy (\n525 /'600))\n[Daily] Make Oil (27/100)")
+        self.assertEqual((result['current'],result['target']),(525,600))
+        self.assertIsNone(parse_quest_text("[Alchemy] Guild Supply Mission\nObtain Catalyst (525 /'60?)"))
+
     def test_real_ocr_of_generated_mission_widget(self):
         engine=Path(r'C:\Program Files\Tesseract-OCR\tesseract.exe')
         if not engine.exists():self.skipTest('Tesseract unavailable')
@@ -78,6 +83,11 @@ class QuestParsingTests(unittest.TestCase):
 class QuestStateTests(unittest.TestCase):
     def setUp(self):self.db=sqlite3.connect(':memory:');self.state=GuildQuestProgress(self.db)
     def tearDown(self):self.db.close()
+
+    def test_default_warning_waits_until_95_percent(self):
+        self.assertEqual(self.state.accept(reading(569),at=100),[])
+        self.assertEqual(self.state.accept(reading(570),at=110),['near'])
+        self.assertEqual(self.state.accept(reading(571),at=120),[])
 
     def test_near_and_complete_alert_once_and_survive_restart(self):
         self.assertEqual(self.state.accept(reading(184),90,100),[])

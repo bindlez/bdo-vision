@@ -14,7 +14,7 @@ class GuildQuestTracker:
         self.model=GuildQuestProgress(tracker.ledger.db)
         self.enabled=tk.BooleanVar(value=bool(settings.get('guild_quest_enabled',False)))
         self.sound=tk.BooleanVar(value=bool(settings.get('guild_quest_sound',True)))
-        self.threshold=tk.StringVar(value=str(settings.get('guild_quest_threshold',90)))
+        self.threshold=tk.StringVar(value=str(settings.get('guild_quest_threshold',95)))
         self.region=settings.get('guild_quest_region');self.frame=None;self.closed=False;self.busy=False;self.pending=None;self.generation=0
         self.progress=tk.StringVar(value='— / —');self.state=tk.StringVar(value='Guild Quest tracking is off')
         self.detail=tk.StringVar(value='Show the alchemy guild mission in BDO’s right-hand quest widget.')
@@ -28,7 +28,7 @@ class GuildQuestTracker:
 
     def safe_threshold(self):
         try:return max(1,min(99,int(self.threshold.get())))
-        except (ValueError,TypeError):return 90
+        except (ValueError,TypeError):return 95
 
     def build(self,tabs):
         c=self.app.colors;self.frame=frame=tk.Frame(tabs,bg=c['bg'],padx=20,pady=16);tabs.add(frame,text='Guild Quest')
