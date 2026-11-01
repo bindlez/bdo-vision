@@ -1,6 +1,16 @@
 """Small in-memory reader status, shared by the native view and local diagnostics."""
 from collections import deque
-import time
+import math,time
+
+
+def estimate_durability(row,age,active_id,seconds_per_use=1.):
+    """Display-only estimate assuming the confirmed tool keeps being used."""
+    if row['id']!=active_id:return row['current']
+    pace=row.get('seconds_per_use') or seconds_per_use
+    try:pace=float(pace)
+    except (ValueError,TypeError):return None
+    if not math.isfinite(pace) or pace<=0:return None
+    return max(0,row['current']-int(max(0,age)/pace))
 
 
 TITLES={'idle':'Ready to find tools','reading':'Reading visible tools','waiting':'Switch to BDO',

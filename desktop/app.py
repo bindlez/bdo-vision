@@ -14,7 +14,7 @@ from tracking_core import ReadingGate, remaining_at, align_to_capture, estimate_
 from spatial_ocr import tsv_candidates, choose_spatial_pair
 from ocr_runtime import run_ocr
 from tool_reader import AutomaticToolReader
-from tool_status import ToolStatus
+from tool_status import ToolStatus,estimate_durability
 from windows_bdo import foreground_bdo_capture_bounds
 
 ROOT=(Path(sys.executable).resolve().parent if getattr(sys,'frozen',False)
@@ -228,8 +228,8 @@ class App:
   style=ttk.Style();style.configure('Tools.Treeview',background=c['panel'],fieldbackground=c['panel'],foreground=c['text'],rowheight=28)
   style.configure('Tools.Treeview.Heading',background=c['panel2'],foreground=c['secondary'],font=('Segoe UI Semibold',9))
   body=tk.Frame(win,bg=c['panel']);body.pack(fill='both',expand=True,padx=22)
-  self.tool_tree=ttk.Treeview(body,columns=('name','durability','state','age'),show='headings',height=7,style='Tools.Treeview')
-  for name,label,width in [('name','VISIBLE TOOL',220),('durability','VERIFIED DURABILITY',140),('state','STATUS',220),('age','LAST READ',80)]:
+  self.tool_tree=ttk.Treeview(body,columns=('name','durability','estimate','state','age'),show='headings',height=7,style='Tools.Treeview')
+  for name,label,width in [('name','VISIBLE TOOL',200),('durability','VERIFIED DURABILITY',140),('estimate','ESTIMATED DURA',125),('state','STATUS',210),('age','LAST READ',80)]:
    self.tool_tree.heading(name,text=label);self.tool_tree.column(name,width=width,minwidth=55,stretch=name=='name')
   self.tool_tree.tag_configure('active',background=c['panel2'],foreground=c['good'])
   self.tool_tree.tag_configure('stale',foreground=c['muted'])
@@ -237,6 +237,7 @@ class App:
   self.tool_tree.configure(yscrollcommand=scroll.set);scroll.pack(side='right',fill='y')
   self.tool_tree.pack(side='left',fill='both',expand=True)
   self.tool_empty=tk.Label(body,text='No verified readings yet.\nShow tool labels in BDO; the search continues automatically.',bg=c['panel'],fg=c['muted'],font=('Segoe UI',11),justify='center')
+  tk.Label(win,text='Estimate assumes continued crafting: verified − whole uses since last read.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=810,justify='left').pack(anchor='w',padx=22,pady=(8,0))
   footer=tk.Frame(win,bg=c['bg']);footer.pack(fill='x',padx=22,pady=14)
   tk.Label(footer,textvariable=self.tool_metrics,bg=c['bg'],fg=c['muted'],font=('Segoe UI',9)).pack(side='left')
   self.action(footer,'FIND AGAIN',self.rescan_tools,flat=True).pack(side='right')
@@ -282,9 +283,13 @@ class App:
    if ident not in wanted:self.tool_tree.delete(ident);cache.pop(ident,None)
   age=max(0,int(time.time()-view['last_read_at'])) if view['last_read_at'] else 0
   current=view['stage'] not in ('paused','error','off','searching') and age<=15
+  try:pace=float(self.speed.get())
+  except (ValueError,TypeError):pace=1.
   for index,row in enumerate(view['tools']):
    state=('Last verified · capture paused' if view['stage'] in ('paused','error','off') else 'Last verified · awaiting refresh') if not current else row['state']
-   values=(row['name'],f"{row['current']:,} / {row['maximum']:,}",state,f'{age}s ago')
+   estimate=estimate_durability(row,age,view['active_id'],pace)
+   estimated=f'≈ {estimate:,}' if estimate is not None else '—'
+   values=(row['name'],f"{row['current']:,} / {row['maximum']:,}",estimated,state,f'{age}s ago')
    tag='active' if current and row['id']==view['active_id'] else 'stale' if not current else ''
    key=(values,tag)
    if not self.tool_tree.exists(row['id']):self.tool_tree.insert('',index,iid=row['id'],values=values,tags=(tag,))

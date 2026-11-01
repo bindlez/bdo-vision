@@ -37,6 +37,8 @@ class DesktopSmokeTests(unittest.TestCase):
             app.tool_tree.selection_set('tool-1');app.refresh_tool_view()
             self.assertEqual(app.tool_tree.selection(),('tool-1',))
             self.assertIn('95/3,000',app.tool_preview.get())
+            self.assertIn('estimate',app.tool_tree['columns'])
+            self.assertEqual(app.tool_tree.item('tool-1')['values'][2],'≈ 95')
             app.loot.ledger.add('Milk',3);app.loot.silver.refresh()
             tree=app.loot.silver.tree
             self.assertTrue(tree.exists('Milk'))

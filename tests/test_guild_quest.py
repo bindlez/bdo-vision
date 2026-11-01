@@ -35,6 +35,13 @@ class QuestParsingTests(unittest.TestCase):
         self.assertEqual((result['current'],result['target']),(13,600))
         self.assertIsNone(parse_quest_text('[Alchemy] Guild Supply Mission\nObtain Catalyst (13/-600)'))
 
+    def test_live_double_slash_punctuation_preserves_literal_digits(self):
+        text="[Alchemy] Glorious Guild Supply Mission\nObtain Mysterious Catalyst via Alchemy (\n362'//600))\n[Daily] Make Oil (24/100)"
+        result=parse_quest_text(text)
+        self.assertEqual((result['current'],result['target']),(362,600))
+        for counter in ("?62'//600", "362'//60?", "362'//-600", "362'///600"):
+            self.assertIsNone(parse_quest_text('[Alchemy] Guild Supply Mission\nObtain Catalyst ('+counter+')'),counter)
+
     def test_real_ocr_of_generated_mission_widget(self):
         engine=Path(r'C:\Program Files\Tesseract-OCR\tesseract.exe')
         if not engine.exists():self.skipTest('Tesseract unavailable')

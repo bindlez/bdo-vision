@@ -1,7 +1,7 @@
 import sys,unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'desktop'))
-from tool_status import ToolStatus
+from tool_status import ToolStatus,estimate_durability
 
 
 def report(current=95,wear=0,active=None):
@@ -11,6 +11,17 @@ def report(current=95,wear=0,active=None):
 
 
 class ToolStatusTests(unittest.TestCase):
+    def test_display_estimate_uses_whole_crafts_without_changing_verified_value(self):
+        row={'id':'a','current':100}
+        self.assertEqual(estimate_durability(row,5.9,'a'),95)
+        self.assertEqual(estimate_durability(row,5.9,'a',2),98)
+        self.assertEqual(estimate_durability(row,200,'b'),100)
+        self.assertEqual(estimate_durability(row,200,'a'),0)
+        self.assertEqual(estimate_durability(row,-10,'a'),100)
+        self.assertEqual(estimate_durability({**row,'seconds_per_use':2},5.9,'a'),98)
+        self.assertIsNone(estimate_durability(row,5,'a',float('nan')))
+        self.assertEqual(row['current'],100)
+
     def test_found_confirming_tracking_and_paused_are_distinct(self):
         status=ToolStatus();status.accept(report());self.assertEqual(status.stage,'found')
         status.accept(report(94,1));self.assertEqual(status.stage,'confirming')

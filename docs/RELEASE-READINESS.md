@@ -1,5 +1,7 @@
 # First-release review
 
+rc.6 is intentionally narrow: one guild separator normalization plus a regression test. No durability, timer, loot or scheduling code changed from the working rc.5. Live rc.5 status confirmed one active identity at 2240 then 2163/3000. A captured live guild counter at 362/600 exposed an apostrophe/doubled slash; the parser fix recovers it without changing digits. Final live rc.6 results belong in the local verification record; saved replay alone is not a completion claim.
+
 ## Release scope
 
 The complete Windows product remains: saved loot/silver, crafting and grind sessions, paired planner, optional sharing, tray tools, Gear Studio and reviewed tooltip import. rc.5 adds optional alchemy Guild Quest and improves automatic tool discovery. The working crafting timer's selection, time calculation and sending behavior are retained.

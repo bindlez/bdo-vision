@@ -1,3 +1,13 @@
+# BDO Vision 1.12.0-rc.7 — tool-reader estimate column
+
+Adds a clearly labeled estimated-durability column beside the verified value. For the confirmed active tool it subtracts whole uses since the existing last-read timestamp, using observed seconds/use or the configured craft speed. At one use/second this is verified durability minus integer seconds since read. Other tools retain their verified count. The estimate assumes crafting continues, including while capture is paused, clamps at zero and never becomes an OCR measurement or recorded loot. It uses the existing visible-window refresh and adds no scan, worker, polling timer or dependency. Tool recognition and the working crafting timer are unchanged. Includes the rc.6 guild separator fix.
+
+# BDO Vision 1.12.0-rc.6 — small guild counter compatibility fix
+
+The live test exposed a counter read as `362'//600`. Normalize only this separator punctuation inside the already scoped guild objective, preserving every digit and requiring the existing two-pass agreement. The same captured frame now reads 362/600; damaged digits, negative goals and three slashes remain rejected. Durability discovery, active-tool selection, timers and loot recording are unchanged from rc.5, which remains available as a fallback.
+
+During the rc.5 live check the active tool retained its identity at 2240 then 2163/3000 and an empty neighbor was identified separately. This confirms that sequence; it is not a guarantee for every camera view. Guild live verification of rc.6 is recorded separately after installation.
+
 # BDO Vision 1.12.0-rc.5 — recover difficult gold mission headings
 
 The next real near-finish frame read 593/600 but lost the low-contrast gold guild heading. A bounded focused heading pass now supplies context only when it reads the alchemy guild caption, while both independent objective reads still have to agree. Narrow, harmless separator punctuation is normalized inside the scoped objective; damaged digits remain unresolved. The real 184 → 593/600 replay produces one near warning and no duplicate. New-quest 13/600 was observed separately; actual completion was not forced or assumed. rc.4 remains preserved in the local version library.

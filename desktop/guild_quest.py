@@ -22,6 +22,7 @@ def parse_quest_text(text):
     text=re.sub(r'(?<=\d)\s*[:;]\s*(?=/)','',text)
     text=re.sub(r"/\s*['‘’](\d[\d,]*)['‘’]",r'/\1',text)
     text=re.sub(r'(?m)^\s*/\s*[-–—]\s*(?=\d)','/',text)
+    text=re.sub(r"(?<=\d)\s*['‘’]?\s*/\s*/?\s*(?=\d)",'/',text)
     pairs={(int(a.replace(',','')),int(b.replace(',',''))) for a,b in PAIR.findall(text)}
     if len(pairs)!=1:return None
     current,target=pairs.pop()

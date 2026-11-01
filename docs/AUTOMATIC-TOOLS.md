@@ -1,5 +1,7 @@
 # Automatic cooking/alchemy tool reader
 
+The Tool reader includes **ESTIMATED DURA** alongside verified durability. For the confirmed active tool: estimate = max(0, verified − floor(seconds since read / seconds per use)). It uses observed pace when available, otherwise the configured craft speed; at one use per second this is exactly verified minus integer age. Unused tools do not decay. Estimates assume continued crafting even when capture is paused, stay clearly marked with ≈, and never replace verified values or feed loot counts. The existing visible-window refresh updates them without another OCR scan, worker or timer.
+
 rc.4 adds quote-safe OCR-row parsing, a wider vertical search band and supplemental gold-bar/character-box localization. A numeric field can be found even when Tesseract merges it with a long name. The existing label band remains necessary for low/empty bars; verified locators are merged and conflicting values stay uncertain. The work budget remains six seconds. In two saved live layouts, the updated path recovered 2,910/3,000 and 2,287/3,000 that were missing from the prior result. This is targeted regression evidence, not complete live coverage.
 
 Automatic tool discovery is enabled by default. Show the game in front with utensil labels visible; no capture box is required. The main window shows readable counters before active-tool confirmation. Use **VIEW TOOLS** for verified durability, last-read ages and clear finding/confirming/tracking/paused states. Manual region OCR remains an optional fallback in Settings.
