@@ -186,7 +186,8 @@ class App:
  def refresh_action_states(self):
   available=self.has_reading and bool(self.bridge and self.bridge.server)
   for button in (self.send_button,self.tray_button):
-   button.configure(state='normal' if available else 'disabled')
+   wanted='normal' if available else 'disabled'
+   if str(button['state'])!=wanted:button.configure(state=wanted)
   self.root.after(400,self.refresh_action_states)
 
  def action(self,parent,text,command,primary=False,flat=False):

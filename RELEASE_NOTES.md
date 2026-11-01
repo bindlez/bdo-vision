@@ -1,3 +1,7 @@
+# BDO Vision 1.12.0-rc.3 — reduce paused/background work
+
+The final installed-app check exposed repeated desktop-wide process searches from visibility consumers while BDO was behind other windows. A bounded five-second discovery cache now shares those results. Cached game identities are revalidated, current coverage is always checked, and foreground BDO bypasses negative results immediately. Tray restoration and keyboard helpers retain fresh discovery. Twelve background checks on this desktop fell from 133 ms / 125 ms CPU to 13 ms / 16 ms CPU, with identical unavailable results. This is a helper benchmark, not a total-app or FPS measurement. Silver tables no longer move every row when their content is unchanged; capture status still refreshes every second. All rc.2 reader and UI fixes remain included.
+
 # BDO Vision 1.12.0-rc.2 — tool reader reliability and polish
 
 Shows readable counters before a tool is confirmed, with explicit capture states, reading ages, a scrollable tool list and bounded local diagnostics. Reduces difficult-frame numeric retries, detects camera shifts from tiny title masks, handles split fraction tokens and retains identity through one missed frame without reporting a hidden tool as active. Two consecutive misses reset use evidence. Returning to BDO rechecks immediately; empty searches retry briefly before backing off. Main controls scroll on smaller windows. Existing loot, silver, crafting, grind, gear and history are preserved.

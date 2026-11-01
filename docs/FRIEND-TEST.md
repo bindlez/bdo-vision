@@ -1,4 +1,4 @@
-# BDO Vision · test candidate · 1.12.0-rc.2
+# BDO Vision · test candidate · 1.12.0-rc.3
 
 Tool durability: show full cooking/alchemy labels in BDO, then inspect VIEW TOOLS. Counters appear before the active utensil is confirmed; two separate decreases identify it. Move the camera and verify reacquisition. Cover BDO and confirm readings are labeled paused/last verified, then return to BDO for an immediate recheck. SAVE STATUS exports small local diagnostics without screenshots. These are optional checks alongside loot/grind testing below.
 

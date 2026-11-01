@@ -19,6 +19,7 @@ class SilverLooted:
         return [r for r in rows if r[1][:10]==time.strftime('%Y-%m-%d')] if self.scope.get()=='Today' else rows
 
     def build(self,tabs):
+        self._rendered_key=None
         c=self.tracker.app.colors;self.frame=frame=tk.Frame(tabs,bg=c['bg'],padx=16,pady=12);tabs.add(frame,text='Silver')
         controls=tk.Frame(frame,bg=c['bg']);controls.pack(fill='x')
         picker=ttk.Combobox(controls,style='Vision.TCombobox',textvariable=self.scope,values=('Today','Timed session','All recorded'),state='readonly',width=18);picker.pack(side='left');picker.bind('<<ComboboxSelected>>',lambda e:self.refresh())
@@ -52,11 +53,12 @@ class SilverLooted:
         if self.tracker.insights.prices.last_error:self.coverage.set(self.coverage.get()+' Price refresh unavailable; cached quotes retained.')
         ready,reason=self.tracker.capture_availability()
         self.measurement.set('OBSERVING · qualified item notifications' if ready else 'MEASUREMENT PAUSED · '+reason+' · saved totals retained')
+        if self.tracker.insights.prices.refreshing:self.coverage.set('Matching items and refreshing Central Market prices… '+self.coverage.get())
+        self.draw_contributions(result)
+        if self._rendered_key==key:return
         wanted={e['item'] for e in result['items']}
         for ident in self.tree.get_children():
             if ident not in wanted:self.tree.delete(ident);self._table_values.pop(ident,None)
-        if self.tracker.insights.prices.refreshing:self.coverage.set('Matching items and refreshing Central Market prices… '+self.coverage.get())
-        self.draw_contributions(result)
         for index,entry in enumerate(result['items']):
             values=(entry['item'],entry['market_id'] or '—',f"{entry['quantity']:,}",'Unpriced' if entry['unit_price'] is None else f"{entry['unit_price']:,}",'—' if entry['value'] is None else f"{entry['value']:,}",entry['group']+(' · NPC' if entry.get('price_basis')=='npc_vendor' else ''))
             ident=entry['item']
@@ -65,6 +67,7 @@ class SilverLooted:
                 self.tree.move(ident,'',index)
             else:self.tree.insert('',index,iid=ident,values=values)
             self._table_values[ident]=values
+        self._rendered_key=key
 
     def draw_contributions(self,result,force=False):
         if not self.canvas or not self.canvas.winfo_ismapped():return

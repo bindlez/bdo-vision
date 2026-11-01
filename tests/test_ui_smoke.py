@@ -36,6 +36,15 @@ class DesktopSmokeTests(unittest.TestCase):
             app.tool_tree.selection_set('tool-1');app.refresh_tool_view()
             self.assertEqual(app.tool_tree.selection(),('tool-1',))
             self.assertIn('95/3,000',app.tool_preview.get())
+            app.loot.ledger.add('Milk',3);app.loot.silver.refresh()
+            tree=app.loot.silver.tree
+            self.assertTrue(tree.exists('Milk'))
+            tree.selection_set('Milk')
+            with patch.object(tree,'move',wraps=tree.move) as move:
+                app.loot.silver.refresh();move.assert_not_called()
+            self.assertEqual(tree.selection(),('Milk',))
+            app.loot.ledger.add('Milk',2);app.loot.silver.refresh()
+            self.assertEqual(tree.item('Milk')['values'][2],5)
         finally:
             if "app" in locals():app.loot.close()
             root.destroy()

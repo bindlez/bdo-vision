@@ -1,4 +1,6 @@
-# BDO Vision 1.12.0-rc.2 — clearer, faster tool readings
+# BDO Vision 1.12.0-rc.3 — clearer readings, cheaper background checks
+
+Also shares background game-window discovery for five seconds while rechecking identity and coverage each time. Foreground game detection remains immediate. Unchanged Silver tables and disabled buttons avoid redundant UI updates. No extra process or dependency is added.
 
 Verified counters appear immediately in the main window, before active-tool confirmation. VIEW TOOLS explains finding, confirming, tracking and paused states with reading ages and a small local status export. Camera checks avoid long retry chains; focused numeric results have a bounded eight-second exact-pixel cache. No extra background service or dependency is added. See [automatic tools and measured limits](docs/AUTOMATIC-TOOLS.md).
 

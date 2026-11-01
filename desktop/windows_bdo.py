@@ -5,8 +5,32 @@ injection, memory reads, global key hook, or anti-cheat interaction.
 """
 import ctypes
 from ctypes import wintypes
+import time
+from threading import Lock
 
 GAME_EXE_HINTS = ('blackdesert64', 'blackdesert32', 'blackdesertonline', 'blackdesert.exe')
+_capture_windows_lock=Lock()
+_capture_windows_cache=(-1e9,())
+
+
+def capture_game_windows(foreground,now=None):
+    """Cache only discovery; verify identities and live coverage on every use.
+
+    Background/offline checks must not enumerate every desktop process for
+    each clock, table and sharing consumer. Foreground game detection remains
+    immediate, and tray/input helpers retain their uncached discovery path.
+    """
+    global _capture_windows_cache
+    if is_bdo_window(foreground):return [foreground]
+    now=time.monotonic() if now is None else now
+    with _capture_windows_lock:
+        stamp,handles=_capture_windows_cache
+        if now-stamp<5:
+            valid=[handle for handle in handles if is_bdo_window(handle)]
+            if valid or not handles:return valid
+        handles=tuple(find_bdo_windows()[:8])
+        _capture_windows_cache=(now,handles)
+        return list(handles)
 
 
 def _user32():
@@ -95,7 +119,7 @@ def item_regions_visible(regions):
         # Normal grinding has BDO in front. Avoid enumerating/querying every
         # other desktop process on that common path; coverage checks still run.
         foreground=user32.GetForegroundWindow()
-        game_windows=[foreground] if is_bdo_window(foreground) else find_bdo_windows()
+        game_windows=capture_game_windows(foreground)
         if not game_windows:return False,'BDO game window not found'
         windows=[h for h in game_windows if user32.IsWindowVisible(h) and not user32.IsIconic(h)]
         if not windows:return False,'BDO must be visible, not minimized or in the tray'
