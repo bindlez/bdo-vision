@@ -427,6 +427,20 @@ def changing_tool(before,after,elapsed):
     return candidates[0] if len(candidates)==1 else None
 
 
+def place_selected(report,height):
+    anchor=report.get('anchor') or {}
+    if 'Place Mode' not in anchor.get('evidence',''):return None
+    unit=max(.6,min(2.,height/1080));ranked=[]
+    for row in report.get('tools',[]):
+        box=row.get('numbers') or row['box'];x=(box[0]+box[2])/2;y=(box[1]+box[3])/2
+        if not anchor['y']-5*unit<=y<=anchor['y']+280*unit:continue
+        score=abs(x-anchor['x']-40*unit)+.6*abs(y-anchor['y']-55*unit)
+        if score<=350*unit:ranked.append((score,row))
+    ranked.sort(key=lambda r:r[0])
+    if not ranked or len(ranked)>1 and ranked[1][0]-ranked[0][0]<8*unit:return None
+    return ranked[0][1]
+
+
 class ToolInventory:
     def __init__(self):
         self.tracks={};self.sequence=0;self.context=None
@@ -501,10 +515,19 @@ class AutomaticToolReader:
         started=time.monotonic();_budget.deadline=started+6
         try:
             report=self._read(tess,bounds,grab,now,interval)
-            if confirm_pair and not report['active_id'] and report['tools'] and time.monotonic()-self.last_pair>=15 and _budget.deadline-time.monotonic()>=2.5:
+            selected=place_selected(report,bounds[4]-bounds[2]) if not report['active_id'] else None
+            if selected and not getattr(self,'position_started',False):
+                # First verified read is usable immediately; confirm use on
+                # the following scan without holding the initial countdown.
+                self.position_started=True
+            elif confirm_pair and not report['active_id'] and report['tools'] and time.monotonic()-self.last_pair>=15 and _budget.deadline-time.monotonic()>=2.5:
                 self.last_pair=time.monotonic()
                 try:report=self.compare_pair(tess,bounds,grab,report,interval)
                 except (RuntimeError,TimeoutError,subprocess.TimeoutExpired):report['pair_result']='Comparison interrupted; no active tool inferred'
+            if not report['active_id'] and selected:
+                report.update(active_id=selected['id'],active_key=f"{selected['id']}:{selected.get('cycle',0)}",confirmation='Place Mode position')
+                selected['state']='Selected by Place Mode · checking use'
+                report['next_seconds']=1.5;self.next_due=time.monotonic()+1.5
             report['duration']=time.monotonic()-started
             return report
         finally:del _budget.deadline
@@ -542,7 +565,7 @@ class AutomaticToolReader:
         hwnd,left,top,right,bottom=bounds;width=right-left;height=bottom-top
         if width<100 or height<100 or width*height>16_000_000:raise ValueError('Unsupported visible game window size')
         context=(hwnd,left,top,width,height)
-        if context!=self.context:self.regions=[];self.context=context;self.signatures={};self.numeric_cache={}
+        if context!=self.context:self.regions=[];self.context=context;self.signatures={};self.numeric_cache={};self.position_started=False
         discover=not self.regions or now-self.last_discovery>=30
         calls=0
         if discover:

@@ -1,3 +1,11 @@
+# BDO Vision 1.12.0 — first release
+
+Includes immediate Place Mode-based selection from verified OCR, subsequent use confirmation, timed tool comparison, independent Guild/Daily/Bonus objective counts, wrapped counters, last-seen guild information on planner sends and protected history. Warnings default to guild 95% and ten seconds. Real reference captures cover numerator on either objective line. OCR can still fail over bright or overlapping text; unresolved values are labeled rather than invented. Live tool recognition was confirmed by the user and the running app at 2655/3000. Separate Tesseract English and visible readable game text remain required.
+
+# BDO Vision 1.12.0-rc.10 — start from Place Mode selection
+
+A verified counter near the Place Mode control starts the countdown on the first scan, before wear confirmation. The next scan is due after 1.5 seconds; repeated use or the timed comparison confirms selection. The native view distinguishes selected by position from confirmed by use. Equal-position ambiguity stays unresolved. All rc.9 quest objectives, last-seen planner receipts, warnings and history protection remain. OCR processing still takes time; this does not promise zero-latency recognition or perfect accuracy.
+
 # BDO Vision 1.12.0-rc.9 — active-tool comparison and quest objectives
 
 Tool discovery first checks a small residence header for Place Mode, then reads the label band relative to that control. Character and broad discovery remain fallbacks. When no tool is confirmed, two batches of known label crops are captured 1.5 seconds apart, before OCR. Every field must verify, title masks must stay stable, and exactly one plausible decrease may confirm an active tool. Changes to multiple tools, moved labels, missing fields and large jumps remain uncertain. The comparison shares the six-second work budget and has a fifteen-second cooldown; confirmed monitoring adds no pair. Images are transient crops, not a continuous full-screen recorder.

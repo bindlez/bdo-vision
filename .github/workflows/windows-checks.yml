@@ -71,3 +71,26 @@ jobs:
             exit 1
           fi
           gh release create "v$version" release-packages/*.zip release-packages/*.sha256 --target "$GITHUB_SHA" --prerelease --title "BDO Vision $version · friend test" --notes-file docs/FRIEND-TEST.md
+  first_release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/gear-planner'
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: BDO-Vision-Release-Packages
+          path: release-packages
+      - name: Publish the verified first release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(cat VERSION)"
+          if [ "$version" != '1.12.0' ]; then exit 0; fi
+          if gh release view "v$version" >/dev/null 2>&1; then
+            echo 'Existing release preserved; no files overwritten.'
+            exit 0
+          fi
+          gh release create "v$version" release-packages/*.zip release-packages/*.sha256 --target "$GITHUB_SHA" --title "BDO Vision $version" --notes-file docs/FIRST-RELEASE.md

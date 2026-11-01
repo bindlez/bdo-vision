@@ -344,6 +344,8 @@ class App:
   if self.reading_gate.pending is not None:
    reader.next_due=min(reader.next_due,time.monotonic()+3)
    self.status.set('Confirming the first reading · '+active['name'])
+  elif report.get('confirmation')=='Place Mode position':
+   self.source.set('PLACE MODE SELECTED · verified durability');self.status.set('Countdown started for '+active['name']+'. Checking durability use next.')
   else:self.status.set('Tracking '+active['name']+'. All readings are in VIEW TOOLS.')
 
  def open_planner(self):

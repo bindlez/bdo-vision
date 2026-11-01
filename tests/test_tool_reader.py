@@ -90,6 +90,14 @@ class ActiveToolTests(unittest.TestCase):
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_place_mode_starts_first_read_without_waiting_for_pair(self):
+        reader=AutomaticToolReader();tool={**row(800),'id':'chosen','numbers':[1040,240,1100,260],'cycle':0}
+        report={'active_id':None,'tools':[tool],'anchor':{'x':1025,'y':190,'evidence':'Place Mode anchor'}}
+        with patch.object(reader,'_read',return_value=report),patch.object(reader,'compare_pair') as compare:
+            result=reader.read('engine',(1,0,0,1920,1080),lambda b:None,confirm_pair=True)
+        self.assertEqual(result['active_id'],'chosen');self.assertEqual(result['confirmation'],'Place Mode position')
+        self.assertEqual(result['next_seconds'],1.5);compare.assert_not_called()
+
     def test_pair_captures_only_label_crops_1_5_seconds_apart(self):
         reader=AutomaticToolReader();reader.context='game'
         region={'name':'Alchemy Tool','box':[100,200,300,230],'numbers':[200,200,280,230]};reader.regions=[region]

@@ -15,7 +15,7 @@ def estimate_durability(row,age,active_id,seconds_per_use=1.):
 
 TITLES={'idle':'Ready to find tools','reading':'Reading visible tools','waiting':'Switch to BDO',
         'searching':'Looking for readable labels','confirming':'Confirming the active tool',
-        'found':'Tools found · waiting for use','tracking':'Active tool confirmed',
+        'found':'Tools found · waiting for use','tracking':'Active tool confirmed','positioned':'Tool selected by Place Mode',
         'ambiguous':'Several tools are changing','paused':'Capture paused','off':'Automatic reader off',
         'error':'Reader will retry','empty':'Visible tools are empty'}
 
@@ -48,6 +48,7 @@ class ToolStatus:
         elif any(r.get('wear_streak',0)>0 for r in self.tools):stage='confirming';detail='Durability use detected. Waiting for one more change.'
         else:stage='found';detail=f"{len(self.tools)} readable tool(s). Start crafting to confirm which one is active."
         if self.unreadable:detail+=f' {self.unreadable} other label(s) unreadable.'
+        if active and report.get('confirmation')=='Place Mode position':stage='positioned';detail+=' Countdown started; use confirmation pending.'
         if report.get('confirmation')=='two-frame comparison':detail+=' Confirmed by 1.5-second comparison.'
         elif report.get('pair_result'):detail+=' '+report['pair_result']+'.'
         self.set_stage(stage,detail)
