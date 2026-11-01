@@ -10,6 +10,22 @@ def reading(current,target=600):return {'current':current,'target':target,'label
 
 
 class QuestParsingTests(unittest.TestCase):
+    def test_focused_guild_body_recovers_both_wrapped_heights_without_borrowing(self):
+        crop=Image.new('RGB',(240,20),'black');crop.info['quest_box']=(0,0,240,20)
+        for counter in ('49/\n600','\n101/600'):
+            body='Obtain Catalyst ('+counter+')\n[Daily] Alchemy\nMake Oil (22/100)'
+            responses=['no counter','no counter','[Alchemy] Guild Supply Mission',body,body]
+            with patch('guild_quest.run_ocr',side_effect=[type('Result',(),{'returncode':0,'stdout':t.encode()})() for t in responses]),patch('guild_quest.guild_heading_crops',return_value=[crop]):
+                result,raw=recognize_quest(Image.new('RGB',(300,150),'black'),'engine')
+            self.assertEqual(result['current'],101 if '101' in counter else 49)
+            self.assertEqual(result['target'],600);self.assertIn('FOCUSED',raw)
+
+    def test_disagreeing_focused_guild_body_does_not_accept_a_number(self):
+        crop=Image.new('RGB',(240,20),'black');crop.info['quest_box']=(0,0,240,20)
+        responses=['no counter','no counter','[Alchemy] Guild Supply Mission','Obtain Catalyst (184/600)','Obtain Catalyst (84/600)']
+        with patch('guild_quest.run_ocr',side_effect=[type('Result',(),{'returncode':0,'stdout':t.encode()})() for t in responses]),patch('guild_quest.guild_heading_crops',return_value=[crop]):
+            self.assertIsNone(recognize_quest(Image.new('RGB',(300,150),'black'),'engine')[0])
+
     def test_optional_caption_timeout_preserves_verified_guild_counter(self):
         body=b'[Alchemy] Guild Supply Mission\nObtain Catalyst (184/600)'
         success=type('Result',(),{'returncode':0,'stdout':body})()

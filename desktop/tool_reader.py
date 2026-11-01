@@ -179,7 +179,10 @@ def ocr(image,tess,psm,numeric=False,characters=False):
     result=run_ocr(command+output,
                    input=blob.getvalue(),capture_output=True,timeout=min(5,remaining))
     if result.returncode:raise RuntimeError('Tool OCR could not read the frame')
-    return result.stdout.decode('utf-8','replace')
+    text=result.stdout.decode('utf-8','replace')
+    trace=getattr(_budget,'trace',None)
+    if trace is not None and len(trace)<16:trace.append(f'PSM {psm} numeric={numeric}\n'+text[:1800])
+    return text
 
 
 class CharacterBoxes(HTMLParser):
@@ -418,7 +421,7 @@ def changing_tool(before,after,elapsed):
     if not 1.25<=elapsed<=2.25 or not before or len(before)!=len(after):return None
     candidates=[]
     for a,b in zip(before,after):
-        if a.get('numbers')!=b.get('numbers') or a['maximum']!=b['maximum']:return None
+        if not a.get('numbers') or a.get('numbers')!=b.get('numbers') or a['maximum']!=b['maximum']:return None
         if min(a.get('votes',0),b.get('votes',0))<2:return None
         if family(a['name']) and family(b['name']) and family(a['name'])!=family(b['name']):return None
         drop=a['current']-b['current']
@@ -432,6 +435,7 @@ def place_selected(report,height):
     if 'Place Mode' not in anchor.get('evidence',''):return None
     unit=max(.6,min(2.,height/1080));ranked=[]
     for row in report.get('tools',[]):
+        if row.get('votes',0)<2 or row['current']<=0:continue
         box=row.get('numbers') or row['box'];x=(box[0]+box[2])/2;y=(box[1]+box[3])/2
         if not anchor['y']-5*unit<=y<=anchor['y']+280*unit:continue
         score=abs(x-anchor['x']-40*unit)+.6*abs(y-anchor['y']-55*unit)
@@ -510,12 +514,16 @@ class AutomaticToolReader:
         self.quiet_reads=0
         self.numeric_cache={};self.signatures={}
         self.last_pair=-1e9
+        self.diagnostic=None
 
     def read(self,tess,bounds,grab,now=None,interval=10,confirm_pair=False):
         started=time.monotonic();_budget.deadline=started+6
+        if self.diagnostic is not None:_budget.trace=[]
         try:
             report=self._read(tess,bounds,grab,now,interval)
-            selected=place_selected(report,bounds[4]-bounds[2]) if not report['active_id'] else None
+            selected=place_selected(report,bounds[4]-bounds[2])
+            if selected and report['active_id'] and selected['id']!=report['active_id']:
+                report.update(active_id=None,active_key=None,reason='Place Mode and changing tool disagree; use confirmation pending')
             if selected and not getattr(self,'position_started',False):
                 # First verified read is usable immediately; confirm use on
                 # the following scan without holding the initial countdown.
@@ -529,8 +537,11 @@ class AutomaticToolReader:
                 selected['state']='Selected by Place Mode · checking use'
                 report['next_seconds']=1.5;self.next_due=time.monotonic()+1.5
             report['duration']=time.monotonic()-started
+            if hasattr(_budget,'trace'):report['_debug_raw']='\n\n'.join(_budget.trace)[:12000]
             return report
-        finally:del _budget.deadline
+        finally:
+            del _budget.deadline
+            if hasattr(_budget,'trace'):del _budget.trace
 
     def compare_pair(self,tess,bounds,grab,report,interval):
         """Two small label batches 1.5 seconds apart; never retain full frames."""
@@ -550,7 +561,11 @@ class AutomaticToolReader:
         report['ocr_calls']+=calls_a+calls_b
         field=changing_tool(a,b,b_mono-a_mono) if len(a)==len(regions) and len(b)==len(regions) else None
         report['duration']+=time.monotonic()-a_mono
-        report['pair_result']='One verified changing tool' if field else 'No unique verified durability change'
+        selected=place_selected(report,bounds[4]-bounds[2])
+        if field and selected and tuple(selected.get('numbers',()))!=field:
+            field=None
+            report['pair_result']='A nearby tool changed, but it does not match Place Mode; confirmation withheld'
+        else:report['pair_result']='One verified changing tool' if field else 'No unique verified durability change'
         if field:
             self.inventory.update(a,a_mono,self.context)
             confirmed=self.inventory.update(b,b_mono,self.context,confirmed_field=field)
@@ -602,6 +617,8 @@ class AutomaticToolReader:
             extra_crops=[scene.crop(r['box']) for r in extra]
             rescued,used_calls=verify_labels(extra_crops,extra,tess,self.numeric_cache) if extra else ([],0);calls+=used_calls
             self.regions+=extra;crops+=extra_crops;observations+=rescued
+        if self.diagnostic is not None:
+            self.diagnostic(crops,observations,scene)
         scene=None
         observations=distinct_counters(observations)
         report=self.inventory.update(observations,now,context)

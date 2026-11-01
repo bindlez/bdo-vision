@@ -1,3 +1,13 @@
+# BDO Vision · current development candidate 1.12.1-rc.1
+
+The published first release is [v1.12.0](https://github.com/bindlez/bdo-vision/releases/tag/v1.12.0). This candidate adds optional Live OCR Reader windows for tools and quests, safer Place Mode/use agreement, bounded focused quest recovery and a complete offline Developer Handbook.
+
+For development start with [Start here](docs/handbook/01-start.md), run `python dev.py doctor`, then `python dev.py run` for a disposable profile. Build the linked, searchable website with `python dev.py docs` or open **DEVELOPER-HANDBOOK.bat**. Run `python dev.py check` before a release. The handbook includes line-linked source, schema references, feature editing guides, testing, profiling, releases and recovery. No developer tooling runs during normal gameplay.
+
+Tool and Quest windows each have **LIVE OCR READER**. Previews reuse the existing scan and remain in memory only while open. OCR can still reject unreadable or overlapping text; these views expose the image, recognition and decision rather than promising perfect accuracy. Published packages and real history remain separate from development profiles.
+
+The sections below are historical release notes; their defaults and validation describe those older versions.
+
 # BDO Vision 1.12.0-rc.5 — automatic tools and alchemy Guild Quest
 
 Focused gold-heading recovery handles the live near-complete widget as well as the initial reading. The real 184 → 593/600 sequence triggers one near alert; repeating the same frame does not alert again. Counter consensus, guild context and the three-second work budget remain required.

@@ -9,13 +9,16 @@ out=root/'dist';out.mkdir(exist_ok=True)
 allowed=[]
 for name in ('VERSION','README.md','RELEASE_NOTES.md','requirements.txt','requirements-dev.txt',
              'requirements-optional-tray.txt','RUN.bat','INSTALL.bat','INSTALL-TRAY-SUPPORT.bat',
-             'BUILD-EXE.bat','install_local.py','bdo-market-intelligence.html','.gitignore','.gitattributes'):
+             'BUILD-EXE.bat','install_local.py','bdo-market-intelligence.html','.gitignore','.gitattributes',
+             'dev.py','AGENTS.md','DEVELOPER-HANDBOOK.bat','CHANGELOG.md'):
     path=root/name
     if path.is_file():allowed.append(path)
 for directory,pattern in [('desktop','*.py'),('desktop','*.bat'),('desktop/assets','*.json'),
                           ('desktop/assets','*.js'),('desktop/assets','*.css'),('tests','*.py'),('scripts','*.py'),('scripts','*.js'),('docs','*.md'),
-                          ('.github/workflows','*.yml')]:
+                          ('.github/workflows','*.yml'),('native','*.md'),('native','*.py'),
+                          ('native','*.hpp'),('native','*.cpp'),('native','*.cmd')]:
     allowed.extend((root/directory).glob(pattern))
+allowed.extend((root/'docs/handbook').glob('*.md'))
 if (root/'demo').exists():allowed.extend((root/'demo').glob('*.html'))
 revision=subprocess.run(['git','rev-parse','HEAD'],cwd=root,capture_output=True,text=True)
 dirty=subprocess.run(['git','status','--porcelain'],cwd=root,capture_output=True,text=True)

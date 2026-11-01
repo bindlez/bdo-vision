@@ -3,7 +3,7 @@ import sys,unittest
 from unittest.mock import patch
 from PIL import Image,ImageDraw
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'desktop'))
-from tool_reader import ToolInventory,AutomaticToolReader,character_anchor,discover_regions,PARTIAL_NAME,label_name,read_bands,verify_labels,label_signature,signature_matches,words,CharacterBoxes,durability_bars,distinct_counters,changing_tool
+from tool_reader import ToolInventory,AutomaticToolReader,character_anchor,discover_regions,PARTIAL_NAME,label_name,read_bands,verify_labels,label_signature,signature_matches,words,CharacterBoxes,durability_bars,distinct_counters,changing_tool,place_selected
 
 
 def row(value,x=200,name='Supreme Alchemy Tool',maximum=5000):
@@ -11,6 +11,31 @@ def row(value,x=200,name='Supreme Alchemy Tool',maximum=5000):
 
 
 class ActiveToolTests(unittest.TestCase):
+    def test_place_mode_rejects_empty_unverified_above_and_tied_tools(self):
+        anchor={'x':500,'y':180,'evidence':'Place Mode anchor'}
+        tool={**row(800),'id':'a','numbers':[510,220,570,240]}
+        self.assertEqual(place_selected({'anchor':anchor,'tools':[tool]},1080)['id'],'a')
+        for invalid in ({**tool,'current':0},{**tool,'votes':1},{**tool,'numbers':[510,100,570,120]}):
+            self.assertIsNone(place_selected({'anchor':anchor,'tools':[invalid]},1080))
+        tied={**tool,'id':'b','numbers':[514,220,574,240]}
+        self.assertIsNone(place_selected({'anchor':anchor,'tools':[tool,tied]},1080))
+
+    def test_pair_cannot_confirm_the_neighbour_of_place_mode_selection(self):
+        reader=AutomaticToolReader();reader.context='game'
+        a={**row(800),'id':'a','numbers':[510,220,570,240],'box':[400,210,600,245]}
+        other={**row(900,800),'id':'b','numbers':[810,220,870,240],'box':[700,210,900,245]}
+        reader.regions=[a,other];clock=[10.]
+        report={'active_id':None,'tools':[a,other],'anchor':{'x':500,'y':180,'evidence':'Place Mode anchor'},'duration':0,'ocr_calls':0}
+        def sleep(n):clock[0]+=n
+        with patch('tool_reader.time.monotonic',side_effect=lambda:clock[0]),patch('tool_reader.time.sleep',side_effect=sleep),patch('tool_reader.label_signature',return_value=Image.new('L',(12,12),'white')),patch('tool_reader.verify_labels',side_effect=[([a,other],4),([a,{**other,'current':898}],4)]):
+            result=reader.compare_pair('engine',(1,0,0,1920,1080),lambda box:Image.new('RGB',(200,35)),report,10)
+        self.assertIsNone(result['active_id']);self.assertIn('does not match Place Mode',result['pair_result'])
+
+    def test_refill_empty_missing_and_late_pair_do_not_confirm(self):
+        a={**row(800),'numbers':[100,10,160,25]}
+        for b,elapsed in (({**a,'current':900},1.5),({**a,'current':0},1.5),({**a,'current':798},3),({**a,'current':798,'numbers':None},1.5)):
+            self.assertIsNone(changing_tool([a],[b],elapsed))
+
     def test_pair_requires_one_plausible_verified_change_in_same_fields(self):
         a=[{**row(800),'numbers':[100,10,160,25]},{**row(5000,800),'numbers':[800,10,860,25]}]
         b=[{**a[0],'current':798},dict(a[1])]

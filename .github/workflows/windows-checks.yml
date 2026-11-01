@@ -33,6 +33,12 @@ jobs:
         run: node scripts/test_planner_security.js
       - name: Compile sources
         run: python -m compileall -q desktop scripts tests
+      - name: Build and validate Developer Handbook
+        run: python scripts/build_handbook.py --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BDO-Vision-Developer-Handbook
+          path: build/developer-handbook/
       - name: Build source release with checksums
         run: python scripts/package_release.py
       - name: Build lean Windows application

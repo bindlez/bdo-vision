@@ -123,10 +123,11 @@ def recognize_quest(image,tess):
             except subprocess.TimeoutExpired:break
             header=result.stdout.decode('utf-8','replace').strip()[:240] if not result.returncode else ''
             folded=header.casefold()
-            if 'guild' in folded and 'alchemy' in folded and any(w in folded for w in ('supp','mission','quest')):
-                a,b=[parse_quest_text(header+'\n'+text) for text in texts]
+            guild_header='guild' in folded and 'alchemy' in folded and any(w in folded for w in ('supp','mission','quest'))
+            if guild_header:
+                a,b=[parse_quest_text(header+'\n'+text) for text in texts[:2]]
                 if a and b and (a['current'],a['target'])==(b['current'],b['target']):agreed=a
-            if not re.search(r'\[(Daily|Bonus)\]',header,re.I) or 'quest_box' not in crop.info:continue
+            if not (guild_header and not agreed or re.search(r'\[(Daily|Bonus)\]',header,re.I)) or 'quest_box' not in crop.info:continue
             source=crop.info['quest_box'];stop=min(image.height,source[3]+120)
             if index+1<len(headings) and 'quest_box' in headings[index+1].info:stop=min(stop,headings[index+1].info['quest_box'][1])
             if stop-source[3]<12:continue
@@ -139,15 +140,21 @@ def recognize_quest(image,tess):
                 data=io.BytesIO();variant.save(data,format='PNG')
                 try:response=run_ocr([tess,'stdin','stdout','--psm','6','-l','eng'],input=data.getvalue(),capture_output=True,timeout=min(1,remaining))
                 except subprocess.TimeoutExpired:break
-                verified.append(parse_objectives(header+'\n'+response.stdout.decode('utf-8','replace')) if not response.returncode else [])
+                body_text=response.stdout.decode('utf-8','replace') if not response.returncode else ''
+                texts.append('FOCUSED '+header+'\n'+body_text)
+                verified.append(parse_quest_text(header+'\n'+body_text) if guild_header else parse_objectives(header+'\n'+body_text))
             if len(verified)==2:
-                right={r['key']:r for r in verified[1]}
-                focused.extend(r for r in verified[0] if r['key'] in right and (r['current'],r['target'])==(right[r['key']]['current'],right[r['key']]['target']))
+                if guild_header:
+                    a,b=verified
+                    if a and b and (a['current'],a['target'])==(b['current'],b['target']):agreed=a
+                else:
+                    right={r['key']:r for r in verified[1]}
+                    focused.extend(r for r in verified[0] if r['key'] in right and (r['current'],r['target'])==(right[r['key']]['current'],right[r['key']]['target']))
     left={r['key']:r for r in parse_objectives(texts[0])};right={r['key']:r for r in parse_objectives(texts[1])}
     objectives=[r for key,r in left.items() if key in right and (r['current'],r['target'])==(right[key]['current'],right[key]['target'])]
     objectives=list({r['key']:r for r in [*objectives,*focused]}.values())[:8]
     if objectives:agreed={**(agreed or {}),'objectives':objectives}
-    return agreed,'\n\n'.join(texts)[:1200]
+    return agreed,'\n\n'.join(texts)[:10000]
 
 
 class GuildQuestProgress:

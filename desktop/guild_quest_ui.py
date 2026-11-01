@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import ImageGrab,Image
 from guild_quest import GuildQuestProgress,recognize_quest
+from ocr_debug import OCRReaderView,preview_image
 from windows_bdo import visible_bdo_capture_bounds,item_regions_visible
 
 
@@ -20,6 +21,7 @@ class GuildQuestTracker:
         self.detail=tk.StringVar(value='Show the alchemy guild mission in BDO’s right-hand quest widget.')
         self.notice=tk.StringVar(value='Near-finish and completion alerts are sent once per quest.')
         self.debug=tk.StringVar();self.bar=None;self.cache=None
+        self.reader_view=OCRReaderView(self.app,'Quest OCR reader',self.read_now)
         self.objective_rows={};self.objective_tree=None;self.waiting=False
         tracker.ledger.db.execute('CREATE TABLE IF NOT EXISTS quest_objectives (key TEXT PRIMARY KEY,payload TEXT NOT NULL)')
         for key,payload in tracker.ledger.db.execute('SELECT key,payload FROM quest_objectives LIMIT 8'):
@@ -62,6 +64,7 @@ class GuildQuestTracker:
         buttons=tk.Frame(frame,bg=c['bg']);buttons.pack(fill='x')
         self.app.action(buttons,'READ NOW',self.read_now,primary=True).pack(side='left',padx=(0,8))
         self.app.action(buttons,'NEXT QUEST',self.next_quest,flat=True).pack(side='left')
+        self.app.text_button(buttons,'LIVE OCR READER',self.reader_view.open).pack(side='left',padx=12)
         self.app.text_button(buttons,'CUSTOM AREA',self.select_region).pack(side='right')
         self.app.text_button(buttons,'USE AUTO AREA',self.auto_region).pack(side='right',padx=12)
         tk.Label(frame,text='Reads visible Guild, Daily and Bonus objective counters about every 10 seconds. For a moved widget, select a custom area containing the headings and objectives. Covered or unclear counters retain their last verified value. Vision never accepts quests automatically.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=850,justify='left').pack(anchor='w',pady=(18,8))
@@ -134,11 +137,13 @@ class GuildQuestTracker:
             self.model.pause('Tesseract is unavailable; check Settings.');self.refresh();self.schedule();return
         try:box=self.capture_region()
         except Exception as exc:
+            self.reader_view.paused(str(exc))
             self.model.pause(str(exc));self.refresh();self.schedule(5000);return
         if (box[2]-box[0])*(box[3]-box[1])>(250000 if self.region else 1_000_000):
             self.model.pause('Use a custom area around the current mission, up to 250,000 pixels.');self.refresh();self.schedule();return
         self.busy=True;self.app.busy=True;generation=self.generation;started=time.monotonic()
         self.state.set('Reading the visible guild objective…')
+        debug_token=self.reader_view.token()
         def work():
             try:
                 if self.capture_region()!=box:raise RuntimeError('Mission area moved or was covered; retrying.')
@@ -150,6 +155,10 @@ class GuildQuestTracker:
                 if cached and cached[0]==key and time.monotonic()-cached[1]<60:reading,raw=cached[2],cached[3];reused=True
                 else:reading,raw=recognize_quest(image,tess);reused=False
                 if reading:self.cache=(key,time.monotonic(),reading,raw)
+                if debug_token is not None and self.reader_view.token()==debug_token:
+                    preview=preview_image(image)
+                    detail=('VERIFIED RESULT\n'+json.dumps(reading,indent=2) if reading else 'NOT ACCEPTED: no scoped counter agreed in two passes.')+'\n\nOCR PASSES\n'+raw
+                    self.root.after(0,lambda:self.reader_view.show(debug_token,preview,detail,captured))
                 if not self.closed:self.root.after(0,lambda:self.finish(reading,raw,generation,captured,time.monotonic()-started,reused))
             except Exception as exc:
                 message=str(exc)
@@ -180,6 +189,7 @@ class GuildQuestTracker:
 
     def failed(self,message,generation):
         self.busy=False;self.app.busy=False
+        self.reader_view.paused(message)
         if not self.closed:
             if generation==self.generation:self.model.pause(message);self.refresh()
             self.schedule()
@@ -220,6 +230,7 @@ class GuildQuestTracker:
                 else:self.objective_tree.insert('','end',iid=key,values=values)
 
     def close(self):
+        self.reader_view.close()
         self.closed=True;self.waiting=False;self.generation+=1
         if self.pending is not None:self.root.after_cancel(self.pending);self.pending=None
         self.model.save()

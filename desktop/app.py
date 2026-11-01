@@ -14,6 +14,7 @@ from tracking_core import ReadingGate, remaining_at, align_to_capture, estimate_
 from spatial_ocr import tsv_candidates, choose_spatial_pair
 from ocr_runtime import run_ocr
 from tool_reader import AutomaticToolReader
+from ocr_debug import OCRReaderView,label_montage,preview_image
 from tool_status import ToolStatus,estimate_durability
 from windows_bdo import foreground_bdo_capture_bounds
 
@@ -50,6 +51,7 @@ class App:
   self.region_confirmed=bool(config.get('region_confirmed',not self.first_run))
   self.auto_tools=tk.BooleanVar(value=bool(config.get('auto_tool_discovery',True)))
   self.tool_reader=AutomaticToolReader();self.tool_report=None;self.tool_window=None;self.tool_tree=None;self._active_tool_key=None
+  self.tool_debug=OCRReaderView(self,'Tool OCR reader',self.rescan_tools)
   self.tool_status=ToolStatus();self._tool_view_at=0.;self._tool_bridge_revision=-1
   self.tool_title=tk.StringVar(value='Ready to find tools');self.tool_preview=tk.StringVar(value='Visible counters will appear here')
   self.tool_metrics=tk.StringVar(value='No reading yet');self.tool_empty=None
@@ -223,6 +225,7 @@ class App:
   header=tk.Frame(win,bg=c['bg']);header.pack(fill='x',padx=22,pady=(20,10))
   tk.Label(header,text='TOOL READER',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',20)).pack(side='left')
   self.text_button(header,'SAVE STATUS',self.save_tool_status).pack(side='right')
+  self.text_button(header,'LIVE OCR READER',self.tool_debug.open).pack(side='right',padx=10)
   tk.Label(win,textvariable=self.tool_title,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',12)).pack(anchor='w',padx=22)
   tk.Label(win,textvariable=self.tool_health,bg=c['bg'],fg=c['secondary'],wraplength=810,justify='left').pack(anchor='w',padx=22,pady=(5,12))
   style=ttk.Style();style.configure('Tools.Treeview',background=c['panel'],fieldbackground=c['panel'],foreground=c['text'],rowheight=28)
@@ -258,6 +261,7 @@ class App:
  def set_tool_stage(self,stage,detail):
   if not hasattr(self,'tool_status'):return
   if self.tool_status.set_stage(stage,detail):self.refresh_tool_view()
+  if stage in ('off','paused','waiting','error'):self.tool_debug.paused(detail)
 
  def refresh_tool_view(self):
   if not hasattr(self,'tool_status'):return
@@ -303,6 +307,11 @@ class App:
  def capture_tools(self,tess,automatic=False):
   self.set_tool_stage('reading','Checking visible tool labels and durability. Loot recording remains independent.')
   reader=self.tool_reader;interval=self.safe_scan_interval()
+  debug_token=self.tool_debug.token();debug_frames=[]
+  def diagnostic(crops,observations,scene):
+   if self.tool_debug.token()==debug_token and debug_token is not None:
+    debug_frames[:]=[preview_image(scene) if scene is not None else label_montage(crops)]
+  reader.diagnostic=diagnostic if debug_token is not None else None
   def work():
    try:
     bounds=foreground_bdo_capture_bounds()
@@ -312,16 +321,22 @@ class App:
      return ImageGrab.grab(bbox=box,all_screens=True)
     captured_at=time.time();captured_mono=time.monotonic()
     report=reader.read(tess,bounds,grab,interval=interval,confirm_pair=True)
+    if debug_frames:
+     detail=json.dumps({k:report.get(k) for k in ('reason','confirmation','pair_result','anchor','tools','unreadable','duration','ocr_calls','cache_hits','camera_reacquired')},indent=2)+'\n\nOCR PASSES\n'+report.pop('_debug_raw','Unchanged verified crops reused; no new OCR text.')
+     image=debug_frames[0]
+     self.root.after(0,lambda:self.tool_debug.show(debug_token,image,detail,report.get('captured_at')))
     self.root.after(0,lambda:self.finish_tools(report,reader,automatic,captured_at,captured_mono))
    except Exception as exc:
     message=str(exc);reader.next_due=time.monotonic()+10
     self.root.after(0,lambda:self.tool_failed(message,reader))
+   finally:reader.diagnostic=None
   threading.Thread(target=work,name='vision-tool-finder',daemon=True).start()
 
  def tool_failed(self,message,reader):
   self.busy=False
   if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
   if reader is self.tool_reader:self.set_tool_stage('error',message)
+  self.tool_debug.paused(message)
 
  def finish_tools(self,report,reader,automatic,captured_at,captured_mono):
   self.busy=False
@@ -930,6 +945,7 @@ class App:
   self.ocr_text.set('No reliable current/max durability pair')
   if not automatic:self.status.set('No reading found. Move the camera or adjust the region in Settings.')
  def close(self):
+  self.tool_debug.close()
   try:self.save()
   except:pass
   try:

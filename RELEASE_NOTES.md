@@ -1,3 +1,9 @@
+# BDO Vision 1.12.1-rc.1 — OCR inspection and Developer Handbook
+
+Tool Reader and Quests each include an optional Live OCR Reader showing actual input, recognized text and acceptance/rejection evidence. No extra scan loop or persistent screenshots are added. Tool position selection excludes empty/unverified fields; a changing neighbor cannot confirm a conflicting Place Mode choice. Guild fallback can read the focused objective in both wrapped layouts within its existing budget. Unreadable bright/overlapping text can still be rejected; this is not a perfect-accuracy claim.
+
+Developer tools add isolated launches, selected tests and a linked offline handbook with source pages, symbol search, settings/schema references, feature recipes and release/recovery guidance. Build with `python dev.py docs`; use `python dev.py check` for the full development gate. The handbook is separate from the gameplay runtime. Existing published 1.12.0 packages are retained unchanged.
+
 # BDO Vision 1.12.0 — first release
 
 Includes immediate Place Mode-based selection from verified OCR, subsequent use confirmation, timed tool comparison, independent Guild/Daily/Bonus objective counts, wrapped counters, last-seen guild information on planner sends and protected history. Warnings default to guild 95% and ten seconds. Real reference captures cover numerator on either objective line. OCR can still fail over bright or overlapping text; unresolved values are labeled rather than invented. Live tool recognition was confirmed by the user and the running app at 2655/3000. Separate Tesseract English and visible readable game text remain required.
