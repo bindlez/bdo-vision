@@ -68,6 +68,7 @@ class PlannerBridge:
         self.gear_job=None;self.gear_stop=Event()
         self.gear_store_lock=Lock()
         self.tool_status={'stage':'idle','title':'Waiting for the native reader','tools':[]}
+        self.guild_status={'enabled':False,'available':False,'current':None,'target':None}
         self.data = {
             'current': int(current), 'maximum': int(maximum),
             'seconds_per_craft': float(seconds_per_craft),
@@ -147,6 +148,9 @@ class PlannerBridge:
                 route = urlsplit(self.path).path
                 if route=='/tool-reader':
                     with bridge._lock:status=copy.deepcopy(bridge.tool_status)
+                    self._send(status)
+                elif route=='/guild-quest':
+                    with bridge._lock:status=copy.deepcopy(bridge.guild_status)
                     self._send(status)
                 elif route in ('/', '/planner'):
                     try:
@@ -374,6 +378,12 @@ class PlannerBridge:
         value={key:status[key] for key in allowed if key in status}
         if len(json.dumps(value))>16000:raise ValueError('Tool status too large')
         with self._lock:self.tool_status=copy.deepcopy(value)
+
+    def update_guild_status(self,status):
+        allowed=('current','target','label','objective','available','last_at','percent','remaining','eta','complete','reason','enabled','threshold')
+        value={key:status[key] for key in allowed if key in status}
+        if len(json.dumps(value,allow_nan=False))>4000:raise ValueError('Guild status too large')
+        with self._lock:self.guild_status=copy.deepcopy(value)
 
     def consume_show_request(self):
         with self._lock:

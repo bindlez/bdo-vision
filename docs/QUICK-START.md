@@ -9,7 +9,7 @@ Extract the entire Windows ZIP. Close any older Vision, then double-click **OPEN
 3. Wait for an identified reading, then open **Grind**, name your spot and start the session before fighting. After a restart, resume an unfinished session explicitly.
 4. Check **Silver** for observed item value and price coverage. Unpriced items stay recorded but are excluded from partial silver totals. Capture outages pause observed time; missing drops are never invented.
 
-Minimize Vision while playing, leaving the game and selected loot area visible. Tool OCR stays idle during grinding when no tool timer is running. Loot recording continues independently of the open tab.
+Minimize Vision while playing, leaving the game and selected loot area visible. Tool discovery backs off when labels are absent. Loot recording continues independently of the open tab.
 
 ## Start crafting
 
@@ -25,4 +25,8 @@ Your history remains in `%USERPROFILE%/.bdo-vision`. Use the app's history backu
 
 ## Automatic durability
 
-No box is needed for cooking/alchemy tool durability. Keep BDO in front with tool labels visible. Open NEARBY TOOLS to inspect what was read. The reader confirms active use after two separate decreases and reacquires after camera motion. If labels leave the screen, measurements wait until they are visible again. Existing manual area selection is optional.
+No box is needed for cooking/alchemy tool durability. Keep BDO in front with tool labels visible. Open VIEW TOOLS to inspect what was read. The reader confirms active use after two separate decreases and reacquires after camera motion. If labels leave the screen, measurements wait until they are visible again. Existing manual area selection is optional.
+
+## Alchemy Guild Quest
+
+Click **GUILD QUEST**, enable the optional tracker, and return to BDO with the current alchemy guild objective visible in the right-hand quest widget. It reads the objective counter, shows progress and remaining units, and alerts once at 90% and once at completion. The warning percentage and sound are editable. Use **TEST ALERT** to check sound; **NEXT QUEST** archives the previous snapshot. A moved widget can use **CUSTOM AREA**. Hidden/unclear counters retain the last verified progress. Vision does not infer guild credit from loot or accept missions for you.

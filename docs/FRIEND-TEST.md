@@ -1,4 +1,6 @@
-# BDO Vision · test candidate · 1.12.0-rc.3
+# BDO Vision · test candidate · 1.12.0-rc.4
+
+Guild Quest: click GUILD QUEST in Vision, enable the optional tracker and return to BDO with the alchemy guild objective visible in the right-hand quest widget. Compare the displayed progress against the game. Default alert is 90%, with one completion alert. TEST ALERT checks sound without altering progress. Hide the widget and verify the state pauses. NEXT QUEST archives the previous snapshot. See GUILD-QUEST.md for boundaries.
 
 Tool durability: show full cooking/alchemy labels in BDO, then inspect VIEW TOOLS. Counters appear before the active utensil is confirmed; two separate decreases identify it. Move the camera and verify reacquisition. Cover BDO and confirm readings are labeled paused/last verified, then return to BDO for an immediate recheck. SAVE STATUS exports small local diagnostics without screenshots. These are optional checks alongside loot/grind testing below.
 

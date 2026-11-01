@@ -155,6 +155,7 @@ class App:
   gear_row=tk.Frame(main,bg=c['bg']);gear_row.pack(fill='x',pady=(12,0))
   self.action(gear_row,'SILVER & LOOT HISTORY',self.loot.open,flat=True).pack(side='left',fill='x',expand=True,padx=(0,5))
   self.action(gear_row,'GEAR STUDIO',self.open_gear_planner,flat=True).pack(side='left',fill='x',expand=True,padx=(5,0))
+  self.action(gear_row,'GUILD QUEST',self.open_guild_quest,flat=True).pack(side='left',fill='x',expand=True,padx=(8,0))
   tk.Label(main,textvariable=self.auto_health,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9)).pack(anchor='w',pady=(8,0))
 
   tk.Frame(main,bg=c['line'],height=1).pack(fill='x',pady=(12,9))
@@ -205,6 +206,10 @@ class App:
  def open_gear_planner(self):
   if self.bridge and self.bridge.server:webbrowser.open(self.bridge.base_url+'/planner#gear')
   else:self.status.set('Local planner is unavailable. Check the connection in Settings.')
+
+ def open_guild_quest(self):
+  self.loot.open()
+  self.loot.tabs.select(self.loot.guild.frame)
 
  def tool_mode_changed(self):
   self.tool_reader=AutomaticToolReader();self.last_scan_started=0
@@ -476,7 +481,7 @@ class App:
   heading('TESSERACT OCR')
   ttk.Entry(main,textvariable=self.tess,style='Vision.TEntry').pack(fill='x')
   heading('OCR PREVIEW')
-  self.preview=tk.Label(main,text='Automatic readings appear in NEARBY TOOLS.\nManual area preview is optional.',bg=c['panel'],fg=c['muted'],height=3,font=('Segoe UI',9))
+  self.preview=tk.Label(main,text='Automatic readings appear in VIEW TOOLS.\nManual area preview is optional.',bg=c['panel'],fg=c['muted'],height=3,font=('Segoe UI',9))
   self.preview.pack(fill='x',pady=(0,4))
   if self.last_image:self.show_preview(self.last_image)
   row=tk.Frame(footer,bg=c['bg']);row.pack(fill='x',pady=(0,6))
@@ -693,6 +698,7 @@ class App:
    x1,y1=pos;x2,y2=e.x_root,e.y_root;overlay.destroy();self._restore_region_windows()
    if abs(x2-x1)>5 and abs(y2-y1)>5:
     selected=[min(x1,x2),min(y1,y2),abs(x2-x1),abs(y2-y1)]
+    if self.region_target=='guild':self.loot.guild.set_region(selected);return
     if self.region_target in ('loot','loot_rare'):
      self.loot.set_region(selected,rare=self.region_target=='loot_rare');return
     for v,n in zip(self.region,selected):v.set(str(n))

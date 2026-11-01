@@ -50,6 +50,15 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(caught.exception.code,403)
         with self.assertRaises(ValueError):self.bridge.update_tool_status({'detail':'x'*17000})
 
+    def test_guild_status_is_read_only_bounded_and_local(self):
+        self.bridge.update_guild_status({'current':184,'target':600,'available':True,'image':'excluded'})
+        _,data=self.get('/guild-quest');view=json.loads(data)
+        self.assertEqual(view['current'],184);self.assertNotIn('image',view)
+        request=urllib.request.Request(self.bridge.base_url+'/guild-quest',headers={'Origin':'https://foreign.example'})
+        with self.assertRaises(urllib.error.HTTPError) as caught:urllib.request.urlopen(request,timeout=3)
+        self.assertEqual(caught.exception.code,403)
+        with self.assertRaises(ValueError):self.bridge.update_guild_status({'objective':'x'*5000})
+
     def test_original_payload_and_timestamp(self):
         reading = self.bridge.send(350,3000,1.2,observed_at=time.time()-4,
                                    session_id='existing',source='ocr')

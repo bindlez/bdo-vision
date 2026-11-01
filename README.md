@@ -1,4 +1,10 @@
-# BDO Vision 1.12.0-rc.3 — clearer readings, cheaper background checks
+# BDO Vision 1.12.0-rc.4 — automatic tools and alchemy Guild Quest
+
+Adds an optional Guild Quest tab with verified objective progress, a default 90% warning, completion alert, recent observed pace and persisted alert state. Default widget discovery needs no selection; a custom area supports moved layouts. Hidden/unreadable objectives retain last verified values. No guild credit is inferred from loot. See [Guild Quest](docs/GUILD-QUEST.md).
+
+Automatic tool discovery now supplements the label band with bounded gold-bar/character-box searches, reads difficult merged numeric fields and fixes quote handling in OCR rows. The crafting timer behavior is retained. See [release readiness](docs/RELEASE-READINESS.md) for evidence and limits.
+
+## Previous candidate: 1.12.0-rc.3
 
 Also shares background game-window discovery for five seconds while rechecking identity and coverage each time. Foreground game detection remains immediate. Unchanged Silver tables and disabled buttons avoid redundant UI updates. No extra process or dependency is added.
 

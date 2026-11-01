@@ -10,6 +10,7 @@ import math
 import re
 import time
 from threading import local
+from html.parser import HTMLParser
 from PIL import Image,ImageOps,ImageChops,ImageStat
 from ocr_parser import extract_pairs
 from ocr_runtime import run_ocr
@@ -73,7 +74,7 @@ def character_anchor(image):
 
 def words(tsv):
     result=[]
-    for row in csv.DictReader(io.StringIO(tsv),delimiter='\t'):
+    for row in csv.DictReader(io.StringIO(tsv),delimiter='\t',quoting=csv.QUOTE_NONE):
         if row.get('level')!='5' or not row.get('text','').strip():continue
         try:
             left,top,width,height=[int(row[k]) for k in ('left','top','width','height')]
@@ -105,7 +106,7 @@ def lines(tokens):
 
 def label_name(text):
     match=TOOL.search(text)
-    if not match:return PARTIAL_NAME if re.search(r'\b(?:Tool|Utensil)\s*[({\[]?\s*\d{1,6}\s*[/|]',text,re.I) else None
+    if not match:return PARTIAL_NAME if re.search(r'\b(?:Tool|ool|ol|Utensil)\s*[({\[]?\s*\d{1,6}\s*[/|]',text,re.I) else None
     name=' '.join(match.group().split())
     name=re.sub(r'Alchemy\s*Tool','Alchemy Tool',name,flags=re.I)
     name=re.sub(r'Cooking\s*Utensil','Cooking Utensil',name,flags=re.I)
@@ -167,16 +168,95 @@ def discover_regions(tsv,size,scale=1,anchor=None):
     return regions[:MAX_TOOLS]
 
 
-def ocr(image,tess,psm,numeric=False):
+def ocr(image,tess,psm,numeric=False,characters=False):
     blob=io.BytesIO();image.save(blob,format='PNG')
     command=[tess,'stdin','stdout','--psm',str(psm),'-l','eng']
     if numeric:command+=['-c','tessedit_char_whitelist=0123456789/()']
     remaining=getattr(_budget,'deadline',time.monotonic()+5)-time.monotonic()
     if remaining<.15:raise RuntimeError('Tool search reached its time budget; retrying automatically')
-    result=run_ocr(command+['tsv'],
+    output=['-c','hocr_char_boxes=1','hocr'] if characters else ['tsv']
+    result=run_ocr(command+output,
                    input=blob.getvalue(),capture_output=True,timeout=min(5,remaining))
     if result.returncode:raise RuntimeError('Tool OCR could not read the frame')
     return result.stdout.decode('utf-8','replace')
+
+
+class CharacterBoxes(HTMLParser):
+    """Exact glyph locations avoid estimating digits inside a merged OCR word."""
+    def __init__(self):super().__init__();self.box=None;self.chars=[]
+    def handle_starttag(self,tag,attrs):
+        attrs=dict(attrs)
+        if 'ocrx_cinfo' in attrs.get('class',''):
+            match=re.search(r'x_bboxes (\d+) (\d+) (\d+) (\d+)',attrs.get('title',''))
+            self.box=list(map(int,match.groups())) if match else None
+    def handle_data(self,data):
+        if self.box is not None and data:
+            self.chars.extend((char,self.box) for char in data);self.box=None
+
+
+def durability_bars(image):
+    """Cheap gold-line candidates; OCR still has to prove a tool and a fraction."""
+    width,height=image.size
+    small=image.resize((max(1,width//2),max(1,height//2)),Image.Resampling.NEAREST).convert('RGB')
+    red,green,blue=small.split()
+    mask=ImageChops.multiply(ImageChops.multiply(red.point(lambda p:255 if p>170 else 0),
+        green.point(lambda p:255 if p>140 else 0)),blue.point(lambda p:255 if p<160 else 0))
+    data=mask.tobytes();sw,sh=small.size;groups=[];pattern=re.compile(b'\xff{16,110}')
+    start=int(sw*.12);end=int(sw*.87)
+    for y in range(int(sh*.12),int(sh*.66)):
+        for hit in pattern.finditer(data[y*sw+start:y*sw+end]):
+            a=start+hit.start();b=start+hit.end()
+            previous=next((g for g in reversed(groups) if 0<=y-g[3]<=1 and abs((a+b-g[0]-g[2])/2)<6),None)
+            if previous:previous[0]=min(previous[0],a);previous[2]=max(previous[2],b);previous[3]=y+1
+            elif len(groups)<96:groups.append([a,y,b,y+1])
+    candidates=[[a*2,b*2,c*2,d*2] for a,b,c,d in groups if 1<=d-b<=3]
+    candidates.sort(key=lambda b:abs((b[0]+b[2])/2-width*.5)+abs(b[1]-height*.28)*.5)
+    pixels=image.load();unit=max(.6,min(2.,height/1080));bars=[]
+    for a,b,c,d in candidates[:32]:
+        middle=(a+c)//2;tracks=[]
+        for y in (b-1,b-2,d+1,d):
+            if not 0<=y<height or max(pixels[middle,y][:3])>=175:continue
+            left=right=middle
+            while left>max(0,middle-int(210*unit)) and max(pixels[left-1,y][:3])<175:left-=1
+            while right<min(width-1,middle+int(210*unit)) and max(pixels[right+1,y][:3])<175:right+=1
+            if 50*unit<=right-left<=180*unit and left<=a+4 and right>=c-4:tracks.append((abs((right-left)-100*unit),left,right))
+        if not tracks:
+            if c-a<60*unit:continue
+            left,right=a,c
+        else:_,left,right=min(tracks)
+        if any(abs(left-r['box'][0])<10 and abs(b-r['box'][1])<8 for r in bars):continue
+        bars.append({'box':[left,b,right,d],'fill':min(1.,(c-a)/max(1,right-left)) if tracks else None})
+    return bars[:MAX_TOOLS]
+
+
+def discover_bar_labels(image,tess,known=()):
+    width,height=image.size;unit=max(.6,min(2.,height/1080));regions=[];calls=0
+    for bar in durability_bars(image):
+        left,top,right,bottom=bar['box']
+        center=(left+right)/2
+        if any(r.get('numbers') and r['box'][0]<=center<=r['box'][2] and r['box'][1]<=top-10*unit<=r['box'][3] for r in known):continue
+        box=[max(0,int(left-190*unit)),max(0,int(top-26*unit)),min(width,int(left+310*unit)),max(1,int(top-6*unit))]
+        crop=image.crop(box)
+        if crop.height<8:continue
+        prepared=ImageOps.autocontrast(crop.convert('L')).resize((crop.width*3,crop.height*3),Image.Resampling.LANCZOS)
+        parser=CharacterBoxes();parser.feed(ocr(prepared,tess,7,characters=True));calls+=1
+        text=''.join(char for char,_ in parser.chars)
+        kind='Alchemy Tool' if re.search(r'alc[hkn]emy',text,re.I) else 'Cooking Utensil' if re.search(r'cookin[gqc]',text,re.I) else None
+        name=label_name(text)
+        if not kind and name!=PARTIAL_NAME and 'traditional' not in text.casefold():continue
+        candidates=list(re.finditer(r'[(\{][^(){}]{3,24}[)\}]',text))
+        if not candidates:candidates=list(re.finditer(r'[\dOIlS?][\dOIlS?,.:]{0,12}[/|][\dOIlS?,.:]{1,12}',text))
+        for match in candidates:
+            boxes=[b for _,b in parser.chars[match.start():match.end()]]
+            if not boxes or sum(c.isdigit() for c in match.group())<3:continue
+            a=min(b[0] for b in boxes)/3+box[0];b=max(b[2] for b in boxes)/3+box[0]
+            if not left+20*unit<=(a+b)/2<=left+300*unit:continue
+            numeric=[max(box[0],int(a-16*unit)),box[1],min(box[2],int(b+10*unit)),box[3]]
+            strict=re.fullmatch(r'[({]?(\d[\d,]*)\s*[/|]\s*(\d[\d,]*)[)}]?',match.group())
+            region={'name':name if name and name!=PARTIAL_NAME else kind or PARTIAL_NAME,'box':box,'numbers':numeric,'locator':'durability bar','bar_fill':bar['fill']}
+            if strict:region['bar_pair']=tuple(int(n.replace(',','')) for n in strict.groups())
+            if not any(abs((r['numbers'][0]+r['numbers'][2]-numeric[0]-numeric[2])/2)<16 and abs(r['box'][1]-box[1])<8 for r in regions):regions.append(region)
+    return regions[:MAX_TOOLS],calls
 
 
 def read_bands(tsv,bands):
@@ -201,27 +281,35 @@ def verify_labels(crops,regions,tess,cache=None):
     result=[];calls=0
     for index,(crop,region) in enumerate(zip(crops,regions)):
         if not region.get('numbers'):continue
-        a,b,c,d=region['numbers'];left,top,_,_=region['box']
-        numeric=crop.crop((a-left,b-top,c-left,d-top))
-        if numeric.width<8 or numeric.height<5:continue
-        key=(tess,tuple(region['numbers']),hashlib.sha256(numeric.tobytes()).digest())
-        cached=cache.get(key) if cache is not None else None
-        if cached and time.monotonic()-cached[0]<8:
-            result.append({**cached[1],'name':region['name'],'box':region['box'],'cache_hit':True});continue
-        gray=ImageOps.autocontrast(ImageOps.grayscale(numeric)).resize((numeric.width*4,numeric.height*4),Image.Resampling.LANCZOS)
-        readings=[];confidences=[]
-        for variant in (gray,ImageOps.invert(gray)):
-            tokens=words(ocr(variant,tess,7,numeric=True));calls+=1
-            readings.append(set(extract_pairs(' '.join(w['text'] for w in tokens))))
-            confidences.append(sum(w['confidence'] for w in tokens)/max(1,len(tokens)))
-        if len(readings[0])==1 and readings[0]==readings[1]:
-            current,maximum=next(iter(readings[0]))
-            if 0<=current<=maximum and 100<=maximum<=100_000:
-                result.append({'name':region['name'],'current':current,'maximum':maximum,'box':region['box'],'confidence':min(confidences),'votes':2})
-                if cache is not None:
-                    if len(cache)>=16:cache.pop(next(iter(cache)))
-                    cache[key]=(time.monotonic(),dict(result[-1]))
-                continue
+        original=region['numbers'];left,top,_,_=region['box']
+        windows=[original]
+        if region.get('locator')=='durability bar':windows.append([max(left,original[0]-3),*original[1:]])
+        for window in windows:
+            a,b,c,d=window;numeric=crop.crop((a-left,b-top,c-left,d-top))
+            if numeric.width<8 or numeric.height<5:continue
+            key=(tess,tuple(window),hashlib.sha256(numeric.tobytes()).digest())
+            cached=cache.get(key) if cache is not None else None
+            if cached and time.monotonic()-cached[0]<8:
+                result.append({**cached[1],'name':region['name'],'box':region['box'],'cache_hit':True});region['numbers']=window;region.pop('bar_pair',None);region.pop('bar_fill',None);break
+            gray=ImageOps.autocontrast(ImageOps.grayscale(numeric)).resize((numeric.width*4,numeric.height*4),Image.Resampling.LANCZOS)
+            readings=[];confidences=[]
+            for variant in (gray,ImageOps.invert(gray)):
+                tokens=words(ocr(variant,tess,7,numeric=True));calls+=1
+                readings.append(set(extract_pairs(' '.join(w['text'] for w in tokens))))
+                confidences.append(sum(w['confidence'] for w in tokens)/max(1,len(tokens)))
+            if len(readings[0])==1 and readings[0]==readings[1]:
+                current,maximum=next(iter(readings[0]))
+                if region.get('bar_pair') is not None and tuple(region['bar_pair'])!=(current,maximum):continue
+                if maximum and region.get('bar_fill') is not None and abs(current/maximum-region['bar_fill'])>.18:continue
+                if 0<=current<=maximum and 100<=maximum<=100_000:
+                    result.append({'name':region['name'],'current':current,'maximum':maximum,'box':region['box'],'numbers':window,'confidence':min(confidences),'votes':2})
+                    region['numbers']=window
+                    region.pop('bar_pair',None)
+                    region.pop('bar_fill',None)
+                    if cache is not None:
+                        if len(cache)>=16:cache.pop(next(iter(cache)))
+                        cache[key]=(time.monotonic(),dict(result[-1]))
+                    break
     return result,calls
 
 
@@ -240,7 +328,12 @@ def discover_scene(image,tess):
         return regions
     top=max(0,int(anchor['y']-height*.278));bottom=max(top+1,min(height,int(anchor['y']-height*.046)))
     regions=band((0,top,width,bottom),anchor);calls+=1
-    if regions:return regions,anchor,calls
+    bar_regions,used_calls=discover_bar_labels(image,tess,regions);calls+=used_calls
+    if not bar_regions and not any(r.get('numbers') for r in regions):
+        wide_top=max(0,int(anchor['y']-height*.36))
+        wider=band((0,wide_top,width,bottom),anchor);calls+=1
+        if any(r.get('numbers') for r in wider):regions=wider
+    if regions or bar_regions:return (regions+bar_regions)[:MAX_TOOLS],{**anchor,'evidence':'visible durability bars + label band' if bar_regions else anchor['evidence']},calls
     # A fallback broad pass also locates a movable Place Mode button. It is a
     # search aid only, never evidence that the nearest utensil is active.
     scale=min(1,1920/width,1080/height)
@@ -255,6 +348,20 @@ def discover_scene(image,tess):
         regions=band((0,top,width,bottom),place);calls+=1
         if regions:return regions,place,calls
     return discover_regions(raw,(width,height),scale,anchor),anchor,calls
+
+
+def distinct_counters(observations):
+    """Merge locators for the same field; conflicting values remain unreadable."""
+    groups=[]
+    for row in observations:
+        box=row.get('numbers')
+        if not box:groups.append([row]);continue
+        group=next((g for g in groups if g[0].get('numbers') and
+            abs(sum(g[0]['numbers'][::2])-sum(box[::2]))<80 and
+            abs(sum(g[0]['numbers'][1::2])-sum(box[1::2]))<32),None)
+        if group is None:groups.append([row])
+        else:group.append(row)
+    return [g[0] for g in groups if len({(r['current'],r['maximum']) for r in g})==1]
 
 
 class ToolInventory:
@@ -332,7 +439,7 @@ class AutomaticToolReader:
 
     def _read(self,tess,bounds,grab,now=None,interval=10):
         """bounds=(window_id,left,top,right,bottom); grab is screen-capture adapter."""
-        started=time.monotonic();now=started if now is None else now
+        started=time.monotonic();now=started if now is None else now;scene=None
         hwnd,left,top,right,bottom=bounds;width=right-left;height=bottom-top
         if width<100 or height<100 or width*height>16_000_000:raise ValueError('Unsupported visible game window size')
         context=(hwnd,left,top,width,height)
@@ -341,6 +448,7 @@ class AutomaticToolReader:
         calls=0
         if discover:
             image=grab((left,top,right,bottom)).convert('RGB')
+            scene=image
             captured_mono=time.monotonic();captured_at=time.time()
             self.regions,self.anchor,used_calls=discover_scene(image,tess);calls+=used_calls
             self.last_discovery=now
@@ -356,6 +464,7 @@ class AutomaticToolReader:
             # Camera motion invalidates remembered label rectangles. Reacquire
             # this scan rather than waiting for the broad-discovery heartbeat.
             image=grab((left,top,right,bottom)).convert('RGB')
+            scene=image
             captured_mono=time.monotonic();captured_at=time.time()
             self.regions,self.anchor,used_calls=discover_scene(image,tess);calls+=used_calls
             crops=[image.crop(r['box']) for r in self.regions]
@@ -363,6 +472,16 @@ class AutomaticToolReader:
             observations,used_calls=verify_labels(crops,self.regions,tess,self.numeric_cache) if crops else ([],0)
             calls+=used_calls
             self.last_discovery=now;discover=True
+        if scene is not None and any(r.get('locator')!='durability bar' and not any(o['box']==r['box'] for o in observations) for r in self.regions):
+            known=[r for r in self.regions if r.get('locator')=='durability bar' or any(o['box']==r['box'] for o in observations)]
+            extra,used_calls=discover_bar_labels(scene,tess,known);calls+=used_calls
+            verified=[r for r in self.regions if any(o['box']==r['box'] for o in observations)]
+            extra=extra[:max(0,MAX_TOOLS-len(verified))]
+            extra_crops=[scene.crop(r['box']) for r in extra]
+            rescued,used_calls=verify_labels(extra_crops,extra,tess,self.numeric_cache) if extra else ([],0);calls+=used_calls
+            self.regions+=extra;crops+=extra_crops;observations+=rescued
+        scene=None
+        observations=distinct_counters(observations)
         report=self.inventory.update(observations,now,context)
         unreadable=[{'name':r['name'],'box':r['box']} for r in self.regions if not any(r['box']==o['box'] for o in observations)]
         self.misses=self.misses+1 if not observations else 0

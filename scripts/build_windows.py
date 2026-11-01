@@ -26,7 +26,7 @@ for name in ('bdo-market-intelligence.html','VERSION','README.md','RELEASE_NOTES
 guide=root/'docs/QUICK-START.md'
 if not guide.is_file():guide=root/'docs/FRIEND-TEST.md'
 if guide.is_file():shutil.copy2(guide,stage/'START-HERE.md')
-for name in ('FRIEND-TEST.md','PERFORMANCE-AND-SECURITY.md','RELEASE-SYSTEM.md','AUTOMATIC-TOOLS.md'):
+for name in ('FRIEND-TEST.md','PERFORMANCE-AND-SECURITY.md','RELEASE-SYSTEM.md','AUTOMATIC-TOOLS.md','GUILD-QUEST.md','RELEASE-READINESS.md'):
     if (root/'docs'/name).is_file():shutil.copy2(root/'docs'/name,stage/name)
 evidence=stage/'CHECKS';evidence.mkdir(exist_ok=True)
 for name in ('test-report.txt','test-results.json'):

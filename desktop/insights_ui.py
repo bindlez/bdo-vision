@@ -86,6 +86,8 @@ class LootInsights:
             if self.frame and self.frame.winfo_exists() and self.frame.winfo_ismapped():self.refresh()
             if self.sessions_frame and self.sessions_frame.winfo_exists() and self.sessions_frame.winfo_ismapped():self.refresh_sessions()
             if self.tracker.grind.frame and self.tracker.grind.frame.winfo_exists() and self.tracker.grind.frame.winfo_ismapped():self.tracker.grind.refresh()
+            guild=getattr(self.tracker,'guild',None)
+            if guild and guild.frame and guild.frame.winfo_exists() and guild.frame.winfo_ismapped():guild.refresh()
         except Exception as exc:self.state.set('Tracking paused; automatic retry pending: '+str(exc))
         finally:
             if not self.closed:self.root.after(1000,self.tick)

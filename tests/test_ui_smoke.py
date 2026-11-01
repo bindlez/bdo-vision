@@ -22,6 +22,7 @@ class DesktopSmokeTests(unittest.TestCase):
             app.bridge = type('Bridge', (), {'server': True})()
             app.refresh_action_states()
             self.assertEqual(str(app.send_button['state']), 'normal')
+            app.bridge=None
             app.open_settings()
             root.update_idletasks()
             self.assertTrue(app.settings_window.winfo_exists())
@@ -45,6 +46,14 @@ class DesktopSmokeTests(unittest.TestCase):
             self.assertEqual(tree.selection(),('Milk',))
             app.loot.ledger.add('Milk',2);app.loot.silver.refresh()
             self.assertEqual(tree.item('Milk')['values'][2],5)
+            app.open_guild_quest();root.update_idletasks()
+            self.assertEqual(app.loot.tabs.select(),str(app.loot.guild.frame))
+            self.assertFalse(app.loot.guild.enabled.get());self.assertIsNone(app.loot.guild.pending)
+            app.loot.guild.model.accept({'current':184,'target':600},at=100)
+            app.loot.guild.refresh();self.assertEqual(app.loot.guild.progress.get(),'184 / 600')
+            with patch('guild_quest_ui.winsound.MessageBeep') as beep:
+                app.loot.guild.alert('test');beep.assert_called_once()
+            self.assertEqual(app.loot.guild.model.current,184)
         finally:
             if "app" in locals():app.loot.close()
             root.destroy()

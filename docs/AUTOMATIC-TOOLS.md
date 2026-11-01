@@ -1,5 +1,7 @@
 # Automatic cooking/alchemy tool reader
 
+rc.4 adds quote-safe OCR-row parsing, a wider vertical search band and supplemental gold-bar/character-box localization. A numeric field can be found even when Tesseract merges it with a long name. The existing label band remains necessary for low/empty bars; verified locators are merged and conflicting values stay uncertain. The work budget remains six seconds. In two saved live layouts, the updated path recovered 2,910/3,000 and 2,287/3,000 that were missing from the prior result. This is targeted regression evidence, not complete live coverage.
+
 Automatic tool discovery is enabled by default. Show the game in front with utensil labels visible; no capture box is required. The main window shows readable counters before active-tool confirmation. Use **VIEW TOOLS** for verified durability, last-read ages and clear finding/confirming/tracking/paused states. Manual region OCR remains an optional fallback in Settings.
 
 The reader finds a likely character anchor from paired in-world red/blue bars, with screen center as a search prior when those bars are absent. It reads a narrow band above that anchor at higher resolution, then automatically isolates numeric fractions for two focused OCR reads. It searches outward when needed and can use an OCR-detected **Place Mode** button as a fallback reference. No rearrangement of the game's UI is required.

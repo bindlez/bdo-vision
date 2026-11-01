@@ -19,6 +19,7 @@ from silver_loot import silver_snapshot
 from capture_clock import CaptureClock
 from grind_ui import GrindTracker
 from frame_cache import FeedCache
+from guild_quest_ui import GuildQuestTracker
 
 
 class LootTracker:
@@ -53,10 +54,11 @@ class LootTracker:
         self.insights=LootInsights(self)
         self.silver=SilverLooted(self)
         self.grind=GrindTracker(self)
+        self.guild=GuildQuestTracker(self,settings)
         self.root.after(250,self.poll)
 
     def settings(self):
-        return {'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get()}
+        return {'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings()}
 
     def safe_interval(self):
         try:return max(.5,min(30,float(self.interval.get())))
@@ -111,6 +113,7 @@ class LootTracker:
         self.insights.build(tabs)
         self.silver.build(tabs)
         self.grind.build(tabs)
+        self.guild.build(tabs)
         reader=tk.Frame(tabs,bg=c['bg']);tabs.add(reader,text='OCR reader')
         self.preview=tk.Label(reader,bg=c['panel'],fg=c['muted'],text='Latest capture will appear here.');self.preview.pack(fill='x',pady=8)
         self.debug_text=tk.Text(reader,height=10,bg=c['panel'],fg=c['text'],font=('Consolas',10),wrap='word',relief='flat',state='disabled');self.debug_text.pack(fill='both',expand=True)
@@ -211,7 +214,8 @@ class LootTracker:
         try:
             if self.enabled.get():
                 next_poll=250
-                if self.busy:self.capture_state.set('Tracking ON · reading item notifications')
+                if getattr(getattr(self,'guild',None),'busy',False):self.capture_state.set('Tracking ON · guild reader finishing');next_poll=500
+                elif self.busy:self.capture_state.set('Tracking ON · reading item notifications')
                 elif self.app.selecting_region:self.capture_state.set('Tracking ON · selecting capture area')
                 else:
                     delay=max(0,self.safe_interval()-(time.monotonic()-self.last_scan))
@@ -366,7 +370,7 @@ class LootTracker:
         self.refresh()
 
     def close(self):
-        self.closed=True;self.generation+=1;self.capture_clock.save();self.silver.close();self.insights.close();self.ledger.close()
+        self.closed=True;self.generation+=1;self.guild.close();self.capture_clock.save();self.silver.close();self.insights.close();self.ledger.close()
 
     def planner_loot_snapshot(self):
         prices=self.insights.prices

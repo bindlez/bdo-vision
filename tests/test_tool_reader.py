@@ -3,7 +3,7 @@ import sys,unittest
 from unittest.mock import patch
 from PIL import Image,ImageDraw
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'desktop'))
-from tool_reader import ToolInventory,AutomaticToolReader,character_anchor,discover_regions,PARTIAL_NAME,label_name,read_bands,verify_labels,label_signature,signature_matches
+from tool_reader import ToolInventory,AutomaticToolReader,character_anchor,discover_regions,PARTIAL_NAME,label_name,read_bands,verify_labels,label_signature,signature_matches,words,CharacterBoxes,durability_bars,distinct_counters
 
 
 def row(value,x=200,name='Supreme Alchemy Tool',maximum=5000):
@@ -76,6 +76,43 @@ class ActiveToolTests(unittest.TestCase):
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_quote_noise_cannot_swallow_following_tsv_rows(self):
+        text='level\tleft\ttop\twidth\theight\tconf\ttext\n5\t0\t0\t10\t20\t10\t"noise\n5\t100\t200\t250\t20\t95\tAlchemy Tool(95/3000)\n'
+        tokens=words(text)
+        self.assertEqual(len(tokens),2);self.assertEqual(tokens[1]['text'],'Alchemy Tool(95/3000)')
+        self.assertEqual(discover_regions(text,(1000,700))[0]['coarse_pair'],(95,3000))
+
+    def test_character_locations_preserve_merged_word_geometry(self):
+        parser=CharacterBoxes();parser.feed('<span class="ocrx_cinfo" title="x_bboxes 12 3 18 19; x_conf 90">2</span><span class="ocrx_cinfo" title="x_bboxes 19 3 22 19">/</span>')
+        self.assertEqual(parser.chars,[('2',[12,3,18,19]),('/',[19,3,22,19])])
+
+    def test_gold_icons_without_a_thin_shadow_track_are_rejected(self):
+        im=Image.new('RGB',(1280,720),'white');draw=ImageDraw.Draw(im)
+        draw.rectangle((400,210,440,218),fill=(240,200,70))
+        self.assertEqual(durability_bars(im),[])
+        draw.rectangle((600,210,669,215),fill=(50,50,50));draw.rectangle((600,211,661,213),fill=(240,200,70))
+        self.assertEqual(len(durability_bars(im)),1)
+
+    def test_two_locators_merge_one_counter_and_disagreement_is_excluded(self):
+        a={**row(95),'numbers':[100,10,160,25]};b={**row(95,800),'numbers':[103,10,163,25]}
+        self.assertEqual(len(distinct_counters([a,b])),1)
+        self.assertEqual(distinct_counters([a,{**b,'current':5}]),[])
+
+    def test_bar_validation_is_discovery_only_and_does_not_freeze_counter(self):
+        region={'name':'Alchemy Tool','box':[0,0,100,30],'numbers':[20,0,100,30],'locator':'durability bar','bar_pair':(95,3000),'bar_fill':.032}
+        header='level\tleft\ttop\twidth\theight\tconf\ttext\n5\t0\t0\t80\t20\t90\t'
+        crop=Image.new('RGB',(100,30),'white')
+        with patch('tool_reader.ocr',return_value=header+'95/3000\n'):
+            self.assertEqual(verify_labels([crop],[region],'engine')[0][0]['current'],95)
+        self.assertNotIn('bar_pair',region);self.assertNotIn('bar_fill',region)
+        with patch('tool_reader.ocr',return_value=header+'92/3000\n'):
+            self.assertEqual(verify_labels([crop],[region],'engine')[0][0]['current'],92)
+
+    def test_bad_numeric_digit_cannot_disagree_with_a_nearly_full_bar(self):
+        region={'name':'Alchemy Tool','box':[0,0,100,30],'numbers':[20,0,100,30],'locator':'durability bar','bar_fill':.97}
+        raw='level\tleft\ttop\twidth\theight\tconf\ttext\n5\t0\t0\t80\t20\t90\t290/3000\n'
+        with patch('tool_reader.ocr',return_value=raw):
+            self.assertEqual(verify_labels([Image.new('RGB',(100,30),'white')],[region],'engine')[0],[])
     def test_fraction_split_across_tokens_gets_one_numeric_crop(self):
         header='level\tleft\ttop\twidth\theight\tconf\ttext\n'
         raw=header+'5\t100\t200\t80\t20\t90\tAlchemy\n5\t185\t200\t60\t20\t90\tTool(95\n5\t250\t200\t6\t20\t90\t/\n5\t260\t200\t50\t20\t90\t3000)\n'
