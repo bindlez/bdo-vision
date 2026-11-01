@@ -40,6 +40,16 @@ class BridgeTests(unittest.TestCase):
         self.assertIn('text/html', h['Content-Type'])
         self.assertIn(b'function pollBridge()', text)
 
+    def test_tool_diagnostics_are_small_isolated_and_read_only(self):
+        status={'stage':'found','tools':[{'id':'a','current':95}], 'screenshot':'excluded'}
+        self.bridge.update_tool_status(status);status['tools'][0]['current']=7
+        _,data=self.get('/tool-reader');view=json.loads(data)
+        self.assertEqual(view['tools'][0]['current'],95);self.assertNotIn('screenshot',view)
+        request=urllib.request.Request(self.bridge.base_url+'/tool-reader',headers={'Origin':'https://foreign.example'})
+        with self.assertRaises(urllib.error.HTTPError) as caught:urllib.request.urlopen(request,timeout=3)
+        self.assertEqual(caught.exception.code,403)
+        with self.assertRaises(ValueError):self.bridge.update_tool_status({'detail':'x'*17000})
+
     def test_original_payload_and_timestamp(self):
         reading = self.bridge.send(350,3000,1.2,observed_at=time.time()-4,
                                    session_id='existing',source='ocr')

@@ -32,6 +32,14 @@ class AutoOCRTests(unittest.TestCase):
         app=self.app();app.region_confirmed=False
         App.poll_auto_ocr(app);app.read_ocr.assert_not_called()
 
+    def test_return_to_game_rechecks_immediately(self):
+        app=self.app();app.auto_tools=types.SimpleNamespace(get=lambda:True)
+        app.tool_reader=types.SimpleNamespace(next_due=float('inf'))
+        app.tool_status=types.SimpleNamespace(stage='paused');app.set_tool_stage=MagicMock()
+        App.poll_auto_ocr(app)
+        self.assertEqual(app.tool_reader.next_due,0)
+        app.read_ocr.assert_called_once_with(delayed=False,automatic=True)
+
     def test_worker_failure_does_not_stop_polling(self):
         app=self.app();app.read_ocr.side_effect=RuntimeError('failure')
         App.poll_auto_ocr(app)

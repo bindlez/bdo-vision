@@ -1,3 +1,9 @@
+# BDO Vision 1.12.0-rc.2 — tool reader reliability and polish
+
+Shows readable counters before a tool is confirmed, with explicit capture states, reading ages, a scrollable tool list and bounded local diagnostics. Reduces difficult-frame numeric retries, detects camera shifts from tiny title masks, handles split fraction tokens and retains identity through one missed frame without reporting a hidden tool as active. Two consecutive misses reset use evidence. Returning to BDO rechecks immediately; empty searches retry briefly before backing off. Main controls scroll on smaller windows. Existing loot, silver, crafting, grind, gear and history are preserved.
+
+On three saved BDO frames, difficult reads fell from 13/17 OCR calls to 5/5; the candidate recovered an additional empty-tool counter. Identical cached fields took zero OCR calls during the eight-second cache window. This small replay is not a full accuracy or FPS benchmark; visible labels and separate Tesseract English remain required.
+
 # BDO Vision 1.12.0-rc.1 — automatic durability and active tools
 
 Adds automatic discovery of visible cooking/alchemy labels without drawing a region, a nearby-tools window, focused numeric consensus and active-tool evidence from repeated durability loss. Uses a character-based search prior and Place Mode fallback; reacquires after camera movement. Names and active identities remain unresolved when visual evidence is insufficient. New per-pass work bounds preserve the existing lightweight worker policy. Stable 1.11.1 remains available as a fallback.

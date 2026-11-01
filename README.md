@@ -1,4 +1,8 @@
-# BDO Vision 1.12.0-rc.1 — automatic tool discovery
+# BDO Vision 1.12.0-rc.2 — clearer, faster tool readings
+
+Verified counters appear immediately in the main window, before active-tool confirmation. VIEW TOOLS explains finding, confirming, tracking and paused states with reading ages and a small local status export. Camera checks avoid long retry chains; focused numeric results have a bounded eight-second exact-pixel cache. No extra background service or dependency is added. See [automatic tools and measured limits](docs/AUTOMATIC-TOOLS.md).
+
+## Previous candidate: 1.12.0-rc.1
 
 Cooking/alchemy durability no longer needs an initial capture box. The character anchor prioritizes visible labels, Place Mode is a fallback, focused numeric OCR verifies counters, and repeated durability use identifies the active tool. Camera movement triggers reacquisition. See [automatic tools and limits](docs/AUTOMATIC-TOOLS.md). The complete loot, silver, crafting, grind, gear and history product remains included.
 

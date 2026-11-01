@@ -29,6 +29,13 @@ class DesktopSmokeTests(unittest.TestCase):
             root.update_idletasks()
             self.assertTrue(app.loot.window.winfo_exists())
             self.assertEqual(len(app.loot.tree.get_children()),len(app.loot.ledger.rows()))
+            app.bridge=None;root.deiconify();app.open_tools();root.update()
+            app.tool_status.accept({'tools':[{'id':'tool-1','name':'Alchemy Tool','current':95,'maximum':3000,'state':'Visible'}]})
+            app.refresh_tool_view();root.update_idletasks()
+            self.assertTrue(app.tool_tree.exists('tool-1'))
+            app.tool_tree.selection_set('tool-1');app.refresh_tool_view()
+            self.assertEqual(app.tool_tree.selection(),('tool-1',))
+            self.assertIn('95/3,000',app.tool_preview.get())
         finally:
             if "app" in locals():app.loot.close()
             root.destroy()

@@ -67,6 +67,7 @@ class PlannerBridge:
         self.gear_ocr_gate=BoundedSemaphore(1)
         self.gear_job=None;self.gear_stop=Event()
         self.gear_store_lock=Lock()
+        self.tool_status={'stage':'idle','title':'Waiting for the native reader','tools':[]}
         self.data = {
             'current': int(current), 'maximum': int(maximum),
             'seconds_per_craft': float(seconds_per_craft),
@@ -144,7 +145,10 @@ class PlannerBridge:
 
             def do_GET(self):
                 route = urlsplit(self.path).path
-                if route in ('/', '/planner'):
+                if route=='/tool-reader':
+                    with bridge._lock:status=copy.deepcopy(bridge.tool_status)
+                    self._send(status)
+                elif route in ('/', '/planner'):
                     try:
                         content = bridge.html_path.read_bytes()
                     except OSError:
@@ -363,6 +367,13 @@ class PlannerBridge:
     def acknowledgment(self):
         with self._lock:
             return self.ack_signal, self.ack_at
+
+    def update_tool_status(self,status):
+        # Native-only, read-only diagnostics: never accept screenshots or paths.
+        allowed=('stage','title','detail','tools','active_id','unreadable','last_read_at','scans','ocr_calls','cache_hits','last_seconds','revision','recent')
+        value={key:status[key] for key in allowed if key in status}
+        if len(json.dumps(value))>16000:raise ValueError('Tool status too large')
+        with self._lock:self.tool_status=copy.deepcopy(value)
 
     def consume_show_request(self):
         with self._lock:

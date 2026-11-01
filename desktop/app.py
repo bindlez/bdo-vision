@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 import time, threading, subprocess, os, re, json, ctypes, winsound, webbrowser, urllib.request, uuid, sys, shutil
 from planner_bridge import PlannerBridge,PORTS
 from loot_ui import LootTracker
@@ -14,6 +14,7 @@ from tracking_core import ReadingGate, remaining_at, align_to_capture, estimate_
 from spatial_ocr import tsv_candidates, choose_spatial_pair
 from ocr_runtime import run_ocr
 from tool_reader import AutomaticToolReader
+from tool_status import ToolStatus
 from windows_bdo import foreground_bdo_capture_bounds
 
 ROOT=(Path(sys.executable).resolve().parent if getattr(sys,'frozen',False)
@@ -30,7 +31,7 @@ class App:
   self.root=root
   root.title(f'BDO Vision {APP_VERSION}  •  Saved history')
   root.geometry('600x900')
-  root.minsize(600,860)
+  root.minsize(600,640)
   root.configure(bg='#08070d')
   try:
    icon_path=ROOT/'assets'/'bdo-lite.png'
@@ -49,6 +50,9 @@ class App:
   self.region_confirmed=bool(config.get('region_confirmed',not self.first_run))
   self.auto_tools=tk.BooleanVar(value=bool(config.get('auto_tool_discovery',True)))
   self.tool_reader=AutomaticToolReader();self.tool_report=None;self.tool_window=None;self.tool_tree=None;self._active_tool_key=None
+  self.tool_status=ToolStatus();self._tool_view_at=0.;self._tool_bridge_revision=-1
+  self.tool_title=tk.StringVar(value='Ready to find tools');self.tool_preview=tk.StringVar(value='Visible counters will appear here')
+  self.tool_metrics=tk.StringVar(value='No reading yet');self.tool_empty=None
   self.tool_health=tk.StringVar(value='Automatic tool finder · no area selection needed')
   self.region_target='craft'
   self.selecting_region=False
@@ -92,13 +96,21 @@ class App:
   root.option_add('*selectBackground',c['violet'])
   root.option_add('*selectForeground','#ffffff')
 
-  main=tk.Frame(root,bg=c['bg'],padx=28,pady=24);main.pack(fill='both',expand=True)
+  shell=tk.Frame(root,bg=c['bg']);shell.pack(fill='both',expand=True)
+  scroller=tk.Canvas(shell,bg=c['bg'],highlightthickness=0)
+  scroll=ttk.Scrollbar(shell,orient='vertical',command=scroller.yview)
+  scroller.configure(yscrollcommand=scroll.set);scroll.pack(side='right',fill='y');scroller.pack(side='left',fill='both',expand=True)
+  main=tk.Frame(scroller,bg=c['bg'],padx=24,pady=20)
+  main_id=scroller.create_window((0,0),window=main,anchor='nw')
+  main.bind('<Configure>',lambda e:scroller.configure(scrollregion=scroller.bbox('all')))
+  scroller.bind('<Configure>',lambda e:scroller.itemconfigure(main_id,width=e.width))
+  root.bind('<MouseWheel>',lambda e:scroller.yview_scroll(-int(e.delta/120),'units') if e.delta else None)
   head=tk.Frame(main,bg=c['bg']);head.pack(fill='x')
   brand=tk.Frame(head,bg=c['bg']);brand.pack(side='left')
   tk.Label(brand,text='✦',bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',25)).pack(side='left',padx=(0,9))
   titles=tk.Frame(brand,bg=c['bg']);titles.pack(side='left')
   tk.Label(titles,text='BDO VISION',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',20)).pack(anchor='w')
-  tk.Label(titles,text=f'LITE  /  CRAFT COMPANION  /  {APP_VERSION}',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',8)).pack(anchor='w')
+  tk.Label(titles,text=f'LOOT  /  CRAFTING  /  {APP_VERSION}',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',8)).pack(anchor='w')
   self.text_button(head,'⚙  SETTINGS',self.open_settings).pack(side='right',pady=(7,0))
 
   hero=tk.Frame(main,bg=c['panel'],highlightbackground=c['line'],highlightthickness=1,padx=22,pady=20)
@@ -109,6 +121,10 @@ class App:
   self.state_label.pack(side='right')
   tk.Label(hero,textvariable=self.durability_display,bg=c['panel'],fg=c['text'],font=('Segoe UI Semibold',40)).pack(anchor='w',pady=(4,9))
   self.bar=ttk.Progressbar(hero,maximum=100,style='Vision.Horizontal.TProgressbar');self.bar.pack(fill='x',pady=(0,13))
+  tool_strip=tk.Frame(hero,bg=c['panel']);tool_strip.pack(fill='x',pady=(0,14))
+  self.text_button(tool_strip,'VIEW TOOLS',self.open_tools).pack(side='right',padx=(8,0))
+  tk.Label(tool_strip,textvariable=self.tool_title,bg=c['panel'],fg=c['bright'],font=('Segoe UI Semibold',10)).pack(anchor='w')
+  tk.Label(tool_strip,textvariable=self.tool_preview,bg=c['panel'],fg=c['secondary'],font=('Segoe UI',9),wraplength=370,justify='left').pack(anchor='w',pady=(4,0))
   metrics=tk.Frame(hero,bg=c['panel']);metrics.pack(fill='x')
   for i,(name,var) in enumerate([('TIME REMAINING',self.count),('EARLY WARNING IN',self.alarm_in)]):
    col=tk.Frame(metrics,bg=c['panel']);col.pack(side='left',fill='x',expand=True)
@@ -150,8 +166,7 @@ class App:
   health=tk.Frame(main,bg=c['panel'],padx=14,pady=12,highlightbackground=c['line'],highlightthickness=1)
   health.pack(fill='x',pady=(16,0))
   tk.Label(health,textvariable=self.scan_health,bg=c['panel'],fg=c['secondary'],font=('Segoe UI',9)).pack(anchor='w')
-  self.text_button(health,'NEARBY TOOLS',self.open_tools).pack(side='right')
-  tk.Label(health,textvariable=self.tool_health,bg=c['panel'],fg=c['muted'],font=('Segoe UI',9),wraplength=400,justify='left').pack(anchor='w')
+  tk.Label(health,textvariable=self.tool_metrics,bg=c['panel'],fg=c['muted'],font=('Segoe UI',9)).pack(anchor='w',pady=(4,0))
   tk.Label(health,text='LOCAL CAPTURE  /  MANUAL PLANNER SYNC',bg=c['panel'],fg=c['muted'],font=('Segoe UI Semibold',8)).pack(anchor='w',pady=(5,0))
   self.send_button.configure(state='disabled')
   self.tray_button.configure(state='disabled')
@@ -192,30 +207,90 @@ class App:
 
  def tool_mode_changed(self):
   self.tool_reader=AutomaticToolReader();self.last_scan_started=0
+  self.set_tool_stage('idle' if self.auto_tools.get() else 'off','Show tool labels in BDO.' if self.auto_tools.get() else 'Manual capture area is selected in Settings.')
   self.save_quietly()
 
  def open_tools(self):
   if self.tool_window and self.tool_window.winfo_exists():self.tool_window.deiconify();self.tool_window.lift();return
   c=self.colors;win=self.tool_window=tk.Toplevel(self.root)
-  win.title('BDO Vision • Nearby tools');win.geometry('820x420');win.configure(bg=c['bg'])
-  tk.Label(win,text='NEARBY TOOLS',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',18)).pack(anchor='w',padx=20,pady=(18,8))
-  tk.Label(win,textvariable=self.tool_health,bg=c['bg'],fg=c['bright'],wraplength=760,justify='left').pack(anchor='w',padx=20,pady=(0,12))
+  win.title('BDO Vision • Tool reader');win.geometry('880x480');win.minsize(720,380);win.configure(bg=c['bg'])
+  header=tk.Frame(win,bg=c['bg']);header.pack(fill='x',padx=22,pady=(20,10))
+  tk.Label(header,text='TOOL READER',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',20)).pack(side='left')
+  self.text_button(header,'SAVE STATUS',self.save_tool_status).pack(side='right')
+  tk.Label(win,textvariable=self.tool_title,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',12)).pack(anchor='w',padx=22)
+  tk.Label(win,textvariable=self.tool_health,bg=c['bg'],fg=c['secondary'],wraplength=810,justify='left').pack(anchor='w',padx=22,pady=(5,12))
   style=ttk.Style();style.configure('Tools.Treeview',background=c['panel'],fieldbackground=c['panel'],foreground=c['text'],rowheight=28)
-  style.configure('Tools.Treeview.Heading',background=c['panel2'],foreground=c['text'])
-  self.tool_tree=ttk.Treeview(win,columns=('name','durability','percent','state','pace'),show='headings',height=8,style='Tools.Treeview')
-  for name,label,width in [('name','VISIBLE TOOL',240),('durability','DURABILITY',130),('percent','LEFT',60),('state','EVIDENCE',220),('pace','SEC / USE',90)]:
+  style.configure('Tools.Treeview.Heading',background=c['panel2'],foreground=c['secondary'],font=('Segoe UI Semibold',9))
+  body=tk.Frame(win,bg=c['panel']);body.pack(fill='both',expand=True,padx=22)
+  self.tool_tree=ttk.Treeview(body,columns=('name','durability','state','age'),show='headings',height=7,style='Tools.Treeview')
+  for name,label,width in [('name','VISIBLE TOOL',220),('durability','VERIFIED DURABILITY',140),('state','STATUS',220),('age','LAST READ',80)]:
    self.tool_tree.heading(name,text=label);self.tool_tree.column(name,width=width,minwidth=55,stretch=name=='name')
-  self.tool_tree.pack(fill='both',expand=True,padx=20)
-  tk.Label(win,text='Visible cooking/alchemy labels only · Active requires repeated durability decreases. Camera movement triggers reacquisition; uncertain identities are not selected.',bg=c['bg'],fg=c['muted'],wraplength=760,justify='left').pack(anchor='w',padx=20,pady=12)
+  self.tool_tree.tag_configure('active',background=c['panel2'],foreground=c['good'])
+  self.tool_tree.tag_configure('stale',foreground=c['muted'])
+  scroll=ttk.Scrollbar(body,orient='vertical',command=self.tool_tree.yview)
+  self.tool_tree.configure(yscrollcommand=scroll.set);scroll.pack(side='right',fill='y')
+  self.tool_tree.pack(side='left',fill='both',expand=True)
+  self.tool_empty=tk.Label(body,text='No verified readings yet.\nShow tool labels in BDO; the search continues automatically.',bg=c['panel'],fg=c['muted'],font=('Segoe UI',11),justify='center')
+  footer=tk.Frame(win,bg=c['bg']);footer.pack(fill='x',padx=22,pady=14)
+  tk.Label(footer,textvariable=self.tool_metrics,bg=c['bg'],fg=c['muted'],font=('Segoe UI',9)).pack(side='left')
+  self.action(footer,'FIND AGAIN',self.rescan_tools,flat=True).pack(side='right')
+  self._tool_table_values={}
   self.refresh_tools()
 
- def refresh_tools(self):
+ def rescan_tools(self):
+  if self.busy:self.status.set('The reader is already working. Results will appear automatically.');return
+  self.tool_reader.last_discovery=-1e9;self.tool_reader.next_due=0
+  self.read_ocr()
+
+ def save_tool_status(self):
+  path=filedialog.asksaveasfilename(parent=self.tool_window,defaultextension='.json',initialfile='vision-tool-status.json',filetypes=[('Reader status','*.json')])
+  if path:
+   try:Path(path).write_text(json.dumps({'version':APP_VERSION,**self.tool_status.snapshot()},indent=2),encoding='utf-8')
+   except OSError as exc:messagebox.showerror('Save status',str(exc),parent=self.tool_window)
+
+ def set_tool_stage(self,stage,detail):
+  if not hasattr(self,'tool_status'):return
+  if self.tool_status.set_stage(stage,detail):self.refresh_tool_view()
+
+ def refresh_tool_view(self):
+  if not hasattr(self,'tool_status'):return
+  view=self.tool_status.snapshot();self._tool_view_at=time.monotonic()
+  def set_changed(variable,value):
+   if variable.get()!=value:variable.set(value)
+  set_changed(self.tool_title,view['title']);set_changed(self.tool_health,view['detail'])
+  age=max(0,int(time.time()-view['last_read_at'])) if view['last_read_at'] else None
+  preview=' · '.join(f"{r['current']:,}/{r['maximum']:,}" for r in view['tools'][:3])
+  fresh=age is not None and age<=15 and view['stage'] not in ('paused','error','off','searching')
+  set_changed(self.tool_preview,(('Readings: ' if fresh else 'Last verified: ')+preview) if preview else view['detail'])
+  set_changed(self.tool_metrics,f"Last scan {view['last_seconds']:.2f}s · read {age}s ago" if age is not None else 'No reading yet · show labels in BDO')
+  bridge=getattr(self,'bridge',None)
+  if bridge and self._tool_bridge_revision!=view['revision']:
+   bridge.update_tool_status(view);self._tool_bridge_revision=view['revision']
+  self.refresh_tools(view)
+
+ def refresh_tools(self,view=None):
   if not self.tool_tree or not self.tool_tree.winfo_exists():return
-  self.tool_tree.delete(*self.tool_tree.get_children())
-  for row in (self.tool_report or {}).get('tools',[]):
-   self.tool_tree.insert('','end',values=(row['name'],f"{row['current']:,} / {row['maximum']:,}",f"{row['percent']:g}%",row['state'],'—' if row['seconds_per_use'] is None else f"{row['seconds_per_use']:.2f}"))
+  if not self.tool_tree.winfo_ismapped():return
+  view=view or self.tool_status.snapshot();wanted={r['id'] for r in view['tools']};cache=getattr(self,'_tool_table_values',{})
+  for ident in self.tool_tree.get_children():
+   if ident not in wanted:self.tool_tree.delete(ident);cache.pop(ident,None)
+  age=max(0,int(time.time()-view['last_read_at'])) if view['last_read_at'] else 0
+  current=view['stage'] not in ('paused','error','off','searching') and age<=15
+  for index,row in enumerate(view['tools']):
+   state=('Last verified · capture paused' if view['stage'] in ('paused','error','off') else 'Last verified · awaiting refresh') if not current else row['state']
+   values=(row['name'],f"{row['current']:,} / {row['maximum']:,}",state,f'{age}s ago')
+   tag='active' if current and row['id']==view['active_id'] else 'stale' if not current else ''
+   key=(values,tag)
+   if not self.tool_tree.exists(row['id']):self.tool_tree.insert('',index,iid=row['id'],values=values,tags=(tag,))
+   elif cache.get(row['id'])!=key:self.tool_tree.item(row['id'],values=values,tags=(tag,))
+   cache[row['id']]=key
+  self._tool_table_values=cache
+  if self.tool_empty:
+   if wanted:self.tool_empty.place_forget()
+   else:self.tool_empty.place(relx=.5,rely=.55,anchor='center')
 
  def capture_tools(self,tess,automatic=False):
+  self.set_tool_stage('reading','Checking visible tool labels and durability. Loot recording remains independent.')
   reader=self.tool_reader;interval=self.safe_scan_interval()
   def work():
    try:
@@ -235,30 +310,30 @@ class App:
  def tool_failed(self,message,reader):
   self.busy=False
   if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
-  if reader is self.tool_reader:self.tool_health.set(message)
+  if reader is self.tool_reader:self.set_tool_stage('error',message)
 
  def finish_tools(self,report,reader,automatic,captured_at,captured_mono):
   self.busy=False
   if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
   if reader is not self.tool_reader or not self.auto_tools.get():return
   captured_at=report.get('captured_at',captured_at);captured_mono=report.get('captured_mono',captured_mono)
-  self.tool_report=report;rows=report['tools'];self.refresh_tools()
-  self.tool_health.set(f"{len(rows)} verified visible tool(s) · "+report['reason'])
+  self.tool_report=report;rows=report['tools'];self.tool_status.accept(report);self.refresh_tool_view()
   active=next((r for r in rows if r['id']==report['active_id']),None)
   if not active:
    if self._active_tool_key is not None:
     self.update_value();self.running=False;self.anchor=None;self.source.set('ACTIVE TOOL UNCONFIRMED · estimate paused')
    self.scan_health.set(f"Tool finder · {report['duration']:.1f}s · {report['ocr_calls']} OCR passes")
-   self.status.set(report['reason']+'. No durability is chosen until use is confirmed.')
+   self.status.set(self.tool_status.detail)
    return
   if report['active_key']!=self._active_tool_key:
    self._active_tool_key=report['active_key'];self.has_reading=False;self.reading_gate=ReadingGate()
    self.session_id=uuid.uuid4().hex;self.speed_estimator.reset();self.last_good_ocr=None
   a,b=active['current'],active['maximum']
   self.finish_ocr([(a,b),(a,b)],[],[],automatic,captured_at,captured_mono,report['duration'])
-  if self.reading_gate.pending is not None:reader.next_due=min(reader.next_due,time.monotonic()+3)
-  self.tool_health.set(f"Active: {active['name']} · {a:,}/{b:,} · repeated durability use")
-  self.status.set('Automatic tool lock · '+active['name']+'. Other visible tools remain listed in NEARBY TOOLS.')
+  if self.reading_gate.pending is not None:
+   reader.next_due=min(reader.next_due,time.monotonic()+3)
+   self.status.set('Confirming the first reading · '+active['name'])
+  else:self.status.set('Tracking '+active['name']+'. All readings are in VIEW TOOLS.')
 
  def open_planner(self):
   """Serve the paired planner from our own bridge; no cross-origin file permissions."""
@@ -515,6 +590,7 @@ class App:
   self.root.deiconify();self.root.lift();self.loot.open()
 
  def tick(self):
+  if time.monotonic()-getattr(self,'_tool_view_at',0)>=1:self.refresh_tool_view()
   if self.bridge and self.bridge.consume_show_request():self.show_saved_history()
   if self.bridge:
    for command in self.bridge.consume_commands():
@@ -547,14 +623,21 @@ class App:
   # Keep scanning alive independently of timer / planner update failures.
   finder=bool(getattr(self,'auto_tools',None) and self.auto_tools.get())
   try:
-   if not self.auto_enabled.get():self.auto_health.set('Auto OCR: OFF')
+   if not self.auto_enabled.get():
+    self.auto_health.set('Auto OCR: OFF')
+    if finder:self.set_tool_stage('off','Automatic scanning is off. SCAN & TRACK still reads on demand.')
    elif self.selecting_region:self.auto_health.set('Auto OCR: selecting capture area')
    elif not finder and not self.region_confirmed:self.auto_health.set('Auto OCR: select your craft area in Settings')
    elif not finder and getattr(self.loot,'enabled',None) is not None and self.loot.enabled.get() and not self.loot.crafting.get() and not self.running:
     self.auto_health.set('Tool OCR idle during grinding · enable Crafting mode when needed')
-   elif not self.bdo_foreground():self.auto_health.set('Auto OCR: waiting for BDO in front')
+   elif not self.bdo_foreground():
+    self.auto_health.set('Auto OCR: waiting for BDO in front')
+    if finder and not self.busy:self.set_tool_stage('paused','Bring BDO to the front. Last verified counters are preserved; no hidden tool is read.')
    elif self.busy or self.loot.busy:self.auto_health.set('Auto OCR: scan in progress')
    else:
+    if finder and getattr(getattr(self,'tool_status',None),'stage',None)=='paused':
+     self.tool_reader.next_due=0
+     self.set_tool_stage('idle','BDO is visible again. Rechecking tool counters.')
     remaining=max(0,self.tool_reader.next_due-time.monotonic()) if finder else max(0,self.safe_scan_interval()-(time.monotonic()-self.last_scan_started))
     self.auto_health.set('Auto OCR: next scan in %ds'%int(remaining+.999))
     if remaining<=0:
@@ -629,7 +712,9 @@ class App:
     return
    if self.auto_tools.get():
     self.busy=True;self.last_scan_started=time.monotonic()
-    if delayed:self.status.set('Switch to BDO now — finding visible tools in 3 seconds…')
+    if delayed:
+     self.status.set('Switch to BDO now — finding visible tools in 3 seconds…')
+     self.set_tool_stage('waiting','Switch to BDO. Reading starts in 3 seconds.')
     if self.scan_button:self.scan_button.configure(state='disabled',text='FINDING TOOLS…')
     self.root.after(3000 if delayed else 1,lambda:self.capture_tools(tess,automatic))
     return

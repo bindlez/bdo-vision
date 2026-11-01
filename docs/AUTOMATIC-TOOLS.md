@@ -1,6 +1,6 @@
 # Automatic cooking/alchemy tool reader
 
-Automatic tool discovery is enabled by default. Show the game in front with utensil labels visible; no capture box is required. Use **NEARBY TOOLS** to see verified durability, percentage remaining and active-use evidence. Manual region OCR remains an optional fallback in Settings.
+Automatic tool discovery is enabled by default. Show the game in front with utensil labels visible; no capture box is required. The main window shows readable counters before active-tool confirmation. Use **VIEW TOOLS** for verified durability, last-read ages and clear finding/confirming/tracking/paused states. Manual region OCR remains an optional fallback in Settings.
 
 The reader finds a likely character anchor from paired in-world red/blue bars, with screen center as a search prior when those bars are absent. It reads a narrow band above that anchor at higher resolution, then automatically isolates numeric fractions for two focused OCR reads. It searches outward when needed and can use an OCR-detected **Place Mode** button as a fallback reference. No rearrangement of the game's UI is required.
 
@@ -15,3 +15,11 @@ Only currently visible labels can be measured. Zooming a label off-screen or hid
 At most eight candidate labels are processed per pass, with a six-second OCR work budget and below-normal, single-thread workers. Cached crops are used between broad discoveries; failed crop locations trigger a new search in the same scan. No game input is generated. Screenshots remain transient in memory. The existing loot reader, saved history, optional sharing and manual planner-send controls are retained.
 
 Automated tests cover multi-tool ambiguity, unrelated HUD fractions, damaged digits, missing labels, replacements, camera shifts, no initial region selection, and actual Tesseract reads of generated scenes. Real-world overlap/font/zoom coverage remains under validation; keep 1.11.1 as a known working fallback.
+
+## rc.2 reliability and cost
+
+Title masks detect invalid cached crop locations before numeric OCR. Fractions split across several OCR tokens receive one numeric crop. Verification uses two focused grayscale polarities; broad label mosaics and redundant mask retries are removed. Successful exact numeric pixels may reuse a verified result for eight seconds, capped at sixteen entries; no full images are cached. A single missed frame preserves identity evidence but reports no hidden active tool. Two misses clear wear evidence. Empty search delays are 3, 10, 30, 60, then 120 seconds; returning from a covered game immediately requests a new read.
+
+Replay of three private saved game frames with real Tesseract, using the same tool-discovery source and captures: rc.1 used 5/13/17 calls, rc.2 used 5/5/5. All previously verified nonempty counters were retained; rc.2 also read an empty 0/3000 counter on the last frame. The difficult frames took about 1.02/0.99 seconds instead of 1.69/2.31 seconds on this PC. Two immediate unchanged repeats each used zero OCR calls and about 1 ms of reader work. The first discovery varied from 0.94 to 1.04 seconds. These are small sequential replay results, excluding screen capture and game FPS impact; cache savings apply only within its short TTL.
+
+**SAVE STATUS** writes at most eight counter summaries and sixteen state transitions to a file you choose. The same bounded diagnostic summary is available read-only at `/tool-reader` on the paired local bridge, under its existing origin/Host restrictions. It contains no screenshots, capture boxes, game chat or profile paths. No website polling or extra process is added.

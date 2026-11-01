@@ -3,7 +3,7 @@ import sys,unittest
 from unittest.mock import patch
 from PIL import Image,ImageDraw
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'desktop'))
-from tool_reader import ToolInventory,AutomaticToolReader,character_anchor,discover_regions,PARTIAL_NAME,label_name,read_bands
+from tool_reader import ToolInventory,AutomaticToolReader,character_anchor,discover_regions,PARTIAL_NAME,label_name,read_bands,verify_labels,label_signature,signature_matches
 
 
 def row(value,x=200,name='Supreme Alchemy Tool',maximum=5000):
@@ -33,11 +33,24 @@ class ActiveToolTests(unittest.TestCase):
             result=tracker.update([row(values[0]),row(values[1],800)],at)
         self.assertIsNone(result['active_id']);self.assertIn('Several',result['reason'])
 
-    def test_missing_labels_reset_wear_evidence(self):
+    def test_two_missing_frames_reset_wear_evidence(self):
         tracker=ToolInventory()
         for at,value in ((0,800),(3,797),(6,794)):tracker.update([row(value)],at)
         tracker.update([],9)
-        self.assertIsNone(tracker.update([row(788)],12)['active_id'])
+        tracker.update([],12)
+        self.assertIsNone(tracker.update([row(785)],15)['active_id'])
+
+    def test_single_ocr_gap_preserves_identity_but_never_reports_hidden_tool(self):
+        tracker=ToolInventory()
+        for at,value in ((0,800),(3,797),(6,794)):result=tracker.update([row(value)],at)
+        active=result['active_id'];self.assertIsNotNone(active)
+        self.assertIsNone(tracker.update([],9)['active_id'])
+        self.assertEqual(tracker.update([row(788)],12)['active_id'],active)
+
+    def test_unchanged_reads_count_toward_consumption_time(self):
+        tracker=ToolInventory()
+        for at,value in ((0,800),(3,797),(6,797),(9,794)):result=tracker.update([row(value)],at)
+        self.assertEqual(tracker.tracks[result['active_id']]['pace'],[1.,2.])
 
     def test_large_jump_does_not_select_another_tool(self):
         tracker=ToolInventory()
@@ -63,6 +76,43 @@ class ActiveToolTests(unittest.TestCase):
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_fraction_split_across_tokens_gets_one_numeric_crop(self):
+        header='level\tleft\ttop\twidth\theight\tconf\ttext\n'
+        raw=header+'5\t100\t200\t80\t20\t90\tAlchemy\n5\t185\t200\t60\t20\t90\tTool(95\n5\t250\t200\t6\t20\t90\t/\n5\t260\t200\t50\t20\t90\t3000)\n'
+        regions=discover_regions(raw,(1000,700))
+        self.assertEqual(len(regions),1);self.assertEqual(regions[0]['coarse_pair'],(95,3000))
+        self.assertLess(regions[0]['numbers'][0],240);self.assertGreater(regions[0]['numbers'][2],300)
+
+    def test_verified_numeric_cache_is_exact_bounded_and_expires(self):
+        region={'name':'Alchemy Tool','box':[0,0,100,30],'numbers':[20,0,100,30]}
+        crop=Image.new('RGB',(100,30),'white');cache={}
+        raw='level\tleft\ttop\twidth\theight\tconf\ttext\n5\t0\t0\t80\t20\t90\t95/3000\n'
+        with patch('tool_reader.ocr',return_value=raw) as engine,patch('tool_reader.time.monotonic',return_value=100):
+            self.assertEqual(verify_labels([crop],[region],'engine',cache)[1],2)
+            rows,calls=verify_labels([crop],[region],'engine',cache)
+            self.assertEqual(calls,0);self.assertTrue(rows[0]['cache_hit']);self.assertEqual(engine.call_count,2)
+        with patch('tool_reader.ocr',return_value=raw),patch('tool_reader.time.monotonic',return_value=109):
+            self.assertEqual(verify_labels([crop],[region],'engine',cache)[1],2)
+            for number in range(25):
+                changed=Image.new('RGB',(100,30),(number,number,number))
+                verify_labels([changed],[region],'engine',cache)
+            self.assertLessEqual(len(cache),16)
+
+    def test_title_signature_ignores_digits_and_rejects_moved_title(self):
+        region={'box':[0,0,200,30],'numbers':[100,0,190,30]}
+        image=Image.new('RGB',(200,30),'black');draw=ImageDraw.Draw(image)
+        draw.rectangle((10,8,45,17),fill='white');draw.rectangle((110,8,140,17),fill='white')
+        original=label_signature(image,region)
+        draw.rectangle((100,0,199,29),fill='black')
+        self.assertTrue(signature_matches(original,label_signature(image,region)))
+        draw.rectangle((0,0,99,29),fill='black');draw.rectangle((55,8,90,17),fill='white')
+        self.assertFalse(signature_matches(original,label_signature(image,region)))
+
+    def test_no_labels_retry_quickly_then_back_off(self):
+        reader=AutomaticToolReader();image=Image.new('RGB',(1200,800),'black')
+        with patch('tool_reader.discover_scene',return_value=([],None,1)):
+            delays=[reader.read('engine',(1,0,0,1200,800),lambda box:image.crop(box),now=at)['next_seconds'] for at in (0,3,13,43,103,223)]
+        self.assertEqual(delays,[3,10,30,60,120,120])
     def test_damaged_leading_digit_never_becomes_a_shorter_durability(self):
         header='level\tleft\ttop\twidth\theight\tconf\ttext\n'
         damaged=header+'5\t0\t0\t200\t20\t90\tAlchemy Tool(?5/3000)\n'

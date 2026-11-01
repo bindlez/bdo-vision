@@ -10,7 +10,7 @@ import math
 import re
 import time
 from threading import local
-from PIL import Image,ImageOps
+from PIL import Image,ImageOps,ImageChops,ImageStat
 from ocr_parser import extract_pairs
 from ocr_runtime import run_ocr
 
@@ -23,6 +23,28 @@ _budget=local()
 
 def family(name):
     return 'alchemy' if 'alchemy' in name.casefold() else 'cooking' if 'cooking' in name.casefold() else None
+
+
+def label_signature(crop,region):
+    """Tiny white-glyph mask of the title, excluding changing numeric digits."""
+    width=(region.get('numbers',[region['box'][2]-70])[0]-region['box'][0])-3
+    if width<12:return None
+    image=crop.crop((0,3,min(crop.width,width),max(4,crop.height-3))).convert('RGB')
+    red,green,blue=image.split();low=ImageChops.darker(ImageChops.darker(red,green),blue)
+    high=ImageChops.lighter(ImageChops.lighter(red,green),blue)
+    mask=ImageChops.multiply(low.point(lambda v:255 if v>190 else 0),
+                            ImageChops.subtract(high,low).point(lambda v:255 if v<35 else 0))
+    factor=min(1,256/mask.width,36/mask.height)
+    mask=mask.resize((max(1,int(mask.width*factor)),max(1,int(mask.height*factor))),Image.Resampling.NEAREST)
+    return mask if ImageStat.Stat(mask).sum[0]>=12*255 else None
+
+
+def signature_matches(reference,current):
+    if reference is None or current is None:return reference is None
+    if reference.size!=current.size:return False
+    total=ImageStat.Stat(reference).sum[0]
+    missing=ImageStat.Stat(ImageChops.subtract(reference,current)).sum[0]
+    return missing/max(1,total)<.35
 
 
 def character_anchor(image):
@@ -95,8 +117,8 @@ def label_name(text):
 
 def discover_regions(tsv,size,scale=1,anchor=None):
     """Find name-bearing labels, never generic HUD fractions or nearby HP."""
-    width,height=size;regions=[]
-    for group in lines(words(tsv)):
+    width,height=size;regions=[];tokens=words(tsv);groups=lines(tokens)
+    for group in groups:
         text=' '.join(w['text'] for w in group)
         name=label_name(text)
         if not name:continue
@@ -109,7 +131,7 @@ def discover_regions(tsv,size,scale=1,anchor=None):
         regions.append({'name':name,'box':[left,top,right,bottom]})
     # Overlapping furniture names can erase the prefix while the literal
     # Tool(current/max) tail remains readable. Verify just that tail separately.
-    for token in words(tsv):
+    for token in tokens:
         if label_name(token['text'])!=PARTIAL_NAME:continue
         center=(token['x']+token['w']/2)/scale;y=(token['y']+token['h']/2)/scale
         if any(r['box'][0]<=center<=r['box'][2] and r['box'][1]<=y<=r['box'][3] for r in regions):continue
@@ -118,17 +140,25 @@ def discover_regions(tsv,size,scale=1,anchor=None):
         regions.append({'name':PARTIAL_NAME,'box':box})
     for region in regions:
         numbers=[]
-        for token in words(tsv):
-            for match in COUNTER.finditer(token['text']):
+        a,b,c,d=region['box']
+        for group in groups:
+            text=' '.join(w['text'] for w in group)
+            y=(min(w['y'] for w in group)+max(w['y']+w['h'] for w in group))/2/scale
+            if not b<=y<=d:continue
+            def position(index):
+                offset=0
+                for token in group:
+                    if offset<=index<=offset+len(token['text']):
+                        return (token['x']+token['w']*(index-offset)/max(1,len(token['text'])))/scale
+                    offset+=len(token['text'])+1
+                return (group[-1]['x']+group[-1]['w'])/scale
+            for match in COUNTER.finditer(text):
                 current,maximum=[int(v.replace(',','')) for v in match.groups()]
                 if not 0<=current<=maximum or not 100<=maximum<=100_000:continue
-                x1=(token['x']+token['w']*match.start(1)/len(token['text']))/scale
-                x2=(token['x']+token['w']*match.end(2)/len(token['text']))/scale
-                y=(token['y']+token['h']/2)/scale
-                a,b,c,d=region['box']
+                x1=position(match.start(1));x2=position(match.end(2))
                 if a<=(x1+x2)/2<=c and b<=y<=d:
-                    numbers.append(([max(a,int(x1)-9),max(b,int(token['y']/scale)-6),
-                                     min(c,int(x2)+12),min(d,int((token['y']+token['h'])/scale)+7)],(current,maximum)))
+                    numbers.append(([max(a,int(x1)-12),max(b,int(min(w['y'] for w in group)/scale)-6),
+                                     min(c,int(x2)+14),min(d,int(max(w['y']+w['h'] for w in group)/scale)+7)],(current,maximum)))
         if len(numbers)==1:region['numbers'],region['coarse_pair']=numbers[0]
     if anchor:
         regions.sort(key=lambda r:abs((r['box'][0]+r['box'][2])/2-anchor['x'])+
@@ -149,24 +179,6 @@ def ocr(image,tess,psm,numeric=False):
     return result.stdout.decode('utf-8','replace')
 
 
-def mosaic(crops,ink_threshold=None):
-    prepared=[]
-    for image in crops:
-        if ink_threshold is not None:
-            from loot_capture import notification_ink
-            gray=notification_ink(image,ink_threshold,False)
-        else:gray=ImageOps.autocontrast(ImageOps.grayscale(image))
-        factor=min(1 if ink_threshold is not None else 3,1600/max(1,gray.width),180/max(1,gray.height))
-        gray=gray.resize((max(1,int(gray.width*factor)),max(1,int(gray.height*factor))))
-        prepared.append(gray)
-    width=max((im.width for im in prepared),default=1)+24
-    height=sum(im.height+24 for im in prepared)
-    output=Image.new('L',(width,height),255 if ink_threshold is not None else 0);bands=[];y=0
-    for im in prepared:
-        output.paste(im,(12,y+12));bands.append((y,y+im.height+24));y=bands[-1][1]
-    return output,bands
-
-
 def read_bands(tsv,bands):
     grouped=defaultdict(list)
     for word in words(tsv):
@@ -184,12 +196,18 @@ def read_bands(tsv,bands):
     return result
 
 
-def verify_labels(crops,regions,tess):
-    result=[];pending=[];calls=0
+def verify_labels(crops,regions,tess,cache=None):
+    import hashlib
+    result=[];calls=0
     for index,(crop,region) in enumerate(zip(crops,regions)):
-        if not region.get('numbers'):pending.append(index);continue
+        if not region.get('numbers'):continue
         a,b,c,d=region['numbers'];left,top,_,_=region['box']
         numeric=crop.crop((a-left,b-top,c-left,d-top))
+        if numeric.width<8 or numeric.height<5:continue
+        key=(tess,tuple(region['numbers']),hashlib.sha256(numeric.tobytes()).digest())
+        cached=cache.get(key) if cache is not None else None
+        if cached and time.monotonic()-cached[0]<8:
+            result.append({**cached[1],'name':region['name'],'box':region['box'],'cache_hit':True});continue
         gray=ImageOps.autocontrast(ImageOps.grayscale(numeric)).resize((numeric.width*4,numeric.height*4),Image.Resampling.LANCZOS)
         readings=[];confidences=[]
         for variant in (gray,ImageOps.invert(gray)):
@@ -200,39 +218,10 @@ def verify_labels(crops,regions,tess):
             current,maximum=next(iter(readings[0]))
             if 0<=current<=maximum and 100<=maximum<=100_000:
                 result.append({'name':region['name'],'current':current,'maximum':maximum,'box':region['box'],'confidence':min(confidences),'votes':2})
+                if cache is not None:
+                    if len(cache)>=16:cache.pop(next(iter(cache)))
+                    cache[key]=(time.monotonic(),dict(result[-1]))
                 continue
-        pending.append(index)
-    if not pending:return result,calls
-    # A bounded text-mask fallback handles labels whose numeric tail was not
-    # localized cleanly. Unknown digits never become an implicit shorter value.
-    fallback_regions=[regions[i] for i in pending];fallback_crops=[crops[i] for i in pending]
-    extra,extra_calls=verify_text_labels(fallback_crops,fallback_regions,tess)
-    return result+extra,calls+extra_calls
-
-
-def verify_text_labels(crops,regions,tess):
-    image,bands=mosaic(crops)
-    first=read_bands(ocr(image,tess,6),bands)
-    second=read_bands(ocr(ImageOps.invert(image),tess,6),bands)
-    result=[];missing=[]
-    for index,region in enumerate(regions):
-        a,b=first.get(index),second.get(index)
-        if not a or not b or (a['current'],a['maximum'])!=(b['current'],b['maximum']):missing.append(index);continue
-        if a['name'].casefold()!=b['name'].casefold():
-            kind=family(a['name'])
-            name=('Alchemy Tool' if kind=='alchemy' else 'Cooking Utensil') if kind and kind==family(b['name']) else PARTIAL_NAME
-            a={**a,'name':name}
-        result.append({**a,'box':region['box'],'votes':2})
-    calls=2
-    if missing:
-        subset=[crops[i] for i in missing]
-        mask,bands=mosaic(subset,120);extra_a=read_bands(ocr(mask,tess,6),bands)
-        mask,bands=mosaic(subset,140);extra_b=read_bands(ocr(mask,tess,6),bands);calls+=2
-        for index,original in enumerate(missing):
-            a,b=extra_a.get(index),extra_b.get(index)
-            if not a or not b or (a['current'],a['maximum'])!=(b['current'],b['maximum']):continue
-            name=a['name'] if a['name'].casefold()==b['name'].casefold() else PARTIAL_NAME
-            result.append({**a,'name':name,'box':regions[original]['box'],'votes':2})
     return result,calls
 
 
@@ -274,11 +263,13 @@ class ToolInventory:
 
     def update(self,observations,now,context=None):
         if context!=self.context:self.tracks={};self.context=context
+        for old in self.tracks.values():old['missing']=old.get('missing',0)+1
         used=set();visible=[]
         for row in observations:
             left,top,right,bottom=row['box'];x=(left+right)/2;y=(top+bottom)/2
             possible=[]
             for ident,old in self.tracks.items():
+                if old.get('missing',0)>2:continue
                 if row['maximum']!=old['maximum']:continue
                 if family(row['name']) and family(old['name']) and family(row['name'])!=family(old['name']):continue
                 distance=math.hypot(x-old['x'],y-old['y'])
@@ -288,26 +279,31 @@ class ToolInventory:
                 if not 0<elapsed<=180 or not 0<=drop<=max(4,elapsed*20+4):continue
                 pace=sorted(old['pace'])
                 expected=old['current']-(elapsed/pace[len(pace)//2] if pace else 0)
-                score=min(abs(row['current']-old['current']),abs(row['current']-expected))
+                score=min(abs(row['current']-old['current']),abs(row['current']-expected))+max(0,old.get('missing',1)-1)*5
                 possible.append((score,ident,old,distance))
             possible.sort(key=lambda p:p[0])
             match=possible[0] if possible and possible[0][1] not in used and (len(possible)==1 or possible[1][0]-possible[0][0]>=3) else None
+            if match is None:
+                stationary=[p for p in possible if p[1] not in used and p[2]['current']==row['current'] and p[2]['wear_streak']==0]
+                stationary.sort(key=lambda p:p[3])
+                if stationary and stationary[0][3]<32 and (len(stationary)==1 or stationary[1][3]-stationary[0][3]>32):match=stationary[0]
             if match:
                 _,ident,old,_=match;elapsed=now-old['seen_at'];drop=old['current']-row['current']
                 valid_wear=1<=drop<=max(4,elapsed*20+4) and 1<=elapsed<=180
                 streak=old['wear_streak']+1 if valid_wear else old['wear_streak'] if drop==0 and old['idle_reads']==0 else 0
                 idle=0 if valid_wear else old['idle_reads']+1
                 cycle=old['cycle']+(1 if row['current']>old['current'] else 0)
-                pace=(old['pace']+[elapsed/drop])[-5:] if valid_wear else old['pace'] if drop==0 else []
+                changed=now if valid_wear or drop!=0 else old.get('changed_at',old['seen_at'])
+                pace=(old['pace']+[(now-old.get('changed_at',old['seen_at']))/drop])[-5:] if valid_wear and old['idle_reads']<2 else old['pace'] if drop==0 else []
             else:
-                self.sequence+=1;ident='tool-'+str(self.sequence);elapsed=0;drop=0;streak=0;idle=0;cycle=0;pace=[]
+                self.sequence+=1;ident='tool-'+str(self.sequence);elapsed=0;drop=0;streak=0;idle=0;cycle=0;pace=[];changed=now
             used.add(ident)
             track={**row,'id':ident,'x':x,'y':y,'seen_at':now,'wear_streak':streak,'idle_reads':idle,
-                   'last_drop':drop,'cycle':cycle,'pace':pace,'percent':round(100*row['current']/row['maximum'],1)}
+                   'last_drop':drop,'cycle':cycle,'pace':pace,'changed_at':changed,'missing':0,'percent':round(100*row['current']/row['maximum'],1)}
             self.tracks[ident]=track;visible.append(track)
-        self.tracks={k:v for k,v in self.tracks.items() if now-v['seen_at']<=180}
+        self.tracks={k:v for k,v in self.tracks.items() if now-v['seen_at']<=180 and v['missing']<=2}
         for ident,track in self.tracks.items():
-            if ident not in used:track['wear_streak']=0;track['idle_reads']=2
+            if ident not in used and track['missing']>=2:track['wear_streak']=0;track['idle_reads']=2
         moving=[r for r in visible if r['current']>0 and r['wear_streak']>=2 and r['idle_reads']<=1]
         active=moving[0] if len(moving)==1 else None
         tools=[]
@@ -327,6 +323,7 @@ class AutomaticToolReader:
         self.last_discovery=-1e9;self.next_due=0;self.misses=0
         self.anchor=None
         self.quiet_reads=0
+        self.numeric_cache={};self.signatures={}
 
     def read(self,tess,bounds,grab,now=None,interval=10):
         _budget.deadline=time.monotonic()+6
@@ -339,7 +336,7 @@ class AutomaticToolReader:
         hwnd,left,top,right,bottom=bounds;width=right-left;height=bottom-top
         if width<100 or height<100 or width*height>16_000_000:raise ValueError('Unsupported visible game window size')
         context=(hwnd,left,top,width,height)
-        if context!=self.context:self.regions=[];self.context=context
+        if context!=self.context:self.regions=[];self.context=context;self.signatures={};self.numeric_cache={}
         discover=not self.regions or now-self.last_discovery>=30
         calls=0
         if discover:
@@ -352,7 +349,8 @@ class AutomaticToolReader:
         else:
             captured_mono=time.monotonic();captured_at=time.time()
             crops=[grab((left+r['box'][0],top+r['box'][1],left+r['box'][2],top+r['box'][3])) for r in self.regions]
-        observations,used_calls=verify_labels(crops,self.regions,tess) if crops else ([],0)
+        shifted=not discover and any(not signature_matches(self.signatures.get(tuple(r['box'])),label_signature(crop,r)) for r,crop in zip(self.regions,crops))
+        observations,used_calls=verify_labels(crops,self.regions,tess,self.numeric_cache) if crops and not shifted else ([],0)
         calls+=used_calls
         if not discover and len(observations)<len(self.regions):
             # Camera motion invalidates remembered label rectangles. Reacquire
@@ -361,17 +359,21 @@ class AutomaticToolReader:
             captured_mono=time.monotonic();captured_at=time.time()
             self.regions,self.anchor,used_calls=discover_scene(image,tess);calls+=used_calls
             crops=[image.crop(r['box']) for r in self.regions]
-            observations,used_calls=verify_labels(crops,self.regions,tess) if crops else ([],0)
+            del image
+            observations,used_calls=verify_labels(crops,self.regions,tess,self.numeric_cache) if crops else ([],0)
             calls+=used_calls
             self.last_discovery=now;discover=True
         report=self.inventory.update(observations,now,context)
+        unreadable=[{'name':r['name'],'box':r['box']} for r in self.regions if not any(r['box']==o['box'] for o in observations)]
         self.misses=self.misses+1 if not observations else 0
+        if discover:self.signatures={tuple(r['box']):label_signature(crop,r) for r,crop in zip(self.regions,crops) if any(r['box']==o['box'] for o in observations)}
         self.regions=[r for r in self.regions if any(r['box']==o['box'] for o in observations)]
         if any(row['last_drop']>0 for row in report['tools']) or discover:self.quiet_reads=0
         else:self.quiet_reads+=1
-        delay=max(3,min(120,interval)) if report['active_id'] else min(30,3*max(1,self.quiet_reads-2)) if observations else min(120,30*self.misses)
+        delay=max(3,min(120,interval)) if report['active_id'] else min(30,3*max(1,self.quiet_reads-2)) if observations else (3,10,30,60,120)[min(4,self.misses-1)]
         self.next_due=time.monotonic()+delay
         report.update(duration=time.monotonic()-started,ocr_calls=calls,discovery=discover,
                       next_seconds=delay,visible_limit=MAX_TOOLS,anchor=self.anchor,
-                      captured_mono=captured_mono,captured_at=captured_at)
+                      captured_mono=captured_mono,captured_at=captured_at,unreadable=unreadable,
+                      cache_hits=sum(bool(r.get('cache_hit')) for r in observations),camera_reacquired=shifted)
         return report
