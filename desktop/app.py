@@ -50,6 +50,7 @@ class App:
   self.first_run=not CFG.exists();self.scan_button=None;self.auto_toggle=None
   self.region_confirmed=bool(config.get('region_confirmed',not self.first_run))
   self.auto_tools=tk.BooleanVar(value=bool(config.get('auto_tool_discovery',True)))
+  self.lite_use=tk.BooleanVar(value=bool(config.get('lite_use',False)));self.lite_scan_complete=False
   self.tool_reader=AutomaticToolReader();self.tool_report=None;self.tool_window=None;self.tool_tree=None;self._active_tool_key=None
   self.tool_debug=OCRReaderView(self,'Tool OCR reader',self.rescan_tools)
   self.tool_status=ToolStatus();self._tool_view_at=0.;self._tool_bridge_revision=-1
@@ -127,6 +128,9 @@ class App:
   self.text_button(tool_strip,'VIEW TOOLS',self.open_tools).pack(side='right',padx=(8,0))
   tk.Label(tool_strip,textvariable=self.tool_title,bg=c['panel'],fg=c['bright'],font=('Segoe UI Semibold',10)).pack(anchor='w')
   tk.Label(tool_strip,textvariable=self.tool_preview,bg=c['panel'],fg=c['secondary'],font=('Segoe UI',9),wraplength=370,justify='left').pack(anchor='w',pady=(4,0))
+  modes=tk.Frame(hero,bg=c['panel']);modes.pack(fill='x',pady=(0,12))
+  ttk.Checkbutton(modes,text='Lite Use · initial tool scan, then timer only',variable=self.lite_use,command=self.change_lite_use,style='Vision.TCheckbutton').pack(anchor='w')
+  self.text_button(modes,'INSPECT TOOL OCR',self.tool_debug.open).pack(anchor='w',pady=(6,0))
   metrics=tk.Frame(hero,bg=c['panel']);metrics.pack(fill='x')
   for i,(name,var) in enumerate([('TIME REMAINING',self.count),('EARLY WARNING IN',self.alarm_in)]):
    col=tk.Frame(metrics,bg=c['panel']);col.pack(side='left',fill='x',expand=True)
@@ -155,6 +159,9 @@ class App:
   self.text_button(row,'TEST LINK',self.test_connection).pack(side='right')
 
   gear_row=tk.Frame(main,bg=c['bg']);gear_row.pack(fill='x',pady=(12,0))
+  workspace=tk.Frame(main,bg=c['bg']);workspace.pack(fill='x',pady=(8,0))
+  for label,section in [('WORKSHOP','craft'),('GRIND SESSION','grind'),('LOOT READER','reader')]:
+   self.action(workspace,label,lambda target=section:self.open_activity(target),flat=True).pack(side='left',fill='x',expand=True,padx=3)
   self.action(gear_row,'SILVER & LOOT HISTORY',self.loot.open,flat=True).pack(side='left',fill='x',expand=True,padx=(0,5))
   self.action(gear_row,'GEAR STUDIO',self.open_gear_planner,flat=True).pack(side='left',fill='x',expand=True,padx=(5,0))
   self.action(gear_row,'GUILD QUEST',self.open_guild_quest,flat=True).pack(side='left',fill='x',expand=True,padx=(8,0))
@@ -213,7 +220,13 @@ class App:
   self.loot.open()
   self.loot.tabs.select(self.loot.guild.frame)
 
+ def open_activity(self,section):
+  self.loot.open()
+  targets={'craft':self.loot.craft_tab,'grind':self.loot.grind.frame,'reader':self.loot.preview.master}
+  self.loot.tabs.select(targets[section])
+
  def tool_mode_changed(self):
+  self.lite_scan_complete=False
   self.tool_reader=AutomaticToolReader();self.last_scan_started=0
   self.set_tool_stage('idle' if self.auto_tools.get() else 'off','Show tool labels in BDO.' if self.auto_tools.get() else 'Manual capture area is selected in Settings.')
   self.save_quietly()
@@ -224,7 +237,7 @@ class App:
   win.title('BDO Vision • Tool reader');win.geometry('880x480');win.minsize(720,380);win.configure(bg=c['bg'])
   header=tk.Frame(win,bg=c['bg']);header.pack(fill='x',padx=22,pady=(20,10))
   tk.Label(header,text='TOOL READER',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',20)).pack(side='left')
-  self.text_button(header,'SAVE STATUS',self.save_tool_status).pack(side='right')
+  self.text_button(header,'EXPORT READER STATUS',self.save_tool_status).pack(side='right')
   self.text_button(header,'LIVE OCR READER',self.tool_debug.open).pack(side='right',padx=10)
   tk.Label(win,textvariable=self.tool_title,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',12)).pack(anchor='w',padx=22)
   tk.Label(win,textvariable=self.tool_health,bg=c['bg'],fg=c['secondary'],wraplength=810,justify='left').pack(anchor='w',padx=22,pady=(5,12))
@@ -318,9 +331,13 @@ class App:
     if bounds is None:raise RuntimeError('Bring BDO to the front with cooking/alchemy tool labels visible')
     def grab(box):
      if foreground_bdo_capture_bounds()!=bounds:raise RuntimeError('BDO moved or lost focus; waiting to reacquire tool labels')
-     return ImageGrab.grab(bbox=box,all_screens=True)
+     image=ImageGrab.grab(bbox=box,all_screens=True)
+     if debug_token is not None and self.tool_debug.token()==debug_token:
+      preview=preview_image(image);observed=time.time()
+      self.root.after(0,lambda:self.tool_debug.show(debug_token,preview,'Capture received. Recognition in progress; this image remains available if OCR times out.',observed))
+     return image
     captured_at=time.time();captured_mono=time.monotonic()
-    report=reader.read(tess,bounds,grab,interval=interval,confirm_pair=True)
+    report=reader.read(tess,bounds,grab,interval=interval,confirm_pair=not self.lite_use.get())
     if debug_frames:
      detail=json.dumps({k:report.get(k) for k in ('reason','confirmation','pair_result','anchor','tools','unreadable','duration','ocr_calls','cache_hits','camera_reacquired')},indent=2)+'\n\nOCR PASSES\n'+report.pop('_debug_raw','Unchanged verified crops reused; no new OCR text.')
      image=debug_frames[0]
@@ -523,6 +540,8 @@ class App:
                             seconds_per_craft=float(self.speed.get()),price_book=self.loot.insights.prices,
                              ports=tuple(dict.fromkeys((int(config.get('bridge_port',7288)),*PORTS))))
    self.bridge_server=self.bridge.server
+   self.bridge.ocr_paused=self.lite_use.get()
+   if self.lite_use.get():self.bridge.gear_stop.set()
    if self.bridge_server:
     runtime=json.dumps({'planner_url':self.bridge.planner_url,'base_url':self.bridge.base_url,'pid':os.getpid(),'data_path':str(DATA_ROOT)})
     (DATA_ROOT/'runtime-status.json').write_text(runtime)
@@ -582,7 +601,7 @@ class App:
    d,m,s,w=self.parse_inputs();r=[int(v.get()) for v in self.region]
    if r[2]<=0 or r[3]<=0:raise ValueError('Region width and height must be positive.')
    if not (2<=float(self.scan_interval.get())<=600 and 1<=int(self.alarm_repeats.get())<=20):raise ValueError('Auto scan interval must be 2–600 seconds and alarm beeps 1–20.')
-   CFG.write_text(json.dumps({**self.loot.settings(),'auto_tool_discovery':self.auto_tools.get(),'region_confirmed':self.region_confirmed,'region':r,'seconds_per_craft':s,'warning':w,'durability':d,'maximum':m,'tesseract':self.tess.get(),'auto_scan':self.auto_enabled.get(),'scan_interval':float(self.scan_interval.get()),'alarm_repeats':int(self.alarm_repeats.get()),'wide_tracking':self.wide_tracking.get()},indent=2));self.status.set('Settings saved')
+   CFG.write_text(json.dumps({**self.loot.settings(),'lite_use':self.lite_use.get(),'auto_tool_discovery':self.auto_tools.get(),'region_confirmed':self.region_confirmed,'region':r,'seconds_per_craft':s,'warning':w,'durability':d,'maximum':m,'tesseract':self.tess.get(),'auto_scan':self.auto_enabled.get(),'scan_interval':float(self.scan_interval.get()),'alarm_repeats':int(self.alarm_repeats.get()),'wide_tracking':self.wide_tracking.get()},indent=2));self.status.set('Settings saved')
   except Exception as e:messagebox.showerror('Settings',str(e))
  def refresh_auto_scan_label(self):
   if self.auto_toggle:
@@ -650,11 +669,26 @@ class App:
   try:self.track_ack()
   except Exception as exc:self.connection.set('Planner check retry pending: '+str(exc))
   self.root.after(400,self.tick)
+ def change_lite_use(self):
+  self.lite_scan_complete=False
+  self.tool_reader=AutomaticToolReader()
+  self.loot.generation+=1;self.loot.guild.generation+=1;self.loot.guild.waiting=False
+  if self.bridge:
+   self.bridge.ocr_paused=self.lite_use.get()
+   if self.lite_use.get():self.bridge.gear_stop.set()
+   else:self.bridge.gear_stop.clear()
+  if self.lite_use.get():self.auto_tools.set(True);self.auto_enabled.set(True)
+  self.tool_reader.next_due=0
+  self.save_quietly()
+  self.status.set('Lite Use: initial tool durability only. Loot, quest and gear OCR are paused; after acceptance only the timer runs.' if self.lite_use.get() else 'Normal tracking restored with your existing options.')
+
  def poll_auto_ocr(self):
   # Keep scanning alive independently of timer / planner update failures.
   finder=bool(getattr(self,'auto_tools',None) and self.auto_tools.get())
   try:
-   if not self.auto_enabled.get():
+   if self.lite_use.get() and self.lite_scan_complete:
+    self.auto_health.set('LITE USE · timer estimate only · scan manually for a new tool')
+   elif not self.auto_enabled.get():
     self.auto_health.set('Auto OCR: OFF')
     if finder:self.set_tool_stage('off','Automatic scanning is off. SCAN & TRACK still reads on demand.')
    elif self.selecting_region:self.auto_health.set('Auto OCR: selecting capture area')
@@ -908,6 +942,7 @@ class App:
     self.speed_estimator.reset()
    prior_ocr=self.last_good_ocr
    self.has_reading=True
+   if getattr(self,'lite_use',None) is not None and self.lite_use.get():self.lite_scan_complete=True
    self.last_good_ocr=(a,b)
    self.last_ocr_at=measured_at
    self.dur.set(str(a));self.maximum.set(str(b))

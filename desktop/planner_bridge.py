@@ -66,6 +66,7 @@ class PlannerBridge:
         self.commands=[]
         self.gear_ocr_gate=BoundedSemaphore(1)
         self.gear_job=None;self.gear_stop=Event()
+        self.ocr_paused=False
         self.gear_store_lock=Lock()
         self.tool_status={'stage':'idle','title':'Waiting for the native reader','tools':[]}
         self.guild_status={'enabled':False,'available':False,'current':None,'target':None}
@@ -260,6 +261,7 @@ class PlannerBridge:
                         except OSError:self._send({'error':'Could not save Windows backup; export a JSON backup instead'},503)
                         return
                     if route in ('/gear/ocr','/gear/sweep'):
+                        if bridge.ocr_paused:self._send({'error':'Lite Use is enabled; equipment OCR is paused'},403);return
                         if not bridge.price_book:self._send({'error':'Open the paired Windows app for equipment OCR'},503);return
                         if not bridge.gear_ocr_gate.acquire(blocking=False):self._send({'error':'Equipment reader is busy'},429);return
                         handed_off=False

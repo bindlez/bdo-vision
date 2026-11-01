@@ -115,6 +115,13 @@ class ActiveToolTests(unittest.TestCase):
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_moved_place_mode_is_found_before_returning_nearby_labels(self):
+        from tool_reader import discover_scene
+        raw='level\tleft\ttop\twidth\theight\tconf\ttext\n5\t70\t100\t90\t20\t95\tPlace\n5\t165\t100\t60\t20\t95\tMode\n'
+        with patch('tool_reader.ocr',side_effect=['',raw,'']),patch('tool_reader.discover_bar_labels',return_value=([row(800)],0)):
+            regions,anchor,calls=discover_scene(Image.new('RGB',(1280,720)),'engine')
+        self.assertIn('Place Mode',anchor['evidence']);self.assertLess(anchor['x'],250)
+        self.assertTrue(regions);self.assertEqual(calls,3)
     def test_place_mode_starts_first_read_without_waiting_for_pair(self):
         reader=AutomaticToolReader();tool={**row(800),'id':'chosen','numbers':[1040,240,1100,260],'cycle':0}
         report={'active_id':None,'tools':[tool],'anchor':{'x':1025,'y':190,'evidence':'Place Mode anchor'}}

@@ -35,6 +35,7 @@ class LootTracker:
         self.rare_region=settings.get('rare_drop_region')
         self.feed=tk.StringVar(value=settings.get('loot_feed','Item Drop logs'))
         self.crafting=tk.BooleanVar(value=bool(settings.get('craft_tracking',False)))
+        self.craft_economy=settings.get('craft_economy',{})
         self.track_rare=tk.BooleanVar(value=bool(settings.get('track_rare',True)))
         self.interval=tk.StringVar(value=str(settings.get('loot_interval',2)))
         self.enabled=tk.BooleanVar(value=bool(settings.get('loot_enabled',False) and self.region))
@@ -58,7 +59,7 @@ class LootTracker:
         self.root.after(250,self.poll)
 
     def settings(self):
-        return {'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings()}
+        return {'craft_economy':self.craft_economy,'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings()}
 
     def safe_interval(self):
         try:return max(.5,min(30,float(self.interval.get())))
@@ -102,6 +103,15 @@ class LootTracker:
         self.tabs=tabs=ttk.Notebook(main,style='Loot.TNotebook');tabs.pack(fill='both',expand=True)
         def table(title,columns):
             frame=tk.Frame(tabs,bg=c['bg']);tabs.add(frame,text=title)
+            if title=='Crafts':
+                self.craft_tab=frame
+                canvas=tk.Canvas(frame,bg=c['bg'],highlightthickness=0,takefocus=True)
+                scrollbar=ttk.Scrollbar(frame,orient='vertical',command=canvas.yview);scrollbar.pack(side='right',fill='y')
+                canvas.configure(yscrollcommand=scrollbar.set);canvas.pack(fill='both',expand=True)
+                frame=tk.Frame(canvas,bg=c['bg']);content=canvas.create_window(0,0,window=frame,anchor='nw')
+                frame.bind('<Configure>',lambda e:canvas.configure(scrollregion=canvas.bbox('all')))
+                canvas.bind('<Configure>',lambda e:canvas.itemconfigure(content,width=e.width))
+                canvas.bind('<Next>',lambda e:canvas.yview_scroll(1,'pages'));canvas.bind('<Prior>',lambda e:canvas.yview_scroll(-1,'pages'))
             tree=ttk.Treeview(frame,columns=tuple(name for name,_,_ in columns),show='headings',style='Loot.Treeview',height=8)
             for name,label,width in columns:tree.heading(name,text=label);tree.column(name,width=width,minwidth=60,stretch=name=='item')
             tree.pack(side='left',fill='both',expand=True);scroll=ttk.Scrollbar(frame,orient='vertical',command=tree.yview);scroll.pack(side='right',fill='y');tree.configure(yscrollcommand=scroll.set)
@@ -109,6 +119,9 @@ class LootTracker:
         self.visible_tree=table('Live',[('item','RECOGNIZED ITEM',420),('qty','QUANTITY',100),('kind','ACTIVITY',120),('source','FEED',130)])
         self.tree=table('Loot',[('time','TIME',145),('item','ITEM',320),('qty','QUANTITY',90),('kind','ACTIVITY',100),('source','FEED',110)])
         self.crafts_tree=table('Crafts',[('item','CRAFTED ITEM',500),('qty','QUANTITY',120)])
+        from craft_dashboard import CraftDashboard
+        self.craft_dashboard=CraftDashboard(self,self.crafts_tree.master)
+        self.craft_dashboard.frame.pack(before=self.crafts_tree,side='top',fill='x')
         self.totals_tree=table('Totals',[('item','ITEM',440),('qty','QUANTITY',100),('kind','ACTIVITY',130)])
         self.insights.build(tabs)
         self.silver.build(tabs)
@@ -136,6 +149,7 @@ class LootTracker:
             key=(row[2],row[6]);totals[key]=totals.get(key,0)+row[3]
             if row[6] in ('Crafted','Rare craft'):crafts[row[2]]=crafts.get(row[2],0)+row[3]
         rare=sum(r[3] for r in current if r[6] in ('Rare drop','Rare craft'))
+        if hasattr(self,'craft_dashboard') and self.craft_dashboard.frame.winfo_exists():self.craft_dashboard.update(current)
         self.summary.set(f'Saved history: {len(rows):,} events · {sum(r[3] for r in rows):,} items   |   Today ({today}): {sum(r[3] for r in current):,} items')
         if self.tree and self.tree.winfo_exists():
             cache=getattr(self,'_history_display_cache',{})
@@ -183,6 +197,7 @@ class LootTracker:
         return feeds
 
     def can_capture(self):
+        if getattr(self.app,'lite_use',None) is not None and self.app.lite_use.get():return False,'Lite Use · loot OCR paused'
         regions=list(self.capture_regions().values())
         ready,reason=capture_budget(regions)
         return item_regions_visible(regions) if ready else (False,reason)

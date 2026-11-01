@@ -127,6 +127,8 @@ class GuildQuestTracker:
         return box
 
     def scan(self,manual=False):
+        if getattr(self.app,'lite_use',None) is not None and self.app.lite_use.get():
+            self.waiting=False;self.model.pause('Lite Use · quest OCR paused');self.reader_view.paused('Lite Use');self.refresh();self.schedule();return
         if self.closed:return
         if self.busy or self.app.busy or self.tracker.busy or self.app.selecting_region:
             if manual:self.notice.set('The readers are busy. Try READ NOW after this pass.')

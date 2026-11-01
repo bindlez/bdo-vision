@@ -377,6 +377,19 @@ def discover_scene(image,tess):
                'y':sum(w['y']+w['h']/2 for w in group)/len(group)/header_scale+header_box[1],
                'evidence':'Place Mode anchor'};break
     top=max(0,int(place['y']+height*.005)) if place else max(0,int(anchor['y']-height*.278))
+    if place is None:
+        # A moved residence control may sit outside the cheap central header.
+        # Search only the upper client strip, not an additional full frame.
+        strip=image.crop((0,0,width,int(height*.32)))
+        scale=min(1.,math.sqrt(900000/max(1,strip.width*strip.height)))
+        strip=ImageOps.autocontrast(strip.convert('L')).resize((max(1,int(strip.width*scale)),max(1,int(strip.height*scale))))
+        raw=ocr(strip,tess,11);calls+=1
+        for group in lines(words(raw)):
+            if 'placemode' not in re.sub(r'\W','',' '.join(w['text'] for w in group)).casefold():continue
+            group=[w for w in group if re.search(r'place|mode',w['text'],re.I)] or group
+            place={'x':sum(w['x']+w['w']/2 for w in group)/len(group)/scale,
+                   'y':sum(w['y']+w['h']/2 for w in group)/len(group)/scale,'evidence':'Place Mode expanded header'}
+            top=max(0,int(place['y']+height*.005));break
     bottom=min(height,int(place['y']+height*.24)) if place else max(top+1,min(height,int(anchor['y']-height*.046)))
     if place:anchor=place
     regions=band((0,top,width,bottom),anchor);calls+=1
@@ -558,6 +571,7 @@ class AutomaticToolReader:
                 report['pair_result']='Labels moved; waiting to reacquire';return report
         a,calls_a=verify_labels(first,[dict(r) for r in regions],tess,self.numeric_cache)
         b,calls_b=verify_labels(second,[dict(r) for r in regions],tess,self.numeric_cache)
+        if self.diagnostic is not None:self.diagnostic(second,b,None)
         report['ocr_calls']+=calls_a+calls_b
         field=changing_tool(a,b,b_mono-a_mono) if len(a)==len(regions) and len(b)==len(regions) else None
         report['duration']+=time.monotonic()-a_mono

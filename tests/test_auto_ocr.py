@@ -9,7 +9,7 @@ from app import App, DEFAULT
 
 class AutoOCRTests(unittest.TestCase):
     def app(self):
-        return types.SimpleNamespace(auto_enabled=types.SimpleNamespace(get=lambda:True),region_confirmed=True,selecting_region=False,
+        return types.SimpleNamespace(lite_use=types.SimpleNamespace(get=lambda:False),lite_scan_complete=False,auto_enabled=types.SimpleNamespace(get=lambda:True),region_confirmed=True,selecting_region=False,
             bdo_foreground=lambda:True,busy=False,loot=types.SimpleNamespace(busy=False),
             safe_scan_interval=lambda:10,last_scan_started=0,auto_health=MagicMock(),root=MagicMock(),read_ocr=MagicMock(),poll_auto_ocr=MagicMock())
 
@@ -18,6 +18,13 @@ class AutoOCRTests(unittest.TestCase):
         app.read_ocr.assert_called_once_with(delayed=False,automatic=True)
         self.assertGreater(app.last_scan_started,0)
         app.root.after.assert_called_once()
+
+    def test_lite_mode_scans_until_accepted_then_stops(self):
+        app=self.app();app.lite_use=types.SimpleNamespace(get=lambda:True)
+        App.poll_auto_ocr(app);app.read_ocr.assert_called_once()
+        app.read_ocr.reset_mock();app.lite_scan_complete=True
+        App.poll_auto_ocr(app);app.read_ocr.assert_not_called()
+        self.assertIn('LITE USE',app.auto_health.set.call_args.args[0])
 
     def test_automatic_tool_finder_needs_no_initial_region(self):
         app=self.app();app.region_confirmed=False
