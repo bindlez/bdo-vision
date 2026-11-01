@@ -1,3 +1,7 @@
+# BDO Vision 1.12.0-rc.5 — recover difficult gold mission headings
+
+The next real near-finish frame read 593/600 but lost the low-contrast gold guild heading. A bounded focused heading pass now supplies context only when it reads the alchemy guild caption, while both independent objective reads still have to agree. Narrow, harmless separator punctuation is normalized inside the scoped objective; damaged digits remain unresolved. The real 184 → 593/600 replay produces one near warning and no duplicate. New-quest 13/600 was observed separately; actual completion was not forced or assumed. rc.4 remains preserved in the local version library.
+
 # BDO Vision 1.12.0-rc.4 — alchemy Guild Quest and automatic-reader fixes
 
 Optional native Guild Quest tracking reads the visible alchemy guild objective, keeps saved progress, displays remaining units and observed pace, and alerts once near the configured percentage and once at completion. Default warning is 90%. Restarting does not repeat old alerts. New quests archive previous progress; an automatic reset after confirmed completion needs two separate readings. Defaults off, with no guild polling/worker while disabled. Default right-hand widget reads have an optional custom-area fallback, bounded crops, paired OCR consensus and short exact-frame reuse. No game inputs or inferred shared-guild credit are added.

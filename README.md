@@ -1,4 +1,6 @@
-# BDO Vision 1.12.0-rc.4 — automatic tools and alchemy Guild Quest
+# BDO Vision 1.12.0-rc.5 — automatic tools and alchemy Guild Quest
+
+Focused gold-heading recovery handles the live near-complete widget as well as the initial reading. The real 184 → 593/600 sequence triggers one near alert; repeating the same frame does not alert again. Counter consensus, guild context and the three-second work budget remain required.
 
 Adds an optional Guild Quest tab with verified objective progress, a default 90% warning, completion alert, recent observed pace and persisted alert state. Default widget discovery needs no selection; a custom area supports moved layouts. Hidden/unreadable objectives retain last verified values. No guild credit is inferred from loot. See [Guild Quest](docs/GUILD-QUEST.md).
 

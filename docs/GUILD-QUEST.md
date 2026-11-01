@@ -15,3 +15,5 @@ English text is supported in this candidate. Input is limited to 250,000 pixels 
 The small read-only local `/guild-quest` diagnostic route uses the existing Host/origin restrictions and returns only objective/status summaries. No new website polling or backend is added.
 
 Validation: the saved real widget read **Mysterious Catalyst 184/600** in both passes and excluded the nearby **2/100** personal quest. Generated-widget real OCR, disagreement rejection, threshold alerts, restart behavior, stale/blocked capture, counter regressions and archived/new-quest transitions are tested. Live completion of a real guild mission is not claimed.
+
+rc.5 also verifies the real **593/600** near-finish frame. A small focused gold-heading fallback recovers guild context lost by whole-widget OCR; two objective counts still must agree. A replay of 184 → 593 → 593 triggers one near alert, then no repeat. Work is bounded to three seconds per guild read, and unclear objectives back off rather than repeatedly launching OCR.

@@ -30,6 +30,11 @@ class QuestParsingTests(unittest.TestCase):
         result=parse_quest_text('[Alchemy] Guild Supply Mission\nProduce elixirs (1,000/1,000)')
         self.assertEqual((result['current'],result['target']),(1000,1000))
 
+    def test_wrapped_separator_noise_keeps_new_quest_count(self):
+        result=parse_quest_text('[Alchemy] Glorious Guild Supply Mission\nObtain Mysterious Catalyst via Alchemy (13\n/-600)\n[Bonus] Make Reagent (8/100)')
+        self.assertEqual((result['current'],result['target']),(13,600))
+        self.assertIsNone(parse_quest_text('[Alchemy] Guild Supply Mission\nObtain Catalyst (13/-600)'))
+
     def test_real_ocr_of_generated_mission_widget(self):
         engine=Path(r'C:\Program Files\Tesseract-OCR\tesseract.exe')
         if not engine.exists():self.skipTest('Tesseract unavailable')
@@ -49,6 +54,18 @@ class QuestParsingTests(unittest.TestCase):
             with patch('guild_quest.time.monotonic',side_effect=[0,3.1]):
                 with self.assertRaises(RuntimeError):recognize_quest(Image.new('RGB',(300,100)),'engine')
             engine.assert_not_called()
+
+    def test_focused_gold_header_recovers_near_complete_counter(self):
+        bodies=[b"Remaining: 258 min\nObtain Mysterious Catalyst via Alchemy (\n593:/'600')\nMake Oil (20/100)",b'Remaining: 258 min\nObtain Mysterious Catalyst via Alchemy (\n593/600)\nMake Oil (20/100)',b'[Alchemy] Glorious Guild Supp...']
+        responses=[type('Result',(),{'returncode':0,'stdout':t})() for t in bodies]
+        with patch('guild_quest.run_ocr',side_effect=responses),patch('guild_quest.guild_heading_crops',return_value=[Image.new('RGB',(240,20),'black')]):
+            result,_=recognize_quest(Image.new('RGB',(300,100),'black'),'engine')
+        self.assertEqual((result['current'],result['target']),(593,600))
+
+    def test_focused_personal_header_cannot_supply_guild_context(self):
+        bodies=[b'Obtain Mysterious Catalyst via Alchemy (593/600)']*2+[b'[Daily] Alchemy Mission']
+        with patch('guild_quest.run_ocr',side_effect=[type('Result',(),{'returncode':0,'stdout':t})() for t in bodies]),patch('guild_quest.guild_heading_crops',return_value=[Image.new('RGB',(240,20),'black')]):
+            self.assertIsNone(recognize_quest(Image.new('RGB',(300,100),'black'),'engine')[0])
 
 
 class QuestStateTests(unittest.TestCase):

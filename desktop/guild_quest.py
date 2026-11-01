@@ -1,7 +1,7 @@
 """Optional, visible alchemy guild-mission progress. No inferred guild credit."""
 from collections import deque
 import io,json,math,re,time
-from PIL import ImageOps,Image
+from PIL import ImageOps,Image,ImageChops
 from ocr_runtime import run_ocr
 
 NUMBER=r'(?:[1-9]\d{0,2}(?:,\d{3})+|0|[1-9]\d{0,7})'
@@ -13,19 +13,43 @@ def parse_quest_text(text):
     start=next((i for i,line in enumerate(lines) if 'guild' in line.casefold() and 'alchemy' in line.casefold() and any(w in line.casefold() for w in ('mission','quest','supp'))),None)
     if start is None:return None
     scope=[]
-    for line in lines[start:start+9]:
+    for line in lines[start:start+24]:
         if scope and re.search(r'\[(?:bonus|daily|weekly|main|event|repeat|combat|story)\b',line,re.I):break
         scope.append(line)
     objective=next((i for i,line in enumerate(scope[1:],1) if re.search(r'\b(?:obtain|produce|make|craft|perform)\b',line,re.I)),None)
     if objective is None:return None
     text='\n'.join(scope[objective:objective+2])
+    text=re.sub(r'(?<=\d)\s*[:;]\s*(?=/)','',text)
+    text=re.sub(r"/\s*['‘’](\d[\d,]*)['‘’]",r'/\1',text)
+    text=re.sub(r'(?m)^\s*/\s*[-–—]\s*(?=\d)','/',text)
     pairs={(int(a.replace(',','')),int(b.replace(',',''))) for a,b in PAIR.findall(text)}
     if len(pairs)!=1:return None
     current,target=pairs.pop()
     if not 0<=current<=target<=10_000_000 or target==0:return None
     heading=re.sub(r'^[^\w\[]+','',scope[0]).strip()
-    detail=re.sub(r'^[^\w\[]+','',PAIR.sub('',scope[objective])).strip().rstrip(' ()')
+    detail=re.sub(r'^[^\w\[]+','',PAIR.sub('',text).splitlines()[0]).strip().rstrip(' ()')
     return {'current':current,'target':target,'label':heading[:120],'objective':detail[:160]}
+
+
+def guild_heading_crops(image):
+    r,g,b=image.convert('RGB').split()
+    mask=ImageChops.multiply(ImageChops.subtract(r,g).point(lambda p:255 if p>10 else 0),ImageChops.subtract(g,b).point(lambda p:255 if p>12 else 0))
+    mask=ImageChops.multiply(mask,r.point(lambda p:255 if p>135 else 0))
+    bands=[];top=None;last=None
+    for y in range(mask.height):
+        count=mask.crop((0,y,mask.width,y+1)).histogram()[255]
+        if count>=max(10,mask.width*.02):
+            if top is None:top=y
+            last=y
+        elif top is not None and y-last>2:
+            if 4<=last-top+1<=30:bands.append((top,last+1))
+            top=last=None
+    if top is not None and 4<=last-top+1<=30:bands.append((top,last+1))
+    result=[]
+    for a,bottom in bands[:6]:
+        box=mask.crop((0,a,mask.width,bottom)).getbbox()
+        if box:result.append(image.crop((max(0,box[0]-6),max(0,a-4),min(image.width,box[2]+6),min(image.height,bottom+4))))
+    return result[:4]
 
 
 def recognize_quest(image,tess):
@@ -42,6 +66,19 @@ def recognize_quest(image,tess):
         text=result.stdout.decode('utf-8','replace')[:6000];texts.append(text);readings.append(parse_quest_text(text))
     a,b=readings
     agreed=a if a and b and (a['current'],a['target'])==(b['current'],b['target']) else None
+    if not agreed:
+        for crop in guild_heading_crops(image):
+            remaining=deadline-time.monotonic()
+            if remaining<.15:break
+            prepared=ImageOps.autocontrast(crop.convert('RGB').getchannel('R'))
+            prepared=prepared.resize((prepared.width*3,prepared.height*3),Image.Resampling.LANCZOS)
+            data=io.BytesIO();prepared.save(data,format='PNG')
+            result=run_ocr([tess,'stdin','stdout','--psm','7','-l','eng'],input=data.getvalue(),capture_output=True,timeout=min(1,remaining))
+            header=result.stdout.decode('utf-8','replace').strip()[:240] if not result.returncode else ''
+            folded=header.casefold()
+            if not ('guild' in folded and 'alchemy' in folded and any(w in folded for w in ('supp','mission','quest'))):continue
+            a,b=[parse_quest_text(header+'\n'+text) for text in texts]
+            if a and b and (a['current'],a['target'])==(b['current'],b['target']):agreed=a;break
     return agreed,'\n\n'.join(texts)[:1200]
 
 

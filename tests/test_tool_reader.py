@@ -113,6 +113,19 @@ class DiscoveryTests(unittest.TestCase):
         raw='level\tleft\ttop\twidth\theight\tconf\ttext\n5\t0\t0\t80\t20\t90\t290/3000\n'
         with patch('tool_reader.ocr',return_value=raw):
             self.assertEqual(verify_labels([Image.new('RGB',(100,30),'white')],[region],'engine')[0],[])
+
+    def test_damaged_separator_requires_independent_digit_field_agreement(self):
+        region={'name':PARTIAL_NAME,'box':[0,0,100,30],'numbers':[10,0,95,30],
+            'locator':'durability bar','bar_pair':(574,3000),'digit_boxes':[[15,2,40,28],[50,2,90,28]]}
+        header='level\tleft\ttop\twidth\theight\tconf\ttext\n5\t0\t0\t20\t20\t90\t'
+        crop=Image.new('RGB',(100,30),'white')
+        responses=[header+n+'\n' for n in ('574','574','3000','3000')]
+        with patch('tool_reader.ocr',side_effect=responses) as engine:
+            rows,calls=verify_labels([crop],[dict(region)],'engine')
+            self.assertEqual((rows[0]['current'],rows[0]['maximum']),(574,3000));self.assertEqual(calls,4)
+        for numbers in (('574','574','73000','73000'),('574','574','3000','300')):
+            with patch('tool_reader.ocr',side_effect=[header+n+'\n' for n in numbers]):
+                self.assertEqual(verify_labels([crop],[dict(region)],'engine')[0],[])
     def test_fraction_split_across_tokens_gets_one_numeric_crop(self):
         header='level\tleft\ttop\twidth\theight\tconf\ttext\n'
         raw=header+'5\t100\t200\t80\t20\t90\tAlchemy\n5\t185\t200\t60\t20\t90\tTool(95\n5\t250\t200\t6\t20\t90\t/\n5\t260\t200\t50\t20\t90\t3000)\n'

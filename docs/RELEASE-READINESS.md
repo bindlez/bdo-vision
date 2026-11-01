@@ -2,13 +2,15 @@
 
 ## Release scope
 
-The complete Windows product remains: saved loot/silver, crafting and grind sessions, paired planner, optional sharing, tray tools, Gear Studio and reviewed tooltip import. rc.4 adds optional alchemy Guild Quest and fixes automatic tool discovery. The working crafting timer's selection, time calculation and sending behavior are retained.
+The complete Windows product remains: saved loot/silver, crafting and grind sessions, paired planner, optional sharing, tray tools, Gear Studio and reviewed tooltip import. rc.5 adds optional alchemy Guild Quest and improves automatic tool discovery. The working crafting timer's selection, time calculation and sending behavior are retained.
 
 ## Addressed release blockers
 
 - Tool discovery failed against bright scenery and camera positions. Quote-noise could swallow TSV rows; a tight search band could clip labels; merged words placed numeric crops incorrectly. The reader now disables CSV quote interpretation, expands the search band and adds bounded gold-line/character-box localization with focused numeric consensus.
 - A real missed capture now reads 2,910/3,000 plus its 3,000/3,000 neighbor. Another camera layout reads the active 2,287/3,000. Previously successful low counters remain replay regressions. Duplicate locators are merged; disagreements remain uncertain.
 - Guild progress must not borrow personal quests or local loot totals. The parser scopes the alchemy guild objective and verifies its count in two reads. A real 184/600 widget excludes a neighboring 2/100 objective.
+- Gold guild headings now have a focused fallback. Saved captures read 184/600, 593/600 and the next quest at 13/600, including wrapped punctuation. The 593 reading triggers one near-finish alert in replay; a real completed 600/600 was not observed.
+- A saved overlapping-label capture reads 574/3000 using independently verified digit fields when the slash is damaged. The four latest saved scenes take about 1–2 seconds for broad discovery here. One still misses the active 777/3000 label while finding its neighbor; this is a known reader limit, not full live coverage. Prior successful low-counter replays remain checked.
 - Alerts must not repeat after restart or guess completion during outages. State and delivered flags persist, blocked/stale readings pause, and new-quest reset evidence is explicit.
 - Saved history must survive builds and updates. Profile data stays separate, installs use the single-instance guard and verified backups, and loot rows are compared before/after updates.
 

@@ -1,4 +1,4 @@
-# BDO Vision · test candidate · 1.12.0-rc.4
+# BDO Vision · test candidate · 1.12.0-rc.5
 
 Guild Quest: click GUILD QUEST in Vision, enable the optional tracker and return to BDO with the alchemy guild objective visible in the right-hand quest widget. Compare the displayed progress against the game. Default alert is 90%, with one completion alert. TEST ALERT checks sound without altering progress. Hide the widget and verify the state pauses. NEXT QUEST archives the previous snapshot. See GUILD-QUEST.md for boundaries.
 

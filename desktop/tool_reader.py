@@ -234,13 +234,18 @@ def discover_bar_labels(image,tess,known=()):
     for bar in durability_bars(image):
         left,top,right,bottom=bar['box']
         center=(left+right)/2
-        if any(r.get('numbers') and r['box'][0]<=center<=r['box'][2] and r['box'][1]<=top-10*unit<=r['box'][3] for r in known):continue
+        if any(r.get('locator')=='durability bar' and r.get('numbers') and r['box'][0]<=center<=r['box'][2] and r['box'][1]<=top-10*unit<=r['box'][3] for r in known):continue
         box=[max(0,int(left-190*unit)),max(0,int(top-26*unit)),min(width,int(left+310*unit)),max(1,int(top-6*unit))]
         crop=image.crop(box)
         if crop.height<8:continue
         prepared=ImageOps.autocontrast(crop.convert('L')).resize((crop.width*3,crop.height*3),Image.Resampling.LANCZOS)
         parser=CharacterBoxes();parser.feed(ocr(prepared,tess,7,characters=True));calls+=1
         text=''.join(char for char,_ in parser.chars)
+        if re.search(r'(?:Tool|Utensil)\(\d{4,}\)',text,re.I):
+            box[0]+=1;box[2]=min(width,box[2]+1);crop=image.crop(box)
+            prepared=ImageOps.autocontrast(crop.convert('L')).resize((crop.width*3,crop.height*3),Image.Resampling.BICUBIC)
+            parser=CharacterBoxes();parser.feed(ocr(prepared,tess,7,characters=True));calls+=1
+            text=''.join(char for char,_ in parser.chars)
         kind='Alchemy Tool' if re.search(r'alc[hkn]emy',text,re.I) else 'Cooking Utensil' if re.search(r'cookin[gqc]',text,re.I) else None
         name=label_name(text)
         if not kind and name!=PARTIAL_NAME and 'traditional' not in text.casefold():continue
@@ -250,11 +255,26 @@ def discover_bar_labels(image,tess,known=()):
             boxes=[b for _,b in parser.chars[match.start():match.end()]]
             if not boxes or sum(c.isdigit() for c in match.group())<3:continue
             a=min(b[0] for b in boxes)/3+box[0];b=max(b[2] for b in boxes)/3+box[0]
-            if not left+20*unit<=(a+b)/2<=left+300*unit:continue
+            primary=left+20*unit<=(a+b)/2<=left+300*unit
+            prefix=text[max(0,match.start()-60):match.start()]
+            if not primary and not re.search(r'(?:Tool|Utensil)$',prefix,re.I):continue
             numeric=[max(box[0],int(a-16*unit)),box[1],min(box[2],int(b+10*unit)),box[3]]
             strict=re.fullmatch(r'[({]?(\d[\d,]*)\s*[/|]\s*(\d[\d,]*)[)}]?',match.group())
-            region={'name':name if name and name!=PARTIAL_NAME else kind or PARTIAL_NAME,'box':box,'numbers':numeric,'locator':'durability bar','bar_fill':bar['fill']}
+            region={'name':name if name and name!=PARTIAL_NAME else kind or PARTIAL_NAME,'box':box,'numbers':numeric,'locator':'durability bar'}
+            if primary:region['bar_fill']=bar['fill']
+            else:region['name']=label_name(prefix) or PARTIAL_NAME
             if strict:region['bar_pair']=tuple(int(n.replace(',','')) for n in strict.groups())
+            damaged=re.fullmatch(r'[({](\d[\d,]*)[^\w\s](\d[\d,]*)[)}]',match.group()) if not strict else None
+            if not primary and not strict and not damaged and not re.search(r'[/|]',match.group()):continue
+            if damaged:
+                # A damaged separator is geometry only. Recognize each digit
+                # field independently; never turn an unknown glyph into '/'.
+                region['bar_pair']=tuple(int(n.replace(',','')) for n in damaged.groups())
+                region['digit_boxes']=[]
+                for part in (1,2):
+                    glyphs=[b for _,b in parser.chars[match.start()+damaged.start(part):match.start()+damaged.end(part)]]
+                    region['digit_boxes'].append([int(min(g[0] for g in glyphs)/3+box[0]),box[1]+2,
+                        int(max(g[2] for g in glyphs)/3+box[0]),box[3]])
             if not any(abs((r['numbers'][0]+r['numbers'][2]-numeric[0]-numeric[2])/2)<16 and abs(r['box'][1]-box[1])<8 for r in regions):regions.append(region)
     return regions[:MAX_TOOLS],calls
 
@@ -283,7 +303,7 @@ def verify_labels(crops,regions,tess,cache=None):
         if not region.get('numbers'):continue
         original=region['numbers'];left,top,_,_=region['box']
         windows=[original]
-        if region.get('locator')=='durability bar':windows.append([max(left,original[0]-3),*original[1:]])
+        if region.get('locator')=='durability bar' and not region.get('digit_boxes'):windows.append([max(left,original[0]-3),*original[1:]])
         for window in windows:
             a,b,c,d=window;numeric=crop.crop((a-left,b-top,c-left,d-top))
             if numeric.width<8 or numeric.height<5:continue
@@ -293,10 +313,24 @@ def verify_labels(crops,regions,tess,cache=None):
                 result.append({**cached[1],'name':region['name'],'box':region['box'],'cache_hit':True});region['numbers']=window;region.pop('bar_pair',None);region.pop('bar_fill',None);break
             gray=ImageOps.autocontrast(ImageOps.grayscale(numeric)).resize((numeric.width*4,numeric.height*4),Image.Resampling.LANCZOS)
             readings=[];confidences=[]
-            for variant in (gray,ImageOps.invert(gray)):
-                tokens=words(ocr(variant,tess,7,numeric=True));calls+=1
-                readings.append(set(extract_pairs(' '.join(w['text'] for w in tokens))))
-                confidences.append(sum(w['confidence'] for w in tokens)/max(1,len(tokens)))
+            if region.get('digit_boxes'):
+                fields=[]
+                for x1,y1,x2,y2 in region['digit_boxes']:
+                    field=ImageOps.autocontrast(crop.crop((x1-left,y1-top,x2-left,y2-top)).convert('L'))
+                    field=field.resize((field.width*4,field.height*4),Image.Resampling.LANCZOS)
+                    values=[]
+                    for variant in (field,ImageOps.invert(field)):
+                        tokens=words(ocr(variant,tess,7,numeric=True));calls+=1
+                        literal=''.join(w['text'] for w in tokens)
+                        values.append(int(literal) if re.fullmatch(r'\d{1,6}',literal) else None)
+                    fields.append(values[0] if values[0] is not None and values[0]==values[1] else None)
+                if all(value is not None for value in fields):readings=[{tuple(fields)}]*2;confidences=[0,0]
+                else:continue
+            else:
+                for variant in (gray,ImageOps.invert(gray)):
+                    tokens=words(ocr(variant,tess,7,numeric=True));calls+=1
+                    readings.append(set(extract_pairs(' '.join(w['text'] for w in tokens))))
+                    confidences.append(sum(w['confidence'] for w in tokens)/max(1,len(tokens)))
             if len(readings[0])==1 and readings[0]==readings[1]:
                 current,maximum=next(iter(readings[0]))
                 if region.get('bar_pair') is not None and tuple(region['bar_pair'])!=(current,maximum):continue
