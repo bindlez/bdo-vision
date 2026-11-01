@@ -214,7 +214,7 @@ class LootTracker:
         try:
             if self.enabled.get():
                 next_poll=250
-                if getattr(getattr(self,'guild',None),'busy',False):self.capture_state.set('Tracking ON · guild reader finishing');next_poll=500
+                if getattr(getattr(self,'guild',None),'busy',False) or getattr(getattr(self,'guild',None),'waiting',False):self.capture_state.set('Tracking ON · quest reader finishing');next_poll=250
                 elif self.busy:self.capture_state.set('Tracking ON · reading item notifications')
                 elif self.app.selecting_region:self.capture_state.set('Tracking ON · selecting capture area')
                 else:

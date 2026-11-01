@@ -25,4 +25,9 @@ for(const id of ['popularGrid','listingsBody','hotList']){
 }
 assert.strictEqual(context.injected,undefined);
 assert(created[0].innerHTML.includes('&lt;img')&&!created[0].innerHTML.includes('<img'),'toast allows markup injection');
+vm.runInContext(body('visionGuildLastSeenHTML'),context);
+context.questTimer={guildQuestLastSeen:{current:49,target:600,last_at:100,objective:hostile}};
+vm.runInContext('guildMarkup=visionGuildLastSeenHTML(questTimer)',context);
+assert(context.guildMarkup.includes('Last seen 49 / 600'));
+assert(context.guildMarkup.includes('&lt;img')&&!context.guildMarkup.includes('<img'));
 console.log('Planner security: market names render as text in popular, listings, sidebar and toast functions.');

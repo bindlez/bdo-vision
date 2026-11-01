@@ -1,3 +1,13 @@
+# BDO Vision 1.12.0-rc.9 — active-tool comparison and quest objectives
+
+Tool discovery first checks a small residence header for Place Mode, then reads the label band relative to that control. Character and broad discovery remain fallbacks. When no tool is confirmed, two batches of known label crops are captured 1.5 seconds apart, before OCR. Every field must verify, title masks must stay stable, and exactly one plausible decrease may confirm an active tool. Changes to multiple tools, moved labels, missing fields and large jumps remain uncertain. The comparison shares the six-second work budget and has a fifteen-second cooldown; confirmed monitoring adds no pair. Images are transient crops, not a continuous full-screen recorder.
+
+Quest parsing reads the whole objective block, allowing the numerator to move between its two display lines and allowing additional OCR line breaks. Daily and Bonus objectives have independent last-verified progress rows and completion alerts, using the same worker and bounded read budget. Focused title/body reads recover missing Daily/Bonus captions. Uncovered quest areas can be read while Vision is in front; covered or minimized areas pause. A due quest read gets a turn after existing reader work finishes. A refilled mission countdown plus two consistent reads can confirm a new guild mission without claiming the prior mission completed. Legacy saved missions from earlier builds migrate only after two consistent visible counters with their mission countdown; the previous partial snapshot is archived.
+
+Sending a craft now includes a bounded guild receipt: last verified current/target, objective and timestamp. The planner timer labels it Last seen and never extrapolates quest progress. Optional loot-sharing behavior is retained.
+
+Private saved captures verify both 13/600 and 184/600 placements, plus Daily 20/100 and Bonus 8/100 or 2/100. The Place Mode search recovers the 2623/3000 field in the latest camera layout. One saved bright-window JPEG still fails quest consensus and stays unverified. Real captures remain local; these regressions do not prove every background, resolution or live completion. Warning defaults remain 95% and ten seconds. Full efficiency rebuild remains deferred.
+
 # BDO Vision 1.12.0-rc.8 — right-side guild counter punctuation
 
 Warnings default closer to completion: guild quest at 95%, tool timer at 10 seconds remaining. Both remain editable.

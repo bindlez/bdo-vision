@@ -3,7 +3,7 @@ import sys,unittest
 from unittest.mock import patch
 from PIL import Image,ImageDraw
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'desktop'))
-from tool_reader import ToolInventory,AutomaticToolReader,character_anchor,discover_regions,PARTIAL_NAME,label_name,read_bands,verify_labels,label_signature,signature_matches,words,CharacterBoxes,durability_bars,distinct_counters
+from tool_reader import ToolInventory,AutomaticToolReader,character_anchor,discover_regions,PARTIAL_NAME,label_name,read_bands,verify_labels,label_signature,signature_matches,words,CharacterBoxes,durability_bars,distinct_counters,changing_tool
 
 
 def row(value,x=200,name='Supreme Alchemy Tool',maximum=5000):
@@ -11,6 +11,20 @@ def row(value,x=200,name='Supreme Alchemy Tool',maximum=5000):
 
 
 class ActiveToolTests(unittest.TestCase):
+    def test_pair_requires_one_plausible_verified_change_in_same_fields(self):
+        a=[{**row(800),'numbers':[100,10,160,25]},{**row(5000,800),'numbers':[800,10,860,25]}]
+        b=[{**a[0],'current':798},dict(a[1])]
+        self.assertEqual(changing_tool(a,b,1.5),(100,10,160,25))
+        for invalid in ([{**b[0],'current':10},b[1]],[b[0],{**b[1],'current':4998}],[{**b[0],'maximum':9000},b[1]],[{**b[0],'numbers':[300,10,360,25]},b[1]],[{**b[0],'votes':1},b[1]]):
+            self.assertIsNone(changing_tool(a,invalid,1.5))
+        self.assertIsNone(changing_tool(a,a,1.5));self.assertIsNone(changing_tool(a,b,.2))
+
+    def test_verified_pair_confirms_a_unique_tool_after_one_interval(self):
+        inv=ToolInventory();a={**row(800),'numbers':[100,10,160,25]}
+        inv.update([a],10,'game')
+        result=inv.update([{**a,'current':798}],11.5,'game',confirmed_field=(100,10,160,25))
+        self.assertIsNotNone(result['active_id']);self.assertEqual(result['tools'][0]['wear_streak'],2)
+
     def test_active_needs_two_separate_decreases(self):
         tracker=ToolInventory()
         for at,value in ((0,800),(3,797)):
@@ -76,6 +90,26 @@ class ActiveToolTests(unittest.TestCase):
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_pair_captures_only_label_crops_1_5_seconds_apart(self):
+        reader=AutomaticToolReader();reader.context='game'
+        region={'name':'Alchemy Tool','box':[100,200,300,230],'numbers':[200,200,280,230]};reader.regions=[region]
+        a={**region,'current':800,'maximum':3000,'votes':2};b={**a,'current':798}
+        clock=[10.];captures=[];crop=Image.new('RGB',(200,30),'white')
+        def grab(box):captures.append((box,clock[0]));return crop
+        def sleep(seconds):clock[0]+=seconds
+        original={'active_id':None,'tools':[a],'ocr_calls':1,'duration':.1}
+        with patch('tool_reader.time.monotonic',side_effect=lambda:clock[0]),patch('tool_reader.time.sleep',side_effect=sleep),patch('tool_reader.label_signature',return_value=Image.new('L',(12,12),'white')),patch('tool_reader.verify_labels',side_effect=[([a],2),([b],2)]):
+            result=reader.compare_pair('engine',(1,0,0,1200,800),grab,original,10)
+        self.assertEqual([t for _,t in captures],[10.,11.5]);self.assertEqual(captures[0][0],(100,200,300,230))
+        self.assertIsNotNone(result['active_id']);self.assertEqual(result['tools'][0]['current'],798)
+        self.assertEqual(result['confirmation'],'two-frame comparison')
+
+    def test_confirmed_tracking_does_not_take_an_extra_pair(self):
+        reader=AutomaticToolReader()
+        with patch.object(reader,'_read',return_value={'active_id':'a','tools':[row(100)]}),patch.object(reader,'compare_pair') as pair:
+            reader.read('engine',(1,0,0,1200,800),lambda box:None,confirm_pair=True)
+            pair.assert_not_called()
+
     def test_quote_noise_cannot_swallow_following_tsv_rows(self):
         text='level\tleft\ttop\twidth\theight\tconf\ttext\n5\t0\t0\t10\t20\t10\t"noise\n5\t100\t200\t250\t20\t95\tAlchemy Tool(95/3000)\n'
         tokens=words(text)

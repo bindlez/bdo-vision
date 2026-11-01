@@ -1238,7 +1238,7 @@
           '<div class="tmeta">' + metaLine + '<br>' + timeLine + '</div>' +
           '<div class="timer-bar"><div style="width:' + pct.toFixed(1) + '%"></div></div>' +
           '<div class="timer-actions">' + duraHtml + actions + '</div>' +
-          nextChunkCtrl + visionTimerEarningsHTML(t) +
+          nextChunkCtrl + visionGuildLastSeenHTML(t) + visionTimerEarningsHTML(t) +
           '</div>';
       }).join("");
       visionPatchTimers(body,timerMarkup);
@@ -2448,6 +2448,10 @@ function visionGrindSaveRecap(){
  actions.append(download,close);dialog.appendChild(actions);var note=document.createElement('p');note.className='vision-footnote';note.textContent='Generated locally. Nothing is uploaded or shared automatically.';dialog.appendChild(note);document.body.appendChild(dialog);dialog.showModal();heading.focus({preventScroll:true});dialog.scrollTop=0;
 }
 
+    function visionGuildLastSeenHTML(t) {
+      var g=t.guildQuestLastSeen;if(!g)return '';
+      return '<p class="studio-muted">Guild quest · Last seen '+Number(g.current).toLocaleString()+' / '+Number(g.target).toLocaleString()+' · '+visionEscape(new Date(g.last_at*1000).toLocaleString())+'<br>'+visionEscape(g.objective||g.label||'Alchemy guild mission')+'</p>';
+    }
     function applyBridgeReading(j) {
       var signal = Number(j.signal)||0;
       if (signal <= 0) return null;
@@ -2487,6 +2491,9 @@ function visionGrindSaveRecap(){
           bridgeSessionId:j.session_id||"",_queue:null,_recipe:DURABILITY_RECIPE
         });
       }
+      var guild=j.guild_quest,linked=activeTimers.find(function(t){return t.bridgeEventId===eventId;});
+      if(linked&&guild&&Number.isInteger(guild.current)&&Number.isInteger(guild.target)&&guild.current>=0&&guild.current<=guild.target&&guild.target>0&&Number.isFinite(guild.last_at))linked.guildQuestLastSeen={current:guild.current,target:guild.target,label:String(guild.label||'').slice(0,120),objective:String(guild.objective||'').slice(0,160),last_at:guild.last_at};
+      else if(linked)delete linked.guildQuestLastSeen;
       lastBridgeEvent=eventId;
       saveState();
       // Background OCR should never pull users out of market browsing or

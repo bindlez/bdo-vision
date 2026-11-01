@@ -48,6 +48,8 @@ class ToolStatus:
         elif any(r.get('wear_streak',0)>0 for r in self.tools):stage='confirming';detail='Durability use detected. Waiting for one more change.'
         else:stage='found';detail=f"{len(self.tools)} readable tool(s). Start crafting to confirm which one is active."
         if self.unreadable:detail+=f' {self.unreadable} other label(s) unreadable.'
+        if report.get('confirmation')=='two-frame comparison':detail+=' Confirmed by 1.5-second comparison.'
+        elif report.get('pair_result'):detail+=' '+report['pair_result']+'.'
         self.set_stage(stage,detail)
 
     def snapshot(self):

@@ -56,6 +56,13 @@ class DesktopSmokeTests(unittest.TestCase):
             with patch('guild_quest_ui.winsound.MessageBeep') as beep:
                 app.loot.guild.alert('test');beep.assert_called_once()
             self.assertEqual(app.loot.guild.model.current,184)
+            app.loot.guild.finish({'current':184,'target':600,'objectives':[{'key':'daily:oil','kind':'Daily','objective':'Make Oil','current':31,'target':100},{'key':'bonus:reagent','kind':'Bonus','objective':'Make Reagent','current':21,'target':100}]},'',app.loot.guild.generation,100,.1,False)
+            self.assertEqual(len(app.loot.guild.objective_tree.get_children()),2)
+            self.assertEqual(app.loot.ledger.db.execute('SELECT count(*) FROM quest_objectives').fetchone()[0],2)
+            app.busy=True;app.loot.guild.enabled.set(True)
+            with patch.object(app.loot.guild,'schedule'):
+                app.loot.guild.scan();self.assertTrue(app.loot.guild.waiting)
+            app.busy=False;app.loot.guild.enabled.set(False);app.loot.guild.toggle();self.assertFalse(app.loot.guild.waiting)
         finally:
             if "app" in locals():app.loot.close()
             root.destroy()

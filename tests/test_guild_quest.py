@@ -1,15 +1,39 @@
-import io,json,sqlite3,sys,tempfile,unittest
+import io,json,sqlite3,sys,tempfile,unittest,subprocess
 from pathlib import Path
 from unittest.mock import patch
 from PIL import Image,ImageDraw,ImageFont
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'desktop'))
-from guild_quest import GuildQuestProgress,parse_quest_text,recognize_quest
+from guild_quest import GuildQuestProgress,parse_quest_text,recognize_quest,parse_objectives
 
 
 def reading(current,target=600):return {'current':current,'target':target,'label':'[Alchemy] Glorious Guild Supply Mission','objective':'Obtain Mysterious Catalyst via Alchemy'}
 
 
 class QuestParsingTests(unittest.TestCase):
+    def test_optional_caption_timeout_preserves_verified_guild_counter(self):
+        body=b'[Alchemy] Guild Supply Mission\nObtain Catalyst (184/600)'
+        success=type('Result',(),{'returncode':0,'stdout':body})()
+        with patch('guild_quest.run_ocr',side_effect=[success,success,subprocess.TimeoutExpired('engine',1)]),patch('guild_quest.guild_heading_crops',return_value=[Image.new('RGB',(200,20),'black')]):
+            result,_=recognize_quest(Image.new('RGB',(300,100),'black'),'engine')
+        self.assertEqual(result['current'],184)
+    def test_daily_bonus_require_each_counter_to_agree(self):
+        one='[Daily][Alchemy] Striving\nMake Oil (31/100)\n[Bonus] Skill Up for Alchemy\nMake Reagent (21/100)'
+        two=one.replace('31/100','30/100')
+        with patch('guild_quest.run_ocr',side_effect=[type('Result',(),{'returncode':0,'stdout':t.encode()})() for t in (one,two)]):
+            result,_=recognize_quest(Image.new('RGB',(300,100),'black'),'engine')
+        self.assertNotIn('current',result);self.assertEqual([(r['kind'],r['current']) for r in result['objectives']],[('Bonus',21)])
+
+    def test_counter_placement_and_line_height_do_not_change_scoping(self):
+        for block in ('Obtain Catalyst (49/\n600)','Obtain Catalyst (\n101/600)','Obtain Catalyst\n49/\n600'):
+            r=parse_quest_text('[Alchemy] Guild Supply Mission\n'+block+'\n[Daily] Alchemy\nMake Oil (30/100)')
+            self.assertEqual((r['current'],r['target']),(101 if '101' in block else 49,600))
+
+    def test_daily_bonus_and_guild_counts_stay_in_their_objectives(self):
+        text='[Alchemy] Guild Supply Mission\nObtain Catalyst (186/600)\n[Daily][Alchemy] Striving\nMake Oil of Corruption x100 (31/100)\nTalk to Liana\n[Bonus] Skill Up for Alchemy\nMake Pure Powder Reagent (21/100)'
+        rows=parse_objectives(text)
+        self.assertEqual([(r['kind'],r['current'],r['target']) for r in rows],[('Daily',31,100),('Bonus',21,100)])
+        self.assertEqual(parse_quest_text(text)['current'],186)
+
     def test_wrapped_real_widget_ignores_personal_quest_counter(self):
         text='Unaccepted Quest\n[Alchemy] Glorious Guild Supp...\nRemaining: 287 min\n- Obtain Mysterious Catalyst via Alchemy (\n184 / 600 )\n[Bonus] Skill Up for Alchemy\nMake Pure Powder Reagent (2/100)'
         result=parse_quest_text(text);self.assertEqual((result['current'],result['target']),(184,600));self.assertIn('Mysterious Catalyst',result['objective'])
@@ -88,6 +112,26 @@ class QuestStateTests(unittest.TestCase):
         self.assertEqual(self.state.accept(reading(569),at=100),[])
         self.assertEqual(self.state.accept(reading(570),at=110),['near'])
         self.assertEqual(self.state.accept(reading(571),at=120),[])
+
+    def test_refilled_mission_timer_confirms_new_quest_without_false_completion(self):
+        self.state.accept({**reading(590),'remaining_minutes':200},at=100)
+        self.state.accept({**reading(10),'remaining_minutes':299},at=110)
+        self.assertEqual(self.state.current,590)
+        self.state.accept({**reading(12),'remaining_minutes':299},at=120)
+        self.assertEqual(self.state.current,12);self.assertFalse(self.state.complete_sent)
+        self.assertEqual(self.db.execute('SELECT current FROM guild_quest_history').fetchone()[0],590)
+
+    def test_legacy_saved_mission_migrates_only_after_two_new_visible_reads(self):
+        self.state.accept(reading(414),at=100)
+        payload=json.loads(self.db.execute('SELECT payload FROM guild_quest_state').fetchone()[0]);payload.pop('mission_deadline');payload.pop('legacy_saved')
+        self.db.execute('UPDATE guild_quest_state SET payload=?',(json.dumps(payload),));self.db.commit()
+        migrated=GuildQuestProgress(self.db)
+        migrated.save();migrated=GuildQuestProgress(self.db)
+        migrated.accept({**reading(57),'remaining_minutes':299},at=200)
+        self.assertEqual(migrated.current,414)
+        migrated.accept({**reading(60),'remaining_minutes':299},at=210)
+        self.assertEqual(migrated.current,60);self.assertFalse(migrated.complete_sent)
+        self.assertEqual(self.db.execute('SELECT current FROM guild_quest_history').fetchone()[0],414)
 
     def test_near_and_complete_alert_once_and_survive_restart(self):
         self.assertEqual(self.state.accept(reading(184),90,100),[])

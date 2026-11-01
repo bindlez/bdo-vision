@@ -352,9 +352,13 @@ class PlannerBridge:
                 self.last_error = str(exc)
         self.last_error = 'All local bridge ports busy: ' + ', '.join(map(str, ports))
 
-    def send(self, current, maximum, seconds_per_craft, observed_at=None, session_id=None, source='manual',crafting_loot=None):
+    def send(self, current, maximum, seconds_per_craft, observed_at=None, session_id=None, source='manual',crafting_loot=None,guild_quest=None):
         if not self.server:
             raise RuntimeError(self.last_error or 'Local bridge offline')
+        receipt=None
+        if guild_quest is not None:
+            receipt={k:guild_quest[k] for k in ('current','target','label','objective','last_at') if k in guild_quest}
+            if len(json.dumps(receipt,allow_nan=False))>2000:raise ValueError('Guild receipt too large')
         with self._lock:
             self.signal += 1
             self.data = {
@@ -366,6 +370,7 @@ class PlannerBridge:
                 'bridge_version': 12, 'source': str(source),
             }
             if crafting_loot is not None:self.data['crafting_loot']=copy.deepcopy(crafting_loot)
+            if receipt is not None:self.data['guild_quest']=copy.deepcopy(receipt)
             return dict(self.data)
 
     def acknowledgment(self):

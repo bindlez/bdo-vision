@@ -311,7 +311,7 @@ class App:
      if foreground_bdo_capture_bounds()!=bounds:raise RuntimeError('BDO moved or lost focus; waiting to reacquire tool labels')
      return ImageGrab.grab(bbox=box,all_screens=True)
     captured_at=time.time();captured_mono=time.monotonic()
-    report=reader.read(tess,bounds,grab,interval=interval)
+    report=reader.read(tess,bounds,grab,interval=interval,confirm_pair=True)
     self.root.after(0,lambda:self.finish_tools(report,reader,automatic,captured_at,captured_mono))
    except Exception as exc:
     message=str(exc);reader.next_due=time.monotonic()+10
@@ -531,6 +531,9 @@ class App:
    extra={}
    loot=getattr(self,'loot',None)
    if loot is not None and loot.share_loot.get():extra['crafting_loot']=loot.planner_loot_snapshot()
+   if loot is not None:
+    guild=loot.guild.model.snapshot()
+    if guild['current'] is not None:extra['guild_quest']={k:guild[k] for k in ('current','target','label','objective','last_at')}
    event=self.bridge.send(d,m,s,observed_at=observed_at,
                           session_id=self.session_id,source=('estimate' if self.running and measurement is None else source),**extra)
    self.sync_armed=True
@@ -644,7 +647,7 @@ class App:
    elif not self.bdo_foreground():
     self.auto_health.set('Auto OCR: waiting for BDO in front')
     if finder and not self.busy:self.set_tool_stage('paused','Bring BDO to the front. Last verified counters are preserved; no hidden tool is read.')
-   elif self.busy or self.loot.busy:self.auto_health.set('Auto OCR: scan in progress')
+   elif self.busy or self.loot.busy or getattr(getattr(self.loot,'guild',None),'waiting',False):self.auto_health.set('Auto OCR: scan in progress')
    else:
     if finder and getattr(getattr(self,'tool_status',None),'stage',None)=='paused':
      self.tool_reader.next_due=0

@@ -138,6 +138,19 @@ def item_regions_visible(regions):
         return False,'Unable to verify the visible BDO item area'
 
 
+def visible_bdo_capture_bounds():
+    """Read-only geometry; callers must verify coverage of their exact ROI."""
+    user32=_user32();foreground=user32.GetForegroundWindow()
+    windows=[h for h in capture_game_windows(foreground) if user32.IsWindowVisible(h) and not user32.IsIconic(h)]
+    if len(windows)!=1:return None
+    hwnd=windows[0]
+    user32.GetClientRect.argtypes=[wintypes.HWND,ctypes.POINTER(wintypes.RECT)]
+    user32.ClientToScreen.argtypes=[wintypes.HWND,ctypes.POINTER(wintypes.POINT)]
+    rect=wintypes.RECT();origin=wintypes.POINT(0,0)
+    if not user32.GetClientRect(hwnd,ctypes.byref(rect)) or not user32.ClientToScreen(hwnd,ctypes.byref(origin)):return None
+    return (int(hwnd),origin.x,origin.y,origin.x+rect.right,origin.y+rect.bottom)
+
+
 def _contains_region(user32,hwnd,x,y,width,height):
     rect=wintypes.RECT()
     return bool(user32.GetWindowRect(hwnd,ctypes.byref(rect)) and rect.left<=x and rect.top<=y and rect.right>=x+width and rect.bottom>=y+height)

@@ -8,6 +8,7 @@ import csv
 import io
 import math
 import re
+import subprocess
 import time
 from threading import local
 from html.parser import HTMLParser
@@ -360,14 +361,28 @@ def discover_scene(image,tess):
             if row.get('numbers'):
                 a,b,c,d=row['numbers'];row['numbers']=[a+box[0],b+box[1],c+box[0],d+box[1]]
         return regions
-    top=max(0,int(anchor['y']-height*.278));bottom=max(top+1,min(height,int(anchor['y']-height*.046)))
+    # Residence controls stay legible when furniture names move above the
+    # character-centred band. Read this small header before searching labels.
+    header_box=(int(width*.28),int(height*.08),int(width*.66),int(height*.25))
+    header=image.crop(header_box);header_scale=1.5
+    header=ImageOps.autocontrast(header.convert('L')).resize((int(header.width*header_scale),int(header.height*header_scale)))
+    header_raw=ocr(header,tess,11);calls+=1;place=None
+    for group in lines(words(header_raw)):
+        if 'placemode' not in re.sub(r'\W','',' '.join(w['text'] for w in group)).casefold():continue
+        group=[w for w in group if re.search(r'place|mode',w['text'],re.I)] or group
+        place={'x':sum(w['x']+w['w']/2 for w in group)/len(group)/header_scale+header_box[0],
+               'y':sum(w['y']+w['h']/2 for w in group)/len(group)/header_scale+header_box[1],
+               'evidence':'Place Mode anchor'};break
+    top=max(0,int(place['y']+height*.005)) if place else max(0,int(anchor['y']-height*.278))
+    bottom=min(height,int(place['y']+height*.24)) if place else max(top+1,min(height,int(anchor['y']-height*.046)))
+    if place:anchor=place
     regions=band((0,top,width,bottom),anchor);calls+=1
     bar_regions,used_calls=discover_bar_labels(image,tess,regions);calls+=used_calls
     if not bar_regions and not any(r.get('numbers') for r in regions):
         wide_top=max(0,int(anchor['y']-height*.36))
         wider=band((0,wide_top,width,bottom),anchor);calls+=1
         if any(r.get('numbers') for r in wider):regions=wider
-    if regions or bar_regions:return (regions+bar_regions)[:MAX_TOOLS],{**anchor,'evidence':'visible durability bars + label band' if bar_regions else anchor['evidence']},calls
+    if regions or bar_regions:return (regions+bar_regions)[:MAX_TOOLS],{**anchor,'evidence':('Place Mode anchor + durability bars' if place else 'visible durability bars + label band') if bar_regions else anchor['evidence']},calls
     # A fallback broad pass also locates a movable Place Mode button. It is a
     # search aid only, never evidence that the nearest utensil is active.
     scale=min(1,1920/width,1080/height)
@@ -398,11 +413,25 @@ def distinct_counters(observations):
     return [g[0] for g in groups if len({(r['current'],r['maximum']) for r in g})==1]
 
 
+def changing_tool(before,after,elapsed):
+    """Return one changed field only when every located field is verified."""
+    if not 1.25<=elapsed<=2.25 or not before or len(before)!=len(after):return None
+    candidates=[]
+    for a,b in zip(before,after):
+        if a.get('numbers')!=b.get('numbers') or a['maximum']!=b['maximum']:return None
+        if min(a.get('votes',0),b.get('votes',0))<2:return None
+        if family(a['name']) and family(b['name']) and family(a['name'])!=family(b['name']):return None
+        drop=a['current']-b['current']
+        if drop<0 or drop>elapsed*20+4:return None
+        if drop and b['current']>0:candidates.append(tuple(b['numbers']))
+    return candidates[0] if len(candidates)==1 else None
+
+
 class ToolInventory:
     def __init__(self):
         self.tracks={};self.sequence=0;self.context=None
 
-    def update(self,observations,now,context=None):
+    def update(self,observations,now,context=None,confirmed_field=None):
         if context!=self.context:self.tracks={};self.context=context
         for old in self.tracks.values():old['missing']=old.get('missing',0)+1
         used=set();visible=[]
@@ -436,6 +465,7 @@ class ToolInventory:
                 cycle=old['cycle']+(1 if row['current']>old['current'] else 0)
                 changed=now if valid_wear or drop!=0 else old.get('changed_at',old['seen_at'])
                 pace=(old['pace']+[(now-old.get('changed_at',old['seen_at']))/drop])[-5:] if valid_wear and old['idle_reads']<2 else old['pace'] if drop==0 else []
+                if valid_wear and confirmed_field and tuple(row.get('numbers',()))==confirmed_field:streak=max(2,streak)
             else:
                 self.sequence+=1;ident='tool-'+str(self.sequence);elapsed=0;drop=0;streak=0;idle=0;cycle=0;pace=[];changed=now
             used.add(ident)
@@ -465,11 +495,46 @@ class AutomaticToolReader:
         self.anchor=None
         self.quiet_reads=0
         self.numeric_cache={};self.signatures={}
+        self.last_pair=-1e9
 
-    def read(self,tess,bounds,grab,now=None,interval=10):
-        _budget.deadline=time.monotonic()+6
-        try:return self._read(tess,bounds,grab,now,interval)
+    def read(self,tess,bounds,grab,now=None,interval=10,confirm_pair=False):
+        started=time.monotonic();_budget.deadline=started+6
+        try:
+            report=self._read(tess,bounds,grab,now,interval)
+            if confirm_pair and not report['active_id'] and report['tools'] and time.monotonic()-self.last_pair>=15 and _budget.deadline-time.monotonic()>=2.5:
+                self.last_pair=time.monotonic()
+                try:report=self.compare_pair(tess,bounds,grab,report,interval)
+                except (RuntimeError,TimeoutError,subprocess.TimeoutExpired):report['pair_result']='Comparison interrupted; no active tool inferred'
+            report['duration']=time.monotonic()-started
+            return report
         finally:del _budget.deadline
+
+    def compare_pair(self,tess,bounds,grab,report,interval):
+        """Two small label batches 1.5 seconds apart; never retain full frames."""
+        _,left,top,_,_=bounds
+        regions=[dict(r) for r in self.regions]
+        if not regions:return report
+        def capture():return [grab((left+r['box'][0],top+r['box'][1],left+r['box'][2],top+r['box'][3])) for r in regions]
+        a_mono=time.monotonic();first=capture()
+        time.sleep(max(0,1.5-(time.monotonic()-a_mono)))
+        b_mono=time.monotonic();b_wall=time.time();second=capture()
+        for r,a,b in zip(regions,first,second):
+            signature=label_signature(a,r)
+            if signature is None or not signature_matches(signature,label_signature(b,r)):
+                report['pair_result']='Labels moved; waiting to reacquire';return report
+        a,calls_a=verify_labels(first,[dict(r) for r in regions],tess,self.numeric_cache)
+        b,calls_b=verify_labels(second,[dict(r) for r in regions],tess,self.numeric_cache)
+        report['ocr_calls']+=calls_a+calls_b
+        field=changing_tool(a,b,b_mono-a_mono) if len(a)==len(regions) and len(b)==len(regions) else None
+        report['duration']+=time.monotonic()-a_mono
+        report['pair_result']='One verified changing tool' if field else 'No unique verified durability change'
+        if field:
+            self.inventory.update(a,a_mono,self.context)
+            confirmed=self.inventory.update(b,b_mono,self.context,confirmed_field=field)
+            report.update(confirmed,captured_mono=b_mono,captured_at=b_wall,confirmation='two-frame comparison')
+            self.signatures={tuple(r['box']):label_signature(crop,r) for r,crop in zip(regions,second)}
+            self.next_due=time.monotonic()+max(3,min(120,interval));report['next_seconds']=max(3,min(120,interval))
+        return report
 
     def _read(self,tess,bounds,grab,now=None,interval=10):
         """bounds=(window_id,left,top,right,bottom); grab is screen-capture adapter."""

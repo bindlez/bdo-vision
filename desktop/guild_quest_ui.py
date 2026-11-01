@@ -1,11 +1,11 @@
 """Small optional guild tracker; no worker or polling while disabled."""
-import hashlib,shutil,threading,time,winsound
+import hashlib,json,math,shutil,threading,time,winsound
 from pathlib import Path
 import tkinter as tk
 from tkinter import ttk
-from PIL import ImageGrab
+from PIL import ImageGrab,Image
 from guild_quest import GuildQuestProgress,recognize_quest
-from windows_bdo import foreground_bdo_capture_bounds,item_regions_visible
+from windows_bdo import visible_bdo_capture_bounds,item_regions_visible
 
 
 class GuildQuestTracker:
@@ -20,6 +20,12 @@ class GuildQuestTracker:
         self.detail=tk.StringVar(value='Show the alchemy guild mission in BDO’s right-hand quest widget.')
         self.notice=tk.StringVar(value='Near-finish and completion alerts are sent once per quest.')
         self.debug=tk.StringVar();self.bar=None;self.cache=None
+        self.objective_rows={};self.objective_tree=None;self.waiting=False
+        tracker.ledger.db.execute('CREATE TABLE IF NOT EXISTS quest_objectives (key TEXT PRIMARY KEY,payload TEXT NOT NULL)')
+        for key,payload in tracker.ledger.db.execute('SELECT key,payload FROM quest_objectives LIMIT 8'):
+            try:self.objective_rows[key]=json.loads(payload)
+            except (ValueError,TypeError):pass
+        tracker.ledger.db.commit()
         if self.enabled.get():self.schedule(1000)
 
     def settings(self):
@@ -31,9 +37,16 @@ class GuildQuestTracker:
         except (ValueError,TypeError):return 95
 
     def build(self,tabs):
-        c=self.app.colors;self.frame=frame=tk.Frame(tabs,bg=c['bg'],padx=20,pady=16);tabs.add(frame,text='Guild Quest')
+        c=self.app.colors;self.frame=outer=tk.Frame(tabs,bg=c['bg']);tabs.add(outer,text='Quests')
+        canvas=tk.Canvas(outer,bg=c['bg'],highlightthickness=0,takefocus=True)
+        scroll=ttk.Scrollbar(outer,orient='vertical',command=canvas.yview);scroll.pack(side='right',fill='y')
+        canvas.configure(yscrollcommand=scroll.set);canvas.pack(side='left',fill='both',expand=True)
+        frame=tk.Frame(canvas,bg=c['bg'],padx=20,pady=16);content=canvas.create_window(0,0,window=frame,anchor='nw')
+        frame.bind('<Configure>',lambda e:canvas.configure(scrollregion=canvas.bbox('all')))
+        canvas.bind('<Configure>',lambda e:canvas.itemconfigure(content,width=e.width))
+        canvas.bind('<Next>',lambda e:canvas.yview_scroll(1,'pages'));canvas.bind('<Prior>',lambda e:canvas.yview_scroll(-1,'pages'))
         row=tk.Frame(frame,bg=c['bg']);row.pack(fill='x')
-        ttk.Checkbutton(row,text='Track alchemy guild quest (optional)',variable=self.enabled,command=self.toggle,style='Vision.TCheckbutton').pack(side='left')
+        ttk.Checkbutton(row,text='Track Guild / Daily / Bonus quests',variable=self.enabled,command=self.toggle,style='Vision.TCheckbutton').pack(side='left')
         ttk.Checkbutton(row,text='Sound alerts',variable=self.sound,command=self.app.save_quietly,style='Vision.TCheckbutton').pack(side='right')
         tk.Label(frame,text='ALCHEMY · GUILD QUEST',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(22,4))
         tk.Label(frame,textvariable=self.progress,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',36)).pack(anchor='w')
@@ -51,14 +64,20 @@ class GuildQuestTracker:
         self.app.action(buttons,'NEXT QUEST',self.next_quest,flat=True).pack(side='left')
         self.app.text_button(buttons,'CUSTOM AREA',self.select_region).pack(side='right')
         self.app.text_button(buttons,'USE AUTO AREA',self.auto_region).pack(side='right',padx=12)
-        tk.Label(frame,text='Default: read the alchemy guild mission in the right-hand quest widget every 10 seconds. For a moved widget, select a custom area containing its heading and current objective. Hidden or unclear counters pause measurement. No loot credit is inferred and no quest is accepted automatically.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=850,justify='left').pack(anchor='w',pady=(18,8))
+        tk.Label(frame,text='Reads visible Guild, Daily and Bonus objective counters about every 10 seconds. For a moved widget, select a custom area containing the headings and objectives. Covered or unclear counters retain their last verified value. Vision never accepts quests automatically.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=850,justify='left').pack(anchor='w',pady=(18,8))
         tk.Label(frame,textvariable=self.debug,bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=850,justify='left').pack(anchor='w')
+        tk.Label(frame,text='DAILY & BONUS · LAST VERIFIED',bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(12,5))
+        self.objective_tree=ttk.Treeview(frame,columns=('kind','objective','progress','seen'),show='headings',height=3,style='Loot.Treeview')
+        for key,title,width in [('kind','QUEST',70),('objective','OBJECTIVE',450),('progress','PROGRESS',120),('seen','LAST SEEN',100)]:
+            self.objective_tree.heading(key,text=title);self.objective_tree.column(key,width=width,minwidth=50,stretch=key=='objective')
+        self.objective_tree.pack(fill='x')
         self.refresh()
 
     def schedule(self,delay=10000):
         if not self.closed and self.enabled.get() and self.pending is None:self.pending=self.root.after(delay,self.poll)
 
     def toggle(self):
+        self.waiting=False
         self.generation+=1
         if self.pending is not None:self.root.after_cancel(self.pending);self.pending=None
         self.model.pause('Waiting for a visible mission' if self.enabled.get() else 'Guild Quest tracking is off')
@@ -83,6 +102,7 @@ class GuildQuestTracker:
     def poll(self):
         self.pending=None
         if self.closed or not self.enabled.get():return
+        self.waiting=True
         self.scan()
 
     def read_now(self):
@@ -95,23 +115,27 @@ class GuildQuestTracker:
             ready,reason=item_regions_visible([self.region])
             if not ready:raise RuntimeError(reason)
             x,y,w,h=self.region;return (x,y,x+w,y+h)
-        bounds=foreground_bdo_capture_bounds()
+        bounds=visible_bdo_capture_bounds()
         if bounds is None:raise RuntimeError('Bring BDO to the front with the alchemy guild objective visible.')
         _,left,top,right,bottom=bounds;w=right-left;h=bottom-top
-        return (left+int(w*.76),top+int(h*.32),left+int(w*.995),top+int(h*.70))
+        box=(left+int(w*.80),top+int(h*.32),left+int(w*.995),top+int(h*.94))
+        ready,reason=item_regions_visible([(box[0],box[1],box[2]-box[0],box[3]-box[1])])
+        if not ready:raise RuntimeError(reason)
+        return box
 
     def scan(self,manual=False):
         if self.closed:return
         if self.busy or self.app.busy or self.tracker.busy or self.app.selecting_region:
             if manual:self.notice.set('The readers are busy. Try READ NOW after this pass.')
-            self.schedule(1000);return
+            self.waiting=self.enabled.get();self.schedule(250);return
+        self.waiting=False
         tess=self.app.tess.get().strip().strip('"')
         if not (Path(tess).is_file() or shutil.which(tess)):
             self.model.pause('Tesseract is unavailable; check Settings.');self.refresh();self.schedule();return
         try:box=self.capture_region()
         except Exception as exc:
             self.model.pause(str(exc));self.refresh();self.schedule(5000);return
-        if (box[2]-box[0])*(box[3]-box[1])>250000:
+        if (box[2]-box[0])*(box[3]-box[1])>(250000 if self.region else 1_000_000):
             self.model.pause('Use a custom area around the current mission, up to 250,000 pixels.');self.refresh();self.schedule();return
         self.busy=True;self.app.busy=True;generation=self.generation;started=time.monotonic()
         self.state.set('Reading the visible guild objective…')
@@ -120,6 +144,8 @@ class GuildQuestTracker:
                 if self.capture_region()!=box:raise RuntimeError('Mission area moved or was covered; retrying.')
                 image=ImageGrab.grab(bbox=box,all_screens=True).convert('RGB');captured=time.time()
                 if self.capture_region()!=box:raise RuntimeError('Mission area moved or was covered; retrying.')
+                if image.width*image.height>250000:
+                    scale=math.sqrt(249000/(image.width*image.height));image=image.resize((int(image.width*scale),int(image.height*scale)),Image.Resampling.LANCZOS)
                 key=(tess,box,hashlib.sha256(image.tobytes()).digest());cached=self.cache
                 if cached and cached[0]==key and time.monotonic()-cached[1]<60:reading,raw=cached[2],cached[3];reused=True
                 else:reading,raw=recognize_quest(image,tess);reused=False
@@ -134,9 +160,21 @@ class GuildQuestTracker:
         self.busy=False;self.app.busy=False
         if self.closed:return
         if generation!=self.generation:self.schedule();return
-        if reading:
+        if reading and 'current' in reading:
             for event in self.model.accept(reading,self.safe_threshold(),captured):self.alert(event)
         else:self.model.pause('No agreed guild objective counter. Keep the guild heading and progress visible.')
+        for row in (reading or {}).get('objectives',[]):
+            value={**row,'last_at':captured};previous=self.objective_rows.get(row['key'])
+            self.objective_rows[row['key']]=value
+            if not previous or any(previous.get(k)!=value[k] for k in ('current','target','objective')):
+                with self.tracker.ledger.db:self.tracker.ledger.db.execute('INSERT INTO quest_objectives VALUES (?,?) ON CONFLICT(key) DO UPDATE SET payload=excluded.payload',(row['key'],json.dumps(value)))
+            if row['current']==row['target'] and (not previous or previous['current']!=previous['target']):
+                self.notice.set(f"{row['kind']} objective complete: {row['objective']}")
+                if self.sound.get():winsound.MessageBeep(winsound.MB_ICONASTERISK)
+        while len(self.objective_rows)>8:self.objective_rows.pop(min(self.objective_rows,key=lambda k:self.objective_rows[k]['last_at']))
+        if self.objective_rows:
+            keys=list(self.objective_rows)
+            with self.tracker.ledger.db:self.tracker.ledger.db.execute('DELETE FROM quest_objectives WHERE key NOT IN ('+','.join('?' for _ in keys)+')',keys)
         self.debug.set(f"Reader {duration:.2f}s · "+('unchanged verified pixels reused' if reused else 'two OCR passes')+' · no screenshot saved')
         self.refresh();self.schedule(10000 if reading else 30000)
 
@@ -172,8 +210,16 @@ class GuildQuestTracker:
         if age is not None:detail+=f'\nLast verified {age}s ago.'
         if view['eta'] is not None:detail+=f" At the recent visible pace: about {int(view['eta']//60)}m {int(view['eta']%60)}s remaining."
         changed(self.detail,detail)
+        if self.objective_tree:
+            for key in self.objective_tree.get_children():
+                if key not in self.objective_rows:self.objective_tree.delete(key)
+            for key,row in self.objective_rows.items():
+                values=(row['kind'],row['objective'],f"{row['current']:,} / {row['target']:,}",f"{max(0,int(time.time()-row['last_at']))}s ago")
+                if self.objective_tree.exists(key):
+                    if tuple(self.objective_tree.item(key)['values'])!=values:self.objective_tree.item(key,values=values)
+                else:self.objective_tree.insert('','end',iid=key,values=values)
 
     def close(self):
-        self.closed=True;self.generation+=1
+        self.closed=True;self.waiting=False;self.generation+=1
         if self.pending is not None:self.root.after_cancel(self.pending);self.pending=None
         self.model.save()

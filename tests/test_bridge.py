@@ -69,6 +69,13 @@ class BridgeTests(unittest.TestCase):
             self.assertEqual(reading[key],parsed[key])
         self.assertAlmostEqual(parsed['observed_at'],reading['observed_at'])
 
+    def test_sent_guild_receipt_is_last_seen_and_frozen(self):
+        quest={'current':49,'target':600,'last_at':100,'label':'Alchemy guild','objective':'Obtain Catalyst','eta':999,'image':'excluded'}
+        self.bridge.send(350,3000,1,guild_quest=quest);quest['current']=500
+        _,data=self.get('/durability');saved=json.loads(data)['guild_quest']
+        self.assertEqual(saved['current'],49);self.assertEqual(saved['last_at'],100)
+        self.assertNotIn('eta',saved);self.assertNotIn('image',saved)
+
     def test_website_acknowledgment(self):
         reading=self.bridge.send(270,3000,1, session_id='batch')
         ack=self.post('/ack',{'instance_id':reading['instance_id'],'signal':reading['signal']})
