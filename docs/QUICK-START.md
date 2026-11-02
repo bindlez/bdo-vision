@@ -4,6 +4,8 @@ Extract the entire Windows ZIP. Close any older Vision, then double-click **OPEN
 
 Open **HOME** for all reader states, the current recording session, daily goal and progress. **CAPTURE SETUP** expands occasional setup controls; it starts collapsed. Lite Use obtains the initial tool value for a timer, then pauses every automatic OCR reader, including loot and quests. Turn Lite Use off for full recording.
 
+The compact main tracker opens at 380×560. **WORKSPACE** opens Home; **MORE CONTROLS** reveals Grind, Quests, Gear, Fairy, restore controls and diagnostics without enlarging the window. The detailed workspace opens at 860×650 and can be resized. Scroll the page for lower panels rather than keeping a full-height window over BDO.
+
 ## Start a grind
 
 1. Open **Silver & Loot History → Capture Setup**. Choose **Text feed** and select only BDO's personal **You have obtained…** messages. Show 6–8 complete rows, including item names and quantities. Keep this area uncovered.

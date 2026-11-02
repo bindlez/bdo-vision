@@ -1,6 +1,6 @@
 # 19. Integrated platform workflows
 
-This chapter describes the 1.13.0-rc.3 candidate. Read [architecture](02-architecture.md), [storage](04-state-storage.md), [tools](06-tools.md), [economics](09-economy.md) and [bridge security](10-bridge-security.md) for the underlying contracts. The candidate keeps the existing Python/Tk runtime and Tesseract reader; the native experiment is not silently substituted.
+This chapter describes the 1.13.0-rc.4 candidate. Read [architecture](02-architecture.md), [storage](04-state-storage.md), [tools](06-tools.md), [economics](09-economy.md) and [bridge security](10-bridge-security.md) for the underlying contracts. The candidate keeps the existing Python/Tk runtime and Tesseract reader; the native experiment is not silently substituted.
 
 ## One source of observations
 
@@ -9,6 +9,8 @@ BDO visibility and reader gates come before recognition. Accepted item events en
 The native main navigation opens Home, Workshop, Grind or Loot Reader in the same activity window. Gear, Quests and Fairy remain directly accessible. `App.open_activity` is the route map; adding a label without updating that map creates a dead destination. The Capture Setup section starts collapsed, with a visible toggle. Setup is an occasional task, not half of every working screen.
 
 The compact header retains capture/recording state; detailed capture instructions and last-item evidence live in Live. Workshop and Home support mouse-wheel and Page Up/Down navigation. `ui_scroll.enable_page_wheel` scopes wheel input to canvas descendants and leaves tables/text/comboboxes to their own handlers. Nested economics tabs use the existing `Loot.TNotebook` theme.
+
+`desktop/main_ui.py` constructs the compact 380×560 timer and exposes existing controller widget attributes. Advanced controls expand inside the same scrolling canvas; they do not resize the window. The detailed activity workspace defaults to 860×650. Shared buttons use six pixels of vertical padding (five for flat actions). Tool/debug windows open smaller while the full image remains inspectable. The source no longer mixes the main layout construction into OCR/controller code.
 
 ## Home and quiet progress
 
@@ -75,6 +77,10 @@ Additive tables:
 Two numeric preprocessing passes can agree on the same clipped leading digit. `counter_context_error` therefore checks fresh independent full-label/bar context before accepting either a newly recognized value or an exact-pixel cache hit. A full-label disagreement beyond `max(4, maximum × 0.015)`, a conflicting independently located counter, or a bar-fill discrepancy above six percentage points rejects the observation. This can withhold a good read when the bar/context is damaged; it must not repair digits by expectation.
 
 Successful verification removes transient coarse/bar hints from the retained region. Otherwise a coarse discovery value would become a stale veto against normal declining durability. The numeric cache remains bounded and time-limited. A large same-field decrease schedules fresh discovery on the next normal scan. The application also guards a large downward identity change until repeated use evidence; a manual fresh scan is explicit. Place Mode still provides the initial positional choice, and use confirmation remains independent.
+
+`white_glyph_mask` is shared by title-motion signatures and gold-bar candidate filtering. A candidate with fewer than 12 white glyph pixels is skipped before starting OCR; it cannot supply a readable white tool title. This is a cheap candidate filter, not digit recognition or a looser numeric acceptance rule. `unreadable_regions` also ignores a numberless partial-title hint centered inside an already verified numeric field; separate or conflicting numeric fields remain reported.
+
+When damaged-separator digit boxes fail, a bounded fallback reads the whole white-glyph numeric field twice. Both passes must contain the same complete literal pair and agree with an independently measured bar fill. The malformed HOCR pair used to locate the failed split is not a numeric veto for this fallback. No character is replaced or dropped to manufacture a fraction. A successful field retains white-glyph preprocessing for subsequent two-pass reads, avoiding another four failed split-field attempts each time.
 
 Failure evidence includes the crop, numeric/raw output, independent context and rejection reason. Cache acceptance clears an earlier rejection label. The real-Tesseract matrix tests several font sizes and leading-digit values; every accepted fixture must be exact. Synthetic tests are not proof of universal BDO font/scale accuracy. Keep live camera movement, identical tools, near-zero replacement, refills, occlusion and delayed-read cases in the acceptance matrix.
 

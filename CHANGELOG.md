@@ -1,5 +1,12 @@
 # BDO Vision Lite changelog
 
+## 1.13.0-rc.4 · compact tracker and cheaper discovery
+
+- Reduced default main/workspace sizes, spacing, buttons, debug previews and heading sizes; advanced main controls expand on demand.
+- Separated the main layout into readable main_ui.py without changing timer, planner, tray or reader callbacks.
+- Skip texture-only gold candidates before OCR and suppress duplicate partial-field miss messages; numeric consensus/context guards remain.
+- Fixed Windows LF/CRLF generation differences in the reproducible Fairy page.
+
 ## 1.13.0-rc.3 · integrated platform candidate
 
 - Unified Home with reader/session states, daily goals and persistent deduplicated milestones; collapsed occasional capture setup.

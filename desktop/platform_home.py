@@ -37,13 +37,13 @@ class PlatformHome:
         canvas=tk.Canvas(self.frame,bg=c['bg'],highlightthickness=0,takefocus=True)
         scroll=ttk.Scrollbar(self.frame,orient='vertical',command=canvas.yview);scroll.pack(side='right',fill='y')
         canvas.configure(yscrollcommand=scroll.set);canvas.pack(fill='both',expand=True)
-        content=tk.Frame(canvas,bg=c['bg'],padx=18,pady=16);window=canvas.create_window(0,0,window=content,anchor='nw')
+        content=tk.Frame(canvas,bg=c['bg'],padx=10,pady=10);window=canvas.create_window(0,0,window=content,anchor='nw')
         content.bind('<Configure>',lambda event:canvas.configure(scrollregion=canvas.bbox('all')))
         canvas.bind('<Configure>',lambda event:canvas.itemconfigure(window,width=event.width))
         canvas.bind('<Next>',lambda event:canvas.yview_scroll(1,'pages'));canvas.bind('<Prior>',lambda event:canvas.yview_scroll(-1,'pages'))
         from ui_scroll import enable_page_wheel
         enable_page_wheel(canvas)
-        tk.Label(content,text='YOUR VISION WORKSPACE',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',21)).pack(anchor='w')
+        tk.Label(content,text='YOUR VISION WORKSPACE',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',16)).pack(anchor='w')
         self.mode=tk.StringVar();tk.Label(content,textvariable=self.mode,bg=c['panel2'],fg=c['bright'],padx=12,pady=10,wraplength=850,justify='left').pack(fill='x',pady=(10,14))
         nav=tk.Frame(content,bg=c['bg']);nav.pack(fill='x')
         for label,target in [('WORKSHOP','craft'),('GRIND','grind'),('SESSIONS','sessions'),('QUESTS','quests')]:

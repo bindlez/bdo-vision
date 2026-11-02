@@ -27,15 +27,20 @@ def family(name):
     return 'alchemy' if 'alchemy' in name.casefold() else 'cooking' if 'cooking' in name.casefold() else None
 
 
+def white_glyph_mask(image):
+    red,green,blue=image.convert('RGB').split()
+    low=ImageChops.darker(ImageChops.darker(red,green),blue)
+    high=ImageChops.lighter(ImageChops.lighter(red,green),blue)
+    return ImageChops.multiply(low.point(lambda v:255 if v>190 else 0),
+                              ImageChops.subtract(high,low).point(lambda v:255 if v<35 else 0))
+
+
 def label_signature(crop,region):
     """Tiny white-glyph mask of the title, excluding changing numeric digits."""
     width=(region.get('numbers',[region['box'][2]-70])[0]-region['box'][0])-3
     if width<12:return None
     image=crop.crop((0,3,min(crop.width,width),max(4,crop.height-3))).convert('RGB')
-    red,green,blue=image.split();low=ImageChops.darker(ImageChops.darker(red,green),blue)
-    high=ImageChops.lighter(ImageChops.lighter(red,green),blue)
-    mask=ImageChops.multiply(low.point(lambda v:255 if v>190 else 0),
-                            ImageChops.subtract(high,low).point(lambda v:255 if v<35 else 0))
+    mask=white_glyph_mask(image)
     factor=min(1,256/mask.width,36/mask.height)
     mask=mask.resize((max(1,int(mask.width*factor)),max(1,int(mask.height*factor))),Image.Resampling.NEAREST)
     return mask if ImageStat.Stat(mask).sum[0]>=12*255 else None
@@ -243,6 +248,10 @@ def discover_bar_labels(image,tess,known=()):
         box=[max(0,int(left-190*unit)),max(0,int(top-26*unit)),min(width,int(left+310*unit)),max(1,int(top-6*unit))]
         crop=image.crop(box)
         if crop.height<8:continue
+        # Gold furniture trim also looks like a durability bar. A readable
+        # tool title must contain the same white glyphs used by motion checks;
+        # skip blank/color-only candidates before launching another OCR worker.
+        if white_glyph_mask(crop).histogram()[255]<12:continue
         prepared=ImageOps.autocontrast(crop.convert('L')).resize((crop.width*3,crop.height*3),Image.Resampling.LANCZOS)
         parser=CharacterBoxes();parser.feed(ocr(prepared,tess,7,characters=True));calls+=1
         text=''.join(char for char,_ in parser.chars)
@@ -312,6 +321,20 @@ def counter_context_error(current,maximum,region):
     return ''
 
 
+def unreadable_regions(regions,observations):
+    result=[]
+    for region in regions:
+        if any(region['box']==o['box'] for o in observations):continue
+        # The broad pass may also locate a clipped tail inside an independently
+        # verified counter. It is a second locator for that field, not a missed
+        # neighboring utensil. Keep genuinely separate unresolved labels.
+        if region['name']==PARTIAL_NAME and not region.get('numbers'):
+            a,b,c,d=region['box'];x=(a+c)/2;y=(b+d)/2
+            if any(o.get('numbers') and o['numbers'][0]<=x<=o['numbers'][2] and o['numbers'][1]<=y<=o['numbers'][3] for o in observations):continue
+        result.append({k:region[k] for k in ('name','box','rejection','coarse_pair','bar_fill') if k in region})
+    return result
+
+
 def verify_labels(crops,regions,tess,cache=None):
     import hashlib
     result=[];calls=0
@@ -330,7 +353,7 @@ def verify_labels(crops,regions,tess,cache=None):
             if cached and time.monotonic()-cached[0]<8 and not counter_context_error(cached[1]['current'],cached[1]['maximum'],region):
                 result.append({**cached[1],'name':region['name'],'box':region['box'],'cache_hit':True});region['numbers']=window;region.pop('bar_pair',None);region.pop('bar_fill',None);region.pop('coarse_pair',None);region.pop('rejection',None);break
             gray=ImageOps.autocontrast(ImageOps.grayscale(numeric)).resize((numeric.width*4,numeric.height*4),Image.Resampling.LANCZOS)
-            readings=[];confidences=[]
+            readings=[];confidences=[];context_region=region;recovered=False
             if region.get('digit_boxes'):
                 fields=[]
                 for x1,y1,x2,y2 in region['digit_boxes']:
@@ -343,18 +366,35 @@ def verify_labels(crops,regions,tess,cache=None):
                         values.append(int(literal) if re.fullmatch(r'\d{1,6}',literal) else None)
                     fields.append(values[0] if values[0] is not None and values[0]==values[1] else None)
                 if all(value is not None for value in fields):readings=[{tuple(fields)}]*2;confidences=[0,0]
+                elif region.get('bar_fill') is not None:
+                    # A damaged slash can be included in a digit box (e.g.
+                    # "4/5000"). Read the complete literal field from white
+                    # glyphs twice; never remove/replace a digit to repair it.
+                    mask=white_glyph_mask(numeric).resize((numeric.width*4,numeric.height*4),Image.Resampling.LANCZOS)
+                    for variant in (mask,ImageOps.invert(mask)):
+                        tokens=words(ocr(variant,tess,7,numeric=True));calls+=1
+                        readings.append(set(extract_pairs(' '.join(w['text'] for w in tokens))))
+                        confidences.append(sum(w['confidence'] for w in tokens)/max(1,len(tokens)))
+                    # The malformed HOCR pair only located the failed split.
+                    # The fresh bar fill still independently checks magnitude.
+                    context_region={k:v for k,v in region.items() if k!='bar_pair'}
+                    recovered=True
                 else:continue
             else:
-                for variant in (gray,ImageOps.invert(gray)):
+                base=(white_glyph_mask(numeric).resize((numeric.width*4,numeric.height*4),Image.Resampling.LANCZOS)
+                      if region.get('white_numeric') else gray)
+                for variant in (base,ImageOps.invert(base)):
                     tokens=words(ocr(variant,tess,7,numeric=True));calls+=1
                     readings.append(set(extract_pairs(' '.join(w['text'] for w in tokens))))
                     confidences.append(sum(w['confidence'] for w in tokens)/max(1,len(tokens)))
             if len(readings[0])==1 and readings[0]==readings[1]:
                 current,maximum=next(iter(readings[0]))
-                error=counter_context_error(current,maximum,region)
+                error=counter_context_error(current,maximum,context_region)
                 if error:region['rejection']=error;continue
                 if 0<=current<=maximum and 100<=maximum<=100_000:
                     result.append({'name':region['name'],'current':current,'maximum':maximum,'box':region['box'],'numbers':window,'confidence':min(confidences),'votes':2})
+                    if recovered:result[-1]['numeric_recovery']='Two complete white-glyph reads; bar-fill agreement'
+                    if recovered:region.pop('digit_boxes',None);region['white_numeric']=True
                     region['numbers']=window
                     region.pop('bar_pair',None)
                     region.pop('bar_fill',None)
@@ -661,7 +701,7 @@ class AutomaticToolReader:
                             for row in observations for old in self.inventory.tracks.values())
         if suspicious_drop:self.last_discovery=-1e9
         report=self.inventory.update(observations,now,context)
-        unreadable=[{k:r[k] for k in ('name','box','rejection','coarse_pair','bar_fill') if k in r} for r in self.regions if not any(r['box']==o['box'] for o in observations)]
+        unreadable=unreadable_regions(self.regions,observations)
         self.misses=self.misses+1 if not observations else 0
         if discover:self.signatures={tuple(r['box']):label_signature(crop,r) for r,crop in zip(self.regions,crops) if any(r['box']==o['box'] for o in observations)}
         self.regions=[r for r in self.regions if any(r['box']==o['box'] for o in observations)]

@@ -10,7 +10,7 @@ These changes improve edit safety and discovery. They do not claim to have trans
 
 | Area | Finding | Best next change |
 | --- | --- | --- |
-| Native controller | `app.py` coordinates many unrelated responsibilities | Extract tool-window/controller code unchanged behind a small interface, then test parity |
+| Native controller | Main layout now lives in readable `desktop/main_ui.py`; `app.py` still coordinates unrelated responsibilities | Extract tool-window/controller code unchanged behind a small interface, then test parity |
 | Planner delivery | Single HTML plus editable feature assets can diverge | Introduce a deterministic embed manifest with a check-only mode before any wider frontend rewrite |
 | OCR decisions | Good rejection boundaries, several reader-specific pipelines | Define small typed observation records at module seams without forcing all readers into one algorithm |
 | Settings | Literal dictionaries are easy to extend but hard to audit completely | Centralize defaults and validation one subsystem at a time; test old preference migration |

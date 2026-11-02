@@ -11,6 +11,42 @@ def row(value,x=200,name='Supreme Alchemy Tool',maximum=5000):
 
 
 class ActiveToolTests(unittest.TestCase):
+    def test_failed_digit_split_can_recover_only_from_a_complete_agreed_literal_pair(self):
+        region={'name':'Alchemy Tool','box':[0,0,100,30],'numbers':[10,0,100,30],
+                'bar_pair':(2447,45000),'bar_fill':.48,'digit_boxes':[[10,2,40,28],[45,2,90,28]]}
+        header='level\tleft\ttop\twidth\theight\tconf\ttext\n'
+        def tsv(text):return header+'5\t0\t0\t40\t20\t90\t'+text+'\n'
+        remembered=dict(region)
+        with patch('tool_reader.ocr',side_effect=[tsv(t) for t in ('2447','2447','4/5000','4/5000','2447/5000','2447/5000')]):
+            found,calls=verify_labels([Image.new('RGB',(100,30),'white')],[remembered],'engine')
+        self.assertEqual(calls,6);self.assertEqual(found[0]['current'],2447);self.assertEqual(found[0]['maximum'],5000)
+        with patch('tool_reader.ocr',side_effect=[tsv('2446/5000')]*2):
+            found,calls=verify_labels([Image.new('RGB',(100,30),'white')],[remembered],'engine')
+        self.assertEqual(calls,2);self.assertEqual(found[0]['current'],2446)
+        for ending in [('2447/5000','2441/5000'),('447/5000','447/5000')]:
+            with patch('tool_reader.ocr',side_effect=[tsv(t) for t in ('2447','2447','4/5000','4/5000',*ending)]):
+                self.assertEqual(verify_labels([Image.new('RGB',(100,30),'white')],[dict(region)],'engine')[0],[])
+
+    def test_verified_field_does_not_report_its_duplicate_partial_tail_as_missing(self):
+        from tool_reader import unreadable_regions
+        observation={**row(382),'numbers':[300,250,400,280]}
+        duplicate={'name':PARTIAL_NAME,'box':[310,248,390,282]}
+        neighbor={'name':PARTIAL_NAME,'box':[500,248,590,282]}
+        self.assertEqual(unreadable_regions([duplicate,neighbor],[observation]),[neighbor])
+        # A conflicting independently located numeric field remains visible.
+        self.assertEqual(len(unreadable_regions([{**duplicate,'numbers':[310,250,390,280]}],[observation])),1)
+
+    def test_gold_scene_trim_without_title_ink_does_not_launch_ocr(self):
+        from tool_reader import discover_bar_labels
+        image=Image.new('RGB',(1280,720),'#353d45')
+        bar={'box':[600,220,700,224],'fill':.5}
+        with patch('tool_reader.durability_bars',return_value=[bar]),patch('tool_reader.ocr',return_value='') as ocr:
+            self.assertEqual(discover_bar_labels(image,'engine'),([],0))
+            ocr.assert_not_called()
+            ImageDraw.Draw(image).text((510,205),'Alchemy Tool(83/3000)',fill='white')
+            self.assertEqual(discover_bar_labels(image,'engine')[1],1)
+            ocr.assert_called_once()
+
     def test_place_mode_rejects_empty_unverified_above_and_tied_tools(self):
         anchor={'x':500,'y':180,'evidence':'Place Mode anchor'}
         tool={**row(800),'id':'a','numbers':[510,220,570,240]}

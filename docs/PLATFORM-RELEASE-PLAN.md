@@ -2,7 +2,7 @@
 
 Checked items mean implemented with automated evidence, not universal live-game acceptance. This plan preserves the user's complete scope; a candidate package is not proof that every unchecked item is finished.
 
-## Current candidate: 1.13.0-rc.3
+## Current candidate: 1.13.0-rc.4
 
 The integrated implementation includes Home, linked recipe-session economics, frozen assumptions, bounded gross/net graphs, persistent quiet goals and reviewed Fairy journal receipts. See [platform workflows](handbook/19-platform-workflows.md). Remaining unchecked live/visual criteria are not erased by packaging this candidate.
 
@@ -16,6 +16,7 @@ User reports tool discovery still fails and guild OCR works only intermittently.
 - [x] Low-fill tool bars on gray backgrounds have a synthetic regression.
 - [x] Reject conflicting full-label/bar context even when both numeric passes or the pixel cache agree; test leading digits with real Tesseract at multiple sizes.
 - [x] Large same-field drops schedule fresh discovery; suspicious downward identity changes require use evidence.
+- [x] Filter texture-only gold candidates before OCR; keep independent numeric validation. Duplicate partial hints inside verified fields do not count as separate misses.
 - [ ] Verify the installed fixes over changing live counters and camera movement; do not call replay alone verified live reliability.
 
 ## Observation and tool reliability
@@ -35,6 +36,8 @@ User reports tool discovery still fails and guild OCR works only intermittently.
 - [x] Observed, estimated, unknown and stale values remain distinct.
 - [ ] Complete screen-by-screen consistency audit: fonts, spacing, terminology, controls and next actions.
 - [x] One activity/mode overview with all reader states visible together; scrollable Home and collapsed occasional Capture Setup.
+- [x] Compact 380×560 main tracker, 860×650 workspace, smaller controls/debug previews, and collapsible advanced controls. Default main window area is about 61% smaller; this is UI area, not a CPU/RAM reduction.
+- [x] Real native compact preview inspected; regressions check that primary scan/send/tray controls fit and advanced controls expand/collapse.
 - [ ] End-to-end onboarding, setup recovery, keyboard, contrast, resizing and Windows scale checks.
 - [ ] Remove remaining duplicate controls and unnecessary window switching.
 

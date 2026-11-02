@@ -23,7 +23,7 @@ class CraftDashboard:
         tk.Label(self.frame,text='CRAFTING · TODAY',bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',18)).pack(anchor='w')
         self.summary=tk.StringVar()
         tk.Label(self.frame,textvariable=self.summary,bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',12),wraplength=820,justify='left').pack(anchor='w',pady=8)
-        self.canvas=tk.Canvas(self.frame,height=250,bg=c['panel'],highlightthickness=0)
+        self.canvas=tk.Canvas(self.frame,height=200,bg=c['panel'],highlightthickness=0)
         self.canvas.pack(fill='x')
         self.note=tk.StringVar()
         self.market=tk.StringVar(value='Market valuation appears as quotes become available.')
@@ -91,14 +91,14 @@ class CraftDashboard:
         canvas=self.canvas;c=self.tracker.app.colors;canvas.delete('all')
         width=max(300,canvas.winfo_width());height=180
         canvas.create_text(16,18,text='CUMULATIVE CRAFTED UNITS · event order',anchor='w',fill=c['secondary'],font=('Segoe UI',9))
-        for y in (55,95,135):canvas.create_line(16,y,width-16,y,fill=c['line'])
+        for y in (45,75,105):canvas.create_line(16,y,width-16,y,fill=c['line'])
         if not self.data:
             canvas.create_text(width/2,100,text='Ready for your first recorded craft',fill=c['muted'],font=('Segoe UI',12));return
         values=[0,*self.data];peak=max(1,values[-1]);coords=[]
-        for i,value in enumerate(values):coords.extend((20+i*(width-40)/max(1,len(values)-1),145-100*value/peak))
+        for i,value in enumerate(values):coords.extend((20+i*(width-40)/max(1,len(values)-1),120-80*value/peak))
         canvas.create_line(*coords,fill=c['bright'],width=3)
-        canvas.create_text(width-20,163,text=f'{peak:,} units',anchor='e',fill=c['text'])
+        canvas.create_text(width-20,135,text=f'{peak:,} units',anchor='e',fill=c['text'])
         for i,(name,quantity) in enumerate(self.leaders):
-            y=185+i*22
-            canvas.create_rectangle(20,y,20+(width-40)*quantity/max(1,self.leaders[0][1]),y+17,fill=c['violet'],outline='')
-            canvas.create_text(26,y+8,text=f'{name} · {quantity:,}',anchor='w',fill=c['text'],font=('Segoe UI',9))
+            y=150+i*16
+            canvas.create_rectangle(20,y,20+(width-40)*quantity/max(1,self.leaders[0][1]),y+14,fill=c['violet'],outline='')
+            canvas.create_text(26,y+7,text=f'{name} · {quantity:,}',anchor='w',fill=c['text'],font=('Segoe UI',9))

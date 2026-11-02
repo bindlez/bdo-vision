@@ -28,8 +28,8 @@ class OCRReaderView:
         c = self.app.colors
         self.window = win = tk.Toplevel(self.app.root)
         win.title('BDO Vision • ' + self.title)
-        win.geometry('940x680')
-        win.minsize(700, 480)
+        win.geometry('760x560')
+        win.minsize(620, 420)
         win.configure(bg=c['bg'])
         self.opened = True
         self.last_pause=None
@@ -38,7 +38,7 @@ class OCRReaderView:
         header = tk.Frame(win, bg=c['bg'], padx=20, pady=16)
         header.pack(fill='x')
         tk.Label(header, text=self.title, bg=c['bg'], fg=c['text'],
-                 font=('Segoe UI Semibold', 18)).pack(side='left')
+                 font=('Segoe UI Semibold', 14)).pack(side='left')
         self.app.action(header, 'READ NOW', self.read_now, primary=True).pack(side='right')
         self.app.action(header, 'FULL IMAGE', self.open_full_image, primary=False).pack(side='right',padx=8)
         self.hold=tk.BooleanVar(value=False)
@@ -48,7 +48,7 @@ class OCRReaderView:
                  wraplength=890, justify='left').pack(fill='x', padx=20, pady=(0, 10))
         self.preview = tk.Label(win, bg=c['panel'], fg=c['muted'], text='No capture yet', height=1)
         self.preview.pack(fill='both', padx=20)
-        tabs=ttk.Notebook(win);tabs.pack(fill='both',expand=True,padx=20,pady=12)
+        tabs=ttk.Notebook(win,style='Vision.TNotebook');tabs.pack(fill='both',expand=True,padx=12,pady=8)
         body = tk.Frame(tabs, bg=c['bg']);tabs.add(body,text='OCR reading / detection')
         self.text = tk.Text(body, wrap='word', bg=c['panel'], fg=c['text'],
                             insertbackground=c['text'], font=('Consolas', 10), relief='flat', state='disabled')
@@ -123,7 +123,7 @@ class OCRReaderView:
 
 def preview_image(image):
     result = image.copy()
-    result.thumbnail((880, 290), Image.Resampling.LANCZOS)
+    result.thumbnail((700, 210), Image.Resampling.LANCZOS)
     return result
 
 

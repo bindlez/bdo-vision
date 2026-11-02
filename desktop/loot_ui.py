@@ -73,10 +73,10 @@ class LootTracker:
             return
         self._history_display_cache={};self._totals_cache=None;self._crafts_cache=None;self._last_refresh_key=None
         c=self.app.colors
-        win=self.window=tk.Toplevel(self.root);win.title('BDO Vision • Silver, Grind & saved history');win.geometry('1000x900+20+20');win.minsize(940,820);win.configure(bg=c['bg'])
-        main=tk.Frame(win,bg=c['bg'],padx=24,pady=20);main.pack(fill='both',expand=True)
+        win=self.window=tk.Toplevel(self.root);win.title('BDO Vision • Silver, Grind & saved history');win.geometry('860x650+24+60');win.minsize(780,520);win.configure(bg=c['bg'])
+        main=tk.Frame(win,bg=c['bg'],padx=12,pady=10);main.pack(fill='both',expand=True)
         header=tk.Frame(main,bg=c['bg']);header.pack(fill='x')
-        tk.Label(header,text='VISION WORKSPACE',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',22)).pack(side='left')
+        tk.Label(header,text='VISION WORKSPACE',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',16)).pack(side='left')
         self.tracker_setup_button=self.app.text_button(header,'CAPTURE SETUP',self.toggle_setup);self.tracker_setup_button.pack(side='right')
         tk.Label(main,textvariable=self.summary,bg=c['bg'],fg=c['bright'],font=('Segoe UI',10)).pack(anchor='w',pady=(4,14))
         setup_holder=tk.Frame(main,bg=c['bg']);setup_holder.pack(fill='x')

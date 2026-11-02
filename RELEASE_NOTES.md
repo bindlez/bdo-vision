@@ -1,4 +1,12 @@
-# BDO Vision 1.13.0-rc.3 - Integrated workspace and guarded tool readings
+# BDO Vision 1.13.0-rc.4 - Compact tracker and bounded tool discovery
+
+The main tracker now defaults to 380×560 instead of 600×900, with smaller typography/controls and advanced actions behind More controls. Workspace defaults to 860×650 instead of 1000×900. Tool/debug windows and previews are smaller; detailed pages remain scrollable. The main layout is isolated in readable main_ui.py so future visual editing does not disturb OCR logic.
+
+Tool discovery skips gold scene trim with fewer than 12 white title pixels before launching OCR, using the existing glyph-mask criterion. This candidate filter retains numeric consensus/context checks. Duplicate partial locators inside a verified numeric field no longer appear as a separate unreadable tool. Fairy output now uses deterministic LF bytes on Windows, fixing its GitHub reproducibility regression.
+
+A rejected live frame exposed a damaged slash being included in the maximum digit crop. A bounded whole-field white-glyph fallback now requires two identical complete literal pairs plus independent bar-fill agreement. It recovers 2447/5000 on that private frame without digit repair. Successful fields retain the efficient two-pass mask mode for later reads. Other conflicts remain unknown.
+
+# Previous candidate: 1.13.0-rc.3 - Integrated workspace and guarded tool readings
 
 Release identity now reads the shipped VERSION file for source, installed and frozen builds. The extracted-package check rejects an executable/manifest/source version mismatch. This corrects the stale visible version discovered while checking rc.2; earlier candidate archives are retained.
 
