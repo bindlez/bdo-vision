@@ -14,10 +14,21 @@ from cp_reader import parse_hud,agreement,read_image
 from PIL import Image
 
 
-def state(**extra):return {'cp':490,'percent':19.26,'counts':{'catalyst':750000},**extra}
+def state(**extra):return {'cp':490,'percent':19.26,'counts':{'catalyst':750000},'cashPolicy':'best',**extra}
 
 
 class CPTests(unittest.TestCase):
+    def test_market_default_has_no_npc_fallback_and_keeps_leftovers(self):
+        s=state(counts={'catalyst':21});s.pop('cashPolicy')
+        r=calculate(s)
+        self.assertEqual(r['cashPolicy'],'market');self.assertFalse(r['cashComplete'])
+        self.assertIsNone(r['cashTotal']);self.assertIsNone(r['winner'])
+        self.assertTrue(all(a['cash'] is None and a['breakEvenDays'] is None for a in r['routes']))
+        r=calculate(s,{'Clear Liquid Reagent':{'unit_price':12000}})
+        self.assertTrue(r['cashComplete']);self.assertEqual(r['cashTotal'],400*12000*.845)
+        self.assertEqual(r['routes'][1]['cash'],0)
+        self.assertEqual(next(a for a in r['routes'][1]['allocation'] if a['key']=='catalyst')['remaining'],1)
+
     def test_750k_example_uses_current_curve(self):
         r=calculate(state());self.assertEqual(r['totalXp'],67500000);self.assertEqual(r['vendorTotal'],15000000000)
         end=r['routes'][1];self.assertEqual(end['cp'],567);self.assertAlmostEqual(end['percent'],95.86314600076523)

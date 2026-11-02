@@ -12,14 +12,58 @@ def recipes():
     return json.loads((Path(__file__).parent/'assets/recipes.json').read_text(encoding='utf-8'))
 
 
+@lru_cache(maxsize=1)
+def recipe_index():return {r['id']:r for r in recipes()}
+
+
+@lru_cache(maxsize=1)
+def craft_spec():return json.loads((Path(__file__).parent/'assets/crafting-data.json').read_text(encoding='utf-8'))
+
+
+def material_price(mat,quotes):
+    quote=quotes.get(mat['name'],{});value=quote.get('unit_price')
+    if quote.get('price_basis')=='npc_vendor':value=None
+    npc=craft_spec()['items'].get(str(mat.get('itemId')),{}).get('npcBuy')
+    return min(value,npc) if value is not None and npc else npc or value
+
+
+def resolve_recipe(value):
+    if value in recipe_index():return recipe_index()[value]
+    choices=[r for r in recipes() if r['name']==value]
+    return choices[0] if len(choices)==1 else None
+
+
 def validate_model(body):
     ident=body.get('recipe_id')
-    if not isinstance(ident,str) or ident not in {r['id'] for r in recipes()}:raise ValueError('Unknown recipe')
+    if not isinstance(ident,str) or ident not in recipe_index():raise ValueError('Unknown recipe')
     result={'recipe_id':ident}
+    if 'region' in body:
+        region=str(body['region']).upper()
+        if region not in ('NA','EU'):raise ValueError('Unknown model region')
+        result['region']=region
     for key,low,high in [('yield',.01,100),('retention',0,100),('extra',0,10**12)]:
         value=body.get(key)
         if type(value) not in (int,float) or not math.isfinite(value) or not low<=value<=high:raise ValueError('Invalid '+key)
         result[key]=value
+    if 'materials' in body:
+        rows=body['materials'];recipe=recipe_index()[ident]
+        if not isinstance(rows,list) or len(rows)!=len(recipe['mats']):raise ValueError('Invalid resolved ingredients')
+        spec=craft_spec()
+        checked=[]
+        for given,slot in zip(rows,recipe['mats']):
+            if not isinstance(given,dict) or type(given.get('itemId')) is not int:raise ValueError('Invalid ingredient identity')
+            options=spec['groups'].get(str(slot.get('groupId')),[]) if slot.get('groupId') else [{'itemId':slot.get('itemId'),'value':1}]
+            choice=next((o for o in options if o['itemId']==given['itemId']),None)
+            if not choice:raise ValueError('Ingredient is not a valid substitution')
+            qty=math.ceil(slot.get('required',slot['qty'])/choice['value']) if slot.get('groupId') else slot['qty']
+            name=spec['items'][str(choice['itemId'])]['name']
+            if given.get('qty')!=qty or given.get('name')!=name:raise ValueError('Ingredient quantity/name disagrees with recipe')
+            checked.append({'itemId':choice['itemId'],'name':name,'qty':qty})
+        result['materials']=checked
+    if body.get('cost_basis')=='recursive_plan':
+        value=body.get('input_cost_per_batch')
+        if value is not None and (type(value) not in (int,float) or not math.isfinite(value) or not 0<=value<=10**15):raise ValueError('Invalid linked input cost')
+        result.update(cost_basis='recursive_plan',input_cost_per_batch=value)
     return result
 
 
@@ -41,11 +85,17 @@ def load_model(path,ident):
 def session_economy(recipe,rows,quotes,model,seconds=0):
     gross=summarize(rows,quotes,seconds);missing=[];materials=[];unit_cost=0
     if not model:return {'available':False,'reason':'Open this recipe in the paired planner to link its yield, tax and expense assumptions.'}
-    for mat in recipe.get('mats',[]):
-        quote=quotes.get(mat['name']);price=quote.get('unit_price') if quote else None
+    if any(q.get('region') not in (None,model.get('region')) for q in quotes.values()) and model.get('region'):
+        return {'available':False,'reason':'Quotes and the linked recipe model use different market regions.'}
+    for mat in model.get('materials',recipe.get('mats',[])):
+        price=material_price(mat,quotes)
         if price is None:missing.append(mat['name'])
         else:unit_cost+=mat['qty']*price
         materials.append({'item':mat['name'],'per_batch':mat['qty'],'unit_price':price})
+    locked=model.get('cost_basis')=='recursive_plan'
+    if locked:
+        if model.get('input_cost_per_batch') is None:return {'available':False,'reason':'Refresh the linked plan’s input prices in Crafting Studio. The recursive input model is still unpriced.','materials':materials}
+        unit_cost=model['input_cost_per_batch'];missing=[]
     main=sum(r[3] for r in rows if r[2].casefold()==recipe['name'].casefold())
     if missing or gross['unpriced'] or gross['value'] is None or not main:
         return {'available':False,'reason':'Missing material quotes: '+', '.join(missing) if missing else 'Need priced output and recorded main output for this recipe.','materials':materials}
@@ -54,12 +104,12 @@ def session_economy(recipe,rows,quotes,model,seconds=0):
     return {'available':True,'gross':gross['value'],'tax':gross['value']-proceeds,'ingredient_cost':ingredient_cost,'extra':extra,
             'profit':proceeds-ingredient_cost-extra,'batches':batches,'materials':materials,'units':gross['quantity'],
             'profit_hour':(proceeds-ingredient_cost-extra)*3600/seconds if seconds>=60 else None,
-            'basis':'Yield-based batch estimate from recorded main output; not verified inventory consumption. Rare/extra outputs add value when priced; unobserved batches are unknown.'}
+            'basis':('Locked Studio recursive input value; direct ingredient rows show recipe equivalents. ' if locked else '')+'Yield-based batch estimate from recorded main output; not verified inventory consumption. Rare/extra outputs add value when priced; unobserved batches are unknown.'}
 
 
 def economy_points(recipe,rows,quotes,model,limit=48):
     ordered=sorted(rows,key=lambda r:r[0]);points=[];gross=0;main=0
-    cost_per_batch=sum(m['qty']*quotes[m['name']]['unit_price'] for m in recipe['mats'])+model['extra']
+    cost_per_batch=(model['input_cost_per_batch'] if model.get('cost_basis')=='recursive_plan' else sum(m['qty']*material_price(m,quotes) for m in model.get('materials',recipe['mats'])))+model['extra']
     stride=max(1,(len(ordered)+limit-2)//max(1,limit-1))
     for index,row in enumerate(ordered):
         quote=quotes.get(row[2])
@@ -134,13 +184,14 @@ class SessionCostView:
             self.unavailable('Start a Crafting session in Sessions and select its recipe. Open the same recipe in the planner to link yield, tax and expenses. No duplicate item prices to enter.');return
         row=self.tracker.ledger.db.execute('SELECT activity,recipe,ended_at,price_snapshot,created_at FROM insight_sessions WHERE id=?',(session.id,)).fetchone()
         if not row or row[0]!='Crafting' or not row[1]:self.unavailable('Current session is not linked to a crafting recipe. Select a recipe when starting a Crafting session.');return
-        choices=[r for r in recipes() if r['name']==row[1]]
-        if len(choices)!=1:self.unavailable('Recipe identity is missing or ambiguous; costs are unavailable.');return
-        recipe=self.recipe=choices[0]
+        recipe=self.recipe=resolve_recipe(row[1])
+        if recipe is None:self.unavailable('Recipe identity is missing or ambiguous; select the exact variant in Sessions.');return
         if row[2] is not None:
             model_row=self.tracker.ledger.db.execute('SELECT payload FROM craft_session_models WHERE session_id=?',(session.id,)).fetchone()
             model=json.loads(model_row[0]) if model_row else None;quotes=json.loads(row[3])
-        else:model=load_model(self.tracker.path/'loot-history.sqlite3',recipe['id']);quotes=self.tracker.insights.prices.all()
+        else:
+            model=load_model(self.tracker.path/'loot-history.sqlite3',recipe['id'])
+            quotes=self.tracker.insights.prices.all(model.get('region') if model else None)
         key=(session.id,self.tracker.ledger.revision,self.tracker.insights.prices.revision,json.dumps(model,sort_keys=True),row[2],int(session.clock.seconds//10))
         if key==self.last_key:return
         self.last_key=key;self.materials.delete(*self.materials.get_children())

@@ -24,6 +24,7 @@ class PriceBook:
             db.execute('CREATE TABLE IF NOT EXISTS market_context (id INTEGER PRIMARY KEY CHECK(id=1), region TEXT NOT NULL)')
             db.execute("INSERT OR IGNORE INTO market_context VALUES (1,'NA')")
             db.execute('CREATE TABLE IF NOT EXISTS market_items (region TEXT NOT NULL, id INTEGER NOT NULL, name TEXT NOT NULL, category INTEGER, PRIMARY KEY(region,id))')
+            db.execute('CREATE TABLE IF NOT EXISTS market_quote_details (region TEXT NOT NULL, id INTEGER NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(region,id))')
             db.execute('CREATE TABLE IF NOT EXISTS vendor_quotes (id INTEGER PRIMARY KEY,name TEXT NOT NULL,unit_price INTEGER NOT NULL,updated_at TEXT NOT NULL,source_url TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS vendor_checks (id INTEGER PRIMARY KEY,checked_at REAL NOT NULL)')
 
@@ -53,6 +54,11 @@ class PriceBook:
                     if not any(i['id']==ident for i in catalog):catalog.append({'id':ident,'name':name})
             for item in catalog:
                 if item['name'] in quotes:quotes[item['name']]['item_id']=item['id']
+            for ident,payload in db.execute('SELECT id,payload FROM market_quote_details WHERE region=?',(region,)):
+                detail=json.loads(payload)
+                name=detail.get('name')
+                if name in quotes and quotes[name].get('item_id')==ident:
+                    quotes[name].update({k:detail[k] for k in ('stock','last_sold_price','last_sold_at','price_basis','source','source_updated_at','fourteen_day_volume','daily_volume') if k in detail})
             version=(region,len(catalog),max((q['updated_at'] for q in quotes.values()),default=''))
             if version!=self._catalog_version:self._match_cache={};self._catalog_version=version
             cache=self._match_cache
@@ -190,6 +196,70 @@ class PriceBook:
             items=[group[0] for group in groups.values() if len({i['id'] for i in group})==1]
             self.update_market(items,region,activate=False)
             if len(self._recipe_cache)>=16:self._recipe_cache.clear()
+            self._recipe_cache[key]=(time.monotonic(),items)
+            return items
+
+    def recipe_id_quotes(self,ids,region):
+        """Exact public recipe IDs, with quote basis/freshness. No catalog download.
+
+        Only selected plans request quotes. A five-minute shared cache avoids
+        repeat calls while editing a recipe. Prices are provider base quotes,
+        not promises that a large stack will sell at that price.
+        """
+        if region not in ('NA','EU') or not isinstance(ids,list) or not 1<=len(ids)<=64:
+            raise ValueError('Use 1–64 recipe item IDs and NA/EU')
+        if any(type(n) is not int or not 0<n<10_000_000 for n in ids):raise ValueError('Invalid recipe item ID')
+        key=(region,tuple(sorted(set(ids))))
+        with self._recipe_lock:
+            cached=self._recipe_cache.get(key)
+            if cached and time.monotonic()-cached[0]<300:return cached[1]
+            items=[]
+            def visit(value,requested):
+                if isinstance(value,list):
+                    for row in value:visit(row,requested)
+                elif isinstance(value,dict):
+                    base=self._base_quotes(value,requested)
+                    if base:
+                        row=base[0]
+                        row.update({'price_basis':'market_base','updated_at':datetime.now().astimezone().isoformat(timespec='seconds'),'region':region,'source':'Arsha Central Market base price'})
+                        for source,dest in (('currentStock','stock'),('lastSoldPrice','last_sold_price'),('lastSoldTime','last_sold_at')):
+                            v=value.get(source)
+                            if type(v) is int and v>=0:row[dest]=v
+                        items.append(row)
+            ordered=key[1]
+            for start in range(0,len(ordered),40):
+                batch=ordered[start:start+40];visit(self._fetch_quotes(region,batch),set(batch))
+            with closing(sqlite3.connect(self.path)) as db:
+                prior={ident:json.loads(payload) for ident,payload in db.execute('SELECT id,payload FROM market_quote_details WHERE region=?',(region,)) if ident in ordered}
+            for row in items:
+                old=prior.get(row['id'],{})
+                for field in ('daily_volume','fourteen_day_volume','volume_source_updated_at'):
+                    if field in old:row[field]=old[field]
+                if 'daily_volume' in old and 'volume_source_updated_at' not in row:row['volume_source_updated_at']=old.get('source_updated_at')
+            self.update_market(items,region,activate=False)
+            with closing(sqlite3.connect(self.path)) as db,db:
+                db.executemany('INSERT INTO market_quote_details VALUES (?,?,?) ON CONFLICT(region,id) DO UPDATE SET payload=excluded.payload',[(region,i['id'],json.dumps(i)) for i in items])
+            with self._quote_lock:self._quote_cache.clear()
+            if len(self._recipe_cache)>=32:self._recipe_cache.clear()
+            self._recipe_cache[key]=(time.monotonic(),items)
+            return items
+
+    def recipe_market_snapshot(self,region):
+        if region not in ('NA','EU'):raise ValueError('Unknown market region')
+        key=(region,'recipe-market-snapshot')
+        with self._recipe_lock:
+            cached=self._recipe_cache.get(key)
+            if cached and time.monotonic()-cached[0]<900:return cached[1]
+            from craft_economy import craft_spec
+            from recipe_market import fetch_recipe_market
+            items=fetch_recipe_market(region,craft_spec()['items'])
+            stamp=datetime.now().astimezone().isoformat(timespec='seconds')
+            for row in items:row['updated_at']=stamp
+            self.update_market(items,region,activate=False)
+            with closing(sqlite3.connect(self.path)) as db,db:
+                db.executemany('INSERT INTO market_quote_details VALUES (?,?,?) ON CONFLICT(region,id) DO UPDATE SET payload=excluded.payload',[(region,i['id'],json.dumps(i)) for i in items])
+            with self._quote_lock:self._quote_cache.clear()
+            if len(self._recipe_cache)>=32:self._recipe_cache.clear()
             self._recipe_cache[key]=(time.monotonic(),items)
             return items
 

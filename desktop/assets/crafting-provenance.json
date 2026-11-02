@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-02",
+  "recipes": 990,
+  "items": 1665,
+  "groups": 105,
+  "activities": {
+    "processing": 746,
+    "alchemy": 92,
+    "cooking": 152
+  },
+  "sourceResponseSha256": {
+    "public-groups.json": "ea8153cde8cc164992f8b0950b161f0834e48b12311dc724b75199b0bf580b5f",
+    "public-mastery-alchemy.json": "2662cc3640c113069bceb6d379cc3afdde4398108927e7fc97c1733db5996c9e",
+    "public-mastery-cooking.json": "0c9640d7e34edc920266ddb2572cca62fda8f1cbd3f333e9fcf3cae883037c5e",
+    "public-mastery-processing.json": "19abaecd655f139310d61f9d691be6aa069ee0dfa2bb488e688056fa89cc9535",
+    "public-metadata.json": "3e0c5c8222b1802c08da5397abbe21b4540afebaa881f48ec2f5cd461562573d",
+    "public-recipes.json": "b093dd5ff9b6e26e391e142814925298481caefc319c0f776864333dcbd1ba3d"
+  },
+  "endpoints": [
+    "https://bdolytics.com/api/trpc/calculator.getCraftingRecipes",
+    "https://bdolytics.com/api/trpc/calculator.getMaterialGroups",
+    "https://bdolytics.com/api/trpc/calculator.getCraftingItemMetadata",
+    "https://bdolytics.com/api/trpc/calculator.getMasteryCooking",
+    "https://bdolytics.com/api/trpc/calculator.getMasteryAlchemy",
+    "https://bdolytics.com/api/trpc/calculator.getMasteryProcessing"
+  ],
+  "notes": "Factual normalized game data; original code/UI. Mastery formulas and byproduct rates are planning models, not guaranteed in-game yields. No minimum skill requirements supplied.",
+  "modelConstantsSource": "https://bdolytics.com/en/crafting?category=alchemy",
+  "marketSnapshotSource": "https://bdolytics.com/api/trpc/market.getMarket"
+}

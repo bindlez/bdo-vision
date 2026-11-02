@@ -23,6 +23,11 @@ def income_at(report,route,day,multiplier=1):
 def analyze(report,selected='target',elapsed=0):
     from cp_planner import build_route,to_target
     route=next((r for r in report['routes'] if r['key']==selected),report['routes'][2])
+    if not report.get('cashComplete',True):
+        return {'selected':route['key'],'title':'Refresh exchange prices','reason':'Market opportunity cost is unknown. CP quantities remain available; payoff and silver graphs wait for a priced exchange for each stock.',
+                'elapsed':elapsed,'recovered':None,'simulatedEarned':None,'simulatedProfit':None,
+                'milestones':[],'scenarios':[],'requirements':[],'targets':[],'timeline':[],
+                'sensitivity':[],'optimized':None,'candidates':0,'reserveFeasible':False,'grindHours':None}
     days=report['days'];earned=income_at(report,route,elapsed)
     investment=route['investment'];profit=earned-investment
     recovered=min(100,max(0,earned/investment*100)) if investment else 100

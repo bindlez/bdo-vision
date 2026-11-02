@@ -1,4 +1,7 @@
-# BDO Vision · current development candidate 1.13.0-rc.12
+# BDO Vision · current development candidate 1.13.0-rc.13
+
+**Crafting Intelligence** now has 990 real recipe variants across cooking, alchemy, processing and imperial packing, 105 substitution groups, mastery models, rare/optional extra outputs, shared-inventory queues, recursive buy/make trees, tax, weight/EXP, market-volume filters and lazy profit graphs. One shared engine supplies the legacy summary and linked native session costs. **CP cash comparisons now use market material exchanges by default**; missing prices are unpriced, and leftovers stay in inventory. [Try the dated market-snapshot demo](demo/bdo-vision-crafting-demo.html), read the [reference coverage matrix](docs/CRAFTING-REFERENCE-MATRIX.md) and [developer guide](docs/handbook/22-crafting-platform.md), or open the [project paper](demo/bdo-vision-project-paper.html) / [editable Markdown](docs/PROJECT-PAPER.md).
+
 
 **CP Intelligence** now adds setup costs, uptime and ramp-up, explicit payback targets, income stress tests, cash-reserve optimization and simulated recovery milestones behind simple expandable sections. Native scenarios transfer into the browser planner. **Tool acquisition** starts with a focused Place Mode/bar fast path; numeric fields keep fresh bar evidence and never reuse stale digit boxes. **Quests** have a bounded reader queue, focused whole-width cards, clear disabled/queued/partial/last-seen states and optional Smart watch.
 

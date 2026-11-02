@@ -245,7 +245,7 @@ class PlannerBridge:
 
             def do_POST(self):
                 route=urlsplit(self.path).path
-                if route not in ('/ack','/market-prices','/craft-quotes','/craft-model','/show','/grind-command','/cp-read','/gear/ocr','/gear/sweep','/gear/builds'):
+                if route not in ('/ack','/market-prices','/craft-quotes','/craft-market','/craft-model','/show','/grind-command','/cp-read','/gear/ocr','/gear/sweep','/gear/builds'):
                     self._send({'error': 'Unknown endpoint'}, 404)
                     return
                 if not self._origin_allowed():
@@ -325,9 +325,11 @@ class PlannerBridge:
                         finally:
                             if not handed_off:bridge.gear_ocr_gate.release()
                         return
-                    if route=='/craft-quotes':
+                    if route in ('/craft-quotes','/craft-market'):
                         if not bridge.price_book:self._send({'error':'Price book unavailable'},503);return
-                        try:items=bridge.price_book.recipe_quotes(body['names'],str(body['region']).upper())
+                        try:
+                            region=str(body['region']).upper()
+                            items=bridge.price_book.recipe_market_snapshot(region) if route=='/craft-market' else bridge.price_book.recipe_id_quotes(body['ids'],region) if 'ids' in body else bridge.price_book.recipe_quotes(body['names'],region)
                         except (OSError,RuntimeError):self._send({'error':'Market lookup unavailable; cached values retained'},503);return
                         self._send({'items':items,'region':str(body['region']).upper()});return
                     if not isinstance(body,dict):raise ValueError('JSON object required')

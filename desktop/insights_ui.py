@@ -62,7 +62,8 @@ class LootInsights:
     def start(self):
         if self.session.id and not self.session.ended:self.session.finish(self.prices.all(),self.gate())
         targets=[name.strip() for name in self.targets.get().split(',') if name.strip()]
-        self.session.start(self.gate(),label=self.session_name.get(),activity=self.activity.get(),recipe='' if self.recipe.get()=='No recipe' else self.recipe.get(),targets=targets)
+        selected=getattr(self,'recipe_ids',{}).get(self.recipe.get(),self.recipe.get())
+        self.session.start(self.gate(),label=self.session_name.get(),activity=self.activity.get(),recipe='' if self.recipe.get()=='No recipe' else selected,targets=targets)
         if self.activity.get() in ('Crafting','Grinding','Treasure hunt'):
             self.tracker.crafting.set(self.activity.get()=='Crafting');self.tracker.app.save_quietly()
         self.scope.set('Timed session');self.tracker.generation+=1
@@ -155,7 +156,8 @@ class LootInsights:
         row=tk.Frame(frame,bg=c['bg']);row.pack(fill='x',pady=10)
         ttk.Combobox(row,style='Vision.TCombobox',textvariable=self.activity,values=('Crafting','Grinding','Treasure hunt','Other'),state='readonly',width=15).pack(side='left',padx=(0,8))
         recipes=json.loads((Path(__file__).parent/'assets'/'recipes.json').read_text(encoding='utf-8')) if (Path(__file__).parent/'assets'/'recipes.json').exists() else []
-        ttk.Combobox(row,style='Vision.TCombobox',textvariable=self.recipe,values=['No recipe']+sorted(r['name'] for r in recipes),state='readonly',width=30).pack(side='left',padx=(0,8))
+        self.recipe_ids={r['name']+' · '+(r.get('method') or r['type'])+' · '+r['id']:r['id'] for r in recipes}
+        ttk.Combobox(row,style='Vision.TCombobox',textvariable=self.recipe,values=['No recipe']+sorted(self.recipe_ids),state='readonly',width=30).pack(side='left',padx=(0,8))
         self.tracker.app.action(row,'START NEW',self.start).pack(side='left')
         self.tracker.app.action(row,'PAUSE / RESUME',self.pause_resume).pack(side='left',padx=6)
         self.tracker.app.action(row,'FINISH',self.finish_session).pack(side='left')

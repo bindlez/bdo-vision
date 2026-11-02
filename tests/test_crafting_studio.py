@@ -29,7 +29,7 @@ assert.equal(C.plan(r,1,{retention:0},{quote:()=>null,recipes:[r]}).breakEven,nu
         self.js('''
 const a={id:'a',name:'Meal',sell:100,mats:[{name:'Sauce',qty:3,fallback:10}]};
 const b={id:'b',name:'Sauce',sell:10,mats:[{name:'Herb',qty:2,fallback:2}]};
-const p=C.plan(a,2,{yield:1,seconds:5},{quote:()=>null,recipes:[a,b],make:{sauce:true},inventory:{sauce:1},configFor:()=>({yield:2,seconds:3})});
+const p=C.plan(a,2,{yield:1,seconds:5},{quote:n=>({price:{Sauce:10,Herb:2,Meal:100}[n]}),recipes:[a,b],make:{sauce:true},inventory:{sauce:1},configFor:()=>({yield:2,seconds:3})});
 assert.equal(p.steps[0].batches,3);assert.equal(p.purchases[0].quantity,6);assert.equal(p.cost,22);assert.equal(p.seconds,19);
 b.mats=[{name:'Meal',qty:1,fallback:100}];const cyc=C.plan(a,1,{},{quote:()=>null,recipes:[a,b],make:{sauce:true,meal:true}});assert.ok(cyc.warnings.some(x=>x.startsWith('Recipe cycle')));
 assert.equal(C.series(Array.from({length:1000},(_,i)=>[i,i]),48).length,48);

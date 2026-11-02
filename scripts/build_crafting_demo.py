@@ -8,17 +8,20 @@ html=html.replace('<title>Black Desert Online · Central Market</title>','<title
 html=html.replace('"bdo_cm_v1"','"vision_demo_craft_state_v1"').replace('"bdo_cm_intel_v1"','"vision_demo_craft_intel_v1"').replace('vision.craft.studio.v1','vision.demo.craft.studio.v1')
 html=html.replace('    loadState();','    /* Demo starts a fresh synthetic timer on each visit. */').replace('requestNotifyPermission();','/* Demo notifications disabled. */')
 html=html.replace('setInterval(shareMarketPricesWithDesktop,5000);','/* Demo has no native market bridge. */')
-html=html.replace('<body>','''<body><div class="demo-ribbon"><strong>CRAFTING STUDIO DEMO</strong><span>Example prices & simulated drops · no game OCR</span><button id="demoPlay">Play sample drops</button><button id="demoBlock">Block sample capture</button><span id="demoState" role="status">Ready</span><a href="https://github.com/bindlez/bdo-vision/releases">Get Windows app</a></div>''')
+html=html.replace('<body>','''<body><div class="demo-ribbon"><strong>CRAFTING STUDIO DEMO</strong><span>Dated NA market snapshot & simulated drops · no game OCR</span><button id="demoPlay">Play sample drops</button><button id="demoBlock">Block sample capture</button><span id="demoState" role="status">Ready</span><a href="https://github.com/bindlez/bdo-vision/releases">Get Windows app</a></div>''')
 html=html.replace('</style>','''.demo-ribbon{position:sticky;top:0;z-index:9999;display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#30203e;padding:12px 20px;color:#f7eaff;font:12px "Segoe UI",sans-serif;border-bottom:1px solid #806092}.demo-ribbon button,.demo-ribbon a{background:#18101f;color:#f0dfff;border:1px solid #8865aa;border-radius:6px;padding:7px 10px;font:inherit;text-decoration:none}.demo-ribbon>span{color:#dac5e9}.demo-ribbon strong{letter-spacing:.1em}.sidebar{padding-top:75px} .topbar{top:65px}
   </style>''',1)
-recipe=re.search(r'\{"id": "([^"]+)", "type": "alchemy", "name": "Elixir of Demihuman Hunt"',html)[1]
+recipe=next(r['id'] for r in json.loads((root/'desktop/assets/recipes.json').read_text(encoding='utf-8')) if r['name']=='Elixir of Demihuman Hunt')
+snapshot=json.loads((root/'desktop/assets/demo-market-snapshot.json').read_text(encoding='utf-8'))
 boot=r'''
 /* Demo adapter. Everything below is generated sample data, separate from live OCR. */
 var demoCraft={running:false,blocked:false,events:[],observed:0,paused:0,last:Date.now(),count:0};
-var demoQuotes=[{id:678,name:'Elixir of Demihuman Hunt',price:68000},{id:679,name:'Elixir of Fierce Demihuman Hunt',price:188000},{id:9733,name:'Shining Powder',price:212000},{id:1,name:'Oil of Storms',price:48000},{id:2,name:'Clear Liquid Reagent',price:12000},{id:3,name:'Powder of Time',price:6000},{id:4,name:'Ash Sap',price:2500}];
+var demoQuotes=DEMO_MARKET_SNAPSHOT;
+demoQuotes.sort((a,b)=>({678:0,679:1,9733:2}[a.id]??3)-({678:0,679:1,9733:2}[b.id]??3));
 shareMarketPricesWithDesktop=async function(){desktopMarketBatch=[];};
 ensureOcrWorker=async function(){throw Error('Live game OCR requires the Windows app. This demo uses simulated drops.');};
 visionGrindCommand=async function(){toast('Crafting preview','Use the separate loot and grind demo to try a sample grind.',false);};
+craftStudioLoadMarket=async function(){var e=document.getElementById('recipeMarketStatus');if(e)e.textContent='Offline snapshot already loaded. The Windows planner can fetch current recipe prices and volumes.';};
 craftStudioLoadPrices=async function(){var e=document.getElementById('studioMarketState');if(e)e.textContent='DEMO · fixed example prices. The Windows app fetches actual market quotes.';};
 loadData=async function(){rememberPrices(demoQuotes.map(function(q){return {...q,marketRegion:region};}));currentItems=demoQuotes.map(function(q){return {...q,stock:100,trades:1000};});renderListings();setStatus('ok','Demo example prices');};
 loadCategory=async function(){return demoQuotes;};loadHot=async function(){return demoQuotes;};
@@ -31,7 +34,7 @@ refreshVisionTimerEarnings=async function(base,reading){
  if(owner.status==='done'){v.finalized=true;v.tracking=false;var receipt=craftHistory.find(function(h){return h.timerId===owner.id;});if(receipt)receipt.earnings=craftStudioReceipt(owner);renderHistory();}saveState();
 };
 pollBridge=async function(){
- var d=demoCraft,now=Date.now(),dt=Math.min(5,(now-d.last)/1000);d.last=now;if(d.running){if(d.blocked)d.paused+=dt;else{d.observed+=dt;d.count++;var q=demoQuotes[d.count%4===0?1:0];d.events.push({id:d.events.length+1,at:now,item:q.name,price:q.price,quantity:d.count%4===0?1:4,rare:d.count%4===0});if(d.count%9===0)d.events.push({id:d.events.length+1,at:now,item:'Shining Powder',price:212000,quantity:1});}if(d.count>=160)d.running=false;}
+ var d=demoCraft,now=Date.now(),dt=Math.min(5,(now-d.last)/1000);d.last=now;if(d.running){if(d.blocked)d.paused+=dt;else{d.observed+=dt;d.count++;var q=demoQuotes[d.count%4===0?1:0];d.events.push({id:d.events.length+1,at:now,item:q.name,price:q.price,quantity:d.count%4===0?1:4,rare:d.count%4===0});if(d.count%9===0)d.events.push({id:d.events.length+1,at:now,item:'Shining Powder',price:demoQuotes.find(q=>q.id===9733).price,quantity:1});}if(d.count>=160)d.running=false;}
  var items=demoItemRows(d.events),data={history_id:'synthetic-crafting-demo',last_event_id:d.events.length,crafting_mode:true,available:d.running&&!d.blocked,reason:d.blocked?'Item area is covered by demo window':d.running?'':'Sample playback paused',updated_at:now/1000,capture_clock:{observed_seconds:d.observed,paused_seconds:d.paused},items:items,captured_items_available:items.length>0,elixir_units:items.filter(function(i){return i.group==='Elixirs';}).reduce(function(s,i){return s+i.quantity;},0),extra_units:items.filter(function(i){return i.group!=='Elixirs';}).reduce(function(s,i){return s+i.quantity;},0),rare_units:items.reduce(function(s,i){return s+i.rare;},0)};
  bridgeWasConnected=true;bridgeStatus(true,'Synthetic demo · no native connection');document.getElementById('demoState').textContent=d.running?(d.blocked?'Capture blocked · projection only':'Playing sample drops'):'Ready / paused';document.getElementById('demoPlay').textContent=d.running?'Pause sample drops':'Play sample drops';
  renderVisionCraftingLoot({crafting_loot:data});await refreshVisionTimerEarnings('',{crafting_loot:data});if(currentView==='craft')renderActiveTimers();
@@ -39,9 +42,9 @@ pollBridge=async function(){
 document.getElementById('demoPlay').onclick=function(){demoCraft.running=!demoCraft.running;pollBridge();};
 document.getElementById('demoBlock').onclick=function(){demoCraft.blocked=!demoCraft.blocked;this.textContent=demoCraft.blocked?'Restore sample capture':'Block sample capture';pollBridge();};
 rememberPrices(demoQuotes);selectedRecipe=RECIPES.find(function(r){return r.id===DEMO_RECIPE;});lastCraftAmount=100;
-if(!craftStudioState.config[selectedRecipe.id])craftStudioState.config[selectedRecipe.id]={yield:2.5,seconds:5,retention:100,extra:0,goal:1000000,estimate:true};
+if(!craftStudioState.config[selectedRecipe.id])craftStudioState.config[selectedRecipe.id]={yield:2.5,seconds:5,retention:84.5,extra:0,goal:1000000,estimate:true};
 showView('craft');
-'''.replace('DEMO_RECIPE',json.dumps(recipe))
+'''.replace('DEMO_RECIPE',json.dumps(recipe)).replace('DEMO_MARKET_SNAPSHOT',json.dumps(snapshot['items'],separators=(',',':')))
 marker='    processTimers();ensureTick();updateNavBadge();'
 assert marker in html;html=html.replace(marker,boot+'\n'+marker,1)
 target=root/'demo/bdo-vision-crafting-demo.html';target.write_text(html,encoding='utf-8');print(target.name,target.stat().st_size,'bytes')

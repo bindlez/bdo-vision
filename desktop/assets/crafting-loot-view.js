@@ -1,16 +1,17 @@
 /* Optional recorded output. Prices are joined by market ID or exact item name. */
-var visionLootLast=null,visionMarketById={},visionMarketByName={},visionMarketGeneration=0,visionLootTableKey=null;
+var visionLootLast=null,visionMarketById={},visionMarketByName={},visionMarketQuoteDetails={},visionMarketGeneration=0,visionLootTableKey=null;
 function visionName(name){return String(name||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();}
 function visionRememberMarketQuotes(list){
   visionMarketGeneration++;
   list.forEach(function(item){
     var key=String(item.marketRegion||region).toLowerCase()+':';
     if(Number.isSafeInteger(Number(item.price)) && Number(item.price)>0){
-      if(item.id)visionMarketById[key+String(item.id)]=Number(item.price);
+      if(item.id){visionMarketById[key+String(item.id)]=Number(item.price);visionMarketQuoteDetails[key+String(item.id)]={...item,updatedAt:item.updated_at||item.updatedAt||new Date().toISOString()};}
       visionMarketByName[key+visionName(item.name)]=Number(item.price);
     }
   });
   if(visionLootLast)renderVisionCraftingLoot(visionLootLast);
+  if(window.VisionCPPage)for(var quoteRegion of new Set(list.map(i=>String(i.marketRegion||region).toUpperCase())))window.VisionCPPage.acceptQuotes(list.filter(i=>String(i.marketRegion||region).toUpperCase()===quoteRegion),quoteRegion);
 }
 function renderVisionCraftingLoot(reading){
   var panel=document.getElementById('visionCraftingLoot');

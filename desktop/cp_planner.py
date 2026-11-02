@@ -65,8 +65,8 @@ def build_route(report,key,requested):
     daily=full_daily*report['utilization']/100
     setup=report['setup'] if finish['gained'] else 0;investment=spent+setup
     earned=daily*productive_days(report['days'],report['delay'],report['ramp'])
-    initial=report['cashTotal']-investment;effective=productive_days(report['days'],report['delay'],report['ramp'])
-    return {'key':key,**finish,'batches':used,'xp':used*900,'cash':initial,'foregone':spent,'setupCost':setup,
+    initial=report.get('_cashKnownTotal',report['cashTotal'])-investment;effective=productive_days(report['days'],report['delay'],report['ramp'])
+    route={'key':key,**finish,'batches':used,'xp':used*900,'cash':initial,'foregone':spent,'setupCost':setup,
             'investment':investment,'allocation':allocation,'daily':daily,'fullDaily':full_daily,'deployed':active,
             'future':initial+earned,'earnings':earned,'difference':earned-investment,
             'breakEvenDays':payback_days(investment,daily,report['delay'],report['ramp']),
@@ -75,6 +75,9 @@ def build_route(report,key,requested):
             'roiPercent':100*(earned-investment)/investment if investment else None,
             'costPerCp':investment/finish['gained'] if finish['gained'] else None,
             'costPerDeployedCp':investment/active if active else None}
+    if not report.get('cashComplete',True):
+        for field in ('cash','foregone','investment','future','difference','breakEvenDays','requiredPerCpDay','recoveryPercent','roiPercent','costPerCp','costPerDeployedCp'):route[field]=None
+    return route
 
 
 def calculate(state, quotes=None):
@@ -95,8 +98,8 @@ def calculate(state, quotes=None):
     grind_rate=number(state.get('grindRate',0),0,1_000_000_000_000)
     income_mode=state.get('incomeMode','per_cp')
     if income_mode not in ('per_cp','project'):raise ValueError('Choose per-CP or whole-project income')
-    policy=state.get('cashPolicy','best')
-    if policy not in ('best','vendor'):raise ValueError('Choose best priced exchange or NPC sale')
+    policy=state.get('cashPolicy','market')
+    if policy not in ('market','best','vendor'):raise ValueError('Choose market exchange or optional NPC sale')
     counts=state.get('counts',{})
     if not isinstance(counts,dict):raise ValueError('Invalid byproduct counts')
     products=[];all_routes=[];missing=[]
@@ -113,17 +116,26 @@ def calculate(state, quotes=None):
             known=isinstance(value,(int,float)) and not isinstance(value,bool) and math.isfinite(value) and 0<value<=1e12 and quote.get('price_basis')!='npc_vendor'
             if count and not known:missing.append(name)
             gross=value*units*batches if known else None
+            volume=quote.get('daily_volume')
+            volume=volume if type(volume) in (int,float) and math.isfinite(volume) and volume>0 else None
             routes.append({'item':name,'units':units,'unit':value if known else None,
-                           'gross':gross,'net':gross*retention+left*product['vendor'] if known else None,
+                           'gross':gross,'net':gross*retention+(0 if policy=='market' else left*product['vendor']) if known else None,
                            'perBatch':value*units*retention if known else None,'known':known,'npc':False,
-                           'source':str(quote.get('source','Unpriced')),'updated_at':str(quote.get('updated_at',''))})
-        best=max((r for r in routes if r['known']),key=lambda r:r['perBatch']) if policy=='best' else routes[0]
+                           'source':str(quote.get('source','Unpriced')),'updated_at':str(quote.get('updated_at','')),
+                           'dailyVolume':volume,'marketVolumeDays':units*batches/volume if volume else None})
+        if policy=='market':
+            priced=[r for r in routes if r['known'] and not r['npc']]
+            best=max(priced,key=lambda r:r['perBatch']) if priced else {'item':'Market quote required','perBatch':0,'net':0,'known':False}
+            # Incomplete exchange batches remain in inventory, never silently NPC-sold.
+            if priced:best=dict(best)
+        else:best=max((r for r in routes if r['known']),key=lambda r:r['perBatch']) if policy=='best' else routes[0]
         entry={**product,'count':count,'batches':batches,'leftover':left,'best':best,'routes':routes}
         products.append(entry)
         if count:all_routes.extend({'product':product['name'],'batches':batches,'leftover':left,**r} for r in routes)
     ordered=sorted(products,key=lambda p:(p['best']['perBatch'],p['key']))
     total_batches=sum(p['batches'] for p in products)
     cash=sum(p['best']['net'] for p in products)
+    complete=all(p['best']['known'] for p in products if p['batches'])
     need=to_target(cp,pct,target)
     target_batches=math.ceil(max(0,need-1e-7)/900)
 
@@ -134,9 +146,10 @@ def calculate(state, quotes=None):
             'targetBatches':target_batches,'targetReachable':target_batches<=total_batches,
             'totalXp':total_batches*900,'totalBatches':total_batches,'vendorTotal':sum(p['count']*p['vendor'] for p in products),
             'products':products,'exchangeRoutes':all_routes,'missing':sorted(set(missing)),
-            'cashTotal':cash,'curveVersion':spec['version'],'utilization':utilization,'ramp':ramp,'setup':setup,
+            'cashTotal':cash if complete else None,'_cashKnownTotal':cash,'cashComplete':complete,
+            'curveVersion':spec['version'],'utilization':utilization,'ramp':ramp,'setup':setup,
             'reserve':reserve,'grindRate':grind_rate,'incomeMode':income_mode,
             'referenceDeployed':min(advance(cp,pct,total_batches*900)['gained'],deploy)}
     report['routes']=[build_route(report,'cash',0),build_route(report,'cp',total_batches),build_route(report,'target',min(target_batches,total_batches)),build_route(report,'split',math.floor(total_batches*split/100))]
-    report['winner']=max(report['routes'],key=lambda r:r['future'])['key']
+    report['winner']=max(report['routes'],key=lambda r:r['future'])['key'] if complete else None
     return report

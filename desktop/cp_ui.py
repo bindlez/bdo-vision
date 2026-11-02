@@ -77,7 +77,7 @@ class CPInfo:
         self.results=self.text_views['Decision']
         self.chart=tk.Canvas(body,height=145,bg=c['panel'],highlightthickness=0);self.chart.pack(fill='x')
         self.chart.bind('<Configure>',lambda e:self.draw_chart())
-        tk.Label(body,text='Current market quotes from the existing price book. NPC baseline: 20,000 silver each, untaxed. Unknown exchange prices remain unpriced. Future income is modeled, never added to your loot history.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=740,justify='left').pack(fill='x',pady=8)
+        tk.Label(body,text='Current market quotes from the existing price book. Market material exchanges are the primary cash route. Unknown exchange prices remain unpriced; leftovers stay in inventory. Future income is modeled, never added to your loot history.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=740,justify='left').pack(fill='x',pady=8)
         self.recalculate(save=False)
 
     def settings(self):return {'cp_plan':self.saved}
@@ -97,15 +97,19 @@ class CPInfo:
             with self.app.bridge._lock:self.app.bridge.cp_plan=json.loads(json.dumps(state))
         if save:self.app.save_quietly();self.note.set('Saved locally. No extra CP income is assumed until you enter it.' if report['income']==0 else 'Saved scenario · future income is an assumption, not recorded silver.')
         selected_key={'Cash everything':'cash','All CP':'cp','Target, then cash':'target','50% split':'split'}[self.selected.get()]
+        if not report['cashComplete']:
+            text='MARKET PRICES NEEDED\nRefresh existing market prices to calculate material-exchange value. No NPC fallback is used.\n\n'+f"All CP: {report['routes'][1]['cp']} CP (+{report['routes'][1]['gained']})\nTo {report['target']} CP: {report['targetBatches']:,} full batches / {report['targetXp']:,.0f} EXP\n\nUnquoted rewards: "+', '.join(report['missing'])
+            for view in self.text_views.values():view.configure(state='normal');view.delete('1.0','end');view.insert('1.0',text);view.configure(state='disabled')
+            self.draw_chart();return True
         a=analyze(report,selected_key);chosen=next(row for row in report['routes'] if row['key']==selected_key)
         labels=('CASH EVERYTHING','ALL AVAILABLE CP','TARGET, THEN CASH','50% OF BATCHES TO CP')
-        lines=[f"To next CP: {report['nextXp']:,.2f} EXP / {report['nextBatches']:,} batches",f"To {report['target']} CP: {report['targetXp']:,.2f} EXP / {report['targetBatches']:,} batches",f"Available: {report['totalXp']:,} EXP · NPC baseline {silver(report['vendorTotal'])} silver",'']
+        lines=[f"To next CP: {report['nextXp']:,.2f} EXP / {report['nextBatches']:,} batches",f"To {report['target']} CP: {report['targetXp']:,.2f} EXP / {report['targetBatches']:,} batches",f"Available: {report['totalXp']:,} EXP · optional NPC alternative {silver(report['vendorTotal'])} silver",'']
         for title,r in zip(labels,report['routes']):
             percent=f" + {r['percent']:.2f}%" if r['percent'] is not None else ' · curve limit'
             lines.append(f"{title}: {r['cp']} CP{percent} (+{r['gained']})\n  Cash now {silver(r['cash'])} · day {report['days']} {silver(r['future'])} · vs cash {silver(r['difference'])}")
         all_cp=report['routes'][1]
         if all_cp['requiredPerCpDay'] is not None:lines.append(f"All-CP break-even requirement: {all_cp['requiredPerCpDay']:,.0f} silver / deployed CP / day over {report['days']} days")
-        if report['missing']:lines.append(f"Incomplete prices: {len(report['missing'])} rewards. Best means best priced route, including NPC sale.")
+        if report['missing']:lines.append(f"Incomplete prices: {len(report['missing'])} rewards. Best means best available material exchange; unknown alternatives may be better.")
         if not report['targetReachable']:lines.append('Target not fully covered by this stock.')
         decision=[a['title'].upper(),a['reason'],f"Payback: {duration(chosen['breakEvenDays'])}",f"Investment: {silver(chosen['investment'])} · extra net/day: {silver(chosen['daily'])}",f"Day {report['days']}: {chosen['recoveryPercent']:.1f}% recovered · CP minus cash {silver(chosen['difference'])}",'',*lines]
         payoff=['PAYBACK TARGETS · daily income required after delay / ramp',*[(f"{row['day']:>3} days: {silver(row['daily'])}/day total · {silver(row['perCp'])} per CP/day before uptime") for row in a['requirements']], '','INCOME STRESS TEST · modeled, not tracked',*[f"{row['label']}: {duration(row['payback'])} · day {report['days']} CP minus cash {silver(row['difference'])}" for row in a['scenarios']], '','OUTCOME LEDGER',*[f"Day {row['day']:>3}: extra {silver(row['earned'])} · versus cash {silver(row['difference'])}" for row in a['timeline']]]
@@ -118,7 +122,9 @@ class CPInfo:
 
     def draw_chart(self):
         if not getattr(self,'chart',None) or not hasattr(self,'report'):return
-        c=self.chart;c.delete('all');w=max(380,c.winfo_width());r=self.report;maximum=max(1,max(a['future'] for a in r['routes'][:3]));minimum=min(0,min(a['cash'] for a in r['routes'][:3]))
+        c=self.chart;c.delete('all');r=self.report
+        if not r['cashComplete']:return
+        w=max(380,c.winfo_width());maximum=max(1,max(a['future'] for a in r['routes'][:3]));minimum=min(0,min(a['cash'] for a in r['routes'][:3]))
         c.create_text(10,12,text='CASH + EXTRA MODELED INCOME · DAY 0 → '+str(r['days']),anchor='w',fill='#cbbbdc',font=('Segoe UI',9))
         for n,(a,color) in enumerate(zip(r['routes'][:3],('#70e6b3','#c3a0ff','#f2ca79'))):
             points=[]
@@ -138,7 +144,9 @@ class CPInfo:
         def worker():
             try:
                 with closing(sqlite3.connect(prices.path)) as db:region=db.execute('SELECT region FROM market_context WHERE id=1').fetchone()[0]
-                received=prices.recipe_quotes([name for p in data()['products'] for name,_ in p['rewards']],region)
+                from craft_economy import craft_spec
+                wanted={name for p in data()['products'] for name,_ in p['rewards']}
+                received=prices.recipe_id_quotes([m['id'] for m in craft_spec()['items'].values() if m['name'] in wanted],region)
                 message=f'{len(received)} market prices refreshed. Missing prices remain unpriced.'
             except Exception:message='Market refresh unavailable. Cached quotes and NPC values are retained.'
             def finish():

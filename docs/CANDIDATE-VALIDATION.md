@@ -1,3 +1,20 @@
+# Crafting candidate · 1.13.0-rc.13
+
+The preceding rc.12 is committed, checkpointed and preserved in Windows/source/handbook ZIPs; its exact source tree is backed up on GitHub and its Windows CI passed. The installed rc.11 remains intact until a normal close permits a backed-up standalone update.
+
+## Calculator evidence
+
+- 990 factual recipe variants, 105 groups, exact metadata identities and compatible saved recipe IDs.
+- Domain checks cover mastery, ingredient replacement ratios, inventory/produced surplus allocated once, recursion/cycle limits, processing and imperial models, optional weighted alchemy extras, tax bonuses and unknown prices.
+- Native checks validate resolved substitutions, locked recursive costs, region separation, frozen session models and existing origin guards.
+- Actual shipped owned blocks execute in a DOM fixture: targets, queue, export, timer linkage, tax, favorites, processing search and escaping. CP's shipped page checks market-first pricing and interactive graphs. These are interaction checks, not a visual-browser or live-game accuracy claim.
+- Public market streaming checks include split UTF-8, malformed/truncated responses, bounds, exact item identities, base enhancement selection, cache reuse and foreign-origin rejection.
+- A warm representative Node run of 1,000 selected recipe plans took roughly 9–13 ms in aggregate on this machine. Excludes UI, network, OCR, total memory and game FPS. The optional broad market scan is explicit, streamed and cached; it is not a standing gameplay cost.
+
+## Remaining live validation
+
+Windows browser activation was interrupted by active user input, including after one recovery attempt. No blind UI actions or forced close were attempted. Newly changed calculator interactions have automated coverage; a fresh visual pass and live crafting run remain separate checks. The prior saved-scene tool/quest evidence below is preserved, not relabeled as a new live verification.
+
 # Candidate validation: 1.13.0-rc.12
 
 The full isolated native suite passes **370 tests**. Shipped planner/Fairy/demos JavaScript, Gear/Big Drops rendering, CP interaction fixtures, compilation and handbook links pass. New coverage includes exact ramp integrals/inverses, setup and uptime costs, whole-project scaling, reserve-constrained target selection, advanced native/browser parity, scoped full-width wrapped quest cards, busy-reader queue expiry, opt-in watch cancellation in Lite and discarded per-digit boxes. Native CP's Decision/Payback/Milestones/Model controls pass a disposable-profile self-check.

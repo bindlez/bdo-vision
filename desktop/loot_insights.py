@@ -82,12 +82,16 @@ class InsightsSession:
         model=None
         meta=self.db.execute('SELECT activity,recipe FROM insight_sessions WHERE id=?',(self.id,)).fetchone()
         if meta and meta[0]=='Crafting' and meta[1]:
-            from craft_economy import recipes
-            choices=[r for r in recipes() if r['name']==meta[1]]
-            if len(choices)==1:
-                names.update(m['name'] for m in choices[0]['mats'])
+            from craft_economy import resolve_recipe
+            recipe=resolve_recipe(meta[1])
+            if recipe:
+                names.update(m['name'] for m in recipe['mats'])
                 if self.db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='craft_models'").fetchone():
-                    model=self.db.execute('SELECT payload FROM craft_models WHERE recipe_id=?',(choices[0]['id'],)).fetchone()
+                    model=self.db.execute('SELECT payload FROM craft_models WHERE recipe_id=?',(recipe['id'],)).fetchone()
+                    if model:names.update(m['name'] for m in json.loads(model[0]).get('materials',[]))
+                    if model and json.loads(model[0]).get('region') and self.db.execute("SELECT 1 FROM sqlite_master WHERE name='market_quotes'").fetchone():
+                        region=json.loads(model[0])['region']
+                        prices={name:{'unit_price':value,'source':'Central Market ('+region+')','updated_at':stamp,'region':region} for name,value,stamp in self.db.execute('SELECT item,unit_price,updated_at FROM market_quotes WHERE region=?',(region,))}
         snapshot={name:prices[name] for name in names if name in prices}
         with self.db:self.db.execute('UPDATE insight_sessions SET active_seconds=?,ended_at=?,price_snapshot=? WHERE id=?',(self.clock.seconds,time.time(),json.dumps(snapshot),self.id))
         if model:

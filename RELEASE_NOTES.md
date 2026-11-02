@@ -1,3 +1,12 @@
+# 1.13.0-rc.13 · Crafting Intelligence and market-first CP
+
+- Replaced the mixed 114-entry recipe book with 990 attributed variants and 105 concrete substitution groups; compatible saved IDs are preserved.
+- Added processing/imperial methods, mastery models, normal/rare/optional extra outputs, tax benefits, owned stock, recursive make/buy, production trees, shared queue surplus, EXP/weight, market-volume filters and lazy SVG analysis.
+- Selected-plan quotes use exact item IDs and the existing cache. An optional streamed whole-recipe market snapshot adds fourteen-day daily-average volume, with bounded requests and no polling/OCR loop.
+- CP defaults to material exchanges; NPC selling is optional. Unknown market opportunities withhold payoff/graphs; leftovers remain in inventory. Offline previews use dated prices, never a simulated live feed.
+- Shared models link resolved ingredients, region and locked recursive input costs into native sessions. Removed redundant legacy profit controls and independent fallback arithmetic.
+- Added a linked Markdown-backed project paper with explicit fictional narrative disclosure and scoped evidence, plus developer documentation and a reference matrix.
+
 # BDO Vision 1.13.0-rc.12 - Deeper decisions, reliable reader handoffs
 
 CP Info now separates Decision, Payback, Milestones and Model in the native app. The browser adds a signed recovery chart, 30/90/180/365/730-day income targets, cautious/base/strong scenarios, nine cost/income stress cases, an affordable whole-CP target search, detailed outcome ledgers and explicitly simulated recovery checkpoints. Setup costs, uptime, delay, ramp-up, whole-project income and cash reserves are modeled. Advanced controls stay collapsed. Opening Full Planner imports the native scenario on demand. No CP background work or new OCR loop is added.

@@ -6,7 +6,7 @@ from cp_planner import calculate
 from cp_forecast import analyze,productive_days,payback_days,income_at
 
 
-def state(**extra):return {'cp':490,'percent':19.26,'counts':{'catalyst':750000},**extra}
+def state(**extra):return {'cp':490,'percent':19.26,'counts':{'catalyst':750000},'cashPolicy':'best',**extra}
 
 
 class ForecastTests(unittest.TestCase):
