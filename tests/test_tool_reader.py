@@ -11,6 +11,12 @@ def row(value,x=200,name='Supreme Alchemy Tool',maximum=5000):
 
 
 class ActiveToolTests(unittest.TestCase):
+    def test_fragmentary_dark_track_does_not_supply_a_false_percentage(self):
+        image=Image.new('RGB',(1280,720),(95,90,84));draw=ImageDraw.Draw(image)
+        draw.rectangle((600,210,646,215),fill=(40,40,36));draw.rectangle((600,211,607,213),fill=(240,200,70))
+        bars=durability_bars(image)
+        self.assertTrue(any(abs(r['box'][0]-600)<4 and r['fill'] is None for r in bars))
+
     def test_failed_digit_split_can_recover_only_from_a_complete_agreed_literal_pair(self):
         region={'name':'Alchemy Tool','box':[0,0,100,30],'numbers':[10,0,100,30],
                 'bar_pair':(2447,45000),'bar_fill':.48,'digit_boxes':[[10,2,40,28],[45,2,90,28]]}

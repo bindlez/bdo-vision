@@ -1,6 +1,6 @@
 # 19. Integrated platform workflows
 
-This chapter describes the 1.13.0-rc.5 candidate. Read [architecture](02-architecture.md), [storage](04-state-storage.md), [tools](06-tools.md), [economics](09-economy.md) and [bridge security](10-bridge-security.md) for the underlying contracts. The candidate keeps the existing Python/Tk runtime and Tesseract reader; the native experiment is not silently substituted.
+This chapter describes the 1.13.0-rc.6 candidate. Read [architecture](02-architecture.md), [storage](04-state-storage.md), [tools](06-tools.md), [economics](09-economy.md) and [bridge security](10-bridge-security.md) for the underlying contracts. The candidate keeps the existing Python/Tk runtime and Tesseract reader; the native experiment is not silently substituted.
 
 ## One source of observations
 
@@ -81,6 +81,8 @@ Two numeric preprocessing passes can agree on the same clipped leading digit. `c
 Successful verification removes transient coarse/bar hints from the retained region. Otherwise a coarse discovery value would become a stale veto against normal declining durability. The numeric cache remains bounded and time-limited. A large same-field decrease schedules fresh discovery on the next normal scan. The application also guards a large downward identity change until repeated use evidence; a manual fresh scan is explicit. Place Mode still provides the initial positional choice, and use confirmation remains independent.
 
 `white_glyph_mask` is shared by title-motion signatures and gold-bar candidate filtering. A candidate with fewer than 12 white glyph pixels is skipped before starting OCR; it cannot supply a readable white tool title. This is a cheap candidate filter, not digit recognition or a looser numeric acceptance rule. `unreadable_regions` also ignores a numberless partial-title hint centered inside an already verified numeric field; separate or conflicting numeric fields remain reported.
+
+Dark tracks can fade into the scene and look shorter than their actual width. A fragment still locates a label, but its fill ratio is unavailable unless the measured track is at least `75 × max(1, unit)` pixels wide, where unit is the existing height-based scale prior. Smaller UI tracks may therefore have no percentage check; literal numeric agreement remains required. This avoids a distorted 17% hint rejecting a correctly read 353/5000 label. It does not infer durability from the expected bar width.
 
 When damaged-separator digit boxes fail, a bounded fallback reads the whole white-glyph numeric field twice. Both passes must contain the same complete literal pair and agree with an independently measured bar fill. The malformed HOCR pair used to locate the failed split is not a numeric veto for this fallback. No character is replaced or dropped to manufacture a fraction. A successful field retains white-glyph preprocessing for subsequent two-pass reads, avoiding another four failed split-field attempts each time.
 

@@ -2,7 +2,7 @@
 
 Checked items mean implemented with automated evidence, not universal live-game acceptance. This plan preserves the user's complete scope; a candidate package is not proof that every unchecked item is finished.
 
-## Current candidate: 1.13.0-rc.5
+## Current candidate: 1.13.0-rc.6
 
 The integrated implementation includes Home, linked recipe-session economics, frozen assumptions, bounded gross/net graphs, persistent quiet goals and reviewed Fairy journal receipts. See [platform workflows](handbook/19-platform-workflows.md). Remaining unchecked live/visual criteria are not erased by packaging this candidate.
 

@@ -235,7 +235,10 @@ def durability_bars(image):
             left,right=a,c
         else:_,left,right=min(tracks)
         if any(abs(left-r['box'][0])<10 and abs(b-r['box'][1])<8 for r in bars):continue
-        bars.append({'box':[left,b,right,d],'fill':min(1.,(c-a)/max(1,right-left)) if tracks else None})
+        # A bright/transparent track can stop the dark-run search halfway.
+        # Such a fragment still locates text, but cannot veto its numeric value.
+        trusted=bool(tracks and right-left>=75*max(1.,unit))
+        bars.append({'box':[left,b,right,d],'fill':min(1.,(c-a)/max(1,right-left)) if trusted else None})
     return bars[:MAX_TOOLS]
 
 

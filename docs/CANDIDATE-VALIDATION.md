@@ -1,4 +1,4 @@
-# Candidate validation: 1.13.0-rc.5
+# Candidate validation: 1.13.0-rc.6
 
 This is scoped evidence, not universal OCR acceptance or a zero-overhead claim. The complete remaining checklist is [Platform release plan](PLATFORM-RELEASE-PLAN.md).
 
@@ -13,6 +13,8 @@ Compared the rc.3 baseline and rc.4 candidate with fresh reader instances, the s
 | Median discovery duration | 2.856 seconds | 1.961 seconds |
 
 That comparison uses about 41% fewer OCR calls and 31% less median time while recovering the second frame. It does not measure live FPS, complete process memory, overall CPU, every camera angle or four independent scenes. Repeating the same frame is a repeatability check, not an accuracy population study. The failed baseline frame exposed a damaged separator/max-field crop; the candidate accepts a literal pair only after two complete white-glyph reads and bar-fill agreement.
+
+An additional near-empty live reference exposed a different failure: a fragmentary dark track supplied a false percentage and vetoed a correct 353/5000 literal. The rc.6 confidence guard reads that frame correctly in approximately 2.0 seconds with 10 OCR calls. This single additional replay is separate from the comparison table and is not a universal live-accuracy claim.
 
 ## Domain calculation benchmark
 

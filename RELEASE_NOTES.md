@@ -1,3 +1,7 @@
+# BDO Vision 1.13.0-rc.6 - Reliable text when a bar track is fragmentary
+
+The final live check exposed a nearly-empty tool whose text read 353/5000 correctly, but the dark track was measured only halfway and produced a false 17% fill. Fragmentary tracks can still locate labels; only sufficiently complete tracks provide a percentage veto. The same private frame now selects 353/5000 in about two seconds with ten OCR calls. Numeric consensus, full-label checks, Place Mode and use confirmation remain. Includes the compact, fully scrollable rc.5 interface.
+
 # BDO Vision 1.13.0-rc.5 - Compact tracker and bounded tool discovery
 
 Final sizing also reduces Silver/Guild headline values, Grind/Insights cards, table rows and tab padding. Settings and full-image windows open smaller, and detailed text wraps within the narrower workspace. Silver, Grind, Insights, Sessions and Quests scroll as complete pages, keeping lower controls and footnotes reachable at smaller heights.

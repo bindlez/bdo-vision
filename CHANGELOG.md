@@ -1,5 +1,11 @@
 # BDO Vision Lite changelog
 
+## 1.13.0-rc.6 · fragmentary bar confidence
+
+- Keep short/transparent dark-track fragments usable as label locators without trusting their distorted fill percentage.
+- Recovered the saved near-empty 353/5000 tool frame; numeric agreement and established discovery remain unchanged.
+- Added the fragmentary-track regression and retained the compact rc.5 interface.
+
 ## 1.13.0-rc.5 · compact tracker and cheaper discovery
 
 - Reduced default main/workspace sizes, spacing, buttons, debug previews and heading sizes; advanced main controls expand on demand.
