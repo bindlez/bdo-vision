@@ -1,4 +1,12 @@
-# Candidate validation: 1.13.0-rc.10
+# Candidate validation: 1.13.0-rc.11
+
+CP Intelligence adds 22 Python regressions, bringing the isolated suite to **350 passing tests**. Native/browser calculations agree across 100 deterministic mixed-stock, percentage, target and deployment scenarios. The actual shipped page executes in a DOM fixture covering boot, income edits, invalid inputs, reset, target allocations and graph-point selection. The native CP tab also passes a disposable-profile widget/calculation self-check. JavaScript, previous Gear/Big Drops rendering, compilation and all handbook links pass. The native example and CP data are included in extracted Windows self-checks.
+
+All three user-supplied screenshots produced 490 total CP, 1 unused CP and 19.26% with exact two-pass agreement. A 5,664-pixel HUD crop took 0.250–0.274 seconds for both passes on this machine. A 1,000-calculation JavaScript loop took about 36–43 ms; this is arithmetic time, not total DOM render time or an FPS measurement. CP has no idle scan, recurring price refresh or animation loop. No claim of 100% accuracy across all HUD layouts or a verified new live capture is made. Windows browser control ended because its current URL could not be established reliably, so real-browser visual verification remains unclaimed; the standalone interactive preview is included for inspection.
+
+The 750,000-catalyst example is hypothetical, not read inventory. Its NPC baseline is 15B; checked NA exchange prices can produce a much larger estimated market value. Those private market checks are not baked into a demo or shipped as fallback prices. The app reuses current cached/exact market quotes and flags missing prices and liquidation limits.
+
+## Previous candidate · 1.13.0-rc.10
 
 Big Drops checks cover strict Big/Huge unit-price boundaries, treasure overrides, malformed/missing values, craft exclusion, original observed timing, deduplication/restart, bounded journal versus complete totals, zero-drop baseline exposure, personal rarity samples and unchanged rare aggregates across common drops. Native smoke builds the trophy tab and displays an unpriced retained treasure. Renderer checks escape hostile data and verify ownership of the actual embedded code. Preview data is synthetic; no new real Big/Huge reveal or statistical drop-rate calibration is claimed by those checks.
 

@@ -33,6 +33,10 @@ jobs:
         run: node scripts/test_planner_security.js
       - name: Check Big Drops rendering and shipped ownership
         run: node scripts/test_big_drops.js
+      - name: Check CP calculations and shipped ownership
+        run: node scripts/test_cp.js
+      - name: Check actual CP page interactions
+        run: node scripts/test_cp_page.js
       - name: Compile sources
         run: python -m compileall -q desktop scripts tests
       - name: Build and validate Developer Handbook

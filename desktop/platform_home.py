@@ -46,7 +46,7 @@ class PlatformHome:
         tk.Label(content,text='YOUR VISION WORKSPACE',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',16)).pack(anchor='w')
         self.mode=tk.StringVar();tk.Label(content,textvariable=self.mode,bg=c['panel2'],fg=c['bright'],padx=12,pady=10,wraplength=850,justify='left').pack(fill='x',pady=(10,14))
         nav=tk.Frame(content,bg=c['bg']);nav.pack(fill='x')
-        for label,target in [('WORKSHOP','craft'),('GRIND','grind'),('SESSIONS','sessions'),('QUESTS','quests')]:
+        for label,target in [('WORKSHOP','craft'),('GRIND','grind'),('SESSIONS','sessions'),('QUESTS','quests'),('CP INFO','cp')]:
             self.app.action(nav,label,lambda section=target:self.app.open_activity(section),flat=True).pack(side='left',expand=True,fill='x',padx=3)
         cards=tk.Frame(content,bg=c['bg']);cards.pack(fill='x',pady=14)
         self.states={}

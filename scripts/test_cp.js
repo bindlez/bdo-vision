@@ -1,0 +1,10 @@
+'use strict';
+const assert=require('assert'),fs=require('fs'),spec=JSON.parse(fs.readFileSync('desktop/assets/cp-data.json','utf8')),engine=require('../desktop/assets/cp-engine.js').create(spec);
+const state={cp:490,percent:19.26,target:500,counts:{catalyst:750000}};
+const r=engine.calculate(state);assert.equal(r.routes[1].cp,567);assert.equal(r.totalXp,67500000);assert.equal(r.vendorTotal,15000000000);assert.equal(r.targetBatches,4520);
+assert.equal(engine.advance(499,0,414778).cp,500);assert.equal(engine.advance(599,0,2341248).cp,600);
+for(const bad of [NaN,Infinity,-1,true,''])assert.throws(()=>engine.calculate({...state,income:bad}));
+const start=performance.now();for(let i=0;i<1000;i++)engine.calculate({...state,split:i%101});const elapsed=performance.now()-start;
+console.log('CP engine: example, curve boundaries, input rejection passed; 1,000 calculations '+elapsed.toFixed(1)+' ms');
+const html=fs.readFileSync('bdo-market-intelligence.html','utf8');assert(html.includes('VISION CP START'));assert(html.includes('data-frontier'));assert(html.includes('/cp-read'));assert(html.includes('Unknown prices may change'));
+console.log('Shipped CP page contains owned engine, interactive graphs and explicit OCR');

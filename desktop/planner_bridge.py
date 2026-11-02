@@ -64,6 +64,8 @@ class PlannerBridge:
         self.last_error = ''
         self.show_requested=False
         self.commands=[]
+        self.cp_reading={'stage':'idle','message':'No CP snapshot requested'}
+        self.cp_request_at=-1e9
         self.gear_ocr_gate=BoundedSemaphore(1)
         self.gear_job=None;self.gear_stop=Event()
         self.ocr_paused=False
@@ -147,7 +149,10 @@ class PlannerBridge:
 
             def do_GET(self):
                 route = urlsplit(self.path).path
-                if route=='/tool-reader':
+                if route=='/cp-reading':
+                    with bridge._lock:status=copy.deepcopy(bridge.cp_reading)
+                    self._send(status)
+                elif route=='/tool-reader':
                     with bridge._lock:status=copy.deepcopy(bridge.tool_status)
                     self._send(status)
                 elif route=='/guild-quest':
@@ -236,7 +241,7 @@ class PlannerBridge:
 
             def do_POST(self):
                 route=urlsplit(self.path).path
-                if route not in ('/ack','/market-prices','/craft-quotes','/craft-model','/show','/grind-command','/gear/ocr','/gear/sweep','/gear/builds'):
+                if route not in ('/ack','/market-prices','/craft-quotes','/craft-model','/show','/grind-command','/cp-read','/gear/ocr','/gear/sweep','/gear/builds'):
                     self._send({'error': 'Unknown endpoint'}, 404)
                     return
                 if not self._origin_allowed():
@@ -256,6 +261,16 @@ class PlannerBridge:
                     def reject_constant(value):raise ValueError('Finite JSON values required')
                     body = json.loads(self.rfile.read(length).decode('utf-8'),parse_constant=reject_constant)
                     if not isinstance(body,dict):raise ValueError('JSON object required')
+                    if route=='/cp-read':
+                        if body.get('instance_id')!=bridge.instance_id:self._send({'error':'Unknown instance'},409);return
+                        if bridge.ocr_paused:self._send({'error':'Lite Use stops extra OCR; disable it for a CP snapshot'},403);return
+                        with bridge._lock:
+                            if len(bridge.commands)>=5 or time.monotonic()-bridge.cp_request_at<15 or bridge.cp_reading.get('stage')=='waiting':
+                                self._send({'error':'CP snapshot pending or cooling down; no extra read queued'},429);return
+                            ident=uuid.uuid4().hex;bridge.cp_request_at=time.monotonic()
+                            bridge.cp_reading={'stage':'waiting','requestId':ident,'message':'One CP snapshot queued'}
+                            bridge.commands.append({'id':ident,'action':'cp-read'})
+                        self._send({'accepted':True,'id':ident},202);return
                     if route=='/craft-model':
                         if body.get('instance_id')!=bridge.instance_id:self._send({'error':'Unknown instance'},409);return
                         if not bridge.price_book:self._send({'error':'Price book unavailable'},503);return

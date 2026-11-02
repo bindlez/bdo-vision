@@ -148,7 +148,7 @@ class App:
 
  def open_activity(self,section):
   self.loot.open()
-  targets={'home':self.loot.home.frame,'craft':self.loot.craft_tab,'grind':self.loot.grind.frame,'reader':self.loot.preview.master,'sessions':self.loot.insights.sessions_frame,'quests':self.loot.guild.frame}
+  targets={'home':self.loot.home.frame,'craft':self.loot.craft_tab,'grind':self.loot.grind.frame,'reader':self.loot.preview.master,'sessions':self.loot.insights.sessions_frame,'quests':self.loot.guild.frame,'cp':self.loot.cp_info.frame}
   self.loot.tabs.select(targets[section])
 
  def open_fairy(self):
@@ -623,7 +623,9 @@ class App:
   if self.bridge and self.bridge.consume_show_request():self.show_saved_history()
   if self.bridge:
    for command in self.bridge.consume_commands():
-    try:self.loot.grind.dispatch(command)
+    try:
+     if command.get('action')=='cp-read':self.loot.cp_info.read_once(command['id'])
+     else:self.loot.grind.dispatch(command)
     except Exception as exc:self.status.set('Session command could not be applied: '+str(exc))
   self.update_value()
   if getattr(self,'_tool_scan_latched',False) and self.value<=0:
@@ -766,7 +768,7 @@ class App:
     self.status.set('OCR area saved. Auto OCR is ON; switch back to BDO.')
   canvas.bind('<ButtonPress-1>',down);canvas.bind('<B1-Motion>',move);canvas.bind('<ButtonRelease-1>',up);overlay.bind('<Escape>',lambda e:(overlay.destroy(),self._restore_region_windows()))
  def read_ocr(self,delayed=True,automatic=False):
-  if self.busy:return
+  if self.busy or getattr(self,'cp_ocr_busy',False):return
   if automatic and (self.lite_use.get() and self.lite_scan_complete or self._tool_scan_latched):return
   if not automatic:self._allow_tool_change=True
   try:

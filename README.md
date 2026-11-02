@@ -1,4 +1,6 @@
-# BDO Vision · current development candidate 1.13.0-rc.10
+# BDO Vision · current development candidate 1.13.0-rc.11
+
+**CP Intelligence** compares byproduct cash exchanges, CP gains and target/split routes using the current CP EXP curve and existing Central Market quotes. Native CP Info and the full browser planner show EXP to next/target CP, whole-batch allocations, opportunity cost, deployment assumptions, break-even and lightweight graphs. [Open the interactive offline preview](demo/bdo-vision-cp-demo.html). The optional one-shot CP HUD reader requires two-pass agreement and adds no background scanning. See [the CP developer guide](docs/handbook/21-cp-intelligence.md) for data provenance, arithmetic and limitations.
 
 **Big Drops** turns accepted rare loot into a local trophy journal: Big for individual quoted items over 1B, Huge over 10B, and curated treasure recognition regardless of price. The native tab and shared website show item details, personal observed rarity comparisons and a retrospective heat rating. No new OCR, polling service, network request or chart dependency is added. Try the [interactive sample preview](demo/bdo-vision-big-drops-demo.html); its data is synthetic. See [the Big Drops editing guide](docs/handbook/20-big-drops.md) for rules, data limits and tests.
 

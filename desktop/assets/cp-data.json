@@ -1,0 +1,15 @@
+{
+  "version": "2026-11-02",
+  "maxCp": 600,
+  "curve": [[0,95],[50,123],[75,160],[100,208],[125,271],[150,352],[175,458],[200,642],[225,899],[250,1349],[275,2023],[300,5057],[325,9103],[350,22758],[375,40965],[400,102414],[425,184345],[450,276518],[475,414778],[500,571594],[525,914550],[550,1463280],[575,2341248]],
+  "sources": [
+    {"label":"Pearl Abyss · September 2025 CP changes","url":"https://blackdesert.pearlabyss.com/tr/en-us/News/Notice/Detail?_boardNo=18600"},
+    {"label":"BDolytics · current CP curve","url":"https://bdolytics.com/en/contribution-calculator"},
+    {"label":"Public curve data · checked November 2, 2026","url":"https://bdolytics.com/api/trpc/calculator.getContributionPoints"}
+  ],
+  "products": [
+    {"key":"catalyst","name":"Mysterious Catalyst","skill":"Alchemy","batch":10,"xp":900,"vendor":20000,"npc":"Dalishain / Bofin (Olvia)","url":"https://bdocodex.com/us/item/9781/","rewards":[["Clear Liquid Reagent",200],["Powder of Darkness",200],["Powder of Flame",200],["Powder of Rifts",200],["Powder of Earth",200],["Powder of Time",200],["Shining Powder",5]]},
+    {"key":"witch","name":"Witch's Delicacy","skill":"Cooking","batch":10,"xp":900,"vendor":20000,"npc":"Liana / Nadia Rowen (Olvia)","url":"https://bdocodex.com/us/item/9780/","rewards":[["Beer",500],["Milk",120]]},
+    {"key":"leaf","name":"Blush Leaf","skill":"Farming","batch":20,"xp":900,"vendor":20000,"npc":"Liana / Camellia Loggia","url":"https://bdocodex.com/us/item/9795/","rewards":[["Special Pepper Seed",4],["Stonetail Fodder",1]]}
+  ]
+}

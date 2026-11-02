@@ -59,10 +59,12 @@ class LootTracker:
         from big_drops_ui import BigDrops
         self.big_drops=BigDrops(self)
         self.guild=GuildQuestTracker(self,settings)
+        from cp_ui import CPInfo
+        self.cp_info=CPInfo(self,settings)
         self.root.after(250,self.poll)
 
     def settings(self):
-        return {'platform_preferences':self.platform_preferences,'craft_economy':self.craft_economy,'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings()}
+        return {'platform_preferences':self.platform_preferences,'craft_economy':self.craft_economy,'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings(),**self.cp_info.settings()}
 
     def safe_interval(self):
         try:return max(.5,min(30,float(self.interval.get())))
@@ -135,6 +137,7 @@ class LootTracker:
         self.grind.build(tabs)
         self.big_drops.build(tabs)
         self.guild.build(tabs)
+        self.cp_info.build(tabs)
         from platform_home import PlatformHome
         self.home=PlatformHome(self,tabs)
         reader=tk.Frame(tabs,bg=c['bg']);tabs.add(reader,text='OCR reader')
@@ -263,7 +266,7 @@ class LootTracker:
             if not self.closed:self.root.after(next_poll,self.poll)
 
     def scan(self):
-        if self.closed or self.busy or not self.enabled.get() or not self.region:return
+        if self.closed or self.busy or getattr(self.app,'cp_ocr_busy',False) or not self.enabled.get() or not self.region:return
         ready,reason=self.can_capture()
         if not ready:self.capture_state.set(reason);return
         started=time.monotonic();self.last_capture_gap=started-self.last_scan if self.last_scan else 0

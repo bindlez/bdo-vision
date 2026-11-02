@@ -22,6 +22,7 @@
 | Equipment recognition | [gear_ocr.py](../../desktop/gear_ocr.py), [gear_sweep.py](../../desktop/gear_sweep.py) | `test_gear` |
 | Equipment planner and backups | [gear-planner.js](../../desktop/assets/gear-planner.js), [gear_store.py](../../desktop/gear_store.py) | `test_gear_core.js`, `test_gear` |
 | Local API | [planner_bridge.py](../../desktop/planner_bridge.py) | `test_bridge`, `test_bridge_security` |
+| CP decisions, byproduct exchanges and one-shot HUD read | [cp_planner.py](../../desktop/cp_planner.py), [CP guide](21-cp-intelligence.md) | `test_cp`, `test_cp_bridge`, `test_cp.js` |
 | Tray and window verification | [windows_bdo.py](../../desktop/windows_bdo.py) | Tray tests and a real Windows check |
 | Install/history safety | [storage.py](../../desktop/storage.py), [install_local.py](../../install_local.py) | `test_lite_release` and upgrade rehearsal |
 | Packaging | [build_windows.py](../../scripts/build_windows.py), [package_release.py](../../scripts/package_release.py) | Extracted package check and manifests |

@@ -1,4 +1,12 @@
-# BDO Vision 1.13.0-rc.10 - Big Drops, Huge Drops and the trophy room
+# BDO Vision 1.13.0-rc.11 - CP Intelligence
+
+Native **CP Info** and the paired planner **CP Intelligence** compare Mysterious Catalyst, Witch's Delicacy and Blush Leaf cash-outs with CP, target-then-cash and custom splits. They use complete batches, dated current CP brackets, actual existing market quotes, untaxed NPC baselines and explicit market retention. Missing quotes remain unpriced. Graphs compare initial cash, modeled incremental income and the allocation frontier; all assumptions and sources are visible. No independent price editor or invented automatic CP income is added.
+
+The optional **Read CP once** captures only the default HUD CP group, requires two OCR passes to agree on unused/total/progress, and preserves inputs on uncertain, covered or non-game reads. It is blocked by Lite Use, runs below normal priority, shares the equipment reader gate and yields to active tool/loot OCR. It has no automatic retry or idle polling. CP OCR reader debugging shows the actual crop and both outputs in memory. Custom HUD positions may require manual input; screenshot checks do not prove every live layout.
+
+The offline demo is a calculator with clearly labeled example stock and verified NPC values. It has no screen access or live market connection. Native and browser scenario stores are local and separate. Existing loot, Big Drops, guild and crafting timer behavior is preserved; modeled CP outcomes never become loot history.
+
+## Previous candidate · 1.13.0-rc.10
 
 Individual item quotes strictly above 1B produce Big Drops; above 10B produce Huge Drops. Full treasure materials and map/compass/telescope/ring components receive recognition even when unpriced. Kabua's Artifact is distinguished from its fragments. Large stacks of cheap trash and known crafting outputs cannot qualify by stack value.
 

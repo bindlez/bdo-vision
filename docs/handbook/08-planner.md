@@ -1,5 +1,7 @@
 # 08 · Browser planner and build ownership
 
+CP Intelligence assets are embedded by `python scripts/build_cp.py`. This updates the real inline planner and the standalone interactive CP demo. See [CP ownership, calculations and OCR](21-cp-intelligence.md) before changing exchange data or assumptions.
+
 ## What ships
 
 `bdo-market-intelligence.html` is the real browser planner served by the desktop bridge. Its inline JavaScript is part of the shipped application. The `desktop/assets` directory also contains editable feature sources, JSON data and modules used by tests/build steps. Do not assume a source asset edit automatically updates the inline copy.

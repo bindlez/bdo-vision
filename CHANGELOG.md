@@ -1,5 +1,13 @@
 # BDO Vision Lite changelog
 
+## 1.13.0-rc.11 · CP Intelligence
+
+- Add native CP Info and integrated browser CP planner with current post-2025 EXP brackets, byproduct exchanges, cash/CP/target/split allocations and source links.
+- Reuse exact-name Central Market pricing, keep unknown rewards explicit, apply market tax only to market routes and account for batch leftovers.
+- Add scenario income/deployment/delay controls, break-even, target distance, SVG graphs and an interactive offline demo without live screen access.
+- Add explicit small-crop two-pass CP HUD reading, in-memory OCR debugging, Lite safeguards, rate limits and no recurring capture or price loop.
+- Add native/browser parity regressions and a detailed CP developer chapter. Preserve the previous immutable release packages.
+
 ## 1.13.0-rc.10 · Big Drops
 
 - Add strict individual-price Big (>1B) and Huge (>10B) tiers plus curated treasure/spotlight recognition.

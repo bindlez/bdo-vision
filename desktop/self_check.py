@@ -13,10 +13,15 @@ def run_self_check(app_class,root_path,data_path):
                           'fairycodex':root_path.parent/'fairycodex.html',
                           'recipes':Path(__file__).parent/'assets/recipes.json',
                           'item_names':Path(__file__).parent/'assets/item-names.json',
+                          'cp_data':Path(__file__).parent/'assets/cp-data.json',
                           'icon':root_path/'assets/bdo-lite.png'}.items():
             report['checks'][name]=path.is_file()
         root=tk.Tk();root.withdraw();app=app_class(root);root.update_idletasks()
         report['checks']['native_widgets']=bool(root.winfo_exists())
+        from tkinter import ttk
+        cp_tabs=ttk.Notebook(root);app.loot.cp_info.build(cp_tabs);root.update_idletasks()
+        report['checks']['cp_native_widgets']=bool(app.loot.cp_info.frame.winfo_exists())
+        report['checks']['cp_example']=app.loot.cp_info.report['routes'][1]['cp']==567
         report['checks']['history_integrity']=app.loot.ledger.db.execute('PRAGMA integrity_check').fetchone()[0]=='ok'
         report['checks']['bridge']=bool(app.bridge and app.bridge.server)
         if '--ocr-fixture' in sys.argv:
