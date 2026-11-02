@@ -10,6 +10,21 @@ from app import App
 
 
 class DesktopSmokeTests(unittest.TestCase):
+    def test_enabled_capture_does_not_open_workspace_on_startup(self):
+        import app as app_module
+        from loot_ui import LootTracker
+        root=tk.Tk();root.withdraw();app=None
+        try:
+            with patch.dict(app_module.config,{'loot_enabled':True,'item_drop_region':[0,0,100,100],'auto_scan':False,'guild_quest_enabled':False}),patch.object(App,'start_bridge'),patch.object(LootTracker,'poll'):
+                app=App(root)
+                root.after(750,root.quit);root.mainloop()
+                self.assertTrue(app.loot.enabled.get())
+                self.assertIsNone(app.loot.window)
+        finally:
+            if app:
+                with patch.object(app.loot,'capture_availability',return_value=(False,'Test profile')):app.close()
+            else:root.destroy()
+
     def test_startup_settings_and_send_states(self):
         root = tk.Tk()
         root.withdraw()

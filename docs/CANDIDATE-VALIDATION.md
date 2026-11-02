@@ -1,4 +1,4 @@
-# Candidate validation: 1.13.0-rc.6
+# Candidate validation: 1.13.0-rc.7
 
 This is scoped evidence, not universal OCR acceptance or a zero-overhead claim. The complete remaining checklist is [Platform release plan](PLATFORM-RELEASE-PLAN.md).
 

@@ -1,3 +1,7 @@
+# BDO Vision 1.13.0-rc.7 - Compact startup and protected tool readings
+
+Enabled loot tracking no longer opens the large activity workspace at startup. The compact tracker appears on its own; Workspace and other navigation open the detailed pages on demand. Background recording retains its existing enabled state. This avoids constructing history tables simply to start tracking. Includes the near-empty tool confidence fix and compact, fully scrollable platform.
+
 # BDO Vision 1.13.0-rc.6 - Reliable text when a bar track is fragmentary
 
 The final live check exposed a nearly-empty tool whose text read 353/5000 correctly, but the dark track was measured only halfway and produced a false 17% fill. Fragmentary tracks can still locate labels; only sufficiently complete tracks provide a percentage veto. The same private frame now selects 353/5000 in about two seconds with ten OCR calls. Numeric consensus, full-label checks, Place Mode and use confirmation remain. Includes the compact, fully scrollable rc.5 interface.

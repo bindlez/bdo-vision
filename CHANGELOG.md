@@ -1,5 +1,11 @@
 # BDO Vision Lite changelog
 
+## 1.13.0-rc.7 · compact startup
+
+- Enabled loot tracking no longer opens the large workspace automatically; detailed views open on demand.
+- Kept background capture enabled and added a native startup regression.
+- Includes the protected tool-reader and compact interface fixes from rc.6.
+
 ## 1.13.0-rc.6 · fragmentary bar confidence
 
 - Keep short/transparent dark-track fragments usable as label locators without trusting their distorted fill percentage.

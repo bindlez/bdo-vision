@@ -116,8 +116,6 @@ class App:
   self.root.after(400,self.tick)
   self.root.after(500,self.poll_auto_ocr)
   self.root.protocol('WM_DELETE_WINDOW',self.close)
-  if config.get('loot_enabled'):
-   self.root.after(600,self.loot.open)
 
  def refresh_action_states(self):
   available=self.has_reading and bool(self.bridge and self.bridge.server)
