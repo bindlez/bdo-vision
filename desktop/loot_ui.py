@@ -56,6 +56,8 @@ class LootTracker:
         self.insights=LootInsights(self)
         self.silver=SilverLooted(self)
         self.grind=GrindTracker(self)
+        from big_drops_ui import BigDrops
+        self.big_drops=BigDrops(self)
         self.guild=GuildQuestTracker(self,settings)
         self.root.after(250,self.poll)
 
@@ -131,6 +133,7 @@ class LootTracker:
         self.insights.build(tabs)
         self.silver.build(tabs)
         self.grind.build(tabs)
+        self.big_drops.build(tabs)
         self.guild.build(tabs)
         from platform_home import PlatformHome
         self.home=PlatformHome(self,tabs)
@@ -328,6 +331,7 @@ class LootTracker:
         observed_at=datetime.fromtimestamp(self.capture_time).astimezone().isoformat(timespec='milliseconds') if self.capture_time else None
         ident=self.ledger.add(event.item,event.quantity,{'normal':'Item Drop Log','rare':'Rare Drop Log','chat':'Text feed'}[feed],self.session,recorded_at=observed_at,kind=event.kind)
         self.insights.observe(ident)
+        self.big_drops.observe(ident,event)
         self.insights.prices.notice_item(event.item)
         self.recent.append({'id':ident,'key':key,'feed':feed,'at':now,'paired':False})
         return True
@@ -399,6 +403,7 @@ class LootTracker:
         self.refresh()
 
     def close(self):
+        self.big_drops.close_toast()
         self.closed=True;self.generation+=1;self.guild.close();self.capture_clock.tick(False,'Application closing');self.capture_clock.save();self.silver.close();self.insights.close();self.ledger.close()
 
     def planner_loot_snapshot(self):
@@ -416,7 +421,7 @@ class LootTracker:
         return {'scope':'All recorded loot','available':fresh,'status':'current' if fresh else 'paused','reason':reason,
                 'updated_at':time.time(),'last_capture_at':self.last_scan_finished or None,
                 'history_id':self.capture_clock.history_id,'crafting_mode':self.crafting.get(),
-                'capture_clock':self.capture_clock.snapshot(),'grind':self.grind.snapshot(),**self._shared_summary}
+                'capture_clock':self.capture_clock.snapshot(),'grind':self.grind.snapshot(),'big_drops':self.big_drops.snapshot(),**self._shared_summary}
 
     def refresh_shared_loot(self):
         bridge=getattr(self.app,'bridge',None)

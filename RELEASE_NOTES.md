@@ -1,3 +1,13 @@
+# BDO Vision 1.13.0-rc.10 - Big Drops, Huge Drops and the trophy room
+
+Individual item quotes strictly above 1B produce Big Drops; above 10B produce Huge Drops. Full treasure materials and map/compass/telescope/ring components receive recognition even when unpriced. Kabua's Artifact is distinguished from its fragments. Large stacks of cheap trash and known crafting outputs cannot qualify by stack value.
+
+The native Big Drops tab and optional shared website have a drop journal, item details, source links, recorded value and time-to-drop when actually captured. An optional passive native reveal closes automatically; it does not activate the game overlay window or start another OCR loop. Historical recorded finds appear without replaying notifications. Delayed quotes can promote up to 32 recent pending finds using their original observed time.
+
+Heat compares recorded Big Drop event pace with prior same-spot runs once there are 3 eligible completed runs, 2 observed hours and 5 qualifying events. Below that sample, labeled burst momentum celebrates clusters of big finds. ON FIRE says: "You're on fire. Strike while the iron is hot!" It celebrates past outcomes and never implies better future odds. The rarity shelf uses your own qualified observed hours, not fabricated global drop probabilities. Repeatedly unpriced or ambiguous variant details stay unknown.
+
+No additional capture worker, price request, polling loop or runtime dependency. Journal display is bounded to 40 records; aggregate totals remain complete. Existing timer-only/Lite and paired quest policies are retained. The standalone interactive preview is clearly synthetic and blocks network access.
+
 # BDO Vision 1.13.0-rc.9 - Scan once, keep the countdown, retain last-seen quests
 
 - A missed active-tool match no longer silently pauses an established countdown. It continues as an explicitly labeled estimate; misses never start a timer or resume a manual pause.

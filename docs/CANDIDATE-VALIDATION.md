@@ -1,4 +1,6 @@
-# Candidate validation: 1.13.0-rc.9
+# Candidate validation: 1.13.0-rc.10
+
+Big Drops checks cover strict Big/Huge unit-price boundaries, treasure overrides, malformed/missing values, craft exclusion, original observed timing, deduplication/restart, bounded journal versus complete totals, zero-drop baseline exposure, personal rarity samples and unchanged rare aggregates across common drops. Native smoke builds the trophy tab and displays an unpriced retained treasure. Renderer checks escape hostile data and verify ownership of the actual embedded code. Preview data is synthetic; no new real Big/Huge reveal or statistical drop-rate calibration is claimed by those checks.
 
 ## Countdown lifecycle and idle work
 

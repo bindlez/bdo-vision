@@ -2,7 +2,9 @@
 
 Checked items mean implemented with automated evidence, not universal live-game acceptance. This plan preserves the user's complete scope; a candidate package is not proof that every unchecked item is finished.
 
-## Current candidate: 1.13.0-rc.9
+## Current candidate: 1.13.0-rc.10
+
+Adds the Big Drops native/shared trophy room, >1B and >10B individual-value tiers, curated treasure exceptions, personal observed rarity comparisons and retrospective heat without additional OCR. See [Big Drops contracts](handbook/20-big-drops.md). The existing live acceptance matrix remains separate from feature tests and preview data.
 
 Adds countdown continuity through uncertain reads, tool-OCR holds after confirmed use, hardened one-shot Lite acquisition and paired last-seen quest snapshots without independent quest polling. These scoped changes do not complete the remaining live acceptance matrix below.
 

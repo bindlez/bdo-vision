@@ -73,6 +73,7 @@ def main():
             (sys.executable, 'scripts/check_planner.py'),
             ('node', 'scripts/test_gear_core.js'),
             ('node', 'scripts/test_planner_security.js'),
+            ('node', 'scripts/test_big_drops.js'),
             (sys.executable, '-m', 'compileall', '-q', 'desktop', 'scripts', 'tests', 'dev.py'),
             (sys.executable, 'scripts/build_handbook.py', '--check'),
         ):

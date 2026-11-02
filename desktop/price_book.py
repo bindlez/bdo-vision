@@ -140,6 +140,11 @@ class PriceBook:
 
     def resolve_name(self,name):
         if name in self._resolved_names:return self._resolved_names[name]
+        # Verified non-market treasure names need no invented market ID/price.
+        # Exact text only: do not add these exceptions to fuzzy OCR matching.
+        from big_drops import BY_NAME,key
+        treasure=BY_NAME.get(key(name))
+        if treasure and treasure['category']=='Treasure':return treasure['item']
         observed=canonical_item(name)
         if self._item_database is None:return EXACT.get(observed.casefold())
         candidates=self._item_database.candidates(observed)

@@ -97,6 +97,8 @@ class LootInsights:
             self.session.tick(ready)
             lite=self.tracker.app.lite_use.get()
             if not lite:self.prices.refresh_async()
+            big=getattr(self.tracker,'big_drops',None)
+            if big:big.refresh_pending()
             if not lite or lite!=self.last_lite_mode:self.tracker.refresh_shared_loot()
             self.last_lite_mode=lite
             home=getattr(self.tracker,'home',None)
@@ -106,6 +108,8 @@ class LootInsights:
             if self.frame and self.frame.winfo_exists() and self.frame.winfo_ismapped():self.refresh()
             if self.sessions_frame and self.sessions_frame.winfo_exists() and self.sessions_frame.winfo_ismapped():self.refresh_sessions()
             if self.tracker.grind.frame and self.tracker.grind.frame.winfo_exists() and self.tracker.grind.frame.winfo_ismapped():self.tracker.grind.refresh()
+            big=getattr(self.tracker,'big_drops',None)
+            if big and big.frame and big.frame.winfo_ismapped():big.refresh()
             guild=getattr(self.tracker,'guild',None)
             if guild and guild.frame and guild.frame.winfo_exists() and guild.frame.winfo_ismapped():guild.refresh()
         except Exception as exc:self.state.set('Tracking paused; automatic retry pending: '+str(exc))

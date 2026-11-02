@@ -1,0 +1,12 @@
+const assert=require('assert'),fs=require('fs'),path=require('path');
+const render=require('../desktop/assets/big-drops.js').visionBigDropMarkup;
+const hostile='<img src=x onerror=alert(1)>';
+const sample={lifetime_events:1,journal:[{id:1,item:hostile,category:'Huge Drop',quantity:1,value:12e9,detail:hostile,price_source:hostile,at:hostile,lifetime_units:1}],heat:{title:'ON FIRE',score:Infinity,on_fire:true,basis:hostile,note:hostile,message:"You're on fire."},comparisons:[{item:hostile,category:'Treasure',sample_events:3,sample_hours:10,sample_runs:3,personal_hours_per_event:null}]};
+sample.latest=sample.journal[0];let html=render(sample,1);
+assert(html.includes('HUGE')||html.includes('Huge Drop'));assert(html.includes('12.00B silver'));assert(html.includes('bd-huge'));assert(!html.includes('<img'));assert(html.includes('&lt;img'));assert(!html.includes('NaN'));assert(!html.includes('width:Infinity'));
+sample.journal[0].category='Treasure';sample.journal[0].value=null;html=render(sample,1);assert(html.includes('Unpriced'));assert(html.includes('Treasure'));assert(!html.includes('undefined'));
+assert(render(null).includes('Connect optional loot sharing'));
+const shipped=fs.readFileSync(path.join(__dirname,'../bdo-market-intelligence.html'),'utf8');
+const asset=fs.readFileSync(path.join(__dirname,'../desktop/assets/big-drops.js'),'utf8');
+assert(shipped.replace(/\r\n/g,'\n').includes(asset.replace(/\r\n/g,'\n')));assert(shipped.includes('renderVisionBigDrops(data&&data.big_drops);'));
+console.log('Big Drops: safe rendering, Huge/Treasure states, missing prices and shipped asset ownership passed');

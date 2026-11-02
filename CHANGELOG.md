@@ -1,5 +1,12 @@
 # BDO Vision Lite changelog
 
+## 1.13.0-rc.10 · Big Drops
+
+- Add strict individual-price Big (>1B) and Huge (>10B) tiers plus curated treasure/spotlight recognition.
+- Add a deduplicated local trophy journal, original observed moment timing, personal rarity shelf, retrospective pace/burst heat, native reveals and shared website cards.
+- Reuse accepted loot, capture clocks, cached market prices and existing update loops. Preserve Lite/timer scan shutdown and paired last-seen quests.
+- Add an offline interactive sample preview, renderer ownership/security checks and native/rule/persistence/work-count regressions.
+
 ## 1.13.0-rc.9 · scan once and retain the countdown
 
 - Preserve running estimates on a lost active-tool match; never start or resume a timer from an unreadable scan.

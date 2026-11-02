@@ -1,4 +1,6 @@
-# BDO Vision · current development candidate 1.13.0-rc.9
+# BDO Vision · current development candidate 1.13.0-rc.10
+
+**Big Drops** turns accepted rare loot into a local trophy journal: Big for individual quoted items over 1B, Huge over 10B, and curated treasure recognition regardless of price. The native tab and shared website show item details, personal observed rarity comparisons and a retrospective heat rating. No new OCR, polling service, network request or chart dependency is added. Try the [interactive sample preview](demo/bdo-vision-big-drops-demo.html); its data is synthetic. See [the Big Drops editing guide](docs/handbook/20-big-drops.md) for rules, data limits and tests.
 
 Lite Use reads the current tool once, includes an optional paired last-seen quest snapshot, then stops all OCR. Normal mode stops tool OCR after confirmed crafting use until the countdown reaches zero. A missed active-tool match no longer pauses an established estimate. Guild quests read only with tool attempts and stay last seen; loot follows its own setting outside Lite Use. **SCAN & TRACK** intentionally starts a fresh acquisition. These timers assume continued crafting at the configured pace.
 

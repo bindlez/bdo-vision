@@ -62,6 +62,7 @@ class GrindTracker:
         self.tracker.app.action(actions,'START GRIND',self.start,primary=True).pack(side='left')
         self.tracker.app.text_button(actions,'PAUSE / RESUME',self.pause).pack(side='left',padx=12)
         self.tracker.app.text_button(actions,'FINISH RUN',self.finish).pack(side='left',padx=12)
+        self.tracker.app.text_button(actions,'BIG DROPS',lambda:self.tracker.big_drops.open()).pack(side='left',padx=8)
         self.tracker.app.text_button(actions,'EXPORT RUN',self.export).pack(side='right')
         tk.Label(frame,textvariable=self.state,bg=c['bg'],fg=c['bright'],wraplength=700,justify='left',font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(0,10))
         cards=tk.Frame(frame,bg=c['bg']);cards.pack(fill='x')

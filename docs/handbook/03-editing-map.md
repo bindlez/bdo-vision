@@ -5,6 +5,7 @@
 | You want to change | Start here | Then verify |
 | --- | --- | --- |
 | Native dashboard, countdown, tool window | [app.py](../../desktop/app.py) | `test_ui_smoke`, `test_tracking_core`, `test_auto_ocr` |
+| Big/Huge drops, treasure exceptions, personal rarity and heat | [Big Drops guide](20-big-drops.md), [big_drops.py](../../desktop/big_drops.py) | `test_big_drops`, native smoke and `scripts/test_big_drops.js` |
 | Tool discovery and active selection | [tool_reader.py](../../desktop/tool_reader.py) | `test_tool_reader`, `test_tool_status` |
 | Tool status wording or estimated durability | [tool_status.py](../../desktop/tool_status.py) | `test_tool_status` |
 | Quest extraction and rollover | [guild_quest.py](../../desktop/guild_quest.py) | `test_guild_quest` |
