@@ -35,7 +35,7 @@ Publish an evidence-based project paper as a website with Markdown as its canoni
 - [x] Improve full-width wrapped quest cards, bounded reader handoffs, clear states and optional Smart watch.
 - [x] Pass the full 370-test native suite, shipped JavaScript checks, graph interactions and handbook links.
 - [x] Commit/checkpoint rc.12, package and verify Windows/source/handbook artifacts, back up the exact source remotely.
-- [ ] Install only after Vision closes safely; verify a consistent backup and unchanged complete history. Use the standalone executable and retain the old releases.
+- [x] Install only after Vision closes safely; verify a consistent backup and unchanged complete history. Use the standalone executable and retain the old releases.
 
 ### A1 · Audit and simplify before extending crafting
 
@@ -92,16 +92,16 @@ Publish an evidence-based project paper as a website with Markdown as its canoni
 - [x] Create a canonical Markdown paper with the fictional-perspective note, abstract, methods, evidence, failures, lessons and limitations.
 - [x] Cover low-cost OCR, current-tool selection, changing digits, wrapped quests, resource budgets, event-driven UI, recipe/pricing architecture, history safety and version control.
 - [x] Use only defensible measurements and labeled experiments. Include reproducible benchmark scope and source links.
-- [ ] Build a readable linked website and publish through the user's established hosting/repository workflow, with a stable link from the index.
-- [ ] Keep the Markdown editable and ensure all local/source/public links work.
+- [x] Build a readable linked website and publish through the user's established hosting/repository workflow, with a stable link from the index.
+- [x] Keep the Markdown editable and ensure all local/source/public links work.
 
 ### H8 · Final validation and delivery
 
-- [ ] Verify every row of the feature matrix and resolve unsupported or uncertain behavior explicitly.
-- [ ] Test domain math, market identities, recipe substitutions/recursion, partial prices, session boundaries, OCR rejection cases and history-safe upgrades.
-- [ ] Measure representative cold/warm calculation and reader costs; report limits without claiming zero FPS impact.
-- [ ] Check the actual shipped HTML, native controls, demos and standalone Windows package.
-- [ ] Deliver an accessible release, editable project, developer documentation, runnable demo and published paper; record exact versions/checksums and remaining live checks.
+- [x] Verify every row of the feature matrix and resolve unsupported or uncertain behavior explicitly.
+- [x] Test domain math, market identities, recipe substitutions/recursion, partial prices, session boundaries, OCR rejection cases and history-safe upgrades.
+- [x] Measure representative cold/warm calculation and reader costs; report limits without claiming zero FPS impact.
+- [x] Check the actual shipped HTML, native controls, demos and standalone Windows package.
+- [x] Deliver an accessible release, editable project, developer documentation, runnable demo and published paper; record exact versions/checksums and remaining live checks.
 
 ## Completion standard
 
@@ -109,4 +109,6 @@ The result must be usable, integrated and reviewable, with genuine recipes as it
 
 ## Evidence status for rc.13
 
-Completed implementation rows above are scoped by `CRAFTING-REFERENCE-MATRIX.md`: public model assumptions and absent minimum-skill facts remain explicit; custom item-price editors and private cloud-account flows are intentionally excluded. The paper is built with 29 linked sections and editable Markdown. Final package/remote publication and installation rows stay open until their evidence exists.
+Completed implementation rows above are scoped by `CRAFTING-REFERENCE-MATRIX.md`: public model assumptions and absent minimum-skill facts remain explicit; custom item-price editors and private cloud-account flows are intentionally excluded. The paper is built with 29 linked sections and editable Markdown. Package, remote publication and backed-up installation evidence now exists in [verified delivery](DELIVERY-1.13.0-rc.13.md). Fresh visual inspection and a new in-game accuracy study remain manual acceptance checks; automated results are not relabeled as those checks.
+
+- [ ] Optional follow-up: fresh visual browser inspection and in-game acceptance across display scales; Windows focus interruptions prevented a reliable final visual pass.
