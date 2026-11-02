@@ -31,6 +31,10 @@ Your history remains in `%USERPROFILE%/.bdo-vision`. Use the app's history backu
 
 ## Automatic durability
 
+For the lightest workflow, enable **Lite Use**, return to BDO and let the initial current-tool scan start the countdown. Optional enabled quest tracking reads one last-seen snapshot alongside it. All OCR then stops, even when the countdown finishes; use **SCAN & TRACK** for the next tool. If switching to Lite with an already verified running timer, Vision keeps it without another scan.
+
+In normal mode, confirmed crafting use stops tool scans until the countdown reaches zero; the warning alarm does not restart them. Loot follows its existing setting, and quests read only with tool scans. The countdown assumes crafting continues at the configured speed. Use **PAUSE** if crafting stops. An unclear tool read keeps an existing estimate running and never starts a new one.
+
 No box is needed for cooking/alchemy tool durability. Keep BDO in front with Place Mode and tool labels visible. A unique verified positional selection starts the timer; two separate decreases confirm use. Open VIEW TOOLS and LIVE OCR READER to inspect the image, pass text and selection/rejection reason. Conflicting leading digits remain unknown and reacquire instead of being guessed. Camera motion also triggers reacquisition. If labels leave the screen, measurements wait until visible. Existing manual area selection is optional. Estimates assume crafting continues; they are labeled separately from verified durability.
 
 ## Alchemy Guild Quest

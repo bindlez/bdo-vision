@@ -17,7 +17,9 @@ TITLES={'idle':'Ready to find tools','reading':'Reading visible tools','waiting'
         'searching':'Looking for readable labels','confirming':'Confirming the active tool',
         'found':'Tools found · waiting for use','tracking':'Active tool confirmed','positioned':'Tool selected by Place Mode',
         'ambiguous':'Several tools are changing','paused':'Capture paused','off':'Automatic reader off',
-        'error':'Reader will retry','empty':'Visible tools are empty'}
+        'error':'Reader will retry','empty':'Visible tools are empty',
+        'unreadable':'Tool labels found · durability unclear','absent':'No tool labels detected',
+        'timer':'Timer only · tool OCR stopped'}
 
 
 class ToolStatus:
@@ -42,12 +44,13 @@ class ToolStatus:
         self.scans+=1;self.calls+=report.get('ocr_calls',0);self.hits+=report.get('cache_hits',0);self.revision+=1
         active=next((r for r in self.tools if r['id']==self.active_id),None)
         if active:stage='tracking';detail=f"{active['name']} · {active['current']:,} / {active['maximum']:,}"
-        elif not self.tools:stage='searching';detail='Keep the full tool label and durability on screen. Search continues automatically.'
+        elif not self.tools and self.unreadable:stage='unreadable';detail='Tool labels were located, but no durability passed verification. Keep the full text visible; retrying automatically.'
+        elif not self.tools:stage='absent';detail='No tool labels were located in this scan. Show your utensil labels if you are crafting; unreadable or hidden tools may also be missed.'
         elif all(r['current']==0 for r in self.tools):stage='empty';detail='The readable tools have no durability remaining.'
         elif sum(r.get('wear_streak',0)>=2 for r in self.tools)>1:stage='ambiguous';detail='Waiting for enough evidence to identify your tool safely.'
         elif any(r.get('wear_streak',0)>0 for r in self.tools):stage='confirming';detail='Durability use detected. Waiting for one more change.'
         else:stage='found';detail=f"{len(self.tools)} readable tool(s). Start crafting to confirm which one is active."
-        if self.unreadable:detail+=f' {self.unreadable} other label(s) unreadable.'
+        if self.unreadable and self.tools:detail+=f' {self.unreadable} other label(s) unreadable.'
         if active and report.get('confirmation')=='Place Mode position':stage='positioned';detail+=' Countdown started; use confirmation pending.'
         if report.get('confirmation')=='two-frame comparison':detail+=' Confirmed by 1.5-second comparison.'
         elif report.get('pair_result'):detail+=' '+report['pair_result']+'.'

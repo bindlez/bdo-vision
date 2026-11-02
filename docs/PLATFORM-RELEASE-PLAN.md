@@ -2,7 +2,9 @@
 
 Checked items mean implemented with automated evidence, not universal live-game acceptance. This plan preserves the user's complete scope; a candidate package is not proof that every unchecked item is finished.
 
-## Current candidate: 1.13.0-rc.8
+## Current candidate: 1.13.0-rc.9
+
+Adds countdown continuity through uncertain reads, tool-OCR holds after confirmed use, hardened one-shot Lite acquisition and paired last-seen quest snapshots without independent quest polling. These scoped changes do not complete the remaining live acceptance matrix below.
 
 Includes explicit two-pass completed-guild-widget recognition, persisted/last-seen presentation and planner receipts, plus a bounded camera-angle tool fallback. Existing acceptance limits and remaining tasks below remain open until individually verified.
 

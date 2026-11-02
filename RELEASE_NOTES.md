@@ -1,3 +1,12 @@
+# BDO Vision 1.13.0-rc.9 - Scan once, keep the countdown, retain last-seen quests
+
+- A missed active-tool match no longer silently pauses an established countdown. It continues as an explicitly labeled estimate; misses never start a timer or resume a manual pause.
+- In normal mode, repeated verified use or a valid two-frame comparison stops tool OCR until the countdown reaches zero. The warning alarm does not rearm scans. Manual SCAN & TRACK overrides the hold for a new reading.
+- Lite Use guarantees startup discovery even with older disabled scanner preferences. It accepts an initial verified positional reading without an additional use-comparison capture, then stops all further automatic OCR, including after timer expiry. Switching an already verified running timer to Lite Use reuses it without another scan.
+- Optional Guild/Daily/Bonus reading is retained and paired only with a tool attempt, including Lite startup. It reuses the full tool capture when available; a cached-crop tool read can take one bounded quest crop. The countdown starts before quest OCR finishes. Values and completion remain last seen, with no independent quest polling or extrapolation. READ NOW triggers a paired tool scan.
+- Tool labels found with unreadable durability have a distinct state from no labels located. Neither state claims the player has left the residence or stopped crafting.
+- Removed independent quest wakeups, skipped Lite loot setup checks and reduced idle controller wakeups/status writes. Loot's own setting continues outside Lite Use. No new runtime dependency or capture loop.
+
 # BDO Vision 1.13.0-rc.8 - Visible guild completion and camera-angle recovery
 
 Quests and Home now show **Guild quest: Complete** from the game's completed-widget message, including its wrapped reward instruction when the heading is covered. Completion is verified by the existing two OCR passes, persists, alerts once, and travels with last-seen planner timer receipts. The last numeric counter is preserved, never changed to an invented total. Quest Debug exposes the recognized message. Ordinary personal completed quests do not complete a guild mission.

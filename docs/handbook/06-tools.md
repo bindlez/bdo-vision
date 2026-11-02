@@ -14,9 +14,13 @@ Ordinary inventory tracking requires repeated plausible decreases for one tool. 
 
 The timed fallback captures two batches of existing label crops about 1.5 seconds apart before OCR. It verifies stable labels, matching fields and capacities, two numeric votes per observation and one unique plausible decrease. The acceptable interval is bounded; delayed batches cannot qualify. It rejects increases, unreadable neighboring fields, multiple changing tools and movement. A timed change that disagrees with a unique Place Mode selection does not confirm the neighbor.
 
-The timed fallback is rate-limited and shares the six-second tool work budget. A confirmed reader does not add another timed pair. A provisional Place Mode selection schedules a quicker follow-up. This may be expensive if the tool stays visible but idle; an evidence-preserving backoff is a future optimization to benchmark, not an undocumented behavior guarantee.
+The timed fallback is rate-limited and shares the six-second tool work budget. A provisional Place Mode selection schedules a quicker follow-up. Once a valid two-frame comparison or repeated verified decreases confirms use, the app sets `_tool_scan_latched` and starts no automatic tool scans until its countdown reaches zero. The near-finish warning does not release the hold. Loot is independent; quests now read only with actual tool attempts. An explicit manual SCAN & TRACK releases the hold and forces fresh discovery. At zero normal mode forces rediscovery; Lite Use remains stopped until a manual request.
 
 ## Countdown versus verified value
+
+A lost active match must never set `running=False` or clear the countdown anchor. `mark_tool_estimate` labels the continuing estimate; `finish_tools` retains the session, alarm and clock. Unknown scans cannot start a timer or resume a manual pause. Accepted readings clear the uncertainty flag. The estimate assumes continued use at the configured craft speed; no hidden consumption is measured. Controller regressions cover misses, pause, gate uncertainty, confirmation hold, warning versus zero, manual override and initial Lite acceptance.
+
+`ToolStatus.accept` uses `unreadable` only when this scan located tool-label candidates but numeric verification failed. Without candidates it uses `absent` (no labels located), not a claim of no tools in the residence. `timer` explicitly reports the stopped tool reader. Neither a missed frame nor a Place Mode button alone fabricates a numeric tool reading.
 
 The tool table has verified durability and an estimated durability column. Estimate equals the verified value minus whole uses since the observation, using a measured or configured craft interval. It assumes continued crafting and is labeled accordingly. It does not require another image read. The application gate handles new sessions, maximum changes and suspicious jumps before synchronizing the craft timer.
 

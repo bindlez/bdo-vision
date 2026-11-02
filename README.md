@@ -1,4 +1,6 @@
-# BDO Vision · current development candidate 1.13.0-rc.8
+# BDO Vision · current development candidate 1.13.0-rc.9
+
+Lite Use reads the current tool once, includes an optional paired last-seen quest snapshot, then stops all OCR. Normal mode stops tool OCR after confirmed crafting use until the countdown reaches zero. A missed active-tool match no longer pauses an established estimate. Guild quests read only with tool attempts and stay last seen; loot follows its own setting outside Lite Use. **SCAN & TRACK** intentionally starts a fresh acquisition. These timers assume continued crafting at the configured pace.
 
 The current candidate recognizes the guild's completed reward widget and shows **Guild quest: Complete** in the native app and frozen planner receipts. It preserves the actual last numeric counter. Bounded camera-angle fallback also recovers active-tool text above Place Mode against stone walls. See [candidate evidence](docs/CANDIDATE-VALIDATION.md) for measured scope and remaining live checks.
 

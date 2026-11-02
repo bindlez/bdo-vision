@@ -234,6 +234,11 @@ class LootTracker:
 
     def poll(self):
         if self.closed:return
+        if getattr(self.app,'lite_use',None) is not None and self.app.lite_use.get():
+            message='Lite Use · loot OCR stopped'
+            if self.capture_state.get()!=message:self.capture_state.set(message)
+            self.root.after(2000,self.poll)
+            return
         next_poll=1000
         try:
             if self.enabled.get():

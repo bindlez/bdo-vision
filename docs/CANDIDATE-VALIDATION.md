@@ -1,4 +1,8 @@
-# Candidate validation: 1.13.0-rc.8
+# Candidate validation: 1.13.0-rc.9
+
+## Countdown lifecycle and idle work
+
+Integrated native-controller tests cover uncertain/missing tool matches without countdown interruption, manual pause preservation, confirmation-gate uncertainty, repeated-use and timed-pair scan holds, warning versus zero, forced manual acquisition, saved Lite settings, reuse of a verified timer, no independent quest polling, last-seen quest retention, stale-generation rejection and one shared full-image tool/quest capture. A hundred locked/Lite controller cycles perform zero foreground/capture queries or tool requests. A hundred Lite loot cycles skip region/interval setup and write the unchanged status only once. These are isolated behavior/work-count checks, not a live game performance benchmark or universal OCR acceptance.
 
 ## Completed guild widget and above-button tool reference
 

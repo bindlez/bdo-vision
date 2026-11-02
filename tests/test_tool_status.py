@@ -33,7 +33,9 @@ class ToolStatusTests(unittest.TestCase):
     def test_empty_and_unreadable_are_explained(self):
         status=ToolStatus();status.accept(report(0));self.assertEqual(status.stage,'empty')
         status.accept({'tools':[],'unreadable':[{'name':'Tool'}]})
-        self.assertEqual(status.stage,'searching');self.assertIn('unreadable',status.detail)
+        self.assertEqual(status.stage,'unreadable');self.assertIn('located',status.detail)
+        status.accept({'tools':[],'unreadable':[]})
+        self.assertEqual(status.stage,'absent');self.assertNotIn('not crafting',status.detail)
 
     def test_history_and_data_are_bounded_without_capture_contents(self):
         status=ToolStatus()

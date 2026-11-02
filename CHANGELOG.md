@@ -1,5 +1,12 @@
 # BDO Vision Lite changelog
 
+## 1.13.0-rc.9 · scan once and retain the countdown
+
+- Preserve running estimates on a lost active-tool match; never start or resume a timer from an unreadable scan.
+- Stop automatic tool OCR after confirmed use until zero; keep Lite Use OCR off after its initial reading and after expiry.
+- Pair optional guild snapshots with tool attempts, reuse full captures, keep quests last seen and remove independent quest polling.
+- Separate located-but-unreadable tool labels from no labels detected. Reduce Lite idle work and add integrated controller lifecycle regressions.
+
 ## 1.13.0-rc.8 · completed guild widget and camera-angle recovery
 
 - Detect the literal completed guild widget in two existing passes; retain numeric last-seen values, persist/deduplicate completion, and guard new-mission transitions.
