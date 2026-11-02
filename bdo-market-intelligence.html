@@ -2464,7 +2464,9 @@ function visionGrindSaveRecap(){
 
     function visionGuildLastSeenHTML(t) {
       var g=t.guildQuestLastSeen;if(!g)return '';
-      return '<p class="studio-muted">Guild quest · Last seen '+Number(g.current).toLocaleString()+' / '+Number(g.target).toLocaleString()+' · '+visionEscape(new Date(g.last_at*1000).toLocaleString())+'<br>'+visionEscape(g.objective||g.label||'Alchemy guild mission')+'</p>';
+      var counter=Number.isInteger(g.current)&&Number.isInteger(g.target)?Number(g.current).toLocaleString()+' / '+Number(g.target).toLocaleString():'';
+      var stamp=g.complete&&Number.isFinite(g.completion_at)?g.completion_at:g.last_at;
+      return '<p class="studio-muted">Guild quest'+(g.complete?': Complete':'')+' · Last seen '+(g.complete?'completion'+(counter?' · last counter '+counter:''):counter)+' · '+visionEscape(new Date(stamp*1000).toLocaleString())+'<br>'+visionEscape(g.objective||g.label||'Alchemy guild mission')+'</p>';
     }
     function applyBridgeReading(j) {
       var signal = Number(j.signal)||0;
@@ -2506,7 +2508,9 @@ function visionGrindSaveRecap(){
         });
       }
       var guild=j.guild_quest,linked=activeTimers.find(function(t){return t.bridgeEventId===eventId;});
-      if(linked&&guild&&Number.isInteger(guild.current)&&Number.isInteger(guild.target)&&guild.current>=0&&guild.current<=guild.target&&guild.target>0&&Number.isFinite(guild.last_at))linked.guildQuestLastSeen={current:guild.current,target:guild.target,label:String(guild.label||'').slice(0,120),objective:String(guild.objective||'').slice(0,160),last_at:guild.last_at};
+      var guildCounter=guild&&Number.isInteger(guild.current)&&Number.isInteger(guild.target)&&guild.current>=0&&guild.current<=guild.target&&guild.target>0&&Number.isFinite(guild.last_at);
+      var guildComplete=guild&&guild.complete===true&&Number.isFinite(guild.completion_at)&&['mission_message','reward_message'].includes(guild.completion_basis);
+      if(linked&&(guildCounter||guildComplete))linked.guildQuestLastSeen={current:guildCounter?guild.current:null,target:guildCounter?guild.target:null,label:String(guild.label||'').slice(0,120),objective:String(guild.objective||'').slice(0,160),last_at:guildCounter?guild.last_at:null,complete:guildComplete||!!(guildCounter&&guild.complete===true&&guild.current===guild.target),completion_at:guildComplete?guild.completion_at:null};
       else if(linked)delete linked.guildQuestLastSeen;
       lastBridgeEvent=eventId;
       saveState();

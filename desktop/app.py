@@ -514,7 +514,7 @@ class App:
    if loot is not None and loot.share_loot.get():extra['crafting_loot']=loot.planner_loot_snapshot()
    if loot is not None:
     guild=loot.guild.model.snapshot()
-    if guild['current'] is not None:extra['guild_quest']={k:guild[k] for k in ('current','target','label','objective','last_at')}
+    if guild['current'] is not None or guild['complete']:extra['guild_quest']={k:guild[k] for k in ('current','target','label','objective','last_at','complete','completion_at','completion_basis')}
    event=self.bridge.send(d,m,s,observed_at=observed_at,
                           session_id=self.session_id,source=('estimate' if self.running and measurement is None else source),**extra)
    self.sync_armed=True

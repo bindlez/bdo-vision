@@ -1,3 +1,9 @@
+# BDO Vision 1.13.0-rc.8 - Visible guild completion and camera-angle recovery
+
+Quests and Home now show **Guild quest: Complete** from the game's completed-widget message, including its wrapped reward instruction when the heading is covered. Completion is verified by the existing two OCR passes, persists, alerts once, and travels with last-seen planner timer receipts. The last numeric counter is preserved, never changed to an invented total. Quest Debug exposes the recognized message. Ordinary personal completed quests do not complete a guild mission.
+
+Tool discovery can recover white labels against stone walls and select a verified label just above Place Mode after camera tilt. Two numeric votes, ambiguity checks, zero-counter guards and the existing work budget remain. The extra text-mask passes run only after failed ordinary discovery; completion adds no OCR pass or polling loop.
+
 # BDO Vision 1.13.0-rc.7 - Compact startup and protected tool readings
 
 Enabled loot tracking no longer opens the large activity workspace at startup. The compact tracker appears on its own; Workspace and other navigation open the detailed pages on demand. Background recording retains its existing enabled state. This avoids constructing history tables simply to start tracking. Includes the near-empty tool confidence fix and compact, fully scrollable platform.

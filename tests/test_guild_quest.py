@@ -3,13 +3,48 @@ from pathlib import Path
 from unittest.mock import patch
 from PIL import Image,ImageDraw,ImageFont
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'desktop'))
-from guild_quest import GuildQuestProgress,parse_quest_text,recognize_quest,parse_objectives
+from guild_quest import GuildQuestProgress,parse_quest_text,recognize_quest,parse_objectives,parse_guild_completion
 
 
 def reading(current,target=600):return {'current':current,'target':target,'label':'[Alchemy] Glorious Guild Supply Mission','objective':'Obtain Mysterious Catalyst via Alchemy'}
 
 
+REWARD='Claim your rewards via the "Complete\nMission" button in the Guild Mission window.'
+def completed():return {**parse_guild_completion(REWARD),'completion_votes':2}
+
+
 class QuestParsingTests(unittest.TestCase):
+    def test_complete_widget_works_with_obscured_heading_and_both_literal_messages(self):
+        for text in (REWARD,'The guild mission is complete.', '[Alchemy] Guild Supply Mission\n'+REWARD):
+            self.assertTrue(parse_guild_completion(text)['completion_observed'])
+            self.assertNotIn('current',parse_guild_completion(text))
+
+    def test_personal_complete_negation_and_instructions_cannot_complete_guild(self):
+        for text in ('[Daily] Alchemy\nMake Oil (100/100)', 'Reach Lv. 57 (Complete)',
+                     'The guild mission is not complete.', 'The guild mission is incomplete.',
+                     'When the guild mission is complete.', 'Claim your rewards\n[Daily] Alchemy\nvia the "Complete Mission" button in the Guild Mission window.',
+                     'Click the Complete Mission button in the Guild Mission window.',
+                     'If ready: The guild mission is complete.'):
+            self.assertIsNone(parse_guild_completion(text),text)
+
+    def test_completion_requires_two_passes_and_rejects_conflicting_incomplete_counter(self):
+        for texts,accepted in (((REWARD,REWARD),True),((REWARD,'nothing readable'),False),
+                               ((REWARD,REWARD+'\n[Alchemy] Guild Supply Mission\nObtain Catalyst (599/600)'),False)):
+            responses=[type('Result',(),{'returncode':0,'stdout':t.encode()})() for t in texts]
+            with patch('guild_quest.run_ocr',side_effect=responses),patch('guild_quest.guild_heading_crops',return_value=[]):
+                result,_=recognize_quest(Image.new('RGB',(300,100),'black'),'engine')
+            self.assertEqual(bool(result and result.get('completion_observed')),accepted)
+
+    def test_real_ocr_of_generated_completed_widget(self):
+        engine=Path(r'C:\Program Files\Tesseract-OCR\tesseract.exe')
+        if not engine.exists():self.skipTest('Tesseract unavailable')
+        image=Image.new('RGB',(450,140),(20,21,25));draw=ImageDraw.Draw(image);font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',16)
+        for at,text in enumerate(('Claim your rewards via the "Complete', 'Mission" button in the Guild Mission window.', '[Bonus] Skill Up for Alchemy', 'Make Reagent (15/100)')):
+            draw.text((8,8+at*29),text,font=font,fill=(245,211,150))
+        result,_=recognize_quest(image,str(engine))
+        self.assertTrue(result['completion_observed']);self.assertEqual(result['completion_votes'],2)
+        self.assertNotIn('current',result)
+
     def test_focused_guild_body_recovers_both_wrapped_heights_without_borrowing(self):
         crop=Image.new('RGB',(240,20),'black');crop.info['quest_box']=(0,0,240,20)
         for counter in ('49/\n600','\n101/600'):
@@ -123,6 +158,44 @@ class QuestParsingTests(unittest.TestCase):
 class QuestStateTests(unittest.TestCase):
     def setUp(self):self.db=sqlite3.connect(':memory:');self.state=GuildQuestProgress(self.db)
     def tearDown(self):self.db.close()
+
+    def test_visual_completion_preserves_last_numeric_counter_and_deduplicates(self):
+        self.state.accept(reading(599),at=100)
+        self.assertEqual(self.state.accept(completed(),at=110),['complete'])
+        self.assertEqual(self.state.accept(completed(),at=120),[])
+        view=self.state.snapshot(121)
+        self.assertTrue(view['complete']);self.assertTrue(view['available'])
+        self.assertEqual((view['current'],view['target'],view['last_at']),(599,600,100))
+        self.assertEqual((view['percent'],view['remaining'],view['completion_at']),(100,0,110))
+        restarted=GuildQuestProgress(self.db)
+        self.assertTrue(restarted.snapshot(121)['complete']);self.assertFalse(restarted.snapshot(121)['available'])
+        self.assertEqual(restarted.accept(completed(),at=130),[])
+
+    def test_completion_before_any_counter_persists_and_next_quest_needs_two_reads(self):
+        self.state.accept(completed(),at=100);self.state=GuildQuestProgress(self.db)
+        self.assertIsNone(self.state.current);self.assertTrue(self.state.complete_sent)
+        self.state.accept(reading(0),at=110);self.assertTrue(self.state.complete_sent)
+        self.state.accept(reading(2),at=120);self.assertFalse(self.state.complete_sent)
+        self.assertEqual(self.state.current,2);self.assertIsNone(self.state.completion_at)
+
+    def test_visual_completion_then_same_or_higher_incomplete_counter_reconfirms_new_quest(self):
+        self.state.accept(reading(599),at=100);self.state.accept(completed(),at=110)
+        self.state.accept(reading(599),at=120);self.assertTrue(self.state.complete_sent)
+        self.state.accept(reading(599),at=130);self.assertFalse(self.state.complete_sent)
+        self.assertEqual(self.db.execute('SELECT current FROM guild_quest_history').fetchone()[0],599)
+
+    def test_completion_cache_refresh_does_not_write_database_each_read(self):
+        self.state.accept(completed(),at=100);writes=self.db.total_changes
+        self.state.accept(completed(),at=120)
+        self.assertEqual(writes,self.db.total_changes);self.assertTrue(self.state.snapshot(140)['available'])
+        self.state.pause('Window covered');self.assertTrue(self.state.snapshot(141)['complete'])
+        self.assertFalse(self.state.snapshot(141)['available'])
+        self.state.reset();self.assertFalse(self.state.snapshot(142)['complete'])
+
+    def test_unverified_completion_cannot_change_saved_state(self):
+        self.state.accept(reading(599),at=100)
+        for r in ({'completion_observed':True},{**completed(),'completion_votes':1},{**completed(),'completion_basis':'loot'}):
+            self.assertEqual(self.state.accept(r,at=110),[]);self.assertFalse(self.state.complete_sent)
 
     def test_default_warning_waits_until_95_percent(self):
         self.assertEqual(self.state.accept(reading(569),at=100),[])

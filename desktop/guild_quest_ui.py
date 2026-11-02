@@ -171,9 +171,10 @@ class GuildQuestTracker:
         self.busy=False;self.app.busy=False
         if self.closed:return
         if generation!=self.generation:self.schedule();return
-        if reading and 'current' in reading:
+        verified=bool(reading and ('current' in reading or reading.get('completion_observed')))
+        if verified:
             for event in self.model.accept(reading,self.safe_threshold(),captured):self.alert(event)
-        else:self.model.pause('No agreed guild objective counter. Keep the guild heading and progress visible.')
+        else:self.model.pause('No agreed guild counter or completion message. Keep the quest widget visible.')
         for row in (reading or {}).get('objectives',[]):
             value={**row,'last_at':captured};previous=self.objective_rows.get(row['key'])
             self.objective_rows[row['key']]=value
@@ -187,7 +188,7 @@ class GuildQuestTracker:
             keys=list(self.objective_rows)
             with self.tracker.ledger.db:self.tracker.ledger.db.execute('DELETE FROM quest_objectives WHERE key NOT IN ('+','.join('?' for _ in keys)+')',keys)
         self.debug.set(f"Reader {duration:.2f}s · "+('unchanged verified pixels reused' if reused else 'two OCR passes')+' · no screenshot saved')
-        self.read_failures=0 if reading and 'current' in reading else self.read_failures+1
+        self.read_failures=0 if verified else self.read_failures+1
         retry=(3000,5000,10000,30000)[min(3,max(0,self.read_failures-1))]
         self.refresh();self.schedule(10000 if self.read_failures==0 else retry)
 
@@ -212,15 +213,19 @@ class GuildQuestTracker:
         if bridge and published!=getattr(self,'_published',None):bridge.update_guild_status(published);self._published=published
         def changed(variable,value):
             if variable.get()!=value:variable.set(value)
-        changed(self.progress,f'{current:,} / {target:,}' if current is not None else '— / —')
+        changed(self.progress,'Complete' if view['complete'] else f'{current:,} / {target:,}' if current is not None else '— / —')
         if self.bar and float(self.bar['value'])!=view['percent']:self.bar['value']=view['percent']
-        if not self.enabled.get():state='MANUAL SNAPSHOT · automatic tracking off' if view['available'] else 'TRACKING OFF · saved progress retained'
+        if view['complete']:state='Guild quest: Complete · '+('claim your rewards in BDO' if view['available'] else 'last seen; '+view['reason'])+(' · tracking off' if not self.enabled.get() else '')
+        elif not self.enabled.get():state='MANUAL SNAPSHOT · automatic tracking off' if view['available'] else 'TRACKING OFF · saved progress retained'
         elif not view['available']:state='PAUSED · '+view['reason']
-        elif view['complete']:state='OBJECTIVE COMPLETE · check BDO for the next quest'
         else:state=f"OBSERVING · {view['percent']:.1f}% · {view['remaining']:,} remaining"
         changed(self.state,state)
         age=max(0,int(time.time()-view['last_at'])) if view['last_at'] is not None else None
         detail=view['label']+'\n'+view['objective']
+        if view['completion_at'] is not None:
+            detail+='\n'+view['completion_evidence']
+            if current is not None:detail+=f'\nLast numeric counter: {current:,} / {target:,} (not inferred).'
+            detail+=f"\nCompletion last seen {max(0,int(time.time()-view['completion_seen_at']))}s ago."
         if age is not None:detail+=f'\nLast verified {age}s ago.'
         if view['eta'] is not None:detail+=f" At the recent visible pace: about {int(view['eta']//60)}m {int(view['eta']%60)}s remaining."
         changed(self.detail,detail)

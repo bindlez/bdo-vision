@@ -1,5 +1,12 @@
 # BDO Vision Lite changelog
 
+## 1.13.0-rc.8 · completed guild widget and camera-angle recovery
+
+- Detect the literal completed guild widget in two existing passes; retain numeric last-seen values, persist/deduplicate completion, and guard new-mission transitions.
+- Show completion in Quests, Home, debug output and frozen planner timer receipts, including when no counter was previously observed.
+- Recover failed residence/label OCR with bounded white-glyph fallbacks and nearby labels above Place Mode; reject nonzero crops conflicting with an empty-tool discovery counter.
+- Add real synthetic OCR and parser/state/UI/bridge/rendering regressions. Private live captures remain excluded from release files.
+
 ## 1.13.0-rc.7 · compact startup
 
 - Enabled loot tracking no longer opens the large workspace automatically; detailed views open on demand.

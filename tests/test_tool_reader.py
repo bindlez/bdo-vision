@@ -11,6 +11,12 @@ def row(value,x=200,name='Supreme Alchemy Tool',maximum=5000):
 
 
 class ActiveToolTests(unittest.TestCase):
+    def test_literal_empty_tool_cannot_turn_into_ten_from_numeric_mask(self):
+        from tool_reader import counter_context_error
+        region={'coarse_pair':(0,5000)}
+        self.assertTrue(counter_context_error(10,5000,region))
+        self.assertFalse(counter_context_error(0,5000,region))
+
     def test_fragmentary_dark_track_does_not_supply_a_false_percentage(self):
         image=Image.new('RGB',(1280,720),(95,90,84));draw=ImageDraw.Draw(image)
         draw.rectangle((600,210,646,215),fill=(40,40,36));draw.rectangle((600,211,607,213),fill=(240,200,70))
@@ -53,7 +59,13 @@ class ActiveToolTests(unittest.TestCase):
             self.assertEqual(discover_bar_labels(image,'engine')[1],1)
             ocr.assert_called_once()
 
-    def test_place_mode_rejects_empty_unverified_above_and_tied_tools(self):
+    def test_place_mode_accepts_nearby_label_above_control_after_camera_tilt(self):
+        tool={**row(254,maximum=3000),'id':'current','numbers':[1150,100,1225,115]}
+        neighbour={**row(413,maximum=3000),'id':'neighbour','numbers':[590,170,660,190]}
+        anchor={'x':1023,'y':159,'evidence':'Place Mode anchor'}
+        self.assertEqual(place_selected({'anchor':anchor,'tools':[tool,neighbour]},1040)['id'],'current')
+
+    def test_place_mode_rejects_empty_unverified_far_above_and_tied_tools(self):
         anchor={'x':500,'y':180,'evidence':'Place Mode anchor'}
         tool={**row(800),'id':'a','numbers':[510,220,570,240]}
         self.assertEqual(place_selected({'anchor':anchor,'tools':[tool]},1080)['id'],'a')
@@ -212,6 +224,16 @@ class DiscoveryTests(unittest.TestCase):
             regions,anchor,calls=discover_scene(Image.new('RGB',(1280,720)),'engine')
         self.assertIn('Place Mode',anchor['evidence']);self.assertLess(anchor['x'],250)
         self.assertTrue(regions);self.assertEqual(calls,3)
+    def test_failed_grayscale_uses_bounded_white_header_and_label_fallback(self):
+        from tool_reader import discover_scene
+        header='level\tleft\ttop\twidth\theight\tconf\ttext\n'
+        control=header+'5\t500\t100\t70\t20\t95\tPlace\n5\t575\t100\t60\t20\t95\tMode\n'
+        label=header+'5\t1100\t30\t100\t24\t95\tAlchemy\n5\t1205\t30\t180\t24\t95\tTool(254/3000)\n'
+        image=Image.new('RGB',(1280,720),'black');ImageDraw.Draw(image).rectangle((400,100,600,150),fill='white')
+        with patch('tool_reader.ocr',side_effect=['',control,'',label]),patch('tool_reader.discover_bar_labels',return_value=([],0)):
+            regions,anchor,calls=discover_scene(image,'engine')
+        self.assertEqual(calls,4);self.assertIn('Place Mode',anchor['evidence'])
+        self.assertEqual(regions[0]['coarse_pair'],(254,3000));self.assertTrue(regions[0]['white_numeric'])
     def test_place_mode_starts_first_read_without_waiting_for_pair(self):
         reader=AutomaticToolReader();tool={**row(800),'id':'chosen','numbers':[1040,240,1100,260],'cycle':0}
         report={'active_id':None,'tools':[tool],'anchor':{'x':1025,'y':190,'evidence':'Place Mode anchor'}}

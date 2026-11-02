@@ -1,4 +1,8 @@
-# Candidate validation: 1.13.0-rc.7
+# Candidate validation: 1.13.0-rc.8
+
+## Completed guild widget and above-button tool reference
+
+A private live reference contains the wrapped guild reward instruction with its heading covered, a nearby Bonus 15/100 and ordinary personal `Complete` labels. Both existing OCR passes recognize the guild completion message; the independent Bonus remains 15/100. The completion replay takes about 1.95 seconds on this machine and adds no OCR pass. The same frame's active tool is 254/3000 slightly above Place Mode. Failed ordinary discovery now recovers the Place Mode button and verifies that exact tool through bounded white-text fallback in about 2.1 seconds. These are scoped single-reference replays, not universal accuracy or live FPS measurements. Regression coverage also rejects a masked nonzero reading when the full-label empty counter is zero.
 
 This is scoped evidence, not universal OCR acceptance or a zero-overhead claim. The complete remaining checklist is [Platform release plan](PLATFORM-RELEASE-PLAN.md).
 

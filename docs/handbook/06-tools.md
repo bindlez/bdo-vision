@@ -22,6 +22,8 @@ The tool table has verified durability and an estimated durability column. Estim
 
 ## Edge-case checklist
 
+Camera tilt may place a valid current-tool label just above Place Mode. Discovery includes a bounded strip above the button; selection allows a label center up to 60 scaled pixels above it, retaining distance, ambiguity and two numeric-vote guards. A failed grayscale residence header can retry its small white-glyph mask. A failed label band with Place Mode can similarly retry white glyphs; ordinary successful grayscale discovery has no additional OCR pass. Empty masks skip the fallback, and all work shares the existing six-second deadline. White-located fields use two white numeric polarities and full-label context. A literal zero in the discovery counter cannot become a nonzero value in a numeric crop.
+
 | Situation | Required behavior |
 | --- | --- |
 | Several tools below Place Mode with similar scores | Keep selection uncertain |

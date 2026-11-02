@@ -109,6 +109,13 @@ class DesktopSmokeTests(unittest.TestCase):
             app.loot.guild.finish({'current':184,'target':600,'objectives':[{'key':'daily:oil','kind':'Daily','objective':'Make Oil','current':31,'target':100},{'key':'bonus:reagent','kind':'Bonus','objective':'Make Reagent','current':21,'target':100}]},'',app.loot.guild.generation,100,.1,False)
             self.assertEqual(len(app.loot.guild.objective_tree.get_children()),2)
             self.assertEqual(app.loot.ledger.db.execute('SELECT count(*) FROM quest_objectives').fetchone()[0],2)
+            with patch.object(app.loot.guild,'schedule'),patch('guild_quest_ui.winsound.MessageBeep') as beep:
+                app.loot.guild.finish({'completion_observed':True,'completion_votes':2,'completion_basis':'reward_message','completion_evidence':'Claim your rewards via the Complete Mission button in the Guild Mission window.'},'',app.loot.guild.generation,110,.1,False)
+                self.assertEqual(app.loot.guild.progress.get(),'Complete')
+                self.assertIn('Guild quest: Complete',app.loot.guild.state.get())
+                self.assertIn('Last numeric counter: 184 / 600',app.loot.guild.detail.get())
+                self.assertEqual(app.loot.guild.read_failures,0);beep.assert_called_once()
+                app.loot.guild.refresh();beep.assert_called_once()
             app.busy=True;app.loot.guild.enabled.set(True)
             with patch.object(app.loot.guild,'schedule'):
                 app.loot.guild.scan();self.assertTrue(app.loot.guild.waiting)

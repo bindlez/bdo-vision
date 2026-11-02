@@ -30,4 +30,12 @@ context.questTimer={guildQuestLastSeen:{current:49,target:600,last_at:100,object
 vm.runInContext('guildMarkup=visionGuildLastSeenHTML(questTimer)',context);
 assert(context.guildMarkup.includes('Last seen 49 / 600'));
 assert(context.guildMarkup.includes('&lt;img')&&!context.guildMarkup.includes('<img'));
+context.questTimer={guildQuestLastSeen:{current:599,target:600,last_at:100,complete:true,completion_at:110,objective:hostile}};
+vm.runInContext('guildMarkup=visionGuildLastSeenHTML(questTimer)',context);
+assert(context.guildMarkup.includes('Guild quest: Complete'));
+assert(context.guildMarkup.includes('last counter 599 / 600')&&!context.guildMarkup.includes('600 / 600'));
+assert(context.guildMarkup.includes('&lt;img')&&!context.guildMarkup.includes('<img'));
+context.questTimer={guildQuestLastSeen:{current:null,target:null,last_at:null,complete:true,completion_at:110}};
+vm.runInContext('guildMarkup=visionGuildLastSeenHTML(questTimer)',context);
+assert(context.guildMarkup.includes('Guild quest: Complete')&&!context.guildMarkup.includes('0 / 0'));
 console.log('Planner security: market names render as text in popular, listings, sidebar and toast functions.');

@@ -90,6 +90,13 @@ class BridgeTests(unittest.TestCase):
         self.assertTrue(ack['ok'])
         self.assertEqual(self.bridge.acknowledgment()[0], reading['signal'])
 
+    def test_visual_guild_completion_without_numeric_counter_is_frozen_and_bounded(self):
+        quest={'current':None,'target':None,'last_at':None,'complete':True,'completion_at':110,'completion_basis':'reward_message','completion_evidence':'private diagnostic excluded'}
+        self.bridge.send(254,3000,1,guild_quest=quest);quest['complete']=False
+        _,data=self.get('/durability');saved=json.loads(data)['guild_quest']
+        self.assertTrue(saved['complete']);self.assertIsNone(saved['current'])
+        self.assertEqual(saved['completion_basis'],'reward_message');self.assertNotIn('completion_evidence',saved)
+
     def test_rejects_foreign_ack(self):
         event=self.bridge.send(250,3000,1)
         with self.assertRaises(urllib.error.HTTPError) as caught:

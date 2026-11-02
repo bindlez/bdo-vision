@@ -369,7 +369,7 @@ class PlannerBridge:
             raise RuntimeError(self.last_error or 'Local bridge offline')
         receipt=None
         if guild_quest is not None:
-            receipt={k:guild_quest[k] for k in ('current','target','label','objective','last_at') if k in guild_quest}
+            receipt={k:guild_quest[k] for k in ('current','target','label','objective','last_at','complete','completion_at','completion_basis') if k in guild_quest}
             if len(json.dumps(receipt,allow_nan=False))>2000:raise ValueError('Guild receipt too large')
         with self._lock:
             self.signal += 1
@@ -397,7 +397,7 @@ class PlannerBridge:
         with self._lock:self.tool_status=copy.deepcopy(value)
 
     def update_guild_status(self,status):
-        allowed=('current','target','label','objective','available','last_at','percent','remaining','eta','complete','reason','enabled','threshold')
+        allowed=('current','target','label','objective','available','last_at','percent','remaining','eta','complete','reason','enabled','threshold','completion_at','completion_seen_at','completion_basis','completion_evidence')
         value={key:status[key] for key in allowed if key in status}
         if len(json.dumps(value,allow_nan=False))>4000:raise ValueError('Guild status too large')
         with self._lock:self.guild_status=copy.deepcopy(value)

@@ -10,6 +10,12 @@ Daily and Bonus objectives are independently keyed by kind and normalized object
 
 ## Quest lifecycle
 
+The completed guild widget can replace the numeric objective with `The guild mission is complete.` or the wrapped instruction `Claim your rewards via the "Complete Mission" button in the Guild Mission window.` Two existing broad passes must independently recognize one of these literal messages. The reward instruction is guild-specific and works when the heading is occluded. Ordinary personal `Complete`, negation, conditional instructions and incomplete-counter conflicts do not qualify. No new capture loop or completion OCR pass is added.
+
+Visual completion has independent `completion_at`, `completion_seen_at`, `completion_basis` and bounded evidence fields. It sets the displayed status to **Guild quest: Complete**, without changing the last numeric `current`, `target` or `last_at`. It can be saved before any numeric counter exists. Completion alerts deduplicate across restart; identical verified reads refresh in-memory freshness without a database write each time. A new incomplete quest requires two separate consistent reads before clearing visual completion, including when its count is the same as the old last numeric value. NEXT QUEST clears the completion. A blocked or stale widget retains a visibly last-seen completion, never fresh inferred progress.
+
+The bridge's frozen craft receipt includes `complete`, `completion_at` and `completion_basis` but excludes raw evidence and images. The planner accepts a valid completion with nullable numeric fields, renders **Guild quest: Complete**, and labels any retained numeric counter as last seen. It does not manufacture a target-equal count or continuously rewrite a finished receipt.
+
 `GuildQuestProgress` stores the last verified counter and observation timestamp. It alerts once near the configured threshold and once at completion. The default near threshold is 95%. A lower counter can mean a new mission, but can also be a bad read. A refilled visible mission timer and repeated consistent observations support rollover. Older saved state has a guarded migration path. Pausing never extrapolates quest credit.
 
 When a craft is sent to the planner, the last seen Guild snapshot can be included. The website displays its observed count and timestamp, not a fabricated forecast. Tracking itself is optional. The Quest OCR reader is also optional and has no separate scanning loop.

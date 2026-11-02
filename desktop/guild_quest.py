@@ -72,6 +72,26 @@ def parse_quest_text(text):
     return result
 
 
+def parse_guild_completion(text):
+    """Recognize the guild's literal finished widget, never a personal 'Complete'."""
+    lines=[line.strip() for line in str(text)[:6000].splitlines() if line.strip()]
+    for index,line in enumerate(lines):
+        # Exact affirmative sentence: 'not complete', instructions and objectives
+        # containing the word complete cannot satisfy this form.
+        if re.fullmatch(r'[^\w]*The guild mission is complete[.!]?[^\w]*',line,re.I):
+            return {'completion_observed':True,'completion_basis':'mission_message','completion_evidence':line[:240]}
+        block=[]
+        for part in lines[index:index+4]:
+            if re.search(r'\[(?:bonus|daily|weekly|main|event|repeat|combat|story)\b',part,re.I):break
+            block.append(part)
+        phrase=' '.join(block)
+        match=re.match(r'[^\w]*Claim your rewards via the ["\u201c\u201d\u2018\u2019\x27]?Complete\s+Mission["\u201c\u201d\u2018\u2019\x27]? button in the Guild Mission window\b',phrase,re.I)
+        if match:
+            evidence=match[0];evidence=evidence[evidence.casefold().index('claim'):]
+            return {'completion_observed':True,'completion_basis':'reward_message','completion_evidence':evidence[:240]}
+    return None
+
+
 def guild_heading_crops(image):
     r,g,b=image.convert('RGB').split()
     mask=ImageChops.multiply(ImageChops.subtract(r,g).point(lambda p:255 if p>10 else 0),ImageChops.subtract(g,b).point(lambda p:255 if p>12 else 0))
@@ -110,6 +130,10 @@ def recognize_quest(image,tess,diagnostic=None):
         if diagnostic is not None:diagnostic(prepared,'BROAD PASS '+str(len(texts))+'\n'+text+'\nSCOPED GUILD: '+str(readings[-1]))
     a,b=readings
     agreed=a if a and b and (a['current'],a['target'])==(b['current'],b['target']) else None
+    completions=[parse_guild_completion(text) for text in texts]
+    conflict=any(completions) and any(row and row['current']<row['target'] for row in readings)
+    if all(completions) and not conflict:
+        agreed={**completions[0],'completion_votes':2}
     focused=[]
     kinds=[{r['kind'] for r in parse_objectives(text)} for text in texts]
     if not agreed or {'Daily','Bonus'}-(kinds[0]&kinds[1]):
@@ -154,6 +178,7 @@ def recognize_quest(image,tess,diagnostic=None):
     left={r['key']:r for r in parse_objectives(texts[0])};right={r['key']:r for r in parse_objectives(texts[1])}
     objectives=[r for key,r in left.items() if key in right and (r['current'],r['target'])==(right[key]['current'],right[key]['target'])]
     objectives=list({r['key']:r for r in [*objectives,*focused]}.values())[:8]
+    if conflict:agreed=None
     if objectives:agreed={**(agreed or {}),'objectives':objectives}
     return agreed,'\n\n'.join(texts)[:10000]
 
@@ -163,6 +188,7 @@ class GuildQuestProgress:
         self.db=db;self.current=None;self.target=None;self.label='Alchemy guild mission';self.objective='';self.last_at=None
         self.near_sent=False;self.complete_sent=False;self.available=False;self.reason='No verified guild mission yet'
         self.samples=deque(maxlen=8);self.pending=None;self.mission_deadline=None;self.legacy_saved=False
+        self.completion_at=None;self.completion_seen_at=None;self.completion_basis='';self.completion_evidence=''
         db.execute('CREATE TABLE IF NOT EXISTS guild_quest_state (id INTEGER PRIMARY KEY CHECK(id=1), payload TEXT NOT NULL)')
         db.execute('CREATE TABLE IF NOT EXISTS guild_quest_history (id INTEGER PRIMARY KEY, saved_at REAL NOT NULL, label TEXT NOT NULL, current INTEGER NOT NULL, target INTEGER NOT NULL)');db.commit()
         row=db.execute('SELECT payload FROM guild_quest_state WHERE id=1').fetchone()
@@ -170,7 +196,9 @@ class GuildQuestProgress:
             try:
                 state=json.loads(row[0]);a,b=state['current'],state['target']
                 self.legacy_saved=bool(state.get('legacy_saved','mission_deadline' not in state))
-                if type(a) is int and type(b) is int and 0<=a<=b<=10_000_000 and b:
+                completed_at=state.get('completion_at')
+                visual=state.get('complete_sent') and state.get('completion_basis') in ('mission_message','reward_message') and type(completed_at) in (int,float) and math.isfinite(completed_at)
+                if (type(a) is int and type(b) is int and 0<=a<=b<=10_000_000 and b) or (a is None and b is None and visual):
                     self.current=a;self.target=b;self.label=str(state.get('label',self.label))[:120]
                     self.objective=str(state.get('objective',''))[:160]
                     self.near_sent=bool(state.get('near_sent'));self.complete_sent=bool(state.get('complete_sent'))
@@ -178,29 +206,45 @@ class GuildQuestProgress:
                     self.reason='Last saved progress; waiting for a fresh visible counter'
                     deadline=state.get('mission_deadline')
                     if type(deadline) in (int,float) and math.isfinite(deadline):self.mission_deadline=deadline
+                    if visual:
+                        self.completion_at=float(completed_at);self.completion_seen_at=self.completion_at
+                        self.completion_basis=state['completion_basis'];self.completion_evidence=str(state.get('completion_evidence',''))[:240]
+                        self.reason='Last saved completion; waiting for the visible guild widget'
             except (ValueError,TypeError,KeyError):pass
 
     def save(self):
-        if self.current is None:
+        if self.current is None and self.completion_at is None:
             with self.db:self.db.execute('DELETE FROM guild_quest_state WHERE id=1')
             return
-        state={key:getattr(self,key) for key in ('current','target','label','objective','last_at','near_sent','complete_sent','mission_deadline','legacy_saved')}
+        state={key:getattr(self,key) for key in ('current','target','label','objective','last_at','near_sent','complete_sent','mission_deadline','legacy_saved','completion_at','completion_basis','completion_evidence')}
         with self.db:self.db.execute('INSERT INTO guild_quest_state VALUES (1,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload',(json.dumps(state),))
 
     def reset(self):
         if self.current is not None:
             with self.db:self.db.execute('INSERT INTO guild_quest_history(saved_at,label,current,target) VALUES (?,?,?,?)',(time.time(),self.label,self.current,self.target))
         self.current=self.target=self.last_at=None;self.near_sent=self.complete_sent=False;self.samples.clear();self.pending=None;self.mission_deadline=None;self.legacy_saved=False
+        self.completion_at=self.completion_seen_at=None;self.completion_basis=self.completion_evidence=''
         self.pause('Ready for the next alchemy guild mission');self.save()
 
     def pause(self,reason):
         self.available=False;self.reason=str(reason)[:180];self.samples.clear()
 
     def accept(self,reading,threshold=95,at=None):
-        at=time.time() if at is None else at;a,b=reading['current'],reading['target']
+        at=time.time() if at is None else at
+        if reading.get('completion_observed') is True:
+            if reading.get('completion_votes')!=2 or reading.get('completion_basis') not in ('mission_message','reward_message'):return []
+            changed=self.completion_at is None;alert=not self.complete_sent
+            if changed:
+                self.completion_at=at;self.completion_basis=reading['completion_basis']
+                self.completion_evidence=str(reading.get('completion_evidence',''))[:240]
+            self.completion_seen_at=at;self.complete_sent=self.near_sent=True
+            self.available=True;self.pending=None;self.samples.clear();self.reason='Verified visible guild mission completion'
+            if changed or alert:self.save()
+            return ['complete'] if alert else []
+        a,b=reading.get('current'),reading.get('target')
         if type(a) is not int or type(b) is not int or not 0<=a<=b<=10_000_000 or not b:return []
         minutes=reading.get('remaining_minutes');deadline=at+minutes*60 if type(minutes) is int and 0<=minutes<=1440 else None
-        if self.current is not None and (b!=self.target or a<self.current):
+        if (self.completion_at is not None and a<b) or (self.current is not None and (b!=self.target or a<self.current)):
             candidate=self.pending
             timer_reset=deadline is not None and self.mission_deadline is not None and deadline>self.mission_deadline+120
             legacy_restart=self.legacy_saved and deadline is not None
@@ -221,11 +265,13 @@ class GuildQuestProgress:
         return alerts
 
     def snapshot(self,now=None):
-        now=time.time() if now is None else now;fresh=self.available and self.last_at is not None and 0<=now-self.last_at<=35
-        remaining=self.target-self.current if self.current is not None else None;eta=None
+        now=time.time() if now is None else now;stamp=self.completion_seen_at if self.completion_at is not None else self.last_at
+        fresh=self.available and stamp is not None and 0<=now-stamp<=35
+        remaining=0 if self.complete_sent else self.target-self.current if self.current is not None else None;eta=None
         if fresh and len(self.samples)>=2:
             elapsed=self.samples[-1][0]-self.samples[0][0];gain=self.samples[-1][1]-self.samples[0][1]
             if elapsed>=15 and gain>0:eta=remaining*elapsed/gain
         return {'current':self.current,'target':self.target,'label':self.label,'objective':self.objective,'available':fresh,'last_at':self.last_at,
-                'percent':100*self.current/self.target if self.target else 0,'remaining':remaining,'eta':eta,
+                'percent':100 if self.complete_sent else 100*self.current/self.target if self.target else 0,'remaining':remaining,'eta':eta,
+                'completion_at':self.completion_at,'completion_seen_at':self.completion_seen_at,'completion_basis':self.completion_basis,'completion_evidence':self.completion_evidence,
                 'complete':self.complete_sent,'reason':self.reason if fresh or not self.available else 'Last verified progress; waiting for a fresh reading'}

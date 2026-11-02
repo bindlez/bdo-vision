@@ -1,4 +1,6 @@
-# BDO Vision · current development candidate 1.13.0-rc.7
+# BDO Vision · current development candidate 1.13.0-rc.8
+
+The current candidate recognizes the guild's completed reward widget and shows **Guild quest: Complete** in the native app and frozen planner receipts. It preserves the actual last numeric counter. Bounded camera-angle fallback also recovers active-tool text above Place Mode against stone walls. See [candidate evidence](docs/CANDIDATE-VALIDATION.md) for measured scope and remaining live checks.
 
 The published first release is [v1.12.0](https://github.com/bindlez/bdo-vision/releases/tag/v1.12.0). This candidate connects Home, Workshop, Grind, Sessions and Fairy Codex, adds recipe-linked session economics and bounded graphs, and rejects numeric tool readings that conflict with fresh independent context. Tool and quest debugging retain their actual images and decision evidence. See [integrated workflows](docs/handbook/19-platform-workflows.md) and the [acceptance checklist](docs/PLATFORM-RELEASE-PLAN.md) for supported behavior and remaining live checks.
 

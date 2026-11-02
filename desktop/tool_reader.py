@@ -315,6 +315,8 @@ def read_bands(tsv,bands):
 
 def counter_context_error(current,maximum,region):
     coarse=region.get('coarse_pair')
+    if coarse and coarse[0]==0 and current!=0:
+        return 'Numeric crop conflicts with the full-label empty tool counter'
     if coarse and (coarse[1]!=maximum or abs(coarse[0]-current)>max(4,maximum*.015)):
         return f'Numeric {current}/{maximum} conflicts with full-label {coarse[0]}/{coarse[1]}'
     if region.get('bar_pair') is not None and tuple(region['bar_pair'])!=(current,maximum):
@@ -413,12 +415,16 @@ def verify_labels(crops,regions,tess,cache=None):
 def discover_scene(image,tess):
     """Prefer a higher-resolution narrow band over expensive whole-scene OCR."""
     width,height=image.size;anchor=character_anchor(image);calls=0
-    def band(box,reference):
+    def band(box,reference,white=False):
+        nonlocal calls
         crop=image.crop(box);scale=min(2,math.sqrt(2_200_000/max(1,crop.width*crop.height)))
-        gray=ImageOps.autocontrast(ImageOps.grayscale(crop.resize((max(1,int(crop.width*scale)),max(1,int(crop.height*scale))))))
+        gray=ImageOps.invert(white_glyph_mask(crop)) if white else ImageOps.autocontrast(ImageOps.grayscale(crop))
+        gray=gray.resize((max(1,int(crop.width*scale)),max(1,int(crop.height*scale))))
         raw=ocr(gray,tess,11)
+        calls+=1
         regions=discover_regions(raw,crop.size,scale,{'x':reference['x']-box[0],'y':reference['y']-box[1]})
         for row in regions:
+            if white:row['white_numeric']=True
             a,b,c,d=row['box'];row['box']=[a+box[0],b+box[1],c+box[0],d+box[1]]
             if row.get('numbers'):
                 a,b,c,d=row['numbers'];row['numbers']=[a+box[0],b+box[1],c+box[0],d+box[1]]
@@ -429,13 +435,23 @@ def discover_scene(image,tess):
     header=image.crop(header_box);header_scale=1.5
     header=ImageOps.autocontrast(header.convert('L')).resize((int(header.width*header_scale),int(header.height*header_scale)))
     header_raw=ocr(header,tess,11);calls+=1;place=None
-    for group in lines(words(header_raw)):
-        if 'placemode' not in re.sub(r'\W','',' '.join(w['text'] for w in group)).casefold():continue
-        group=[w for w in group if re.search(r'place|mode',w['text'],re.I)] or group
-        place={'x':sum(w['x']+w['w']/2 for w in group)/len(group)/header_scale+header_box[0],
-               'y':sum(w['y']+w['h']/2 for w in group)/len(group)/header_scale+header_box[1],
-               'evidence':'Place Mode anchor'};break
-    top=max(0,int(place['y']+height*.005)) if place else max(0,int(anchor['y']-height*.278))
+    def header_anchor(raw,scale):
+        for group in lines(words(raw)):
+            if 'placemode' not in re.sub(r'\W','',' '.join(w['text'] for w in group)).casefold():continue
+            group=[w for w in group if re.search(r'place|mode',w['text'],re.I)] or group
+            return {'x':sum(w['x']+w['w']/2 for w in group)/len(group)/scale+header_box[0],
+                    'y':sum(w['y']+w['h']/2 for w in group)/len(group)/scale+header_box[1],
+                    'evidence':'Place Mode anchor'}
+    place=header_anchor(header_raw,header_scale)
+    if place is None:
+        # Stone walls can swamp grayscale. Retry only the small residence header;
+        # successful ordinary discovery pays no additional OCR cost.
+        mask=white_glyph_mask(image.crop(header_box))
+        if ImageStat.Stat(mask).sum[0]>=12*255:
+            header=ImageOps.invert(mask).resize((mask.width*2,mask.height*2))
+            place=header_anchor(ocr(header,tess,11),2);calls+=1
+    # Camera tilt can put the active label just above the residence control.
+    top=max(0,int(place['y']-height*.065)) if place else max(0,int(anchor['y']-height*.278))
     if place is None:
         # A moved residence control may sit outside the cheap central header.
         # Search only the upper client strip, not an additional full frame.
@@ -448,14 +464,17 @@ def discover_scene(image,tess):
             group=[w for w in group if re.search(r'place|mode',w['text'],re.I)] or group
             place={'x':sum(w['x']+w['w']/2 for w in group)/len(group)/scale,
                    'y':sum(w['y']+w['h']/2 for w in group)/len(group)/scale,'evidence':'Place Mode expanded header'}
-            top=max(0,int(place['y']+height*.005));break
+            top=max(0,int(place['y']-height*.065));break
     bottom=min(height,int(place['y']+height*.24)) if place else max(top+1,min(height,int(anchor['y']-height*.046)))
     if place:anchor=place
-    regions=band((0,top,width,bottom),anchor);calls+=1
+    regions=band((0,top,width,bottom),anchor)
+    if place and not any(r.get('numbers') for r in regions) and ImageStat.Stat(white_glyph_mask(image.crop((0,top,width,bottom)))).sum[0]>=12*255:
+        fallback=band((0,top,width,bottom),anchor,white=True)
+        if any(r.get('numbers') for r in fallback):regions=fallback
     bar_regions,used_calls=discover_bar_labels(image,tess,regions);calls+=used_calls
     if not bar_regions and not any(r.get('numbers') for r in regions):
         wide_top=max(0,int(anchor['y']-height*.36))
-        wider=band((0,wide_top,width,bottom),anchor);calls+=1
+        wider=band((0,wide_top,width,bottom),anchor)
         if any(r.get('numbers') for r in wider):regions=wider
     if regions or bar_regions:return (regions+bar_regions)[:MAX_TOOLS],{**anchor,'evidence':('Place Mode anchor + durability bars' if place else 'visible durability bars + label band') if bar_regions else anchor['evidence']},calls
     # A fallback broad pass also locates a movable Place Mode button. It is a
@@ -467,9 +486,9 @@ def discover_scene(image,tess):
         if 'place mode' not in ' '.join(w['text'] for w in group).casefold():continue
         place={'x':sum(w['x']+w['w']/2 for w in group)/len(group)/scale,
                'y':sum(w['y']+w['h']/2 for w in group)/len(group)/scale,'evidence':'Place Mode search fallback'}
-        top=min(height-1,max(0,int(place['y']+height*.018)))
+        top=min(height-1,max(0,int(place['y']-height*.065)))
         bottom=max(top+1,min(height,int(place['y']+height*.26)))
-        regions=band((0,top,width,bottom),place);calls+=1
+        regions=band((0,top,width,bottom),place)
         if regions:return regions,place,calls
     return discover_regions(raw,(width,height),scale,anchor),anchor,calls
 
@@ -509,7 +528,7 @@ def place_selected(report,height):
     for row in report.get('tools',[]):
         if row.get('votes',0)<2 or row['current']<=0:continue
         box=row.get('numbers') or row['box'];x=(box[0]+box[2])/2;y=(box[1]+box[3])/2
-        if not anchor['y']-5*unit<=y<=anchor['y']+280*unit:continue
+        if not anchor['y']-60*unit<=y<=anchor['y']+280*unit:continue
         score=abs(x-anchor['x']-40*unit)+.6*abs(y-anchor['y']-55*unit)
         if score<=350*unit:ranked.append((score,row))
     ranked.sort(key=lambda r:r[0])
