@@ -1,6 +1,6 @@
 # 08 · Browser planner and build ownership
 
-CP Intelligence assets are embedded by `python scripts/build_cp.py`. This updates the real inline planner and the standalone interactive CP demo. See [CP ownership, calculations and OCR](21-cp-intelligence.md) before changing exchange data or assumptions.
+CP Intelligence uses `cp-engine.js`, `cp-analysis.js`, `cp-planner.js` and `cp-planner.css`. The `/cp-plan` endpoint exposes only the native scenario in memory on the protected paired origin; explicit native launch import does not write browser changes back. CP Intelligence assets are embedded by `python scripts/build_cp.py`. This updates the real inline planner and the standalone interactive CP demo. See [CP ownership, calculations and OCR](21-cp-intelligence.md) before changing exchange data or assumptions.
 
 ## What ships
 

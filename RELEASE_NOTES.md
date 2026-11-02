@@ -1,3 +1,15 @@
+# BDO Vision 1.13.0-rc.12 - Deeper decisions, reliable reader handoffs
+
+CP Info now separates Decision, Payback, Milestones and Model in the native app. The browser adds a signed recovery chart, 30/90/180/365/730-day income targets, cautious/base/strong scenarios, nine cost/income stress cases, an affordable whole-CP target search, detailed outcome ledgers and explicitly simulated recovery checkpoints. Setup costs, uptime, delay, ramp-up, whole-project income and cash reserves are modeled. Advanced controls stay collapsed. Opening Full Planner imports the native scenario on demand. No CP background work or new OCR loop is added.
+
+Tool acquisition prioritizes a bounded Place Mode / durability-bar label fast path. Generic family recovery never repairs numeric digits. Current bar fill is checked from each new field capture; per-digit glyph boxes are discarded after their one-frame use, with a complete-field contrast fallback for later readings. Established timers keep running on uncertain captures, and confirmed use still holds tool OCR until countdown zero. Existing timed evidence can be reused when its capture interval meets the same checks.
+
+Quest acquisition tries focused gold-heading cards first while preserving the full width of wrapped counters, then uses the existing broad/completion fallback within its budget. Busy paired snapshots queue briefly rather than being silently skipped. Tracking-off, queued, partial and frozen snapshots have distinct states and actions. Optional **Smart quest watch** checks only while the craft timer runs, defaults off, reuses exact verified pixels and stops in Lite Use. It reacquires the wider widget if the focused card stops verifying. Completion remains literal and two-pass; no hidden progress is inferred.
+
+Standalone Windows packages include Python. Use OPEN-BDO-VISION.bat / desktop BDO-Vision.exe, never the source RUN.bat for normal user installs. Prior ZIPs and user profiles remain separate and preserved.
+
+## Previous candidate notes
+
 # BDO Vision 1.13.0-rc.11 - CP Intelligence
 
 Native **CP Info** and the paired planner **CP Intelligence** compare Mysterious Catalyst, Witch's Delicacy and Blush Leaf cash-outs with CP, target-then-cash and custom splits. They use complete batches, dated current CP brackets, actual existing market quotes, untaxed NPC baselines and explicit market retention. Missing quotes remain unpriced. Graphs compare initial cash, modeled incremental income and the allocation frontier; all assumptions and sources are visible. No independent price editor or invented automatic CP income is added.

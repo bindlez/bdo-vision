@@ -1,3 +1,17 @@
+# Candidate validation: 1.13.0-rc.12
+
+The full isolated native suite passes **370 tests**. Shipped planner/Fairy/demos JavaScript, Gear/Big Drops rendering, CP interaction fixtures, compilation and handbook links pass. New coverage includes exact ramp integrals/inverses, setup and uptime costs, whole-project scaling, reserve-constrained target selection, advanced native/browser parity, scoped full-width wrapped quest cards, busy-reader queue expiry, opt-in watch cancellation in Lite and discarded per-digit boxes. Native CP's Decision/Payback/Milestones/Model controls pass a disposable-profile self-check.
+
+Private saved-frame replay found an active 2492/3000 tool that the old path missed while retaining a nearby empty utensil. Focused acquisition now returns 2492 with 6 OCR calls in about 1.02 seconds, versus 12 calls / about 2.41 seconds for the original miss. The second saved frame verifies 2491, using 4 calls / about 0.49 seconds. The original 1.55-second frame spacing independently satisfies the unique-decrease evidence rule. Replay processing time is not substituted for capture spacing, and no live use-confirmation is claimed from a faster offline replay.
+
+A saved guild card verifies 119/600 plus the visible Bonus 30/100. Preserving full widget width avoids clipping the left-inset objective and wrapped leading digits. Focused cards take about 1.09 seconds on that sample versus 1.98 seconds for broad scanning. A later live capture had an in-game panel over the active tool and no guild objective displayed; the reader withheld those values and read the visible Bonus counter. That is a rejection/partial-layout check, not a successful new live tool/guild acquisition. Real captures and raw diagnostics remain outside the repository.
+
+Pure Python CP analysis for a 78-candidate example has a warm median of 0.587 ms / p95 0.983 ms over 25 calls, with 12,964 bytes peak additional traced allocation in one forecast. A 1,000-call JavaScript forecast loop takes about 81 ms. The optimizer streams candidates instead of retaining all of them. These scoped numbers exclude UI rendering, OCR, networking, startup, total process memory and game FPS. No zero-impact or universal OCR accuracy claim is made.
+
+Current feature task scope and future calculator/paper work are tracked separately in [the execution brief](CRAFTING-PLATFORM-BRIEF.md). Recipe parity and a published project paper are not claimed by this release.
+
+## Previous candidate · 1.13.0-rc.11
+
 # Candidate validation: 1.13.0-rc.11
 
 CP Intelligence adds 22 Python regressions, bringing the isolated suite to **350 passing tests**. Native/browser calculations agree across 100 deterministic mixed-stock, percentage, target and deployment scenarios. The actual shipped page executes in a DOM fixture covering boot, income edits, invalid inputs, reset, target allocations and graph-point selection. The native CP tab also passes a disposable-profile widget/calculation self-check. JavaScript, previous Gear/Big Drops rendering, compilation and all handbook links pass. The native example and CP data are included in extracted Windows self-checks.

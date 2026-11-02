@@ -662,6 +662,7 @@ class App:
   self.tool_reader=AutomaticToolReader()
   self.loot.generation+=1;self.loot.guild.generation+=1;self.loot.guild.waiting=False
   if self.loot.guild.pending is not None:self.root.after_cancel(self.loot.guild.pending);self.loot.guild.pending=None
+  self.loot.guild.schedule()
   if self.bridge:
    self.bridge.ocr_paused=self.lite_use.get()
    if self.lite_use.get():self.bridge.gear_stop.set()

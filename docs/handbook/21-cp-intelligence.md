@@ -1,5 +1,23 @@
 # 21 · CP Intelligence and byproduct decisions
 
+## Deep payoff model · current extension
+
+The native tab now has Decision, Payback, Milestones and Model pages. The browser keeps the payoff answer and signed recovery graph visible; detailed forecasts, target solvers, stress tables, optimizer and simulated achievement ladder are expandable. Opening Full Planner explicitly transfers the calculated native inputs through the same-origin read-only `/cp-plan` endpoint. Browser edits remain local and do not silently change the native scenario.
+
+New pure arithmetic lives in [cp_forecast.py](../../desktop/cp_forecast.py), mirrored by [cp-engine.js](../../desktop/assets/cp-engine.js); [cp-analysis.js](../../desktop/assets/cp-analysis.js) owns the detailed browser markup and static recovery chart. [Forecast tests](../../tests/test_cp_forecast.py) cover exact integrals/inverses, costs, deployment caps, reserves, milestones and randomized advanced native/browser parity. Rebuild with `python scripts/build_cp.py` after changes. Do not edit only the generated inline HTML.
+
+For a time `t`, setup delay `d` and ramp duration `r`, let `a = max(0, t-d)`. Effective full-income days `P(t)` equal `a` if `r=0`, `a²/(2r)` if `0<a<r`, and `a-r/2` after the ramp. Uptime multiplies steady daily income by its percentage. Additional earnings are `daily × P(t)`. Setup costs apply once when a route gains new whole CP; the cash route has none. Investment is foregone selected cash plus setup cost. Retained cash may be negative, meaning additional funding is required.
+
+To solve payback, set `q = investment / daily`. With a positive ramp, recovery inside it takes `sqrt(2*r*q)` productive calendar days when `q <= r/2`; otherwise it takes `q+r/2`. Add the setup delay. Zero income with a positive investment has no payback, not zero days. Forecast displays suppress false precision beyond ten years. Required-income solvers reverse the same integral, including uptime, and reject a deadline that occurs entirely during setup.
+
+Income basis can be per new deployed CP, or a whole-project amount for the all-CP route. Whole-project daily income scales by `route deployed CP / all-CP deployed CP`, then by uptime. This assumes equal marginal income for the modeled deployment; it does not infer real node or worker profits. Income defaults to zero. Cautious/base/strong cases use 50%/100%/150% of the entered income. The nine-cell sensitivity table separately scales foregone cash by 80%/100%/120%, leaving setup cost fixed; it is not a substitute for market quotes or a probability forecast.
+
+The target optimizer evaluates at most 600 whole-CP targets, including cashing out, and uses minimum complete batches to attain each. It filters on retained cash reserve and maximizes cash plus modeled incremental income at the chosen horizon, preferring fewer batches on ties. It never loops over millions of individual byproducts. CP advancement uses an immutable 601-entry EXP prefix table and binary search; target EXP lookup is constant-time. Existing four route cards remain the named routes; the optimizer is a separate explicitly modeled suggestion. Its result is conditional on available prices and the equal-income assumption.
+
+Recovery checkpoints at 10%, 25%, 50% and 100% are **simulation milestones**, not actual achievements or tracked earnings. The simulation slider updates only its small DOM section; it does not rerun the optimizer, replace the focused slider or collapse open details. No elapsed-time timer, animation loop, game capture, network polling or ledger write is added by CP analysis. The optional grinding-rate input merely converts opportunity cost into equivalent hours at an entered rate.
+
+The original simple no-ramp/no-setup equations below are the special case with 100% uptime, zero ramp and zero setup cost. Use the current integral above whenever those assumptions change.
+
 The native **CP Info** tab and paired planner **CP Intelligence** page compare NPC sales, priced material exchanges, CP turn-ins and split allocations. The standalone [interactive preview](../../demo/bdo-vision-cp-demo.html) works offline with the user's hypothetical 750,000-catalyst example. It has no live market connection or screen access. First-use example inputs are explicitly labeled; they are not detected inventory.
 
 ## Ownership and editing map

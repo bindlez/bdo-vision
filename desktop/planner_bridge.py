@@ -65,6 +65,7 @@ class PlannerBridge:
         self.show_requested=False
         self.commands=[]
         self.cp_reading={'stage':'idle','message':'No CP snapshot requested'}
+        self.cp_plan={}
         self.cp_request_at=-1e9
         self.gear_ocr_gate=BoundedSemaphore(1)
         self.gear_job=None;self.gear_stop=Event()
@@ -152,6 +153,9 @@ class PlannerBridge:
                 if route=='/cp-reading':
                     with bridge._lock:status=copy.deepcopy(bridge.cp_reading)
                     self._send(status)
+                elif route=='/cp-plan':
+                    with bridge._lock:plan=copy.deepcopy(bridge.cp_plan)
+                    self._send({'plan':plan})
                 elif route=='/tool-reader':
                     with bridge._lock:status=copy.deepcopy(bridge.tool_status)
                     self._send(status)
@@ -412,7 +416,7 @@ class PlannerBridge:
         with self._lock:self.tool_status=copy.deepcopy(value)
 
     def update_guild_status(self,status):
-        allowed=('current','target','label','objective','available','last_at','percent','remaining','eta','complete','reason','enabled','threshold','completion_at','completion_seen_at','completion_basis','completion_evidence')
+        allowed=('current','target','label','objective','available','last_at','percent','remaining','eta','complete','reason','enabled','threshold','completion_at','completion_seen_at','completion_basis','completion_evidence','read_stage','next_action','read_attempts','last_read_seconds')
         value={key:status[key] for key in allowed if key in status}
         if len(json.dumps(value,allow_nan=False))>4000:raise ValueError('Guild status too large')
         with self._lock:self.guild_status=copy.deepcopy(value)

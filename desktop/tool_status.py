@@ -37,7 +37,7 @@ class ToolStatus:
         return True
 
     def accept(self,report):
-        fields=('id','name','current','maximum','percent','state','wear_streak','seconds_per_use','cache_hit')
+        fields=('id','name','current','maximum','percent','state','wear_streak','seconds_per_use','cache_hit','votes','name_evidence')
         self.tools=[{k:row[k] for k in fields if k in row} for row in report.get('tools',[])[:8]]
         self.unreadable=len(report.get('unreadable',[])[:8]);self.active_id=report.get('active_id')
         self.last_at=report.get('captured_at',time.time());self.duration=round(report.get('duration',0),3)

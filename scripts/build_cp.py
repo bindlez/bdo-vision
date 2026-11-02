@@ -6,7 +6,7 @@ root=Path(__file__).resolve().parents[1]
 assets=root/'desktop/assets'
 spec=json.loads((assets/'cp-data.json').read_text(encoding='utf-8'))
 css=(assets/'cp-planner.css').read_text(encoding='utf-8')
-js='const VISION_CP_DATA='+json.dumps(spec,ensure_ascii=False,separators=(',',':'))+';\n'+(assets/'cp-engine.js').read_text(encoding='utf-8')+'\n'+(assets/'cp-planner.js').read_text(encoding='utf-8')
+js='const VISION_CP_DATA='+json.dumps(spec,ensure_ascii=False,separators=(',',':'))+';\n'+(assets/'cp-engine.js').read_text(encoding='utf-8')+'\n'+(assets/'cp-analysis.js').read_text(encoding='utf-8')+'\n'+(assets/'cp-planner.js').read_text(encoding='utf-8')
 integration="""
 (function(){
  const nav=document.createElement('button');nav.className='nav-item';nav.dataset.view='cp';nav.id='navCP';nav.style.cssText='font:inherit;width:100%;text-align:left;background:none;border:0;color:inherit';nav.innerHTML='<span class="icon">◉</span> CP Intelligence';

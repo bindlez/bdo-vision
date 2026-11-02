@@ -80,7 +80,7 @@ class PlatformHome:
         lite=self.app.lite_use.get();tool=self.app.tool_status.snapshot();guild=self.tracker.guild.model.snapshot()
         values={'tool':tool['title']+' · '+tool['detail'],
                 'loot':'Paused by Lite Use' if lite else self.tracker.capture_state.get(),
-                'guild':('Guild quest: Complete · last seen' if guild['complete'] else f"Last seen {guild['current']} / {guild['target']}" if guild['current'] is not None else 'Waiting for a paired tool scan'),
+                'guild':('Tracking off · enable quests to read them' if not self.tracker.guild.enabled.get() else 'Guild quest: Complete · last seen' if guild['complete'] else f"Last seen {guild['current']} / {guild['target']}" if guild['current'] is not None else 'No quest snapshot yet · Scan Tool + Quest'),
                 'session':('No active session · start one in Sessions' if not self.tracker.insights.session.id else 'Finished' if self.tracker.insights.session.ended else 'Recording' if self.tracker.insights.session.clock.running else 'Paused')}
         if self.tracker.insights.session.clock.running and not self.tracker.capture_clock.available:values['session']='Session armed · capture paused; excluded time does not earn silver/hour'
         self.mode.set('LITE USE · initial tool scan with optional last-seen guild reading, then all OCR stops. Scan manually for the next tool.' if lite else 'NORMAL TRACKING · confirmed crafting stops tool OCR until the countdown finishes. Guild quests read only with tool scans; loot follows its own setting.')

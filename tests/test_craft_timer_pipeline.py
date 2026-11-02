@@ -11,6 +11,20 @@ from tool_reader import AutomaticToolReader
 
 
 class CraftTimerPipelineTests(unittest.TestCase):
+    def test_paired_quest_waits_for_busy_loot_then_expires_without_sticking(self):
+        guild=self.app.loot.guild;guild.enabled.set(True);self.app.loot.busy=True;callbacks=[]
+        with patch.object(self.root,'after',side_effect=lambda delay,fn:callbacks.append(fn) or 'queued'):
+            guild.scan(paired=True)
+            self.assertTrue(guild.waiting);self.assertEqual(guild.phase,'queued');self.assertEqual(len(callbacks),1)
+            self.clock=104;callbacks[0]()
+            self.assertFalse(guild.waiting);self.assertEqual(guild.phase,'retry');self.assertIsNone(guild.pending)
+
+    def test_smart_quest_watch_is_opt_in_and_lite_cancels_it(self):
+        guild=self.app.loot.guild;guild.enabled.set(True);guild.schedule();self.assertIsNone(guild.watch_pending)
+        guild.watch.set(True);guild.schedule();self.assertIsNotNone(guild.watch_pending)
+        self.app.lite_use.set(True);self.app.change_lite_use();self.assertIsNone(guild.watch_pending)
+        with patch.object(guild,'scan') as scan:guild.poll();scan.assert_not_called()
+
     def setUp(self):
         self.root=tk.Tk();self.root.withdraw();self.clock=100.
         self.clock_patch=patch('app.time.monotonic',side_effect=lambda:self.clock);self.clock_patch.start()

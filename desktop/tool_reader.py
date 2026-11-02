@@ -11,6 +11,7 @@ import re
 import subprocess
 import time
 from threading import local
+from difflib import SequenceMatcher
 from html.parser import HTMLParser
 from PIL import Image,ImageOps,ImageChops,ImageStat
 from ocr_parser import extract_pairs
@@ -186,7 +187,11 @@ def ocr(image,tess,psm,numeric=False,characters=False):
     if result.returncode:raise RuntimeError('Tool OCR could not read the frame')
     text=result.stdout.decode('utf-8','replace')
     trace=getattr(_budget,'trace',None)
-    if trace is not None and len(trace)<16:trace.append(f'PSM {psm} numeric={numeric}\n'+(str([(w['text'],w['confidence'],w['x'],w['y']) for w in words(text)]) if not characters else re.sub('<[^>]+>',' ',text))[:6000])
+    if trace is not None and len(trace)<16:
+        if characters:
+            parser=CharacterBoxes();parser.feed(text);display=''.join(char for char,_ in parser.chars)+'\nExact glyph boxes: '+str(len(parser.chars))
+        else:display=str([(w['text'],w['confidence'],w['x'],w['y']) for w in words(text)])
+        trace.append(f'PSM {psm} numeric={numeric}\n'+display[:6000])
     return text
 
 
@@ -242,9 +247,30 @@ def durability_bars(image):
     return bars[:MAX_TOOLS]
 
 
-def discover_bar_labels(image,tess,known=()):
+def anchored_title_family(text):
+    """Name-only fallback for a Place Mode + visible durability-bar locator.
+
+    Never repair or guess digits. A damaged title can identify a generic family;
+    two literal numeric reads and bar consistency still have to verify its value.
+    """
+    prefix=re.split(r'[({]|\d',text,maxsplit=1)[0]
+    letters=re.sub('[^a-z]','',prefix.casefold())[-45:]
+    if re.search(r'alchem[yv]i?[tl]o[oc]l$',letters):return 'Alchemy Tool'
+    for target,name in (('alchemytool','Alchemy Tool'),('cookingutensil','Cooking Utensil')):
+        for length in range(len(target)-1,len(target)+3):
+            if len(letters)>=length and SequenceMatcher(None,letters[-length:],target,autojunk=False).ratio()>=.82:
+                return name
+    return None
+
+
+def discover_bar_labels(image,tess,known=(),anchor=None):
     width,height=image.size;unit=max(.6,min(2.,height/1080));regions=[];calls=0
-    for bar in durability_bars(image):
+    bars=durability_bars(image)
+    if anchor:
+        bars=[bar for bar in bars if abs((bar['box'][0]+bar['box'][2])/2-anchor['x'])<=340*unit and -65*unit<=bar['box'][1]-anchor['y']<=150*unit]
+        bars.sort(key=lambda bar:abs((bar['box'][0]+bar['box'][2])/2-anchor['x'])+.8*abs(bar['box'][1]-anchor['y']-60*unit))
+        bars=bars[:3]
+    for bar in bars:
         left,top,right,bottom=bar['box']
         center=(left+right)/2
         if any(r.get('locator')=='durability bar' and r.get('numbers') and r['box'][0]<=center<=r['box'][2] and r['box'][1]<=top-10*unit<=r['box'][3] for r in known):continue
@@ -264,6 +290,8 @@ def discover_bar_labels(image,tess,known=()):
             parser=CharacterBoxes();parser.feed(ocr(prepared,tess,7,characters=True));calls+=1
             text=''.join(char for char,_ in parser.chars)
         kind='Alchemy Tool' if re.search(r'alc[hkn]emy',text,re.I) else 'Cooking Utensil' if re.search(r'cookin[gqc]',text,re.I) else None
+        partial_family=anchored_title_family(text) if anchor and kind is None else None
+        if partial_family:kind=partial_family
         name=label_name(text)
         if not kind and name!=PARTIAL_NAME and 'traditional' not in text.casefold():continue
         candidates=list(re.finditer(r'[(\{][^(){}]{3,24}[)\}]',text))
@@ -278,6 +306,10 @@ def discover_bar_labels(image,tess,known=()):
             numeric=[max(box[0],int(a-16*unit)),box[1],min(box[2],int(b+10*unit)),box[3]]
             strict=re.fullmatch(r'[({]?(\d[\d,]*)\s*[/|]\s*(\d[\d,]*)[)}]?',match.group())
             region={'name':name if name and name!=PARTIAL_NAME else kind or PARTIAL_NAME,'box':box,'numbers':numeric,'locator':'durability bar'}
+            if anchor and primary and bar['fill'] is not None:
+                region['bar_geometry']=[left,top,right,bottom]
+                region['box']=[*box[:3],min(height,max(box[3],bottom+3))]
+            if partial_family:region['title_evidence']='Family read from partial title near Place Mode'
             if primary:region['bar_fill']=bar['fill']
             else:region['name']=label_name(prefix) or PARTIAL_NAME
             if strict:region['bar_pair']=tuple(int(n.replace(',','')) for n in strict.groups())
@@ -321,7 +353,7 @@ def counter_context_error(current,maximum,region):
         return f'Numeric {current}/{maximum} conflicts with full-label {coarse[0]}/{coarse[1]}'
     if region.get('bar_pair') is not None and tuple(region['bar_pair'])!=(current,maximum):
         return 'Numeric crop conflicts with the independently located label counter'
-    if maximum and region.get('bar_fill') is not None and abs(current/maximum-region['bar_fill'])>.06:
+    if maximum and region.get('bar_fill') is not None and abs(current/maximum-region['bar_fill'])>.04:
         return f'Numeric {current}/{maximum} conflicts with bar fill {region["bar_fill"]:.1%}'
     return ''
 
@@ -340,10 +372,23 @@ def unreadable_regions(regions,observations):
     return result
 
 
+def current_bar_fill(crop,region):
+    """Refresh cheap bar evidence from this capture; never reuse an old fill."""
+    geometry=region.get('bar_geometry')
+    if not geometry:return None
+    left,top=region['box'][:2];a,b,c,d=geometry
+    if not (0<=a-left<c-left<=crop.width and 0<=b-top<d-top<=crop.height):return None
+    red,green,blue=crop.crop((a-left,b-top,c-left,d-top)).convert('RGB').split()
+    mask=ImageChops.multiply(ImageChops.multiply(red.point(lambda p:255 if p>170 else 0),green.point(lambda p:255 if p>140 else 0)),blue.point(lambda p:255 if p<160 else 0))
+    return max(mask.crop((0,y,mask.width,y+1)).histogram()[255] for y in range(mask.height))/mask.width
+
+
 def verify_labels(crops,regions,tess,cache=None):
     import hashlib
     result=[];calls=0
     for index,(crop,region) in enumerate(zip(crops,regions)):
+        fill=current_bar_fill(crop,region)
+        if fill is not None:region['bar_fill']=fill
         region['rejection']='No numeric field located'
         if not region.get('numbers'):continue
         region['rejection']='Numeric passes did not agree on one complete current / maximum pair'
@@ -358,7 +403,7 @@ def verify_labels(crops,regions,tess,cache=None):
             if cached and time.monotonic()-cached[0]<8 and not counter_context_error(cached[1]['current'],cached[1]['maximum'],region):
                 result.append({**cached[1],'name':region['name'],'box':region['box'],'cache_hit':True});region['numbers']=window;region.pop('bar_pair',None);region.pop('bar_fill',None);region.pop('coarse_pair',None);region.pop('rejection',None);break
             gray=ImageOps.autocontrast(ImageOps.grayscale(numeric)).resize((numeric.width*4,numeric.height*4),Image.Resampling.LANCZOS)
-            readings=[];confidences=[];context_region=region;recovered=False
+            readings=[];confidences=[];context_region=region;recovered=False;alternate_mode=None
             if region.get('digit_boxes'):
                 fields=[]
                 for x1,y1,x2,y2 in region['digit_boxes']:
@@ -392,14 +437,31 @@ def verify_labels(crops,regions,tess,cache=None):
                     tokens=words(ocr(variant,tess,7,numeric=True));calls+=1
                     readings.append(set(extract_pairs(' '.join(w['text'] for w in tokens))))
                     confidences.append(sum(w['confidence'] for w in tokens)/max(1,len(tokens)))
+            agreed=len(readings)==2 and len(readings[0])==1 and readings[0]==readings[1]
+            valid=agreed and not counter_context_error(*next(iter(readings[0])),context_region)
+            if not valid and region.get('bar_geometry') and not region.get('digit_boxes'):
+                # Bright walls and animated backgrounds can change which mask
+                # preserves a glyph. Retry the complete field, never its digits.
+                use_white=not region.get('white_numeric',False)
+                alternative=white_glyph_mask(numeric).resize((numeric.width*4,numeric.height*4),Image.Resampling.LANCZOS) if use_white else gray
+                retries=[];scores=[]
+                for variant in (alternative,ImageOps.invert(alternative)):
+                    tokens=words(ocr(variant,tess,7,numeric=True));calls+=1
+                    retries.append(set(extract_pairs(' '.join(w['text'] for w in tokens))));scores.append(sum(w['confidence'] for w in tokens)/max(1,len(tokens)))
+                if len(retries[0])==1 and retries[0]==retries[1] and not counter_context_error(*next(iter(retries[0])),context_region):
+                    readings=retries;confidences=scores;alternate_mode=use_white
             if len(readings[0])==1 and readings[0]==readings[1]:
                 current,maximum=next(iter(readings[0]))
                 error=counter_context_error(current,maximum,context_region)
                 if error:region['rejection']=error;continue
                 if 0<=current<=maximum and 100<=maximum<=100_000:
                     result.append({'name':region['name'],'current':current,'maximum':maximum,'box':region['box'],'numbers':window,'confidence':min(confidences),'votes':2})
+                    if region.get('title_evidence'):result[-1]['name_evidence']=region['title_evidence']
                     if recovered:result[-1]['numeric_recovery']='Two complete white-glyph reads; bar-fill agreement'
-                    if recovered:region.pop('digit_boxes',None);region['white_numeric']=True
+                    # Per-digit glyph boxes belong to one captured font shape.
+                    # Reusing them after digits change can clip 2491 into 241.
+                    if recovered or region.get('digit_boxes'):region.pop('digit_boxes',None);region['white_numeric']=True
+                    if alternate_mode is not None:region['white_numeric']=alternate_mode;result[-1]['numeric_recovery']='Two complete contrast reads; current bar agrees'
                     region['numbers']=window
                     region.pop('bar_pair',None)
                     region.pop('bar_fill',None)
@@ -412,7 +474,7 @@ def verify_labels(crops,regions,tess,cache=None):
     return result,calls
 
 
-def discover_scene(image,tess):
+def discover_scene(image,tess,focused=True):
     """Prefer a higher-resolution narrow band over expensive whole-scene OCR."""
     width,height=image.size;anchor=character_anchor(image);calls=0
     def band(box,reference,white=False):
@@ -450,6 +512,11 @@ def discover_scene(image,tess):
         if ImageStat.Stat(mask).sum[0]>=12*255:
             header=ImageOps.invert(mask).resize((mask.width*2,mask.height*2))
             place=header_anchor(ocr(header,tess,11),2);calls+=1
+    if place and focused:
+        # The current utensil is the latency-critical result. Start with at most
+        # three nearby bars and their tiny labels before a screen-wide OCR band.
+        fast,used_calls=discover_bar_labels(image,tess,anchor=place);calls+=used_calls
+        if fast:return fast,{**place,'evidence':'Place Mode anchor + focused durability bar'},calls
     # Camera tilt can put the active label just above the residence control.
     top=max(0,int(place['y']-height*.065)) if place else max(0,int(anchor['y']-height*.278))
     if place is None:
@@ -605,6 +672,7 @@ class AutomaticToolReader:
         self.quiet_reads=0
         self.numeric_cache={};self.signatures={}
         self.last_pair=-1e9
+        self.previous_positioned=None
         self.diagnostic=None
 
     def read(self,tess,bounds,grab,now=None,interval=10,confirm_pair=False):
@@ -629,7 +697,7 @@ class AutomaticToolReader:
             if not report['active_id'] and selected:
                 report.update(active_id=selected['id'],active_key=f"{selected['id']}:{selected.get('cycle',0)}",confirmation='Place Mode position')
                 selected['state']='Selected by Place Mode · checking use'
-                report['next_seconds']=1.5;self.next_due=time.monotonic()+1.5
+                report['next_seconds']=1.5;self.next_due=max(time.monotonic(),report.get('captured_mono',time.monotonic())+1.5)
             report['duration']=time.monotonic()-started
             if hasattr(_budget,'trace'):report['_debug_raw']='\n\n'.join(_budget.trace)[-12000:]
             return report
@@ -695,6 +763,10 @@ class AutomaticToolReader:
         shifted=not discover and any(not signature_matches(self.signatures.get(tuple(r['box'])),label_signature(crop,r)) for r,crop in zip(self.regions,crops))
         observations,used_calls=verify_labels(crops,self.regions,tess,self.numeric_cache) if crops and not shifted else ([],0)
         calls+=used_calls
+        if discover and scene is not None and not observations and 'focused durability bar' in (self.anchor or {}).get('evidence','') and _budget.deadline-time.monotonic()>1:
+            self.regions,self.anchor,used_calls=discover_scene(scene,tess,focused=False);calls+=used_calls
+            crops=[scene.crop(r['box']) for r in self.regions]
+            observations,used_calls=verify_labels(crops,self.regions,tess,self.numeric_cache) if crops else ([],0);calls+=used_calls
         if not discover and len(observations)<len(self.regions):
             # Camera motion invalidates remembered label rectangles. Reacquire
             # this scan rather than waiting for the broad-discovery heartbeat.
@@ -722,7 +794,14 @@ class AutomaticToolReader:
         suspicious_drop=any(old.get('numbers')==row.get('numbers') and old['maximum']==row['maximum'] and old['current']-row['current']>max(30,(now-old['seen_at'])*20+4)
                             for row in observations for old in self.inventory.tracks.values())
         if suspicious_drop:self.last_discovery=-1e9
-        report=self.inventory.update(observations,now,context)
+        field=None;previous=self.previous_positioned
+        selected=place_selected({'anchor':self.anchor,'tools':observations},height)
+        if previous and previous['context']==context and selected and not shifted:
+            candidate=changing_tool(previous['observations'],observations,captured_mono-previous['at'])
+            if candidate and candidate==previous['field']==tuple(selected.get('numbers',())):field=candidate
+        report=self.inventory.update(observations,now,context,confirmed_field=field)
+        if field:report['confirmation']='two-frame comparison';report['pair_result']='Consecutive verified acquisitions reused; no extra capture pair'
+        self.previous_positioned={'context':context,'observations':[dict(row) for row in observations],'at':captured_mono,'field':tuple(selected.get('numbers',()))} if selected and all(row.get('votes',0)>=2 for row in observations) else None
         unreadable=unreadable_regions(self.regions,observations)
         self.misses=self.misses+1 if not observations else 0
         if discover:self.signatures={tuple(r['box']):label_signature(crop,r) for r,crop in zip(self.regions,crops) if any(r['box']==o['box'] for o in observations)}

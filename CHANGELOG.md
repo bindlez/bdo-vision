@@ -1,5 +1,13 @@
 # BDO Vision Lite changelog
 
+## 1.13.0-rc.12 · Payback planning and reader acquisition
+
+- Add deep CP forecasts, ramp-up / utilization / setup assumptions, constrained target search, recovery graphs, scenario milestones and native-to-browser scenario import.
+- Prioritize Place Mode/bar tool acquisition; preserve current bar evidence and discard digit boxes after one frame to prevent clipped future counters.
+- Read full-width scoped quest cards first, queue busy paired reads, expose actionable states and add explicit opt-in Smart watch without changing Lite behavior.
+- Keep standalone runtime packaging, existing features, profile history and prior immutable archives.
+
+
 ## 1.13.0-rc.11 · CP Intelligence
 
 - Add native CP Info and integrated browser CP planner with current post-2025 EXP brackets, byproduct exchanges, cash/CP/target/split allocations and source links.

@@ -126,7 +126,7 @@ class DesktopSmokeTests(unittest.TestCase):
                 app.loot.guild.refresh();beep.assert_called_once()
             app.busy=True;app.loot.guild.enabled.set(True)
             with patch.object(app.loot.guild,'schedule'):
-                app.loot.guild.scan(paired=True);self.assertFalse(app.loot.guild.waiting)
+                app.loot.guild.scan(paired=True);self.assertTrue(app.loot.guild.waiting);self.assertIsNotNone(app.loot.guild.pending)
             app.busy=False;app.loot.guild.enabled.set(False);app.loot.guild.toggle();self.assertFalse(app.loot.guild.waiting)
         finally:
             if "app" in locals():app.loot.close()

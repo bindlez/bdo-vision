@@ -2,6 +2,10 @@
 
 ## Discovery and first selection
 
+The current fast path reads Place Mode, then at most three nearby gold-bar label crops before a wide OCR band. A damaged title may identify only a generic tool family through `anchored_title_family`; this fallback is limited to anchored bar candidates and never edits numbers. Both literal numeric passes, capacity checks and fresh bar evidence still apply. If the fast candidate cannot verify and budget remains, discovery falls back to the broader existing path.
+
+Anchored regions include the bar as well as the label. `current_bar_fill` recomputes its fill from **each capture**; the first frame's fill is not carried forward as truth. After a successful per-digit read, discard those glyph-sized boxes. Reusing boxes from a previous numeral shape clipped the saved `2491` into `241`. Later observations read the complete counter area and can switch contrast only after two full-field reads agree with current bar evidence. The trusted-fill tolerance is 4 percentage points; partial/untrusted bars do not veto text. A saved 2-frame replay now returns 2492 then 2491, rather than accepting the damaged value.
+
 `AutomaticToolReader` prefers a small high-resolution header search for Place Mode. It uses that button as an anchor for nearby tool labels, with character-bar and broader scene fallbacks. Gold durability bars and OCR geometry locate candidate names and numeric fields. The reader caps the number of tools and rejects conflicting duplicate locators.
 
 `verify_labels` reads the numeric crop in two polarities. Both readings must contain the same valid current/maximum pair. Initial bar evidence can reject a numeric reading that conflicts with the approximate fill. Exact verified crop hashes can be reused briefly; the numeric cache is bounded. Title signatures ignore changing digits but detect moved labels, triggering rediscovery rather than reading stale coordinates.

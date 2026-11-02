@@ -43,9 +43,15 @@ class CPBridgeTests(unittest.TestCase):
             self.assertEqual(caught.exception.code,code);self.assertFalse(self.bridge.consume_commands())
 
     def test_cp_status_rejects_foreign_origins(self):
-        for route,body in (('/cp-reading',None),('/cp-read',{'instance_id':self.bridge.instance_id})):
+        for route,body in (('/cp-reading',None),('/cp-plan',None),('/cp-read',{'instance_id':self.bridge.instance_id})):
             with self.assertRaises(urllib.error.HTTPError) as caught:self.request(route,body,'https://foreign.example')
             self.assertEqual(caught.exception.code,403)
+
+    def test_native_cp_scenario_is_a_read_only_snapshot(self):
+        self.bridge.cp_plan={'cp':'490','counts':{'catalyst':'90000'},'ramp':'10','incomeMode':'project'}
+        _,result=self.request('/cp-plan');self.assertEqual(result['plan']['counts']['catalyst'],'90000')
+        result['plan']['counts']['catalyst']='0'
+        self.assertEqual(self.bridge.cp_plan['counts']['catalyst'],'90000')
 
     def test_bounded_request_and_queue(self):
         with self.assertRaises(urllib.error.HTTPError) as caught:self.request('/cp-read',{'instance_id':self.bridge.instance_id,'extra':'x'*5000})

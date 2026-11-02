@@ -14,6 +14,30 @@ def completed():return {**parse_guild_completion(REWARD),'completion_votes':2}
 
 
 class QuestParsingTests(unittest.TestCase):
+    def test_focused_first_keeps_digits_left_of_indented_header_at_both_heights(self):
+        from guild_quest import focused_quest_read
+        import time
+        heading=Image.new('RGB',(190,20),'black');heading.info['quest_box']=(100,0,290,20)
+        for counter in ('49/\n600','\n101/600'):
+            body='Obtain Mysterious Catalyst via Alchemy ('+counter+')'
+            samples=['[Alchemy] Glorious Guild Supply Mission',body,body];widths=[]
+            def fake(command,**options):
+                if command[command.index('--psm')+1]=='6':widths.append(Image.open(io.BytesIO(options['input'])).width)
+                return type('Result',(),{'returncode':0,'stdout':samples.pop(0).encode()})()
+            with patch('guild_quest.guild_heading_crops',return_value=[heading]),patch('guild_quest.run_ocr',side_effect=fake):
+                result,_=focused_quest_read(Image.new('RGB',(300,150),'black'),'engine',time.monotonic()+3)
+            self.assertEqual(result['current'],101 if '101' in counter else 49)
+            self.assertEqual(widths,[900,900]);self.assertEqual(result['card_box'][0],0)
+
+    def test_focused_cards_cannot_agree_by_numbers_from_different_objectives(self):
+        from guild_quest import focused_quest_read
+        import time
+        heading=Image.new('RGB',(240,20),'black');heading.info['quest_box']=(0,0,240,20)
+        samples=['[Alchemy] Guild Supply Mission','Obtain Catalyst (49/600)','Make Oil (49/600)']
+        with patch('guild_quest.guild_heading_crops',return_value=[heading]),patch('guild_quest.run_ocr',side_effect=[type('Result',(),{'returncode':0,'stdout':s.encode()})() for s in samples]):
+            result,_=focused_quest_read(Image.new('RGB',(300,150),'black'),'engine',time.monotonic()+3)
+        self.assertIsNone(result)
+
     def test_complete_widget_works_with_obscured_heading_and_both_literal_messages(self):
         for text in (REWARD,'The guild mission is complete.', '[Alchemy] Guild Supply Mission\n'+REWARD):
             self.assertTrue(parse_guild_completion(text)['completion_observed'])
@@ -50,7 +74,7 @@ class QuestParsingTests(unittest.TestCase):
         for counter in ('49/\n600','\n101/600'):
             body='Obtain Catalyst ('+counter+')\n[Daily] Alchemy\nMake Oil (22/100)'
             responses=['no counter','no counter','[Alchemy] Guild Supply Mission',body,body]
-            with patch('guild_quest.run_ocr',side_effect=[type('Result',(),{'returncode':0,'stdout':t.encode()})() for t in responses]),patch('guild_quest.guild_heading_crops',return_value=[crop]):
+            with patch('guild_quest.run_ocr',side_effect=[type('Result',(),{'returncode':0,'stdout':t.encode()})() for t in responses]),patch('guild_quest.guild_heading_crops',return_value=[crop]),patch('guild_quest.focused_quest_read',return_value=(None,'')):
                 result,raw=recognize_quest(Image.new('RGB',(300,150),'black'),'engine')
             self.assertEqual(result['current'],101 if '101' in counter else 49)
             self.assertEqual(result['target'],600);self.assertIn('FOCUSED',raw)
@@ -58,7 +82,7 @@ class QuestParsingTests(unittest.TestCase):
     def test_disagreeing_focused_guild_body_does_not_accept_a_number(self):
         crop=Image.new('RGB',(240,20),'black');crop.info['quest_box']=(0,0,240,20)
         responses=['no counter','no counter','[Alchemy] Guild Supply Mission','Obtain Catalyst (184/600)','Obtain Catalyst (84/600)']
-        with patch('guild_quest.run_ocr',side_effect=[type('Result',(),{'returncode':0,'stdout':t.encode()})() for t in responses]),patch('guild_quest.guild_heading_crops',return_value=[crop]):
+        with patch('guild_quest.run_ocr',side_effect=[type('Result',(),{'returncode':0,'stdout':t.encode()})() for t in responses]),patch('guild_quest.guild_heading_crops',return_value=[crop]),patch('guild_quest.focused_quest_read',return_value=(None,'')):
             self.assertIsNone(recognize_quest(Image.new('RGB',(300,150),'black'),'engine')[0])
 
     def test_optional_caption_timeout_preserves_verified_guild_counter(self):

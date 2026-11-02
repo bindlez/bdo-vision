@@ -38,7 +38,8 @@ def parse_objectives(text):
             if not OBJECTIVE.search(line):continue
             block=objective_block(scope,i);pair=counter_in(block)
             if not pair:continue
-            detail=re.sub(r'^[^\w]+','',PAIR.sub('',block).splitlines()[0]).strip().rstrip(" ()'\"")
+            first=PAIR.sub('',block).splitlines()[0];verb=OBJECTIVE.search(first)
+            detail=first[verb.start():].strip().rstrip(" ()'\"") if verb else first.strip()
             key=kind[1].casefold()+':'+re.sub(r'[^a-z]','',detail.casefold())[:100]
             rows.append({'key':key,'kind':kind[1].title(),'label':header[:120],'objective':detail[:160],'current':pair[0],'target':pair[1]})
     return rows[:8]
@@ -64,7 +65,8 @@ def parse_quest_text(text):
     current,target=pairs.pop()
     if not 0<=current<=target<=10_000_000 or target==0:return None
     heading=re.sub(r'^[^\w\[]+','',scope[0]).strip()
-    detail=re.sub(r'^[^\w\[]+','',PAIR.sub('',text).splitlines()[0]).strip().rstrip(" ()'\"")
+    first=PAIR.sub('',text).splitlines()[0];verb=OBJECTIVE.search(first)
+    detail=first[verb.start():].strip().rstrip(" ()'\"") if verb else first.strip()
     detail=re.sub(r'(?<=[A-Za-z])[\\/](?=[A-Za-z])',' ',detail)
     result={'current':current,'target':target,'label':heading[:120],'objective':detail[:160]}
     remaining=re.search(r'Remaining\s*:\s*(\d{1,4})\s*min','\n'.join(scope),re.I)
@@ -115,11 +117,59 @@ def guild_heading_crops(image):
     return result[:4]
 
 
+def focused_quest_read(image,tess,deadline,diagnostic=None):
+    """Read separated gold-heading cards before a large, noisy widget pass.
+
+    Header geometry ends each card before the next quest. The progress counter
+    may wrap onto either row; never select a fixed row or borrow the next card.
+    """
+    headings=guild_heading_crops(image);texts=[];guild=None;objectives=[]
+    def read(frame,psm):
+        remaining=deadline-time.monotonic()
+        if remaining<.15:return ''
+        blob=io.BytesIO();frame.save(blob,format='PNG')
+        try:r=run_ocr([tess,'stdin','stdout','--psm',str(psm),'-l','eng'],input=blob.getvalue(),capture_output=True,timeout=min(.7,remaining))
+        except subprocess.TimeoutExpired:return ''
+        return r.stdout.decode('utf-8','replace')[:3000] if not r.returncode else ''
+    for index,heading in enumerate(headings):
+        if deadline-time.monotonic()<.35:break
+        source=heading.info.get('quest_box')
+        if not source:continue
+        header=read(ImageOps.autocontrast(heading.convert('RGB').getchannel('R')).resize((heading.width*3,heading.height*3),Image.Resampling.LANCZOS),7).strip()
+        folded=header.casefold()
+        is_guild='guild' in folded and 'alchemy' in folded and any(w in folded for w in ('supp','mission','quest'))
+        is_side=bool(re.search(r'\[(?:Daily|Bonus)\]',header,re.I))
+        if not (is_guild or is_side):continue
+        stop=min(image.height,source[3]+125)
+        if index+1<len(headings):stop=min(stop,headings[index+1].info['quest_box'][1])
+        if stop-source[3]<12:continue
+        # Objective and wrapped digits are left of the gold heading's inset.
+        # Preserve the complete widget width; heading x is not a counter anchor.
+        body=image.crop((0,source[3],image.width,stop))
+        gray=ImageOps.autocontrast(body.convert('RGB').getchannel('R')).resize((body.width*3,body.height*3),Image.Resampling.LANCZOS)
+        values=[]
+        for field in (gray,ImageOps.invert(gray)):
+            raw=read(field,6);text=header+'\n'+raw;texts.append(text)
+            if diagnostic is not None:diagnostic(field,'FOCUSED CARD '+str(len(values)+1)+'\n'+text)
+            values.append(parse_quest_text(text) if is_guild else parse_objectives(text))
+        if is_guild:
+            a,b=values
+            if a and b and (a['current'],a['target'])==(b['current'],b['target']) and a['objective'].casefold()==b['objective'].casefold():guild={**a,'card_box':[0,source[1],image.width,stop]}
+        else:
+            right={r['key']:r for r in values[1]}
+            objectives.extend(r for r in values[0] if r['key'] in right and (r['current'],r['target'])==(right[r['key']]['current'],right[r['key']]['target']))
+    if guild:return {**guild,'objectives':objectives,'reader_path':'focused quest cards'},'\n\n'.join(texts)[:10000]
+    return None,'\n\n'.join(texts)[:10000]
+
+
 def recognize_quest(image,tess,diagnostic=None):
     if image.width<30 or image.height<15 or image.width*image.height>250_000:raise ValueError('Select only the current mission heading and progress, up to 250,000 pixels.')
+    deadline=time.monotonic()+3
+    fast,fast_raw=focused_quest_read(image,tess,min(deadline,deadline-1.65),diagnostic)
+    if fast:return fast,fast_raw
     gray=ImageOps.autocontrast(image.convert('RGB').getchannel('R'));scale=min(2.5,math.sqrt(1_500_000/(gray.width*gray.height)))
     gray=gray.resize((max(1,int(gray.width*scale)),max(1,int(gray.height*scale))),Image.Resampling.LANCZOS)
-    readings=[];texts=[];deadline=time.monotonic()+3
+    readings=[];texts=[]
     for prepared in (gray,ImageOps.invert(gray)):
         data=io.BytesIO();prepared.save(data,format='PNG')
         remaining=deadline-time.monotonic()
@@ -156,7 +206,7 @@ def recognize_quest(image,tess,diagnostic=None):
             source=crop.info['quest_box'];stop=min(image.height,source[3]+120)
             if index+1<len(headings) and 'quest_box' in headings[index+1].info:stop=min(stop,headings[index+1].info['quest_box'][1])
             if stop-source[3]<12:continue
-            body=image.crop((max(0,source[0]-12),source[3],image.width,stop))
+            body=image.crop((0,source[3],image.width,stop))
             field=ImageOps.autocontrast(body.convert('L')).resize((body.width*3,body.height*3),Image.Resampling.LANCZOS)
             verified=[]
             for variant in (field,ImageOps.invert(field)):

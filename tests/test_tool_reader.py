@@ -11,6 +11,30 @@ def row(value,x=200,name='Supreme Alchemy Tool',maximum=5000):
 
 
 class ActiveToolTests(unittest.TestCase):
+    def test_partial_title_family_is_names_only_and_requires_tool_shape(self):
+        from tool_reader import anchored_title_family
+        self.assertEqual(anchored_title_family('MorningLightTraditionaltalchemvilool(2492/3000)'),'Alchemy Tool')
+        for title in ('Alchemy Stone(80/100)','HP(83/5000)','Black Spirit(382/3000)'):
+            self.assertIsNone(anchored_title_family(title))
+
+    def test_trusted_bar_rejects_a_lost_leading_digit_at_5000_capacity(self):
+        from tool_reader import counter_context_error
+        self.assertTrue(counter_context_error(83,5000,{'bar_fill':.08}))
+        self.assertFalse(counter_context_error(382,5000,{'bar_fill':.08}))
+
+    def test_successful_digit_boxes_are_not_reused_after_the_digits_change(self):
+        region={'name':'Alchemy Tool','box':[0,0,100,30],'numbers':[10,0,100,30],
+                'bar_pair':(382,3000),'digit_boxes':[[10,2,40,28],[45,2,90,28]]}
+        header='level\tleft\ttop\twidth\theight\tconf\ttext\n'
+        def tsv(text):return header+'5\t0\t0\t40\t20\t90\t'+text+'\n'
+        with patch('tool_reader.ocr',side_effect=[tsv(t) for t in ('382','382','3000','3000')]):
+            found,calls=verify_labels([Image.new('RGB',(100,30),'white')],[region],'engine')
+        self.assertEqual(found[0]['current'],382);self.assertEqual(calls,4)
+        self.assertNotIn('digit_boxes',region);self.assertTrue(region['white_numeric'])
+        with patch('tool_reader.ocr',side_effect=[tsv('381/3000')]*2):
+            found,calls=verify_labels([Image.new('RGB',(100,30),'white')],[region],'engine')
+        self.assertEqual(found[0]['current'],381);self.assertEqual(calls,2)
+
     def test_literal_empty_tool_cannot_turn_into_ten_from_numeric_mask(self):
         from tool_reader import counter_context_error
         region={'coarse_pair':(0,5000)}
