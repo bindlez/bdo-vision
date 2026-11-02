@@ -1,3 +1,7 @@
+# BDO Vision 1.12.1-rc.5 - OCR diagnosis and low-durability tool fix
+
+Both reader viewers add full-size source inspection, hold-frame control, bounded attempt history and explicit failure details. Quest previews appear before recognition and stream partial pass text so timeouts retain useful evidence. Short gold fills with dark tracks against gray walls can now locate low-durability tools; the private live-frame replay changes from no tools to635/3000 and917/3000 with635 selected by Place Mode. Quest failures retry sooner with bounded backoff. Foreground/occlusion protection and numeric consensus remain. Live post-install acceptance is still required; no perfect OCR claim.
+
 # BDO Vision 1.12.1-rc.4 - Fairy Codex platform integration
 
 Includes pinned Fairy Codex V36.1 from main commit99633c300ea69e06d111fdd54d9b493ab0a01bd2, native/planner navigation, optional same-origin recorded-loot display and exact treasure-name matches. No new OCR, automatic ownership, pity conversion or inferred kill count. Public-site Fairy progress requires explicit export/import because browser origins differ. The complete remaining platform acceptance checklist is in docs/PLATFORM-RELEASE-PLAN.md.

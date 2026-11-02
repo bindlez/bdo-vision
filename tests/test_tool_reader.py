@@ -115,6 +115,11 @@ class ActiveToolTests(unittest.TestCase):
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_short_gold_fill_on_gray_wall_still_locates_the_complete_dark_track(self):
+        image=Image.new('RGB',(1280,720),(95,90,84));draw=ImageDraw.Draw(image)
+        draw.rectangle((600,210,699,215),fill=(40,40,36));draw.rectangle((600,211,619,213),fill=(240,200,70))
+        bars=durability_bars(image)
+        self.assertTrue(any(abs(r['box'][0]-600)<4 and .15<r['fill']<.25 for r in bars))
     def test_moved_place_mode_is_found_before_returning_nearby_labels(self):
         from tool_reader import discover_scene
         raw='level\tleft\ttop\twidth\theight\tconf\ttext\n5\t70\t100\t90\t20\t95\tPlace\n5\t165\t100\t60\t20\t95\tMode\n'

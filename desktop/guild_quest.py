@@ -95,7 +95,7 @@ def guild_heading_crops(image):
     return result[:4]
 
 
-def recognize_quest(image,tess):
+def recognize_quest(image,tess,diagnostic=None):
     if image.width<30 or image.height<15 or image.width*image.height>250_000:raise ValueError('Select only the current mission heading and progress, up to 250,000 pixels.')
     gray=ImageOps.autocontrast(image.convert('RGB').getchannel('R'));scale=min(2.5,math.sqrt(1_500_000/(gray.width*gray.height)))
     gray=gray.resize((max(1,int(gray.width*scale)),max(1,int(gray.height*scale))),Image.Resampling.LANCZOS)
@@ -107,6 +107,7 @@ def recognize_quest(image,tess):
         result=run_ocr([tess,'stdin','stdout','--psm','11','-l','eng'],input=data.getvalue(),capture_output=True,timeout=min(1.5,remaining))
         if result.returncode:raise RuntimeError('Guild mission OCR failed; retrying automatically.')
         text=result.stdout.decode('utf-8','replace')[:6000];texts.append(text);readings.append(parse_quest_text(text))
+        if diagnostic is not None:diagnostic(prepared,'BROAD PASS '+str(len(texts))+'\n'+text+'\nSCOPED GUILD: '+str(readings[-1]))
     a,b=readings
     agreed=a if a and b and (a['current'],a['target'])==(b['current'],b['target']) else None
     focused=[]

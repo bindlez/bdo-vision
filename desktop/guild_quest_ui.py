@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import ImageGrab,Image
 from guild_quest import GuildQuestProgress,recognize_quest
-from ocr_debug import OCRReaderView,preview_image
+from ocr_debug import OCRReaderView,preview_image,source_image
 from windows_bdo import visible_bdo_capture_bounds,item_regions_visible
 
 
@@ -21,6 +21,7 @@ class GuildQuestTracker:
         self.detail=tk.StringVar(value='Show the alchemy guild mission in BDO’s right-hand quest widget.')
         self.notice=tk.StringVar(value='Near-finish and completion alerts are sent once per quest.')
         self.debug=tk.StringVar();self.bar=None;self.cache=None
+        self.read_failures=0
         self.reader_view=OCRReaderView(self.app,'Quest OCR reader',self.read_now)
         self.objective_rows={};self.objective_tree=None;self.waiting=False
         tracker.ledger.db.execute('CREATE TABLE IF NOT EXISTS quest_objectives (key TEXT PRIMARY KEY,payload TEXT NOT NULL)')
@@ -153,9 +154,14 @@ class GuildQuestTracker:
                 if self.capture_region()!=box:raise RuntimeError('Mission area moved or was covered; retrying.')
                 if image.width*image.height>250000:
                     scale=math.sqrt(249000/(image.width*image.height));image=image.resize((int(image.width*scale),int(image.height*scale)),Image.Resampling.LANCZOS)
+                def diagnostic(frame,detail):
+                    if debug_token is not None and self.reader_view.token()==debug_token:
+                        picture=source_image(frame)
+                        self.root.after(0,lambda:self.reader_view.show(debug_token,picture,detail,captured))
+                diagnostic(image,'CAPTURE RECEIVED\nRegion: '+str(box)+'\nRecognition is starting. This frame is retained if a later OCR pass fails.')
                 key=(tess,box,hashlib.sha256(image.tobytes()).digest());cached=self.cache
                 if cached and cached[0]==key and time.monotonic()-cached[1]<60:reading,raw=cached[2],cached[3];reused=True
-                else:reading,raw=recognize_quest(image,tess);reused=False
+                else:reading,raw=recognize_quest(image,tess,diagnostic=diagnostic if debug_token is not None else None);reused=False
                 if reading:self.cache=(key,time.monotonic(),reading,raw)
                 if debug_token is not None and self.reader_view.token()==debug_token:
                     preview=preview_image(image)
@@ -187,7 +193,9 @@ class GuildQuestTracker:
             keys=list(self.objective_rows)
             with self.tracker.ledger.db:self.tracker.ledger.db.execute('DELETE FROM quest_objectives WHERE key NOT IN ('+','.join('?' for _ in keys)+')',keys)
         self.debug.set(f"Reader {duration:.2f}s · "+('unchanged verified pixels reused' if reused else 'two OCR passes')+' · no screenshot saved')
-        self.refresh();self.schedule(10000 if reading else 30000)
+        self.read_failures=0 if reading and 'current' in reading else self.read_failures+1
+        retry=(3000,5000,10000,30000)[min(3,max(0,self.read_failures-1))]
+        self.refresh();self.schedule(10000 if self.read_failures==0 else retry)
 
     def failed(self,message,generation):
         self.busy=False;self.app.busy=False

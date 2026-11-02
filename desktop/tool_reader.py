@@ -181,7 +181,7 @@ def ocr(image,tess,psm,numeric=False,characters=False):
     if result.returncode:raise RuntimeError('Tool OCR could not read the frame')
     text=result.stdout.decode('utf-8','replace')
     trace=getattr(_budget,'trace',None)
-    if trace is not None and len(trace)<16:trace.append(f'PSM {psm} numeric={numeric}\n'+text[:1800])
+    if trace is not None and len(trace)<16:trace.append(f'PSM {psm} numeric={numeric}\n'+(str([(w['text'],w['confidence'],w['x'],w['y']) for w in words(text)]) if not characters else re.sub('<[^>]+>',' ',text))[:6000])
     return text
 
 
@@ -205,7 +205,7 @@ def durability_bars(image):
     red,green,blue=small.split()
     mask=ImageChops.multiply(ImageChops.multiply(red.point(lambda p:255 if p>170 else 0),
         green.point(lambda p:255 if p>140 else 0)),blue.point(lambda p:255 if p<160 else 0))
-    data=mask.tobytes();sw,sh=small.size;groups=[];pattern=re.compile(b'\xff{16,110}')
+    data=mask.tobytes();sw,sh=small.size;groups=[];pattern=re.compile(b'\xff{4,110}')
     start=int(sw*.12);end=int(sw*.87)
     for y in range(int(sh*.12),int(sh*.66)):
         for hit in pattern.finditer(data[y*sw+start:y*sw+end]):
@@ -220,9 +220,10 @@ def durability_bars(image):
         middle=(a+c)//2;tracks=[]
         for y in (b-1,b-2,d+1,d):
             if not 0<=y<height or max(pixels[middle,y][:3])>=175:continue
+            cutoff=min(175,max(60,max(pixels[middle,y][:3])+25))
             left=right=middle
-            while left>max(0,middle-int(210*unit)) and max(pixels[left-1,y][:3])<175:left-=1
-            while right<min(width-1,middle+int(210*unit)) and max(pixels[right+1,y][:3])<175:right+=1
+            while left>max(0,middle-int(210*unit)) and max(pixels[left-1,y][:3])<cutoff:left-=1
+            while right<min(width-1,middle+int(210*unit)) and max(pixels[right+1,y][:3])<cutoff:right+=1
             if 50*unit<=right-left<=180*unit and left<=a+4 and right>=c-4:tracks.append((abs((right-left)-100*unit),left,right))
         if not tracks:
             if c-a<60*unit:continue
@@ -531,6 +532,7 @@ class AutomaticToolReader:
 
     def read(self,tess,bounds,grab,now=None,interval=10,confirm_pair=False):
         started=time.monotonic();_budget.deadline=started+6
+        self.last_failure_trace=''
         if self.diagnostic is not None:_budget.trace=[]
         try:
             report=self._read(tess,bounds,grab,now,interval)
@@ -552,6 +554,9 @@ class AutomaticToolReader:
             report['duration']=time.monotonic()-started
             if hasattr(_budget,'trace'):report['_debug_raw']='\n\n'.join(_budget.trace)[:12000]
             return report
+        except Exception:
+            self.last_failure_trace='\n\n'.join(getattr(_budget,'trace',[]))[:12000]
+            raise
         finally:
             del _budget.deadline
             if hasattr(_budget,'trace'):del _budget.trace

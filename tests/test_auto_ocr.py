@@ -8,6 +8,14 @@ from app import App, DEFAULT
 
 
 class AutoOCRTests(unittest.TestCase):
+    def test_manual_tool_read_waits_for_game_without_taking_a_capture(self):
+        app=types.SimpleNamespace(bdo_foreground=lambda:False,capture_tools=MagicMock(),set_tool_stage=MagicMock(),root=MagicMock(),wait_for_tool_capture=MagicMock(),busy=True,scan_button=None)
+        App.wait_for_tool_capture(app,'engine',float('inf'))
+        app.capture_tools.assert_not_called();app.root.after.assert_called_once()
+        app.bdo_foreground=lambda:True;App.wait_for_tool_capture(app,'engine',float('inf'))
+        app.capture_tools.assert_called_once_with('engine',False)
+        app.bdo_foreground=lambda:False;app.capture_tools.reset_mock();App.wait_for_tool_capture(app,'engine',-1)
+        self.assertFalse(app.busy);app.capture_tools.assert_not_called()
     def app(self):
         return types.SimpleNamespace(lite_use=types.SimpleNamespace(get=lambda:False),lite_scan_complete=False,auto_enabled=types.SimpleNamespace(get=lambda:True),region_confirmed=True,selecting_region=False,
             bdo_foreground=lambda:True,busy=False,loot=types.SimpleNamespace(busy=False),

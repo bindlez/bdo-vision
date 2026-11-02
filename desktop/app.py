@@ -14,7 +14,7 @@ from tracking_core import ReadingGate, remaining_at, align_to_capture, estimate_
 from spatial_ocr import tsv_candidates, choose_spatial_pair
 from ocr_runtime import run_ocr
 from tool_reader import AutomaticToolReader
-from ocr_debug import OCRReaderView,label_montage,preview_image
+from ocr_debug import OCRReaderView,label_montage,preview_image,source_image
 from tool_status import ToolStatus,estimate_durability
 from windows_bdo import foreground_bdo_capture_bounds
 
@@ -322,13 +322,22 @@ class App:
    if wanted:self.tool_empty.place_forget()
    else:self.tool_empty.place(relx=.5,rely=.55,anchor='center')
 
+ def wait_for_tool_capture(self,tess,deadline):
+  if self.bdo_foreground():self.capture_tools(tess,False);return
+  if time.monotonic()>=deadline:
+   self.busy=False
+   if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
+   self.set_tool_stage('paused','No game capture taken: BDO did not come to the front. Press READ NOW and switch to BDO.');return
+  self.set_tool_stage('waiting','Waiting for BDO in front; no OCR runs until the game is visible.')
+  self.root.after(250,lambda:self.wait_for_tool_capture(tess,deadline))
+
  def capture_tools(self,tess,automatic=False):
   self.set_tool_stage('reading','Checking visible tool labels and durability. Loot recording remains independent.')
   reader=self.tool_reader;interval=self.safe_scan_interval()
   debug_token=self.tool_debug.token();debug_frames=[]
   def diagnostic(crops,observations,scene):
    if self.tool_debug.token()==debug_token and debug_token is not None:
-    debug_frames[:]=[preview_image(scene) if scene is not None else label_montage(crops)]
+    debug_frames[:]=[source_image(scene) if scene is not None else label_montage(crops)]
   reader.diagnostic=diagnostic if debug_token is not None else None
   def work():
    try:
@@ -338,7 +347,7 @@ class App:
      if foreground_bdo_capture_bounds()!=bounds:raise RuntimeError('BDO moved or lost focus; waiting to reacquire tool labels')
      image=ImageGrab.grab(bbox=box,all_screens=True)
      if debug_token is not None and self.tool_debug.token()==debug_token:
-      preview=preview_image(image);observed=time.time()
+      preview=source_image(image);observed=time.time()
       self.root.after(0,lambda:self.tool_debug.show(debug_token,preview,'Capture received. Recognition in progress; this image remains available if OCR times out.',observed))
      return image
     captured_at=time.time();captured_mono=time.monotonic()
@@ -359,6 +368,7 @@ class App:
   if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
   if reader is self.tool_reader:self.set_tool_stage('error',message)
   self.tool_debug.paused(message)
+  if getattr(reader,'last_failure_trace',''):self.tool_debug.paused(message+'\nPARTIAL OCR OUTPUT:\n'+reader.last_failure_trace)
 
  def finish_tools(self,report,reader,automatic,captured_at,captured_mono):
   self.busy=False
@@ -787,7 +797,8 @@ class App:
      self.status.set('Switch to BDO now — finding visible tools in 3 seconds…')
      self.set_tool_stage('waiting','Switch to BDO. Reading starts in 3 seconds.')
     if self.scan_button:self.scan_button.configure(state='disabled',text='FINDING TOOLS…')
-    self.root.after(3000 if delayed else 1,lambda:self.capture_tools(tess,automatic))
+    if delayed and not automatic:self.root.after(3000,lambda:self.wait_for_tool_capture(tess,time.monotonic()+12))
+    else:self.root.after(1,lambda:self.capture_tools(tess,automatic))
     return
    x,y,w,h=[int(v.get()) for v in self.region]
    if w<3 or h<3:raise ValueError('Select a valid capture region.')

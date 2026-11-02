@@ -2,6 +2,16 @@
 
 Checked items mean implemented with automated evidence, not universal live-game acceptance. This plan preserves the user's complete scope; a candidate package is not proof that every unchecked item is finished.
 
+## Current acceptance blocker: readers and diagnosis
+
+User reports tool discovery still fails and guild OCR works only intermittently. These are open product defects despite prior regression passes. Current replay evidence: private unobstructed live frame failed tool discovery before the low-fill/dark-track fix; the same frame then reads 635/3000 and 917/3000 and selects 635 by Place Mode (~2.24s). Guild replay reads 58/600 and Daily98/100. A second screenshot contains the Vision window over part of the game and is not proof of a valid timed tool comparison. Live diagnostics also report foreground loss and quest occlusion. Live end-to-end confirmation after installation remains required.
+
+- [x] Full-size source image, hold capture, bounded attempt history and repeated-error suppression in both reader viewers.
+- [x] Quest preview delivered before OCR and partial pass output retained on later failure.
+- [x] Tool failure trace retains readable token text/geometry instead of truncating to TSV boilerplate.
+- [x] Low-fill tool bars on gray backgrounds have a synthetic regression.
+- [ ] Verify the installed fixes over changing live counters and camera movement; do not call replay alone verified live reliability.
+
 ## Observation and tool reliability
 
 - [x] Tool reader image, raw text and decision evidence; dashboard access.
