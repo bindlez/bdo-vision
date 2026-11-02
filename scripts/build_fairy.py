@@ -38,7 +38,8 @@ def build():
     if 'id="vision-link"' not in source:raise ValueError('Missing Fairy body integration')
     adapter=(ROOT/'desktop/assets/fairy-vision.js').read_text(encoding='utf-8')
     source=source.replace('</body>','<script>\n'+adapter+'\n</script></body>',1)
-    (ROOT/'fairycodex.html').write_text(source,encoding='utf-8')
+    # Git's LF checkout and Windows text-mode CRLF output must not disagree.
+    (ROOT/'fairycodex.html').write_bytes(source.encode('utf-8'))
     print('Fairy Codex V36.1 integrated; upstream SHA256',hashlib.sha256((ROOT/'fairycodex-upstream.html').read_bytes()).hexdigest())
 
 
