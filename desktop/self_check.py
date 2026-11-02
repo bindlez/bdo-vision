@@ -10,6 +10,7 @@ def run_self_check(app_class,root_path,data_path):
         import pywinauto
         report['checks']['tray_dependency']=bool(pywinauto)
         for name,path in {'planner':root_path.parent/'bdo-market-intelligence.html',
+                          'fairycodex':root_path.parent/'fairycodex.html',
                           'recipes':Path(__file__).parent/'assets/recipes.json',
                           'item_names':Path(__file__).parent/'assets/item-names.json',
                           'icon':root_path/'assets/bdo-lite.png'}.items():

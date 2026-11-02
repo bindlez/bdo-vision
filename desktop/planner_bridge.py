@@ -160,6 +160,10 @@ class PlannerBridge:
                         self._send({'error': 'Planner HTML not found beside the app'}, 404)
                         return
                     self._send(content, 200, 'text/html; charset=utf-8')
+                elif route=='/fairy':
+                    try:content=bridge.html_path.with_name('fairycodex.html').read_bytes()
+                    except OSError:self._send({'error':'Fairy Codex is not included in this build'},404);return
+                    self._send(content,200,'text/html; charset=utf-8')
                 elif route == '/gear/extras':
                     if not bridge.price_book:self._send({'items':[]});return
                     try:

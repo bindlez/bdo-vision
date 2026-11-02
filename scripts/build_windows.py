@@ -21,7 +21,7 @@ stage=Path(tempfile.mkdtemp(prefix='portable-',dir=build))/f'BDO-Vision-{version
 desktop=stage/'desktop';desktop.mkdir(parents=True,exist_ok=True)
 shutil.copytree(build/'frozen/BDO-Vision',desktop,dirs_exist_ok=True)
 shutil.copytree(assets,desktop/'assets',dirs_exist_ok=True)
-for name in ('bdo-market-intelligence.html','VERSION','README.md','RELEASE_NOTES.md'):
+for name in ('bdo-market-intelligence.html','fairycodex.html','VERSION','README.md','RELEASE_NOTES.md'):
     shutil.copy2(root/name,stage/name)
 guide=root/'docs/QUICK-START.md'
 if not guide.is_file():guide=root/'docs/FRIEND-TEST.md'

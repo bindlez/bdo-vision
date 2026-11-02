@@ -24,7 +24,7 @@ class SilverLooted:
         controls=tk.Frame(frame,bg=c['bg']);controls.pack(fill='x')
         picker=ttk.Combobox(controls,style='Vision.TCombobox',textvariable=self.scope,values=('Today','Timed session','All recorded'),state='readonly',width=18);picker.pack(side='left');picker.bind('<<ComboboxSelected>>',lambda e:self.refresh())
         self.tracker.app.text_button(controls,'REFRESH MARKET MATCHES',lambda:self.tracker.insights.prices.refresh_async(force=True)).pack(side='left',padx=12)
-        ttk.Checkbutton(controls,text='Share recorded loot with planner (optional)',variable=self.tracker.share_loot,command=self.tracker.share_changed,style='Vision.TCheckbutton').pack(side='right')
+        ttk.Checkbutton(controls,text='Share loot with planner / Fairy Codex (optional)',variable=self.tracker.share_loot,command=self.tracker.share_changed,style='Vision.TCheckbutton').pack(side='right')
         tk.Label(frame,textvariable=self.measurement,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10),wraplength=880,justify='left').pack(anchor='w',pady=(16,0))
         tk.Label(frame,text='SILVER LOOTED · RECORDED VALUE',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(18,0))
         tk.Label(frame,textvariable=self.total,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',34)).pack(anchor='w',pady=(4,0))

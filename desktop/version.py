@@ -1,1 +1,1 @@
-APP_VERSION="1.12.1-rc.3"
+APP_VERSION="1.12.1-rc.4"

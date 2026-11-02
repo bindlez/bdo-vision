@@ -26,7 +26,7 @@ def install():
         saved=profile/'backups'/('app-files-'+datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
         shutil.copytree(target,saved,ignore=shutil.ignore_patterns('__pycache__','*.sqlite3*','settings.json','runtime-status.json'))
     target.mkdir(exist_ok=True)
-    for name in ('bdo-market-intelligence.html','README.md','RELEASE_NOTES.md','requirements.txt','RUN.bat','VERSION'):
+    for name in ('bdo-market-intelligence.html','fairycodex.html','README.md','RELEASE_NOTES.md','requirements.txt','RUN.bat','VERSION'):
         shutil.copy2(SOURCE/name,target/name)
     desktop=target/'desktop';desktop.mkdir(exist_ok=True)
     for source in (SOURCE/'desktop').glob('*.py'):shutil.copy2(source,desktop/source.name)

@@ -40,6 +40,14 @@ class BridgeTests(unittest.TestCase):
         self.assertIn('text/html', h['Content-Type'])
         self.assertIn(b'function pollBridge()', text)
 
+    def test_fairy_is_served_locally_with_original_version_and_opt_in_link(self):
+        headers,body=self.get('/fairy')
+        self.assertIn('text/html',headers['Content-Type'])
+        self.assertIn(b'FairyCodex V36.1',body)
+        self.assertIn(b'vision-connect',body)
+        self.assertIn(b'fairycodex.treasure.v1',body)
+        self.assertNotIn(b'id="vision-connect" type="checkbox" checked',body)
+
     def test_tool_diagnostics_are_small_isolated_and_read_only(self):
         status={'stage':'found','tools':[{'id':'a','current':95}], 'screenshot':'excluded'}
         self.bridge.update_tool_status(status);status['tools'][0]['current']=7

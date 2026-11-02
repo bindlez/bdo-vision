@@ -165,6 +165,7 @@ class App:
   self.action(gear_row,'SILVER & LOOT HISTORY',self.loot.open,flat=True).pack(side='left',fill='x',expand=True,padx=(0,5))
   self.action(gear_row,'GEAR STUDIO',self.open_gear_planner,flat=True).pack(side='left',fill='x',expand=True,padx=(5,0))
   self.action(gear_row,'GUILD QUEST',self.open_guild_quest,flat=True).pack(side='left',fill='x',expand=True,padx=(8,0))
+  self.action(main,'FAIRY CODEX · TREASURES & FAIRY PLANNING',self.open_fairy,flat=True).pack(fill='x',pady=(8,0))
   tk.Label(main,textvariable=self.auto_health,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9)).pack(anchor='w',pady=(8,0))
 
   tk.Frame(main,bg=c['line'],height=1).pack(fill='x',pady=(12,9))
@@ -224,6 +225,10 @@ class App:
   self.loot.open()
   targets={'craft':self.loot.craft_tab,'grind':self.loot.grind.frame,'reader':self.loot.preview.master}
   self.loot.tabs.select(targets[section])
+
+ def open_fairy(self):
+  if self.bridge and self.bridge.server:webbrowser.open_new_tab(self.bridge.base_url+'/fairy')
+  else:self.status.set('Start the local connection to open Fairy Codex.')
 
  def tool_mode_changed(self):
   self.lite_scan_complete=False

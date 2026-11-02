@@ -1,0 +1,13 @@
+# Fairy Codex integration
+
+Upstream verified November 1, 2026: bindlez/fairycodex main, commit `99633c300ea69e06d111fdd54d9b493ab0a01bd2`, version V36.1. `fairycodex-upstream.html` preserves that published page; `scripts/build_fairy.py` generates the integrated `fairycodex.html`. The Velocity prototype is not used as the product version. Updating upstream requires explicit adapter review, regeneration, syntax checks and regressions.
+
+Open FAIRY CODEX in the desktop app or Fairy Codex in the planner sidebar. The local bridge serves `/fairy`, with the same origin checks as the planner. Full fairy, treasure, simulation and Imperial planning functionality from upstream remains included. Vision adds a small optional recorded-loot panel; it does not replace Fairy's vault.
+
+Enable optional sharing in Vision's Silver tab, then check Connect recorded loot on the Fairy page. Accepted ledger quantities and exact treasure catalog-name matches appear there. The snapshot covers all recorded history, not current inventory or just the current session. Duplicate snapshots replace the display; they are never accumulated as new drops. Unknown and ambiguous pieces remain unmatched. A count does not automatically complete a collection or become a pity/exchange count. No new OCR, kill estimation or drop-rate inference is introduced.
+
+The adapter requests local snapshots at most every ten seconds while connected and visible, with a timeout and no overlapping requests. Disconnecting stops scheduled requests. Lite Use stops capture; old recorded history may still be displayed as paused. All dynamic item text uses textContent. At most 80 items render; exact treasure matches sort first. No loot is uploaded to the public Fairy site or Velocity Worker by this adapter.
+
+Browser storage is origin-specific. The existing public-site Fairy vault cannot be read by the localhost copy. Export from the old page and import into the integrated page using Fairy's existing backup controls. Keep that export: import replaces the selected vault after confirmation. The Vision adapter does not write Fairy profiles, collection ownership or sessions. The existing Fairy browser worker is for probability calculations, not a new native background tracker; the page is only loaded on request.
+
+The current bridge integration is observed-loot display and exact catalog matching. Automatic native-to-Fairy session import, reviewed identity aliases for ambiguous pieces, pity-specific conversions and cloud profile sync are not implemented. Ordinary monster rates remain unknown where upstream has no verified rate; observation totals must not be converted into invented probabilities.

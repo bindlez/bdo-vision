@@ -9,7 +9,7 @@ out=root/'dist';out.mkdir(exist_ok=True)
 allowed=[]
 for name in ('VERSION','README.md','RELEASE_NOTES.md','requirements.txt','requirements-dev.txt',
              'requirements-optional-tray.txt','RUN.bat','INSTALL.bat','INSTALL-TRAY-SUPPORT.bat',
-             'BUILD-EXE.bat','install_local.py','bdo-market-intelligence.html','.gitignore','.gitattributes',
+             'BUILD-EXE.bat','install_local.py','bdo-market-intelligence.html','fairycodex.html','fairycodex-upstream.html','.gitignore','.gitattributes',
              'dev.py','AGENTS.md','DEVELOPER-HANDBOOK.bat','CHANGELOG.md'):
     path=root/name
     if path.is_file():allowed.append(path)
