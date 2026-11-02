@@ -1,4 +1,27 @@
 """Mouse-wheel support for native canvas pages, without stealing table scrolling."""
+import tkinter as tk
+from tkinter import ttk
+
+
+def notebook_page(notebook, title, colors):
+    """Return the selectable tab and its scrollable content as distinct frames."""
+    outer = tk.Frame(notebook, bg=colors['bg'])
+    notebook.add(outer, text=title)
+    canvas = tk.Canvas(outer, bg=colors['bg'], highlightthickness=0, takefocus=True)
+    scrollbar = ttk.Scrollbar(outer, orient='vertical', command=canvas.yview)
+    scrollbar.pack(side='right', fill='y')
+    canvas.configure(yscrollcommand=scrollbar.set)
+    canvas.pack(fill='both', expand=True)
+    content = tk.Frame(canvas, bg=colors['bg'], padx=12, pady=10)
+    item = canvas.create_window(0, 0, window=content, anchor='nw')
+    content.bind('<Configure>', lambda event: canvas.configure(scrollregion=canvas.bbox('all')))
+    canvas.bind('<Configure>', lambda event: canvas.itemconfigure(item, width=event.width))
+    canvas.bind('<Next>', lambda event: canvas.yview_scroll(1, 'pages'))
+    canvas.bind('<Prior>', lambda event: canvas.yview_scroll(-1, 'pages'))
+    enable_page_wheel(canvas)
+    outer.page_canvas = canvas
+    outer.page_content = content
+    return outer, content
 
 
 def enable_page_wheel(canvas):

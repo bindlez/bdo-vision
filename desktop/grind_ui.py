@@ -51,7 +51,8 @@ class GrindTracker:
         self.insights.session.db.execute('CREATE TABLE IF NOT EXISTS grind_details (session TEXT PRIMARY KEY, spot TEXT NOT NULL, goal INTEGER NOT NULL)');self.insights.session.db.commit()
 
     def build(self,tabs):
-        c=self.tracker.app.colors;self.frame=frame=tk.Frame(tabs,bg=c['bg'],padx=16,pady=14);tabs.add(frame,text='Grind')
+        from ui_scroll import notebook_page
+        c=self.tracker.app.colors;self.frame,frame=notebook_page(tabs,'Grind',c)
         top=tk.Frame(frame,bg=c['bg']);top.pack(fill='x')
         for title,var,width in [('SPOT / ROUTE',self.spot,27),('TREASURE PURSUIT · OPTIONAL',self.target,28),('GOAL',self.goal,5)]:
             field=tk.Frame(top,bg=c['bg']);field.pack(side='left',fill='x',expand=title!='GOAL',padx=(0,12))
@@ -62,15 +63,15 @@ class GrindTracker:
         self.tracker.app.text_button(actions,'PAUSE / RESUME',self.pause).pack(side='left',padx=12)
         self.tracker.app.text_button(actions,'FINISH RUN',self.finish).pack(side='left',padx=12)
         self.tracker.app.text_button(actions,'EXPORT RUN',self.export).pack(side='right')
-        tk.Label(frame,textvariable=self.state,bg=c['bg'],fg=c['bright'],wraplength=870,justify='left',font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(0,10))
+        tk.Label(frame,textvariable=self.state,bg=c['bg'],fg=c['bright'],wraplength=700,justify='left',font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(0,10))
         cards=tk.Frame(frame,bg=c['bg']);cards.pack(fill='x')
         for index,label in enumerate(('RECORDED VALUE','SILVER / OBSERVED HOUR','OBSERVED / EXCLUDED','RARE-NOTICE UNITS')):
             cards.columnconfigure(index,weight=1,uniform='grind')
             card=tk.Frame(cards,bg=c['panel'],padx=12,pady=12);card.grid(row=0,column=index,sticky='nsew',padx=(0,7))
             tk.Label(card,text=label,bg=c['panel'],fg=c['muted'],font=('Segoe UI Semibold',8)).pack(anchor='w')
-            tk.Label(card,textvariable=self.metrics[index],bg=c['panel'],fg=c['text'],font=('Segoe UI Semibold',18 if index!=2 else 12)).pack(anchor='w',pady=(7,0))
-        tk.Label(frame,textvariable=self.benchmark,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9),wraplength=880,justify='left').pack(anchor='w',pady=(10,5))
-        tk.Label(frame,textvariable=self.pursuit,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10),wraplength=870,justify='left').pack(anchor='w',pady=(0,8))
+            tk.Label(card,textvariable=self.metrics[index],bg=c['panel'],fg=c['text'],font=('Segoe UI Semibold',15 if index!=2 else 11)).pack(anchor='w',pady=(7,0))
+        tk.Label(frame,textvariable=self.benchmark,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(10,5))
+        tk.Label(frame,textvariable=self.pursuit,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10),wraplength=700,justify='left').pack(anchor='w',pady=(0,8))
         self.canvas=tk.Canvas(frame,height=66,bg=c['panel'],highlightthickness=0);self.canvas.pack(fill='x',pady=(0,10))
         tk.Label(frame,text='RUN HISTORY · select a finished run to inspect it',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',8)).pack(anchor='w',pady=(0,5))
         box=tk.Frame(frame,bg=c['bg']);box.pack(fill='both',expand=True)
@@ -80,7 +81,7 @@ class GrindTracker:
         self.history_tree.pack(side='left',fill='both',expand=True)
         scroll=ttk.Scrollbar(box,orient='vertical',command=self.history_tree.yview);scroll.pack(side='right',fill='y');self.history_tree.configure(yscrollcommand=scroll.set)
         self.history_tree.bind('<<TreeviewSelect>>',lambda e:self.refresh_cards(self.selected()))
-        tk.Label(frame,text='Value = captured quantity × market or verified NPC unit value. Rate = value ÷ observed seconds × 3,600. Capture gaps and manual pauses are excluded; missed drops are not estimated. Items without verified prices remain unpriced.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=880,justify='left').pack(anchor='w',pady=(10,0))
+        tk.Label(frame,text='Value = captured quantity × market or verified NPC unit value. Rate = value ÷ observed seconds × 3,600. Capture gaps and manual pauses are excluded; missed drops are not estimated. Items without verified prices remain unpriced.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(10,0))
         self.refresh()
 
     def start(self):

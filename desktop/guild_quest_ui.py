@@ -40,22 +40,16 @@ class GuildQuestTracker:
         except (ValueError,TypeError):return 95
 
     def build(self,tabs):
-        c=self.app.colors;self.frame=outer=tk.Frame(tabs,bg=c['bg']);tabs.add(outer,text='Quests')
-        canvas=tk.Canvas(outer,bg=c['bg'],highlightthickness=0,takefocus=True)
-        scroll=ttk.Scrollbar(outer,orient='vertical',command=canvas.yview);scroll.pack(side='right',fill='y')
-        canvas.configure(yscrollcommand=scroll.set);canvas.pack(side='left',fill='both',expand=True)
-        frame=tk.Frame(canvas,bg=c['bg'],padx=20,pady=16);content=canvas.create_window(0,0,window=frame,anchor='nw')
-        frame.bind('<Configure>',lambda e:canvas.configure(scrollregion=canvas.bbox('all')))
-        canvas.bind('<Configure>',lambda e:canvas.itemconfigure(content,width=e.width))
-        canvas.bind('<Next>',lambda e:canvas.yview_scroll(1,'pages'));canvas.bind('<Prior>',lambda e:canvas.yview_scroll(-1,'pages'))
+        from ui_scroll import notebook_page
+        c=self.app.colors;self.frame,frame=notebook_page(tabs,'Quests',c)
         row=tk.Frame(frame,bg=c['bg']);row.pack(fill='x')
         ttk.Checkbutton(row,text='Track Guild / Daily / Bonus quests',variable=self.enabled,command=self.toggle,style='Vision.TCheckbutton').pack(side='left')
         ttk.Checkbutton(row,text='Sound alerts',variable=self.sound,command=self.app.save_quietly,style='Vision.TCheckbutton').pack(side='right')
-        tk.Label(frame,text='ALCHEMY · GUILD QUEST',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(22,4))
-        tk.Label(frame,textvariable=self.progress,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',36)).pack(anchor='w')
+        tk.Label(frame,text='ALCHEMY · GUILD QUEST',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(12,4))
+        tk.Label(frame,textvariable=self.progress,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',26)).pack(anchor='w')
         self.bar=ttk.Progressbar(frame,maximum=100,style='Vision.Horizontal.TProgressbar');self.bar.pack(fill='x',pady=(10,14))
         tk.Label(frame,textvariable=self.state,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',11)).pack(anchor='w')
-        tk.Label(frame,textvariable=self.detail,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',10),wraplength=850,justify='left').pack(anchor='w',pady=(8,16))
+        tk.Label(frame,textvariable=self.detail,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',10),wraplength=700,justify='left').pack(anchor='w',pady=(8,16))
         alert=tk.Frame(frame,bg=c['panel'],padx=14,pady=14);alert.pack(fill='x')
         tk.Label(alert,text='Alert when progress reaches',bg=c['panel'],fg=c['text']).pack(side='left')
         picker=ttk.Combobox(alert,textvariable=self.threshold,values=('80','85','90','95','99'),width=5,state='readonly',style='Vision.TCombobox');picker.pack(side='left',padx=10);picker.bind('<<ComboboxSelected>>',lambda e:self.app.save_quietly())
@@ -68,8 +62,8 @@ class GuildQuestTracker:
         self.app.text_button(buttons,'LIVE OCR READER',self.reader_view.open).pack(side='left',padx=12)
         self.app.text_button(buttons,'CUSTOM AREA',self.select_region).pack(side='right')
         self.app.text_button(buttons,'USE AUTO AREA',self.auto_region).pack(side='right',padx=12)
-        tk.Label(frame,text='Reads visible Guild, Daily and Bonus objective counters about every 10 seconds. For a moved widget, select a custom area containing the headings and objectives. Covered or unclear counters retain their last verified value. Vision never accepts quests automatically.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=850,justify='left').pack(anchor='w',pady=(18,8))
-        tk.Label(frame,textvariable=self.debug,bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=850,justify='left').pack(anchor='w')
+        tk.Label(frame,text='Reads visible Guild, Daily and Bonus objective counters about every 10 seconds. For a moved widget, select a custom area containing the headings and objectives. Covered or unclear counters retain their last verified value. Vision never accepts quests automatically.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(18,8))
+        tk.Label(frame,textvariable=self.debug,bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w')
         tk.Label(frame,text='DAILY & BONUS · LAST VERIFIED',bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(12,5))
         self.objective_tree=ttk.Treeview(frame,columns=('kind','objective','progress','seen'),show='headings',height=3,style='Loot.Treeview')
         for key,title,width in [('kind','QUEST',70),('objective','OBJECTIVE',450),('progress','PROGRESS',120),('seen','LAST SEEN',100)]:

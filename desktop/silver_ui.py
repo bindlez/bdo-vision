@@ -20,16 +20,17 @@ class SilverLooted:
 
     def build(self,tabs):
         self._rendered_key=None
-        c=self.tracker.app.colors;self.frame=frame=tk.Frame(tabs,bg=c['bg'],padx=16,pady=12);tabs.add(frame,text='Silver')
+        from ui_scroll import notebook_page
+        c=self.tracker.app.colors;self.frame,frame=notebook_page(tabs,'Silver',c)
         controls=tk.Frame(frame,bg=c['bg']);controls.pack(fill='x')
         picker=ttk.Combobox(controls,style='Vision.TCombobox',textvariable=self.scope,values=('Today','Timed session','All recorded'),state='readonly',width=18);picker.pack(side='left');picker.bind('<<ComboboxSelected>>',lambda e:self.refresh())
         self.tracker.app.text_button(controls,'REFRESH MARKET MATCHES',lambda:self.tracker.insights.prices.refresh_async(force=True)).pack(side='left',padx=12)
         ttk.Checkbutton(controls,text='Share loot with planner / Fairy Codex (optional)',variable=self.tracker.share_loot,command=self.tracker.share_changed,style='Vision.TCheckbutton').pack(side='right')
-        tk.Label(frame,textvariable=self.measurement,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10),wraplength=880,justify='left').pack(anchor='w',pady=(16,0))
+        tk.Label(frame,textvariable=self.measurement,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10),wraplength=700,justify='left').pack(anchor='w',pady=(16,0))
         tk.Label(frame,text='SILVER LOOTED · RECORDED VALUE',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(18,0))
-        tk.Label(frame,textvariable=self.total,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',34)).pack(anchor='w',pady=(4,0))
+        tk.Label(frame,textvariable=self.total,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',26)).pack(anchor='w',pady=(4,0))
         tk.Label(frame,textvariable=self.detail,bg=c['bg'],fg=c['text'],font=('Segoe UI',11)).pack(anchor='w',pady=(0,8))
-        tk.Label(frame,textvariable=self.coverage,bg=c['bg'],fg=c['secondary'],wraplength=900,justify='left').pack(anchor='w',pady=(0,12))
+        tk.Label(frame,textvariable=self.coverage,bg=c['bg'],fg=c['secondary'],wraplength=700,justify='left').pack(anchor='w',pady=(0,12))
         tk.Label(frame,textvariable=self.milestone,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(0,6))
         self.canvas=tk.Canvas(frame,height=100,bg=c['panel'],highlightthickness=0);self.canvas.pack(fill='x',pady=(0,10))
         self.canvas.bind('<Configure>',lambda e:self.draw_contributions(getattr(self,'_summary',{}),force=True))
@@ -37,7 +38,7 @@ class SilverLooted:
         self.tree=ttk.Treeview(box,columns=('item','id','qty','price','value','group'),show='headings',style='Loot.Treeview',height=5)
         for name,label,width in [('item','MATCHED ITEM',280),('id','ITEM ID',75),('qty','QUANTITY',75),('price','UNIT SILVER',130),('value','TOTAL SILVER',130),('group','GROUP',140)]:self.tree.heading(name,text=label);self.tree.column(name,width=width,minwidth=65,stretch=name=='item')
         self.tree.pack(side='left',fill='both',expand=True);scroll=ttk.Scrollbar(box,orient='vertical',command=self.tree.yview);scroll.pack(side='right',fill='y');self.tree.configure(yscrollcommand=scroll.set)
-        tk.Label(frame,text='Recorded quantity × market or verified NPC sell value. No material costs or fees deducted; this is item value, not a confirmed sale.',bg=c['bg'],fg=c['muted'],wraplength=900,justify='left',font=('Segoe UI',9)).pack(anchor='w',pady=(10,0))
+        tk.Label(frame,text='Recorded quantity × market or verified NPC sell value. No material costs or fees deducted; this is item value, not a confirmed sale.',bg=c['bg'],fg=c['muted'],wraplength=700,justify='left',font=('Segoe UI',9)).pack(anchor='w',pady=(10,0))
         tabs.bind('<<NotebookTabChanged>>',lambda e:self.refresh(),add='+');self.refresh()
 
     def refresh(self):

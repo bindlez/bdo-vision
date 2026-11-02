@@ -32,20 +32,21 @@ class LootInsights:
 
     def build(self,notebook):
         c=self.tracker.app.colors
-        self.frame=frame=tk.Frame(notebook,bg=c['bg'],padx=12,pady=12);notebook.add(frame,text='Insights')
+        from ui_scroll import notebook_page
+        self.frame,frame=notebook_page(notebook,'Insights',c)
         controls=tk.Frame(frame,bg=c['bg']);controls.pack(fill='x')
         scope=ttk.Combobox(controls,style='Vision.TCombobox',textvariable=self.scope,values=('Today','Timed session'),state='readonly',width=16);scope.pack(side='left',padx=(0,10));scope.bind('<<ComboboxSelected>>',lambda e:self.refresh())
         self.tracker.app.action(controls,'START NEW SESSION',self.start).pack(side='left')
         self.pause_button=self.tracker.app.action(controls,'RESUME',self.pause_resume);self.pause_button.pack(side='left',padx=8)
         self.tracker.app.text_button(controls,'OPEN CENTRAL MARKET',self.edit_prices).pack(side='right')
-        tk.Label(frame,textvariable=self.state,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9),wraplength=820,justify='left').pack(anchor='w',pady=(10,12))
+        tk.Label(frame,textvariable=self.state,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(10,12))
         cards=tk.Frame(frame,bg=c['bg']);cards.pack(fill='x')
         for i,label in enumerate(('OUTPUT VALUE · EST.','SILVER / HOUR · EST.','ITEMS / HOUR','CRAFTED / RARE UNITS')):
             cards.columnconfigure(i,weight=1,uniform='metrics')
             card=tk.Frame(cards,bg=c['panel'],padx=10,pady=12);card.grid(row=0,column=i,sticky='nsew',padx=(0,6))
             tk.Label(card,text=label,bg=c['panel'],fg=c['muted'],font=('Segoe UI Semibold',8)).pack(anchor='w')
-            tk.Label(card,textvariable=self.values[i],bg=c['panel'],fg=c['bright'],font=('Segoe UI Semibold',18)).pack(anchor='w',pady=(8,0))
-        tk.Label(frame,textvariable=self.note,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9),wraplength=820,justify='left').pack(anchor='w',pady=(12,10))
+            tk.Label(card,textvariable=self.values[i],bg=c['panel'],fg=c['bright'],font=('Segoe UI Semibold',15)).pack(anchor='w',pady=(8,0))
+        tk.Label(frame,textvariable=self.note,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(12,10))
         table=tk.Frame(frame,bg=c['bg']);table.pack(fill='both',expand=True)
         columns=('item','qty','price','value','share','source')
         self.tree=ttk.Treeview(table,columns=columns,show='headings',style='Loot.Treeview',height=5)
@@ -53,7 +54,7 @@ class LootInsights:
             self.tree.heading(name,text=label);self.tree.column(name,width=width,minwidth=50,stretch=name=='item')
         self.tree.pack(side='left',fill='both',expand=True)
         scroll=ttk.Scrollbar(table,orient='vertical',command=self.tree.yview);scroll.pack(side='right',fill='y');self.tree.configure(yscrollcommand=scroll.set)
-        tk.Label(frame,text='Gross observed value, not profit. Ingredients and fees are not deducted. Uses cached Central Market prices loaded by your existing site.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=820,justify='left').pack(anchor='w',pady=(10,0))
+        tk.Label(frame,text='Gross observed value, not profit. Ingredients and fees are not deducted. Uses cached Central Market prices loaded by your existing site.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(10,0))
         notebook.bind('<<NotebookTabChanged>>',lambda e:self.refresh(),add='+')
         self.refresh()
         self.build_sessions(notebook)
@@ -142,7 +143,8 @@ class LootInsights:
 
     def build_sessions(self,notebook):
         c=self.tracker.app.colors
-        frame=self.sessions_frame=tk.Frame(notebook,bg=c['bg'],padx=12,pady=10);notebook.add(frame,text='Sessions')
+        from ui_scroll import notebook_page
+        self.sessions_frame,frame=notebook_page(notebook,'Sessions',c)
         fields=tk.Frame(frame,bg=c['bg']);fields.pack(fill='x')
         for label,var,width in [('Session name',self.session_name,24),('Treasure target names (comma-separated)',self.targets,36)]:
             field=tk.Frame(fields,bg=c['bg']);field.pack(side='left',fill='x',expand=True,padx=(0,10));tk.Label(field,text=label,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9)).pack(anchor='w');ttk.Entry(field,textvariable=var,width=width,style='Vision.TEntry').pack(fill='x',pady=(4,0))
@@ -153,7 +155,7 @@ class LootInsights:
         self.tracker.app.action(row,'START NEW',self.start).pack(side='left')
         self.tracker.app.action(row,'PAUSE / RESUME',self.pause_resume).pack(side='left',padx=6)
         self.tracker.app.action(row,'FINISH',self.finish_session).pack(side='left')
-        tk.Label(frame,textvariable=self.session_note,bg=c['bg'],fg=c['secondary'],wraplength=900,justify='left',font=('Segoe UI',9)).pack(anchor='w',pady=(0,8))
+        tk.Label(frame,textvariable=self.session_note,bg=c['bg'],fg=c['secondary'],wraplength=700,justify='left',font=('Segoe UI',9)).pack(anchor='w',pady=(0,8))
         box=tk.Frame(frame,bg=c['bg']);box.pack(fill='both',expand=True)
         columns=('name','activity','duration','value','units','targets','state')
         self.sessions_tree=ttk.Treeview(box,columns=columns,show='headings',style='Loot.Treeview',height=4)
@@ -161,7 +163,7 @@ class LootInsights:
         self.sessions_tree.pack(side='left',fill='both',expand=True);scroll=ttk.Scrollbar(box,orient='vertical',command=self.sessions_tree.yview);scroll.pack(side='right',fill='y');self.sessions_tree.configure(yscrollcommand=scroll.set)
         self.sessions_tree.bind('<<TreeviewSelect>>',lambda e:self.show_session())
         self.session_detail=tk.StringVar(value='Select a session to see its recipe, value contributors and captured treasure. Finished-session values keep the saved price assumptions.')
-        tk.Label(frame,textvariable=self.session_detail,bg=c['panel'],fg=c['secondary'],wraplength=880,justify='left',padx=10,pady=10,font=('Segoe UI',9)).pack(fill='x',pady=(10,0))
+        tk.Label(frame,textvariable=self.session_detail,bg=c['panel'],fg=c['secondary'],wraplength=700,justify='left',padx=10,pady=10,font=('Segoe UI',9)).pack(fill='x',pady=(10,0))
         notebook.bind('<<NotebookTabChanged>>',lambda e:self.refresh_sessions(),add='+')
         self.refresh_sessions()
 

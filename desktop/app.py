@@ -166,11 +166,11 @@ class App:
   c=self.colors;win=self.tool_window=tk.Toplevel(self.root)
   win.title('BDO Vision • Tool reader');win.geometry('760x400');win.minsize(680,340);win.configure(bg=c['bg'])
   header=tk.Frame(win,bg=c['bg']);header.pack(fill='x',padx=22,pady=(20,10))
-  tk.Label(header,text='TOOL READER',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',20)).pack(side='left')
+  tk.Label(header,text='TOOL READER',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',15)).pack(side='left')
   self.text_button(header,'EXPORT READER STATUS',self.save_tool_status).pack(side='right')
   self.text_button(header,'LIVE OCR READER',self.tool_debug.open).pack(side='right',padx=10)
   tk.Label(win,textvariable=self.tool_title,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',12)).pack(anchor='w',padx=22)
-  tk.Label(win,textvariable=self.tool_health,bg=c['bg'],fg=c['secondary'],wraplength=810,justify='left').pack(anchor='w',padx=22,pady=(5,12))
+  tk.Label(win,textvariable=self.tool_health,bg=c['bg'],fg=c['secondary'],wraplength=700,justify='left').pack(anchor='w',padx=22,pady=(5,12))
   style=ttk.Style();style.configure('Tools.Treeview',background=c['panel'],fieldbackground=c['panel'],foreground=c['text'],rowheight=28)
   style.configure('Tools.Treeview.Heading',background=c['panel2'],foreground=c['secondary'],font=('Segoe UI Semibold',9))
   body=tk.Frame(win,bg=c['panel']);body.pack(fill='both',expand=True,padx=22)
@@ -183,7 +183,7 @@ class App:
   self.tool_tree.configure(yscrollcommand=scroll.set);scroll.pack(side='right',fill='y')
   self.tool_tree.pack(side='left',fill='both',expand=True)
   self.tool_empty=tk.Label(body,text='No verified readings yet.\nShow tool labels in BDO; the search continues automatically.',bg=c['panel'],fg=c['muted'],font=('Segoe UI',11),justify='center')
-  tk.Label(win,text='Estimate assumes continued crafting: verified − whole uses since last read.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=810,justify='left').pack(anchor='w',padx=22,pady=(8,0))
+  tk.Label(win,text='Estimate assumes continued crafting: verified − whole uses since last read.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',padx=22,pady=(8,0))
   footer=tk.Frame(win,bg=c['bg']);footer.pack(fill='x',padx=22,pady=14)
   tk.Label(footer,textvariable=self.tool_metrics,bg=c['bg'],fg=c['muted'],font=('Segoe UI',9)).pack(side='left')
   self.action(footer,'FIND AGAIN',self.rescan_tools,flat=True).pack(side='right')
@@ -417,7 +417,7 @@ class App:
    self.settings_window.lift();return
   c=self.colors
   win=tk.Toplevel(self.root);self.settings_window=win
-  win.title('BDO Vision Lite  •  Settings');win.geometry('615x690');win.minsize(550,540)
+  win.title('BDO Vision Lite  •  Settings');win.geometry('560x600');win.minsize(500,460)
   win.configure(bg=c['bg'])
   container=tk.Frame(win,bg=c['bg']);container.pack(fill='both',expand=True)
   scroller=tk.Canvas(container,bg=c['bg'],highlightthickness=0,borderwidth=0)

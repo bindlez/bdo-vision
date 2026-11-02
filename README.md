@@ -1,4 +1,4 @@
-# BDO Vision · current development candidate 1.13.0-rc.4
+# BDO Vision · current development candidate 1.13.0-rc.5
 
 The published first release is [v1.12.0](https://github.com/bindlez/bdo-vision/releases/tag/v1.12.0). This candidate connects Home, Workshop, Grind, Sessions and Fairy Codex, adds recipe-linked session economics and bounded graphs, and rejects numeric tool readings that conflict with fresh independent context. Tool and quest debugging retain their actual images and decision evidence. See [integrated workflows](docs/handbook/19-platform-workflows.md) and the [acceptance checklist](docs/PLATFORM-RELEASE-PLAN.md) for supported behavior and remaining live checks.
 

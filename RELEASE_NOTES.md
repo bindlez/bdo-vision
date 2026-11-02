@@ -1,4 +1,6 @@
-# BDO Vision 1.13.0-rc.4 - Compact tracker and bounded tool discovery
+# BDO Vision 1.13.0-rc.5 - Compact tracker and bounded tool discovery
+
+Final sizing also reduces Silver/Guild headline values, Grind/Insights cards, table rows and tab padding. Settings and full-image windows open smaller, and detailed text wraps within the narrower workspace. Silver, Grind, Insights, Sessions and Quests scroll as complete pages, keeping lower controls and footnotes reachable at smaller heights.
 
 The main tracker now defaults to 380×560 instead of 600×900, with smaller typography/controls and advanced actions behind More controls. Workspace defaults to 860×650 instead of 1000×900. Tool/debug windows and previews are smaller; detailed pages remain scrollable. The main layout is isolated in readable main_ui.py so future visual editing does not disturb OCR logic.
 

@@ -1,6 +1,6 @@
 # BDO Vision Lite changelog
 
-## 1.13.0-rc.4 · compact tracker and cheaper discovery
+## 1.13.0-rc.5 · compact tracker and cheaper discovery
 
 - Reduced default main/workspace sizes, spacing, buttons, debug previews and heading sizes; advanced main controls expand on demand.
 - Separated the main layout into readable main_ui.py without changing timer, planner, tray or reader callbacks.

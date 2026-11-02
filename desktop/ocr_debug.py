@@ -103,7 +103,7 @@ class OCRReaderView:
         if self.raw_image is None:
             self.paused('No capture yet. READ NOW, then return to BDO for the scan.');return
         if self.full_window is not None and self.full_window.winfo_exists():self.full_window.destroy()
-        win=self.full_window=tk.Toplevel(self.window);win.title('OCR source image · scroll to inspect');win.geometry('1000x650')
+        win=self.full_window=tk.Toplevel(self.window);win.title('OCR source image · scroll to inspect');win.geometry('860x560')
         canvas=tk.Canvas(win,bg='#100d18');canvas.grid(row=0,column=0,sticky='nsew')
         x=ttk.Scrollbar(win,orient='horizontal',command=canvas.xview);x.grid(row=1,column=0,sticky='ew')
         y=ttk.Scrollbar(win,orient='vertical',command=canvas.yview);y.grid(row=0,column=1,sticky='ns')

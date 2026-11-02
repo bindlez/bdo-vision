@@ -1,6 +1,6 @@
 # 19. Integrated platform workflows
 
-This chapter describes the 1.13.0-rc.4 candidate. Read [architecture](02-architecture.md), [storage](04-state-storage.md), [tools](06-tools.md), [economics](09-economy.md) and [bridge security](10-bridge-security.md) for the underlying contracts. The candidate keeps the existing Python/Tk runtime and Tesseract reader; the native experiment is not silently substituted.
+This chapter describes the 1.13.0-rc.5 candidate. Read [architecture](02-architecture.md), [storage](04-state-storage.md), [tools](06-tools.md), [economics](09-economy.md) and [bridge security](10-bridge-security.md) for the underlying contracts. The candidate keeps the existing Python/Tk runtime and Tesseract reader; the native experiment is not silently substituted.
 
 ## One source of observations
 
@@ -11,6 +11,8 @@ The native main navigation opens Home, Workshop, Grind or Loot Reader in the sam
 The compact header retains capture/recording state; detailed capture instructions and last-item evidence live in Live. Workshop and Home support mouse-wheel and Page Up/Down navigation. `ui_scroll.enable_page_wheel` scopes wheel input to canvas descendants and leaves tables/text/comboboxes to their own handlers. Nested economics tabs use the existing `Loot.TNotebook` theme.
 
 `desktop/main_ui.py` constructs the compact 380×560 timer and exposes existing controller widget attributes. Advanced controls expand inside the same scrolling canvas; they do not resize the window. The detailed activity workspace defaults to 860×650. Shared buttons use six pixels of vertical padding (five for flat actions). Tool/debug windows open smaller while the full image remains inspectable. The source no longer mixes the main layout construction into OCR/controller code.
+
+Silver, Grind, Insights, Sessions and Quests use `ui_scroll.notebook_page`. The returned outer frame remains the direct notebook child for navigation/visibility checks; controls live in the returned scrollable content. This prevents lower tables/footnotes disappearing at smaller heights. Its outer frame exposes `page_canvas` and `page_content` for geometry verification. Wheel input over a table remains assigned to that table. Other page margins/labels scroll the whole page.
 
 ## Home and quiet progress
 

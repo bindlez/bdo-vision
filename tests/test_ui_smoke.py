@@ -76,6 +76,11 @@ class DesktopSmokeTests(unittest.TestCase):
             self.assertEqual(tree.selection(),('Milk',))
             app.loot.ledger.add('Milk',2);app.loot.silver.refresh()
             self.assertEqual(tree.item('Milk')['values'][2],5)
+            app.loot.tabs.select(app.loot.silver.frame);root.update()
+            page=app.loot.silver.frame
+            page.page_canvas.yview_moveto(1);root.update_idletasks()
+            footer=page.page_content.winfo_children()[-1]
+            self.assertLessEqual(footer.winfo_rooty()+footer.winfo_height(),page.page_canvas.winfo_rooty()+page.page_canvas.winfo_height()+2)
             app.open_guild_quest();root.update_idletasks()
             self.assertEqual(app.loot.tabs.select(),str(app.loot.guild.frame))
             app.loot.guild.reader_view.open();root.update_idletasks()
