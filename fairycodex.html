@@ -235,6 +235,9 @@ button,summary{touch-action:manipulation}
 <label><input id="vision-connect" type="checkbox"> Connect recorded loot from this Windows app</label>
 <button id="vision-refresh" type="button">Refresh loot</button>
 <p id="vision-loot-state" role="status">Not connected. Enable optional loot sharing in Vision, then connect here.</p>
+<label>Completed Vision run <select id="vision-receipt"><option value="">Connect to load completed runs</option></select></label>
+<button id="vision-import-receipt" type="button">Review / save run receipt to Fairy journal</button>
+<p id="vision-receipt-state" role="status">Receipts preserve observed/excluded time and recorded loot value. No kills or ownership are inferred.</p>
 <p>Recorded drops are observations, not current inventory or automatic treasure ownership. Exact catalog-name matches are highlighted; unidentified pieces stay unresolved. No additional OCR runs.</p>
 <details><summary>Recorded loot and treasure matches</summary><div style="max-height:360px;overflow:auto"><table style="width:100%;text-align:left"><thead><tr><th>Recorded item</th><th>Units</th><th>Treasure reference</th></tr></thead><tbody id="vision-loot-rows"></tbody></table></div></details>
 </section>
@@ -538,6 +541,13 @@ if(!T.studioSliderV19){T.studioKills=null;T.studioSliderV19=true;}
 const PROFILE_KEY='fairycodex.treasure.profiles.v14.1';
 let profiles={};let activeProfile='';
 try{const stored=JSON.parse(localStorage.getItem(PROFILE_KEY)||'{}');if(stored&&typeof stored==='object'&&!Array.isArray(stored))profiles=stored;}catch{}
+window.VisionImportReceipt=function(receipt){
+ if(!receipt||typeof receipt.key!=='string'||!receipt.key||receipt.key.length>180||typeof receipt.text!=='string'||!receipt.text||receipt.text.length>2000)throw Error('Invalid receipt');
+ if(T.journal.some(j=>j.visionKey===receipt.key))return 'Already imported';
+ T.journal.push({text:receipt.text,date:new Date().toLocaleString(),visionKey:receipt.key});
+ try{localStorage.setItem(KEY,JSON.stringify(T));}catch(error){T.journal.pop();throw Error('Browser storage unavailable; receipt was not saved. Export your vault and retry.');}
+ redraw();return 'Saved to Fairy expedition journal';
+};
 function profileSnapshot(){return {piece:structuredClone(T.piece),sessions:structuredClone(T.sessions),notes:structuredClone(T.notes),journal:structuredClone(T.journal)};}
 function profilesSave(){try{localStorage.setItem(PROFILE_KEY,JSON.stringify(profiles));return true}catch{return false}}
 function profileName(){return (document.getElementById('tr-profile-name')?.value||'').trim().slice(0,60)}
@@ -1312,12 +1322,21 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       .map(row=>({item:row.item,quantity:row.quantity,matches:[...new Set(names.get(nameKey(row.item))||[])]}))
       .sort((a,b)=>b.matches.length-a.matches.length||b.quantity-a.quantity).slice(0,80);
   }
-  const api={nameKey,matchRows};
+  function sessionReceipt(historyId,session){
+    if(typeof historyId!=='string'||!historyId||historyId.length>80||!session||typeof session.id!=='string'||session.id.length>80||!session.ended_at)throw Error('Select a completed run');
+    if(!Number.isFinite(session.observed_seconds)||session.observed_seconds<0)throw Error('Invalid observed time');
+    const silver=session.value==null?'unpriced':Number(session.value).toLocaleString()+' gross silver'+(session.unpriced?' (partial)':'');
+    return {key:historyId+':'+session.id,text:'Vision completed run: '+String(session.spot||session.label||'Unspecified spot').slice(0,100)+
+      ' | observed '+Math.round(session.observed_seconds)+'s | excluded '+Math.round(session.excluded_seconds||0)+'s | '+silver+
+      ' | recorded '+Number(session.units||0).toLocaleString()+' units | kills unknown; inventory ownership unchanged.'};
+  }
+  const api={nameKey,matchRows,sessionReceipt};
   if(typeof module!=='undefined'&&module.exports){module.exports=api;return;}
   root.VisionFairyLoot=api;
   const connect=document.getElementById('vision-connect'),state=document.getElementById('vision-loot-state'),body=document.getElementById('vision-loot-rows');
   if(!connect||!state||!body)return;
   let timer=null,busy=false,generation=0;
+  let linkedLoot=null;
   function schedule(){clearTimeout(timer);timer=null;if(connect.checked&&!document.hidden)timer=setTimeout(refresh,10000);}
   async function refresh(){
     if(!connect.checked||document.hidden||busy)return;
@@ -1327,8 +1346,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       if(!response.ok)throw Error('Local bridge unavailable');
       const reading=await response.json();if(token!==generation)return;
       const loot=reading.crafting_loot;
+      linkedLoot=loot||null;
       if(!loot){body.replaceChildren();state.textContent='Optional loot sharing is off. Enable it in Vision to connect this page.';return;}
       body.replaceChildren();
+      const select=document.getElementById('vision-receipt'),selected=select.value;select.replaceChildren();
+      const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Select a completed run';select.append(placeholder);
+      for(const run of (loot.grind?.history||[]).filter(s=>s.ended_at).slice(0,30)){
+        const option=document.createElement('option');option.value=run.id;option.textContent=String(run.spot||run.label||'Run')+' · '+Math.round(run.observed_seconds)+'s observed';select.append(option);
+      }
+      select.value=selected;
       const rows=matchRows(loot.items,root.VisionTreasureCatalog);
       for(const row of rows){
         const tr=document.createElement('tr');
@@ -1346,6 +1372,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
   connect.addEventListener('change',()=>{generation++;clearTimeout(timer);if(connect.checked)refresh();else{body.replaceChildren();state.textContent='Disconnected. Loot observation link is off.';}});
   document.getElementById('vision-refresh').addEventListener('click',refresh);
+  document.getElementById('vision-import-receipt').addEventListener('click',()=>{
+    const status=document.getElementById('vision-receipt-state');
+    try{
+      if(!connect.checked||!linkedLoot)throw Error('Connect recorded loot first');
+      const run=(linkedLoot.grind?.history||[]).find(s=>s.id===document.getElementById('vision-receipt').value);
+      const receipt=sessionReceipt(linkedLoot.history_id,run);
+      if(confirm(receipt.text+'\n\nSave this receipt to the current Fairy journal?'))status.textContent=root.VisionImportReceipt(receipt);
+    }catch(error){status.textContent=error.message;}
+  });
   document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(timer);generation++;}else if(connect.checked)refresh();});
 })(typeof window==='undefined'?globalThis:window);
 

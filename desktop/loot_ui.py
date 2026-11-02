@@ -36,6 +36,7 @@ class LootTracker:
         self.feed=tk.StringVar(value=settings.get('loot_feed','Item Drop logs'))
         self.crafting=tk.BooleanVar(value=bool(settings.get('craft_tracking',False)))
         self.craft_economy=settings.get('craft_economy',{})
+        self.platform_preferences=settings.get('platform_preferences',{})
         self.track_rare=tk.BooleanVar(value=bool(settings.get('track_rare',True)))
         self.interval=tk.StringVar(value=str(settings.get('loot_interval',2)))
         self.enabled=tk.BooleanVar(value=bool(settings.get('loot_enabled',False) and self.region))
@@ -59,7 +60,7 @@ class LootTracker:
         self.root.after(250,self.poll)
 
     def settings(self):
-        return {'craft_economy':self.craft_economy,'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings()}
+        return {'platform_preferences':self.platform_preferences,'craft_economy':self.craft_economy,'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings()}
 
     def safe_interval(self):
         try:return max(.5,min(30,float(self.interval.get())))
@@ -75,7 +76,7 @@ class LootTracker:
         win=self.window=tk.Toplevel(self.root);win.title('BDO Vision • Silver, Grind & saved history');win.geometry('1000x900+20+20');win.minsize(940,820);win.configure(bg=c['bg'])
         main=tk.Frame(win,bg=c['bg'],padx=24,pady=20);main.pack(fill='both',expand=True)
         header=tk.Frame(main,bg=c['bg']);header.pack(fill='x')
-        tk.Label(header,text='ACTIVITY',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',22)).pack(side='left')
+        tk.Label(header,text='VISION WORKSPACE',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',22)).pack(side='left')
         self.tracker_setup_button=self.app.text_button(header,'CAPTURE SETUP',self.toggle_setup);self.tracker_setup_button.pack(side='right')
         tk.Label(main,textvariable=self.summary,bg=c['bg'],fg=c['bright'],font=('Segoe UI',10)).pack(anchor='w',pady=(4,14))
         setup_holder=tk.Frame(main,bg=c['bg']);setup_holder.pack(fill='x')
@@ -94,16 +95,15 @@ class LootTracker:
         picker=ttk.Combobox(options,style='Vision.TCombobox',textvariable=self.interval,values=('0.5','1','2','3','5','10'),state='readonly',width=4);picker.pack(side='left');picker.bind('<<ComboboxSelected>>',lambda e:self.toggle())
         tk.Label(self.setup_frame,text='For grinding, Text feed + the personal “You have obtained…” panel retains drops longer. Select one feed only. Keep at least 6–8 complete rows visible. Crafting mode labels captured items as craft output.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=880,justify='left').pack(anchor='w',pady=(10,5))
         ttk.Checkbutton(self.setup_frame,text='Save OCR diagnostic images locally (for troubleshooting)',variable=self.diagnostics,command=self.app.save_quietly,style='Vision.TCheckbutton').pack(anchor='w',pady=(0,8))
-        if self.region:self.setup_frame.pack_forget()
-        tk.Label(main,textvariable=self.capture_state,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10)).pack(anchor='w')
-        tk.Label(main,textvariable=self.status,bg=c['bg'],fg=c['secondary'],wraplength=880,justify='left').pack(anchor='w',pady=(5,12))
-        tk.Label(main,textvariable=self.last_read,bg=c['panel'],fg=c['text'],font=('Segoe UI Semibold',10),padx=12,pady=8,wraplength=850,justify='left').pack(fill='x')
-        tk.Label(main,textvariable=self.last_saved,bg=c['bg'],fg=c['bright'],wraplength=880,justify='left').pack(anchor='w',pady=(5,10))
+        self.setup_frame.pack_forget()
+        state_row=tk.Frame(main,bg=c['bg']);state_row.pack(fill='x',pady=(0,10))
+        tk.Label(state_row,textvariable=self.capture_state,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10)).pack(side='left')
+        tk.Label(state_row,textvariable=self.last_saved,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9),wraplength=510,justify='right').pack(side='right')
         style=ttk.Style();style.configure('Loot.Treeview',borderwidth=0,relief='flat',lightcolor=c['panel'],darkcolor=c['panel'],bordercolor=c['line'],background=c['panel'],fieldbackground=c['panel'],foreground=c['text'],rowheight=29,font=('Segoe UI',10));style.configure('Loot.Treeview.Heading',relief='flat',borderwidth=0,lightcolor=c['panel2'],darkcolor=c['panel2'],bordercolor=c['panel2'],background=c['panel2'],foreground=c['text'],font=('Segoe UI Semibold',9));style.map('Loot.Treeview',background=[('selected',c['violet'])],foreground=[('selected',c['text'])]);style.configure('Loot.TNotebook',background=c['bg'],borderwidth=0);style.configure('Loot.TNotebook.Tab',borderwidth=0,focuscolor=c['panel2'],background=c['panel2'],foreground=c['text'],padding=(12,10));style.map('Loot.TNotebook.Tab',background=[('selected',c['violet'])])
         self.tabs=tabs=ttk.Notebook(main,style='Loot.TNotebook');tabs.pack(fill='both',expand=True)
         def table(title,columns):
             frame=tk.Frame(tabs,bg=c['bg']);tabs.add(frame,text=title)
-            if title=='Crafts':
+            if title=='Workshop':
                 self.craft_tab=frame
                 canvas=tk.Canvas(frame,bg=c['bg'],highlightthickness=0,takefocus=True)
                 scrollbar=ttk.Scrollbar(frame,orient='vertical',command=canvas.yview);scrollbar.pack(side='right',fill='y')
@@ -112,13 +112,18 @@ class LootTracker:
                 frame.bind('<Configure>',lambda e:canvas.configure(scrollregion=canvas.bbox('all')))
                 canvas.bind('<Configure>',lambda e:canvas.itemconfigure(content,width=e.width))
                 canvas.bind('<Next>',lambda e:canvas.yview_scroll(1,'pages'));canvas.bind('<Prior>',lambda e:canvas.yview_scroll(-1,'pages'))
+                from ui_scroll import enable_page_wheel
+                enable_page_wheel(canvas)
+            if title=='Live':
+                tk.Label(frame,textvariable=self.status,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',10),wraplength=860,justify='left').pack(anchor='w',padx=12,pady=10)
+                tk.Label(frame,textvariable=self.last_read,bg=c['panel'],fg=c['text'],font=('Segoe UI Semibold',10),padx=12,pady=8,wraplength=850,justify='left').pack(fill='x')
             tree=ttk.Treeview(frame,columns=tuple(name for name,_,_ in columns),show='headings',style='Loot.Treeview',height=8)
             for name,label,width in columns:tree.heading(name,text=label);tree.column(name,width=width,minwidth=60,stretch=name=='item')
             tree.pack(side='left',fill='both',expand=True);scroll=ttk.Scrollbar(frame,orient='vertical',command=tree.yview);scroll.pack(side='right',fill='y');tree.configure(yscrollcommand=scroll.set)
             return tree
         self.visible_tree=table('Live',[('item','RECOGNIZED ITEM',420),('qty','QUANTITY',100),('kind','ACTIVITY',120),('source','FEED',130)])
         self.tree=table('Loot',[('time','TIME',145),('item','ITEM',320),('qty','QUANTITY',90),('kind','ACTIVITY',100),('source','FEED',110)])
-        self.crafts_tree=table('Crafts',[('item','CRAFTED ITEM',500),('qty','QUANTITY',120)])
+        self.crafts_tree=table('Workshop',[('item','CRAFTED ITEM',500),('qty','QUANTITY',120)])
         from craft_dashboard import CraftDashboard
         self.craft_dashboard=CraftDashboard(self,self.crafts_tree.master)
         self.craft_dashboard.frame.pack(before=self.crafts_tree,side='top',fill='x')
@@ -127,6 +132,8 @@ class LootTracker:
         self.silver.build(tabs)
         self.grind.build(tabs)
         self.guild.build(tabs)
+        from platform_home import PlatformHome
+        self.home=PlatformHome(self,tabs)
         reader=tk.Frame(tabs,bg=c['bg']);tabs.add(reader,text='OCR reader')
         self.preview=tk.Label(reader,bg=c['panel'],fg=c['muted'],text='Latest capture will appear here.');self.preview.pack(fill='x',pady=8)
         self.debug_text=tk.Text(reader,height=10,bg=c['panel'],fg=c['text'],font=('Consolas',10),wrap='word',relief='flat',state='disabled');self.debug_text.pack(fill='both',expand=True)
@@ -137,8 +144,10 @@ class LootTracker:
         tabs.select(self.silver.frame)
 
     def toggle_setup(self):
-        if self.setup_frame.winfo_ismapped():self.setup_frame.pack_forget()
-        else:self.setup_frame.pack(fill='x',pady=(0,12))
+        if self.setup_frame.winfo_ismapped():
+            self.setup_frame.pack_forget();self.tracker_setup_button.configure(text='CAPTURE SETUP')
+        else:
+            self.setup_frame.pack(fill='x',pady=(0,12));self.tracker_setup_button.configure(text='HIDE SETUP')
 
     def refresh(self):
         key=(self.ledger.revision,time.strftime('%Y-%m-%d'))
@@ -385,7 +394,7 @@ class LootTracker:
         self.refresh()
 
     def close(self):
-        self.closed=True;self.generation+=1;self.guild.close();self.capture_clock.save();self.silver.close();self.insights.close();self.ledger.close()
+        self.closed=True;self.generation+=1;self.guild.close();self.capture_clock.tick(False,'Application closing');self.capture_clock.save();self.silver.close();self.insights.close();self.ledger.close()
 
     def planner_loot_snapshot(self):
         prices=self.insights.prices

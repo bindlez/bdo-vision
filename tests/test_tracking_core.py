@@ -5,6 +5,7 @@ from tracking_core import ReadingGate, align_to_capture, remaining_at, estimate_
 
 class CoreTests(unittest.TestCase):
  def test_exhausting_tool_cannot_reset_to_full_neighbor_by_position(self):
+  self.assertTrue(replacement_needs_use('old:0','misread:0',382,83,3000,0))
   for remaining in (5,4,3,0):
    self.assertTrue(replacement_needs_use('old:0','neighbor:0',remaining,2993,3000,0))
    self.assertTrue(replacement_needs_use('old:0','neighbor:0',remaining,2992,3000,1))

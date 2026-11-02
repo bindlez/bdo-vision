@@ -70,5 +70,5 @@ def estimate_send(value, anchor_mono, now, seconds_per_craft, running):
 def replacement_needs_use(previous_key,new_key,remaining,current,maximum,wear_streak,manual=False):
     """Near exhaustion, position alone must not reset onto a fresh neighbor."""
     return (not manual and previous_key is not None and previous_key!=new_key
-            and remaining<=max(10,maximum*.01)
-            and current-remaining>max(30,maximum*.03) and wear_streak<2)
+            and (current<remaining or remaining<=max(10,maximum*.01))
+            and abs(current-remaining)>max(30,maximum*.03) and wear_streak<2)

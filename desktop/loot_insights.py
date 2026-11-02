@@ -42,6 +42,7 @@ class InsightsSession:
         self.db=db
         db.execute('CREATE TABLE IF NOT EXISTS insight_sessions (id TEXT PRIMARY KEY, created_at REAL NOT NULL, active_seconds REAL NOT NULL)')
         db.execute('CREATE TABLE IF NOT EXISTS insight_members (session TEXT NOT NULL, loot_id INTEGER NOT NULL, PRIMARY KEY(session,loot_id))');db.commit()
+        db.execute('CREATE TABLE IF NOT EXISTS craft_session_models (session_id TEXT PRIMARY KEY,payload TEXT NOT NULL)');db.commit()
         fields={r[1] for r in db.execute('PRAGMA table_info(insight_sessions)')}
         for name,kind in [('label',"TEXT NOT NULL DEFAULT ''"),('activity',"TEXT NOT NULL DEFAULT 'Other'"),('recipe',"TEXT NOT NULL DEFAULT ''"),('targets',"TEXT NOT NULL DEFAULT '[]'"),('ended_at','REAL'),('price_snapshot',"TEXT NOT NULL DEFAULT '{}'")]:
             if name not in fields:db.execute('ALTER TABLE insight_sessions ADD COLUMN '+name+' '+kind)
@@ -78,8 +79,19 @@ class InsightsSession:
         if not self.id or self.ended:return
         self.clock.tick(gate,now);self.clock.running=False;self.ended=True
         names={canonical_item(row[2]) for row in self.rows()}
+        model=None
+        meta=self.db.execute('SELECT activity,recipe FROM insight_sessions WHERE id=?',(self.id,)).fetchone()
+        if meta and meta[0]=='Crafting' and meta[1]:
+            from craft_economy import recipes
+            choices=[r for r in recipes() if r['name']==meta[1]]
+            if len(choices)==1:
+                names.update(m['name'] for m in choices[0]['mats'])
+                if self.db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='craft_models'").fetchone():
+                    model=self.db.execute('SELECT payload FROM craft_models WHERE recipe_id=?',(choices[0]['id'],)).fetchone()
         snapshot={name:prices[name] for name in names if name in prices}
         with self.db:self.db.execute('UPDATE insight_sessions SET active_seconds=?,ended_at=?,price_snapshot=? WHERE id=?',(self.clock.seconds,time.time(),json.dumps(snapshot),self.id))
+        if model:
+            with self.db:self.db.execute('INSERT OR REPLACE INTO craft_session_models VALUES (?,?)',(self.id,model[0]))
 
     def history(self):
         columns=('id','created_at','active_seconds','label','activity','recipe','targets','ended_at','price_snapshot')

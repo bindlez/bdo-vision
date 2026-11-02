@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -45,6 +46,8 @@ def main():
             folder = Path(folder).resolve()
             folder.mkdir(parents=True, exist_ok=True)
             settings = folder / 'settings.json'
+            if not (folder/'loot-history.sqlite3').exists():
+                sqlite3.connect(folder/'loot-history.sqlite3').close()
             if not settings.exists():
                 settings.write_text(json.dumps({'loot_enabled': False, 'auto_scan': False,
                                                 'guild_quest_enabled': False}), encoding='utf-8')

@@ -301,11 +301,24 @@ def read_bands(tsv,bands):
     return result
 
 
+def counter_context_error(current,maximum,region):
+    coarse=region.get('coarse_pair')
+    if coarse and (coarse[1]!=maximum or abs(coarse[0]-current)>max(4,maximum*.015)):
+        return f'Numeric {current}/{maximum} conflicts with full-label {coarse[0]}/{coarse[1]}'
+    if region.get('bar_pair') is not None and tuple(region['bar_pair'])!=(current,maximum):
+        return 'Numeric crop conflicts with the independently located label counter'
+    if maximum and region.get('bar_fill') is not None and abs(current/maximum-region['bar_fill'])>.06:
+        return f'Numeric {current}/{maximum} conflicts with bar fill {region["bar_fill"]:.1%}'
+    return ''
+
+
 def verify_labels(crops,regions,tess,cache=None):
     import hashlib
     result=[];calls=0
     for index,(crop,region) in enumerate(zip(crops,regions)):
+        region['rejection']='No numeric field located'
         if not region.get('numbers'):continue
+        region['rejection']='Numeric passes did not agree on one complete current / maximum pair'
         original=region['numbers'];left,top,_,_=region['box']
         windows=[original]
         if region.get('locator')=='durability bar' and not region.get('digit_boxes'):windows.append([max(left,original[0]-3),*original[1:]])
@@ -314,8 +327,8 @@ def verify_labels(crops,regions,tess,cache=None):
             if numeric.width<8 or numeric.height<5:continue
             key=(tess,tuple(window),hashlib.sha256(numeric.tobytes()).digest())
             cached=cache.get(key) if cache is not None else None
-            if cached and time.monotonic()-cached[0]<8:
-                result.append({**cached[1],'name':region['name'],'box':region['box'],'cache_hit':True});region['numbers']=window;region.pop('bar_pair',None);region.pop('bar_fill',None);break
+            if cached and time.monotonic()-cached[0]<8 and not counter_context_error(cached[1]['current'],cached[1]['maximum'],region):
+                result.append({**cached[1],'name':region['name'],'box':region['box'],'cache_hit':True});region['numbers']=window;region.pop('bar_pair',None);region.pop('bar_fill',None);region.pop('coarse_pair',None);region.pop('rejection',None);break
             gray=ImageOps.autocontrast(ImageOps.grayscale(numeric)).resize((numeric.width*4,numeric.height*4),Image.Resampling.LANCZOS)
             readings=[];confidences=[]
             if region.get('digit_boxes'):
@@ -338,13 +351,15 @@ def verify_labels(crops,regions,tess,cache=None):
                     confidences.append(sum(w['confidence'] for w in tokens)/max(1,len(tokens)))
             if len(readings[0])==1 and readings[0]==readings[1]:
                 current,maximum=next(iter(readings[0]))
-                if region.get('bar_pair') is not None and tuple(region['bar_pair'])!=(current,maximum):continue
-                if maximum and region.get('bar_fill') is not None and abs(current/maximum-region['bar_fill'])>.18:continue
+                error=counter_context_error(current,maximum,region)
+                if error:region['rejection']=error;continue
                 if 0<=current<=maximum and 100<=maximum<=100_000:
                     result.append({'name':region['name'],'current':current,'maximum':maximum,'box':region['box'],'numbers':window,'confidence':min(confidences),'votes':2})
                     region['numbers']=window
                     region.pop('bar_pair',None)
                     region.pop('bar_fill',None)
+                    region.pop('coarse_pair',None)
+                    region.pop('rejection',None)
                     if cache is not None:
                         if len(cache)>=16:cache.pop(next(iter(cache)))
                         cache[key]=(time.monotonic(),dict(result[-1]))
@@ -554,10 +569,10 @@ class AutomaticToolReader:
                 selected['state']='Selected by Place Mode · checking use'
                 report['next_seconds']=1.5;self.next_due=time.monotonic()+1.5
             report['duration']=time.monotonic()-started
-            if hasattr(_budget,'trace'):report['_debug_raw']='\n\n'.join(_budget.trace)[:12000]
+            if hasattr(_budget,'trace'):report['_debug_raw']='\n\n'.join(_budget.trace)[-12000:]
             return report
         except Exception:
-            self.last_failure_trace='\n\n'.join(getattr(_budget,'trace',[]))[:12000]
+            self.last_failure_trace='\n\n'.join(getattr(_budget,'trace',[]))[-12000:]
             raise
         finally:
             del _budget.deadline
@@ -642,8 +657,11 @@ class AutomaticToolReader:
             self.diagnostic(crops,observations,scene)
         scene=None
         observations=distinct_counters(observations)
+        suspicious_drop=any(old.get('numbers')==row.get('numbers') and old['maximum']==row['maximum'] and old['current']-row['current']>max(30,(now-old['seen_at'])*20+4)
+                            for row in observations for old in self.inventory.tracks.values())
+        if suspicious_drop:self.last_discovery=-1e9
         report=self.inventory.update(observations,now,context)
-        unreadable=[{'name':r['name'],'box':r['box']} for r in self.regions if not any(r['box']==o['box'] for o in observations)]
+        unreadable=[{k:r[k] for k in ('name','box','rejection','coarse_pair','bar_fill') if k in r} for r in self.regions if not any(r['box']==o['box'] for o in observations)]
         self.misses=self.misses+1 if not observations else 0
         if discover:self.signatures={tuple(r['box']):label_signature(crop,r) for r,crop in zip(self.regions,crops) if any(r['box']==o['box'] for o in observations)}
         self.regions=[r for r in self.regions if any(r['box']==o['box'] for o in observations)]

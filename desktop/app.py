@@ -160,7 +160,7 @@ class App:
 
   gear_row=tk.Frame(main,bg=c['bg']);gear_row.pack(fill='x',pady=(12,0))
   workspace=tk.Frame(main,bg=c['bg']);workspace.pack(fill='x',pady=(8,0))
-  for label,section in [('WORKSHOP','craft'),('GRIND SESSION','grind'),('LOOT READER','reader')]:
+  for label,section in [('HOME','home'),('WORKSHOP','craft'),('GRIND','grind'),('LOOT READER','reader')]:
    self.action(workspace,label,lambda target=section:self.open_activity(target),flat=True).pack(side='left',fill='x',expand=True,padx=3)
   self.action(gear_row,'SILVER & LOOT HISTORY',self.loot.open,flat=True).pack(side='left',fill='x',expand=True,padx=(0,5))
   self.action(gear_row,'GEAR STUDIO',self.open_gear_planner,flat=True).pack(side='left',fill='x',expand=True,padx=(5,0))
@@ -211,7 +211,7 @@ class App:
 
  def text_button(self,parent,text,command):
   c=self.colors
-  return tk.Button(parent,text=text,command=command,bg=c['bg'],fg=c['bright'],activebackground=c['panel'],activeforeground='#ffffff',font=('Segoe UI Semibold',8),borderwidth=0,relief='flat',highlightthickness=1,highlightbackground=c['bg'],highlightcolor=c['bright'],takefocus=True,cursor='hand2')
+  return tk.Button(parent,text=text,command=command,bg=c['bg'],fg=c['bright'],activebackground=c['panel'],activeforeground='#ffffff',font=('Segoe UI Semibold',9),padx=3,pady=3,borderwidth=0,relief='flat',highlightthickness=1,highlightbackground=c['bg'],highlightcolor=c['bright'],takefocus=True,cursor='hand2')
 
  def open_gear_planner(self):
   if self.bridge and self.bridge.server:webbrowser.open(self.bridge.base_url+'/planner#gear')
@@ -223,7 +223,7 @@ class App:
 
  def open_activity(self,section):
   self.loot.open()
-  targets={'craft':self.loot.craft_tab,'grind':self.loot.grind.frame,'reader':self.loot.preview.master}
+  targets={'home':self.loot.home.frame,'craft':self.loot.craft_tab,'grind':self.loot.grind.frame,'reader':self.loot.preview.master,'sessions':self.loot.insights.sessions_frame,'quests':self.loot.guild.frame}
   self.loot.tabs.select(targets[section])
 
  def open_fairy(self):

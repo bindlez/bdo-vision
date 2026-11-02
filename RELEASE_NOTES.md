@@ -1,3 +1,13 @@
+# BDO Vision 1.13.0-rc.2 - Integrated workspace and guarded tool readings
+
+Visual review reduced repeated header detail, moved OCR-specific instructions/readouts into Live, kept recording state visible globally, renamed the populated Crafts page to Workshop, applied the shared dark-purple tab style to nested economics panels, and increased economic explanation typography.
+
+Home brings reader availability, session state, a daily recorded-unit goal and persistent quiet milestones together. Capture Setup starts collapsed. Workshop links accepted session output to the existing recipe and exact market quotes, applies the planner's yield/tax/expense model, and shows modeled net value, ingredients, observed/excluded time and a bounded gross/net graph. Finished crafting sessions freeze those assumptions. Manual daily estimates remain a separate scope. Material consumption is yield-based, not verified inventory usage; missing prices withhold profit.
+
+Tool numeric readings and exact-pixel cache hits must agree with fresh full-label/bar context. Conflicting clipped-digit readings are rejected with visible evidence instead of repaired. Large same-field drops trigger reacquisition, and suspicious identity changes need use evidence. Place Mode and the existing independent wear checks remain. Regression coverage includes real numeric OCR at multiple font sizes; live-game acceptance across camera/scale changes remains required.
+
+Lite Use stops repeated capture checks, quote refresh, ledger publication and session saves after its paused transition. Home totals aggregate in SQLite; shared Grind history is bounded to 30 runs. No new runtime or chart dependency is added. Fairy supports reviewed, deduplicated completed-run journal receipts without invented kills or ownership. Developer/test profiles start empty instead of importing legacy history. A new linked handbook chapter documents all contracts. Older packages and stable 1.12.0 remain unchanged.
+
 # BDO Vision 1.12.1-rc.7 - Automatic tool-to-tool continuation
 
 Supports the alarm workflow: move to another tool or go to the bank. A different high-durability tool near exhaustion needs repeated verified use before resetting the timer; confirmed consumption outranks an idle neighbor selected by Place Mode. Initial positional selection remains fast. Idle or unreadable replacements do not acquire a new countdown merely because the previous tool approaches zero. No extra OCR passes are added. Includes the guarded timer reset from rc.6.

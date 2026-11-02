@@ -1,6 +1,6 @@
-# BDO Vision · current development candidate 1.12.1-rc.1
+# BDO Vision · current development candidate 1.13.0-rc.2
 
-The published first release is [v1.12.0](https://github.com/bindlez/bdo-vision/releases/tag/v1.12.0). This candidate adds optional Live OCR Reader windows for tools and quests, safer Place Mode/use agreement, bounded focused quest recovery and a complete offline Developer Handbook.
+The published first release is [v1.12.0](https://github.com/bindlez/bdo-vision/releases/tag/v1.12.0). This candidate connects Home, Workshop, Grind, Sessions and Fairy Codex, adds recipe-linked session economics and bounded graphs, and rejects numeric tool readings that conflict with fresh independent context. Tool and quest debugging retain their actual images and decision evidence. See [integrated workflows](docs/handbook/19-platform-workflows.md) and the [acceptance checklist](docs/PLATFORM-RELEASE-PLAN.md) for supported behavior and remaining live checks.
 
 For development start with [Start here](docs/handbook/01-start.md), run `python dev.py doctor`, then `python dev.py run` for a disposable profile. Build the linked, searchable website with `python dev.py docs` or open **DEVELOPER-HANDBOOK.bat**. Run `python dev.py check` before a release. The handbook includes line-linked source, schema references, feature editing guides, testing, profiling, releases and recovery. No developer tooling runs during normal gameplay.
 

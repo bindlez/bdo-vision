@@ -1,6 +1,6 @@
 """Run native Tk regression modules in separate, disposable user profiles."""
 from pathlib import Path
-import argparse,subprocess,sys,tempfile,os,json,re
+import argparse,subprocess,sys,tempfile,os,json,re,sqlite3
 
 project=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser(description=__doc__)
@@ -18,6 +18,7 @@ for module in modules:
     with tempfile.TemporaryDirectory(prefix='vision-tests-') as folder:
         env=dict(os.environ,BDO_VISION_DATA_DIR=folder,PYTHONUTF8='1')
         Path(folder,'settings.json').write_text(json.dumps({'loot_enabled':False,'auto_scan':False}))
+        sqlite3.connect(Path(folder,'loot-history.sqlite3')).close()
         try:
             result=subprocess.run([sys.executable,'-m','unittest','discover','-s','tests','-p',module.name],
                 cwd=project,env=env,capture_output=True,text=True,encoding='utf-8',timeout=90)

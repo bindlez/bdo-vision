@@ -236,7 +236,7 @@ class PlannerBridge:
 
             def do_POST(self):
                 route=urlsplit(self.path).path
-                if route not in ('/ack','/market-prices','/craft-quotes','/show','/grind-command','/gear/ocr','/gear/sweep','/gear/builds'):
+                if route not in ('/ack','/market-prices','/craft-quotes','/craft-model','/show','/grind-command','/gear/ocr','/gear/sweep','/gear/builds'):
                     self._send({'error': 'Unknown endpoint'}, 404)
                     return
                 if not self._origin_allowed():
@@ -256,6 +256,12 @@ class PlannerBridge:
                     def reject_constant(value):raise ValueError('Finite JSON values required')
                     body = json.loads(self.rfile.read(length).decode('utf-8'),parse_constant=reject_constant)
                     if not isinstance(body,dict):raise ValueError('JSON object required')
+                    if route=='/craft-model':
+                        if body.get('instance_id')!=bridge.instance_id:self._send({'error':'Unknown instance'},409);return
+                        if not bridge.price_book:self._send({'error':'Price book unavailable'},503);return
+                        from craft_economy import save_model
+                        model=save_model(bridge.price_book.path,body)
+                        self._send({'ok':True,'model':model});return
                     if route=='/gear/builds':
                         if not bridge.price_book:self._send({'error':'Windows profile unavailable'},503);return
                         from gear_store import save

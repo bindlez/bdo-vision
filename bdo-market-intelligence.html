@@ -2159,8 +2159,21 @@ async function craftStudioLoadPrices(recipe,force){
    label=document.getElementById('studioMarketState');if(label)label.textContent='Recipe quotes refreshed · '+new Date().toLocaleTimeString()+'. Unmatched items stay labeled.';
  }catch(e){label=document.getElementById('studioMarketState');if(label)label.textContent='Market lookup unavailable · labeled cached / bundled assumptions retained.';}
 }
+var visionModelTimer=null,visionModelLast='';
+function visionSyncCraftModel(recipe,cfg){
+ if(!['127.0.0.1','localhost'].includes(location.hostname))return;
+ var body={recipe_id:recipe.id,yield:cfg.yield,retention:cfg.retention,extra:cfg.extra},signature=JSON.stringify(body);
+ if(signature===visionModelLast)return;clearTimeout(visionModelTimer);
+ visionModelTimer=setTimeout(async function(){try{
+  var response=await fetch('/health',{signal:AbortSignal.timeout(3000)});if(!response.ok)return;
+  var health=await response.json();body.instance_id=health.instance_id;
+  var saved=await fetch('/craft-model',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(3000)});
+  if(saved.ok)visionModelLast=signature;
+ }catch(e){/* Native linkage can retry on the next explicit recipe edit. */}},700);
+}
 function craftStudioRender(recipe,amount){
  var el=document.getElementById('craftDetail'),p=craftStudioPlan(recipe,amount),c=p.cfg,esc=visionEscape;
+ visionSyncCraftModel(recipe,c);
  var field=function(id,label,value,step,min,max){return '<label class="studio-field">'+label+'<input id="'+id+'" type="number" min="'+min+'" max="'+max+'" step="'+step+'" value="'+value+'"></label>';};
  el.innerHTML='<div class="studio-eyebrow">CRAFTING STUDIO · '+esc(String(region).toUpperCase())+'</div><h3>'+esc(recipe.name)+' <span class="badge-alc">'+esc(recipe.type)+'</span></h3>'+
  '<p class="studio-muted">Plan → prepare → craft → measure. Uses the existing recipe book and Central Market.</p><div class="studio-fields">'+

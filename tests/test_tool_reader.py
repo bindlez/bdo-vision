@@ -115,6 +115,40 @@ class ActiveToolTests(unittest.TestCase):
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_real_numeric_ocr_preserves_leading_digits_or_rejects_the_read(self):
+        from PIL import ImageFont
+        engine=Path(r'C:\Program Files\Tesseract-OCR\tesseract.exe')
+        if not engine.exists():self.skipTest('Tesseract unavailable')
+        accepted=0
+        for size in (12,16,20):
+            font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',size)
+            for current in (3,83,382,1000,2993):
+                image=Image.new('RGB',(240,42),(95,90,84));draw=ImageDraw.Draw(image)
+                draw.text((20,8),f'{current}/3000',font=font,fill='white',stroke_width=1,stroke_fill='black')
+                region={'name':'Alchemy Tool','box':[0,0,240,42],'numbers':[8,0,200,42],'coarse_pair':(current,3000),'bar_fill':current/3000}
+                rows,_=verify_labels([image],[region],str(engine))
+                if rows:
+                    accepted+=1;self.assertEqual((rows[0]['current'],rows[0]['maximum']),(current,3000))
+        self.assertGreaterEqual(accepted,10,'Too many supported clear numeric fixtures were rejected')
+    def test_cached_numeric_read_is_rechecked_against_new_label_context(self):
+        cache={};region={'name':'Alchemy Tool','box':[0,0,100,30],'numbers':[20,0,100,30]}
+        crop=Image.new('RGB',(100,30));raw='level\tleft\ttop\twidth\theight\tconf\ttext\n5\t0\t0\t80\t20\t90\t83/3000\n'
+        with patch('tool_reader.ocr',return_value=raw):
+            self.assertEqual(verify_labels([crop],[dict(region)],'engine',cache)[0][0]['current'],83)
+            self.assertEqual(verify_labels([crop],[{**region,'coarse_pair':(382,3000)}],'engine',cache)[0],[])
+    def test_two_numeric_passes_cannot_override_full_label_382_with_83(self):
+        region={'name':'Alchemy Tool','box':[0,0,100,30],'numbers':[20,0,100,30],'coarse_pair':(382,3000)}
+        raw='level\tleft\ttop\twidth\theight\tconf\ttext\n5\t0\t0\t80\t20\t90\t83/3000\n'
+        with patch('tool_reader.ocr',return_value=raw):
+            self.assertEqual(verify_labels([Image.new('RGB',(100,30))],[region],'engine')[0],[])
+
+    def test_bar_fill_rejects_lost_hundreds_digit_but_does_not_invent_it(self):
+        region={'name':'Alchemy Tool','box':[0,0,100,30],'numbers':[20,0,100,30],'bar_fill':.127}
+        header='level\tleft\ttop\twidth\theight\tconf\ttext\n5\t0\t0\t80\t20\t90\t'
+        with patch('tool_reader.ocr',return_value=header+'83/3000\n'):
+            self.assertEqual(verify_labels([Image.new('RGB',(100,30))],[dict(region)],'engine')[0],[])
+        with patch('tool_reader.ocr',return_value=header+'382/3000\n'):
+            self.assertEqual(verify_labels([Image.new('RGB',(100,30))],[dict(region)],'engine')[0][0]['current'],382)
     def test_confirmed_new_tool_use_outranks_idle_neighbor_position(self):
         reader=AutomaticToolReader()
         idle={**row(2993),'id':'idle','numbers':[1040,240,1100,260],'wear_streak':0}

@@ -2,6 +2,10 @@
 
 Checked items mean implemented with automated evidence, not universal live-game acceptance. This plan preserves the user's complete scope; a candidate package is not proof that every unchecked item is finished.
 
+## Current candidate: 1.13.0-rc.2
+
+The integrated implementation includes Home, linked recipe-session economics, frozen assumptions, bounded gross/net graphs, persistent quiet goals and reviewed Fairy journal receipts. See [platform workflows](handbook/19-platform-workflows.md). Remaining unchecked live/visual criteria are not erased by packaging this candidate.
+
 ## Current acceptance blocker: readers and diagnosis
 
 User reports tool discovery still fails and guild OCR works only intermittently. These are open product defects despite prior regression passes. Current replay evidence: private unobstructed live frame failed tool discovery before the low-fill/dark-track fix; the same frame then reads 635/3000 and 917/3000 and selects 635 by Place Mode (~2.24s). Guild replay reads 58/600 and Daily98/100. A second screenshot contains the Vision window over part of the game and is not proof of a valid timed tool comparison. Live diagnostics also report foreground loss and quest occlusion. Live end-to-end confirmation after installation remains required.
@@ -10,6 +14,8 @@ User reports tool discovery still fails and guild OCR works only intermittently.
 - [x] Quest preview delivered before OCR and partial pass output retained on later failure.
 - [x] Tool failure trace retains readable token text/geometry instead of truncating to TSV boilerplate.
 - [x] Low-fill tool bars on gray backgrounds have a synthetic regression.
+- [x] Reject conflicting full-label/bar context even when both numeric passes or the pixel cache agree; test leading digits with real Tesseract at multiple sizes.
+- [x] Large same-field drops schedule fresh discovery; suspicious downward identity changes require use evidence.
 - [ ] Verify the installed fixes over changing live counters and camera movement; do not call replay alone verified live reliability.
 
 ## Observation and tool reliability
@@ -28,7 +34,7 @@ User reports tool discovery still fails and guild OCR works only intermittently.
 - [x] Native Crafts tab populated, scrollable, with useful empty-state guidance.
 - [x] Observed, estimated, unknown and stale values remain distinct.
 - [ ] Complete screen-by-screen consistency audit: fonts, spacing, terminology, controls and next actions.
-- [ ] One activity/mode overview with all reader states visible together.
+- [x] One activity/mode overview with all reader states visible together; scrollable Home and collapsed occasional Capture Setup.
 - [ ] End-to-end onboarding, setup recovery, keyboard, contrast, resizing and Windows scale checks.
 - [ ] Remove remaining duplicate controls and unnecessary window switching.
 
@@ -37,18 +43,19 @@ User reports tool discovery still fails and guild OCR works only intermittently.
 - [x] Recorded daily output, rare units, event counts and gross market value.
 - [x] Explicit daily ingredient spend, sale retention and other expenses; withhold unsupported profit.
 - [x] Detailed recipe-planner route remains available.
-- [ ] Automatically link recipe, batches, actual yields, normal/rare output and byproducts to a crafting session.
-- [ ] Derive actual material consumption/costs from existing recipe and market data.
-- [ ] Clearly separate purchasing cash, material value, gross proceeds, tax and modeled profit across native/web views.
-- [ ] Craft session summaries alongside daily totals.
+- [x] Link the selected existing recipe, observed outputs and planner yield/tax/expense assumptions to a crafting session.
+- [x] Derive modeled material quantities/costs from exact existing quotes; missing quotes withhold net value. Actual batch count/inventory consumption is not measured.
+- [ ] Reconcile actual material inventory consumption and actual yields when independent evidence exists; do not describe a yield model as measured consumption.
+- [x] Separate recorded gross, modeled tax/material expenses and net; retain manual daily budget as an independent scope. Purchasing cash is not a measured transaction.
+- [x] Craft session summaries alongside daily totals; freeze session model/material quotes at finish.
 
 ## Graphs and rewarding feedback
 
 - [x] Bounded cumulative craft curve, top-item bars, recorded-output milestones.
-- [ ] Session gross/profit graphs with observed/excluded time and honest rates.
-- [ ] Integrated grind and rare-drop summaries.
-- [ ] Persistent personal goals, achievement deduplication and fair personal-best comparisons.
-- [ ] Optional quiet celebrations, reduced motion and accessibility checks.
+- [x] Session gross/profit graphs with observed/excluded time and honest rates; 48-point native rendering.
+- [x] Integrated grind and rare-drop summaries with shared accepted ledger quantities.
+- [x] Persistent daily unit goals and deduplicated lifetime achievements; quiet static feedback needs no motion toggle.
+- [ ] Fair personal-best comparisons, configurable celebrations and complete accessibility acceptance.
 - [x] No achievements based on invented drops or guessed quest credit.
 
 ## Lite Use and efficiency
@@ -56,6 +63,8 @@ User reports tool discovery still fails and guild OCR works only intermittently.
 - [x] Initial current-tool durability only, then estimated timer; loot/quest/gear OCR paused.
 - [x] Preserve tracking options; discard pending loot/quest results on mode transition.
 - [x] No new native OCR or graph dependencies for platform integration.
+- [x] Lite transition publishes pause once; subsequent ticks skip capture checks, quote refresh, ledger publication and session writes.
+- [x] Home totals aggregate in SQLite; shared completed grind history is bounded to 30 runs.
 - [ ] Live mode-switch and new-tool workflow acceptance.
 - [ ] Comparable CPU/memory/capture/subprocess benchmarks for idle, initial scan and active tracking.
 - [ ] Hidden-screen redraw and polling audit across every feature.
@@ -70,7 +79,7 @@ User reports tool discovery still fails and guild OCR works only intermittently.
 - [x] Keep observed drops separate from owned inventory, pity conversion and collection completion.
 - [x] Preserve Fairy vault/profile keys; document origin-specific export/import.
 - [ ] Browser/live verification of existing simulations, imports, loot linking, disconnection and Lite Use.
-- [ ] Native-to-Fairy session import with stable IDs and deduplication.
+- [x] Reviewed native completed-run journal receipts with stable history/session IDs, duplicate protection and failed-storage rollback. Unknown kills stay unknown; simulated sessions/ownership remain separate.
 - [ ] Reviewed identity aliases for ambiguous treasure pieces and pity materials.
 - [ ] Unified persistent platform navigation and progress presentation after visual review.
 
@@ -80,7 +89,8 @@ User reports tool discovery still fails and guild OCR works only intermittently.
 - [x] Regression suites cover quests, grind sessions, gear rules/import, tray and bridge security.
 - [x] Protected profile, verified backups, separate application files and immutable older packages.
 - [ ] Live combined walkthrough verifies those features together rather than treating unit coverage as live proof.
-- [ ] Update handbook/quick start to final accepted behavior and complete visual QA.
+- [x] Document current implementation, assumptions and extension contracts in linked handbook chapter 19 and quick start.
+- [ ] Complete candidate visual/live QA; do not equate unit tests with a combined walkthrough.
 - [ ] Final release package, source backup, history comparison, rollback and clear launch instructions.
 
 ## Bird's-eye dependency order

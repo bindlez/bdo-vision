@@ -24,6 +24,7 @@ class LootInsights:
         self.scope=tk.StringVar(value='Today');self.state=tk.StringVar();self.note=tk.StringVar()
         self.values=[tk.StringVar(value='—') for _ in range(4)]
         self.frame=None;self.tree=None;self.pause_button=None;self.closed=False
+        self.last_lite_mode=None
         self.sessions_frame=None;self.sessions_tree=None;self.session_detail=None
         self.session_name=tk.StringVar();self.activity=tk.StringVar(value='Crafting' if tracker.crafting.get() else 'Grinding')
         self.recipe=tk.StringVar(value='No recipe');self.targets=tk.StringVar();self.session_note=tk.StringVar(value='Start a session to group future recorded loot. History is retained when starting another session.')
@@ -61,6 +62,8 @@ class LootInsights:
         if self.session.id and not self.session.ended:self.session.finish(self.prices.all(),self.gate())
         targets=[name.strip() for name in self.targets.get().split(',') if name.strip()]
         self.session.start(self.gate(),label=self.session_name.get(),activity=self.activity.get(),recipe='' if self.recipe.get()=='No recipe' else self.recipe.get(),targets=targets)
+        if self.activity.get() in ('Crafting','Grinding','Treasure hunt'):
+            self.tracker.crafting.set(self.activity.get()=='Crafting');self.tracker.app.save_quietly()
         self.scope.set('Timed session');self.tracker.generation+=1
         self.refresh();self.refresh_sessions()
 
@@ -77,12 +80,28 @@ class LootInsights:
     def tick(self):
         if self.closed:return
         try:
+            lite=self.tracker.app.lite_use.get()
+            if lite:
+                if self.last_lite_mode is not True:
+                    self.tracker.capture_clock.tick(False,'Lite Use · timer only')
+                    self.session.clock.gate=False;self.session.tick(False)
+                    self.tracker.refresh_shared_loot()
+                self.last_lite_mode=True
+                home=getattr(self.tracker,'home',None)
+                if home and home.frame.winfo_exists() and home.frame.winfo_ismapped():home.refresh()
+                return
             ready,reason=self.tracker.capture_availability()
             self.tracker.capture_clock.tick(ready,reason)
             if not ready:self.session.clock.gate=False
             self.session.tick(ready)
-            self.prices.refresh_async()
-            self.tracker.refresh_shared_loot()
+            lite=self.tracker.app.lite_use.get()
+            if not lite:self.prices.refresh_async()
+            if not lite or lite!=self.last_lite_mode:self.tracker.refresh_shared_loot()
+            self.last_lite_mode=lite
+            home=getattr(self.tracker,'home',None)
+            if home and home.frame.winfo_exists() and home.frame.winfo_ismapped():home.refresh()
+            workshop=getattr(self.tracker,'craft_dashboard',None)
+            if workshop and self.tracker.craft_tab.winfo_exists() and self.tracker.craft_tab.winfo_ismapped():workshop.session_cost.refresh()
             if self.frame and self.frame.winfo_exists() and self.frame.winfo_ismapped():self.refresh()
             if self.sessions_frame and self.sessions_frame.winfo_exists() and self.sessions_frame.winfo_ismapped():self.refresh_sessions()
             if self.tracker.grind.frame and self.tracker.grind.frame.winfo_exists() and self.tracker.grind.frame.winfo_ismapped():self.tracker.grind.refresh()

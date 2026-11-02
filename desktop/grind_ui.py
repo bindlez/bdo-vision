@@ -110,7 +110,7 @@ class GrindTracker:
         elif command['action']=='pause':self.pause()
         elif command['action']=='finish':self.finish()
 
-    def summaries(self):
+    def summaries(self,limit=None):
         session=self.insights.session;ready,reason=self.tracker.capture_availability();current_prices=self.insights.prices.all()
         details={r[0]:{'spot':r[1],'goal':r[2]} for r in session.db.execute('SELECT session,spot,goal FROM grind_details')}
         results=[]
@@ -122,10 +122,11 @@ class GrindTracker:
             prices=json.loads(meta['price_snapshot']) if meta['ended_at'] is not None else current_prices
             results.append(grind_summary(meta,session.rows(meta['id']),prices,available=live and session.clock.running and ready,
                 reason='' if live and session.clock.running and ready else 'Session completed' if meta['ended_at'] else 'Manually paused' if live and not session.clock.running else reason))
+            if limit is not None and len(results)>=limit:break
         return results
 
     def snapshot(self):
-        results=self.summaries();current=next((r for r in results if r['id']==self.insights.session.id),None)
+        results=self.summaries(limit=30);current=next((r for r in results if r['id']==self.insights.session.id),None)
         return {'current':current,'history':[{k:v for k,v in r.items() if k not in ('items','latest')} for r in results[:30]]}
 
     def selected(self):

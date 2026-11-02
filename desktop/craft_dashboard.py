@@ -1,5 +1,6 @@
 """Bounded native crafting progress; uses recorded events, never another capture."""
 import tkinter as tk
+from tkinter import ttk
 from decimal import Decimal,InvalidOperation
 
 
@@ -27,17 +28,21 @@ class CraftDashboard:
         self.note=tk.StringVar()
         self.market=tk.StringVar(value='Market valuation appears as quotes become available.')
         tk.Label(self.frame,textvariable=self.market,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',11),wraplength=820,justify='left').pack(anchor='w',pady=8)
+        scopes=ttk.Notebook(self.frame,style='Loot.TNotebook');scopes.pack(fill='x',pady=8)
+        self.recipe_frame=tk.Frame(scopes,bg=c['bg']);scopes.add(self.recipe_frame,text='Recipe session profit')
+        manual_frame=tk.Frame(scopes,bg=c['bg'],padx=10,pady=10);scopes.add(manual_frame,text='Manual daily estimate')
+        tk.Label(manual_frame,text='Independent daily budget estimate. Do not add this to session profit.',bg=c['bg'],fg=c['secondary'],wraplength=800,justify='left').pack(anchor='w',pady=8)
         import time
         saved=tracker.craft_economy if tracker.craft_economy.get('day')==time.strftime('%Y-%m-%d') else {}
         self.inputs={name:tk.StringVar(value=saved.get(name,'')) for name in ('ingredients','retention','expenses')}
-        fields=tk.Frame(self.frame,bg=c['bg']);fields.pack(fill='x')
+        fields=tk.Frame(manual_frame,bg=c['bg']);fields.pack(fill='x')
         for name,label in [('ingredients','Ingredients spent TODAY'),('retention','Sale retention % after tax'),('expenses','Other costs TODAY')]:
             col=tk.Frame(fields,bg=c['bg']);col.pack(side='left',fill='x',expand=True,padx=4)
             tk.Label(col,text=label,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9)).pack(anchor='w')
             entry=tk.Entry(col,textvariable=self.inputs[name],bg=c['panel2'],fg=c['text'],insertbackground=c['text'],width=18);entry.pack(fill='x')
             entry.bind('<FocusOut>',lambda event:self.save_economy())
         self.profit=tk.StringVar()
-        tk.Label(self.frame,textvariable=self.profit,bg=c['bg'],fg=c['text'],wraplength=820,justify='left').pack(anchor='w',pady=8)
+        tk.Label(manual_frame,textvariable=self.profit,bg=c['bg'],fg=c['text'],wraplength=820,justify='left').pack(anchor='w',pady=8)
         self.last_value=None
         for variable in self.inputs.values():variable.trace_add('write',lambda *args:self.refresh_profit())
         tk.Label(self.frame,textvariable=self.note,bg=c['bg'],fg=c['secondary'],wraplength=820,justify='left').pack(anchor='w',pady=8)
@@ -46,6 +51,8 @@ class CraftDashboard:
         tracker.app.text_button(actions,'TOOL READER',tracker.app.open_tools).pack(side='left',padx=12)
         tracker.app.text_button(actions,'QUEST OCR READER',tracker.guild.reader_view.open).pack(side='left')
         self.data=[]
+        from craft_economy import SessionCostView
+        self.session_cost=SessionCostView(tracker,self.recipe_frame)
         self.canvas.bind('<Configure>',lambda event:self.draw())
         self.update([])
 
