@@ -384,9 +384,16 @@ class App:
    self.status.set(self.tool_status.detail)
    return
   if report['active_key']!=self._active_tool_key:
+   from tracking_core import replacement_needs_use
+   self.update_value()
+   if replacement_needs_use(self._active_tool_key,report['active_key'],self.value,active['current'],active['maximum'],active.get('wear_streak',0),getattr(self,'_allow_tool_change',False)):
+    reader.next_due=min(reader.next_due,time.monotonic()+3)
+    self.set_tool_stage('confirming','Current tool is nearly empty. A different high-durability tool must show repeated use before replacing this timer.')
+    self.status.set('Keeping the current countdown. Checking whether the replacement tool is actually being used.');return
    self._active_tool_key=report['active_key'];self.has_reading=False;self.reading_gate=ReadingGate()
    self.session_id=uuid.uuid4().hex;self.speed_estimator.reset();self.last_good_ocr=None
   a,b=active['current'],active['maximum']
+  self._allow_tool_change=False
   self.finish_ocr([(a,b),(a,b)],[],[],automatic,captured_at,captured_mono,report['duration'])
   if self.reading_gate.pending is not None:
    reader.next_due=min(reader.next_due,time.monotonic()+3)
@@ -785,6 +792,7 @@ class App:
   canvas.bind('<ButtonPress-1>',down);canvas.bind('<B1-Motion>',move);canvas.bind('<ButtonRelease-1>',up);overlay.bind('<Escape>',lambda e:(overlay.destroy(),self._restore_region_windows()))
  def read_ocr(self,delayed=True,automatic=False):
   if self.busy:return
+  if not automatic:self._allow_tool_change=True
   try:
    tess=self.tess.get().strip().strip('\"')
    if not (Path(tess).is_file() or shutil.which(tess)):

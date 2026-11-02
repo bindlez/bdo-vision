@@ -115,6 +115,15 @@ class ActiveToolTests(unittest.TestCase):
 
 
 class DiscoveryTests(unittest.TestCase):
+    def test_confirmed_new_tool_use_outranks_idle_neighbor_position(self):
+        reader=AutomaticToolReader()
+        idle={**row(2993),'id':'idle','numbers':[1040,240,1100,260],'wear_streak':0}
+        used={**row(2980),'id':'used','numbers':[900,240,960,260],'wear_streak':2}
+        report={'active_id':'used','active_key':'used:0','tools':[idle,used],'anchor':{'x':1025,'y':190,'evidence':'Place Mode anchor'}}
+        with patch.object(reader,'_read',return_value=report):
+            result=reader.read('engine',(1,0,0,1920,1080),lambda box:None)
+        self.assertEqual(result['active_id'],'used')
+        self.assertIn('overrides Place Mode',result['confirmation'])
     def test_short_gold_fill_on_gray_wall_still_locates_the_complete_dark_track(self):
         image=Image.new('RGB',(1280,720),(95,90,84));draw=ImageDraw.Draw(image)
         draw.rectangle((600,210,699,215),fill=(40,40,36));draw.rectangle((600,211,619,213),fill=(240,200,70))

@@ -538,7 +538,9 @@ class AutomaticToolReader:
             report=self._read(tess,bounds,grab,now,interval)
             selected=place_selected(report,bounds[4]-bounds[2])
             if selected and report['active_id'] and selected['id']!=report['active_id']:
-                report.update(active_id=None,active_key=None,reason='Place Mode and changing tool disagree; use confirmation pending')
+                # Repeated verified consumption outranks a camera-dependent
+                # positional prior when the player moves to another utensil.
+                report['confirmation']='Repeated durability use overrides Place Mode position'
             if selected and not getattr(self,'position_started',False):
                 # First verified read is usable immediately; confirm use on
                 # the following scan without holding the initial countdown.

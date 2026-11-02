@@ -1,3 +1,11 @@
+# BDO Vision 1.12.1-rc.7 - Automatic tool-to-tool continuation
+
+Supports the alarm workflow: move to another tool or go to the bank. A different high-durability tool near exhaustion needs repeated verified use before resetting the timer; confirmed consumption outranks an idle neighbor selected by Place Mode. Initial positional selection remains fast. Idle or unreadable replacements do not acquire a new countdown merely because the previous tool approaches zero. No extra OCR passes are added. Includes the guarded timer reset from rc.6.
+
+# BDO Vision 1.12.1-rc.6 - Preserve the nearly-empty tool countdown
+
+Prevents a newly positioned high-durability tool from bypassing the existing timer baseline near exhaustion. A different tool must show repeated consumption before replacing a nearly-empty timer, unless the user explicitly requests a fresh scan. Covers the reported 5/4/3-to2993 jump. Ordinary tracking, initial scans and confirmed replacement use remain unchanged. This is a targeted guard, not a claim that the exact live OCR misread has been reproduced.
+
 # BDO Vision 1.12.1-rc.5 - OCR diagnosis and low-durability tool fix
 
 Both reader viewers add full-size source inspection, hold-frame control, bounded attempt history and explicit failure details. Quest previews appear before recognition and stream partial pass text so timeouts retain useful evidence. Short gold fills with dark tracks against gray walls can now locate low-durability tools; the private live-frame replay changes from no tools to635/3000 and917/3000 with635 selected by Place Mode. Quest failures retry sooner with bounded backoff. Foreground/occlusion protection and numeric consensus remain. Live post-install acceptance is still required; no perfect OCR claim.

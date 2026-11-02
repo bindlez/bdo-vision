@@ -1,9 +1,18 @@
 import sys, unittest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'desktop'))
-from tracking_core import ReadingGate, align_to_capture, remaining_at, estimate_send
+from tracking_core import ReadingGate, align_to_capture, remaining_at, estimate_send,replacement_needs_use
 
 class CoreTests(unittest.TestCase):
+ def test_exhausting_tool_cannot_reset_to_full_neighbor_by_position(self):
+  for remaining in (5,4,3,0):
+   self.assertTrue(replacement_needs_use('old:0','neighbor:0',remaining,2993,3000,0))
+   self.assertTrue(replacement_needs_use('old:0','neighbor:0',remaining,2992,3000,1))
+ def test_real_replacement_and_explicit_scan_are_allowed(self):
+  self.assertFalse(replacement_needs_use('old:0','new:0',3,2993,3000,2))
+  self.assertFalse(replacement_needs_use('old:0','new:0',3,2993,3000,0,manual=True))
+  self.assertFalse(replacement_needs_use(None,'new:0',0,2993,3000,0))
+  self.assertFalse(replacement_needs_use('old:0','old:0',3,2,3000,2))
  def test_initial_single_requires_confirmation(self):
   gate=ReadingGate()
   self.assertEqual(gate.evaluate((350,3000),None,None,1,1,False).kind,'confirm')
