@@ -1,6 +1,6 @@
 # BDO Vision Lite changelog
 
-## 1.13.0-rc.2 · integrated platform candidate
+## 1.13.0-rc.3 · integrated platform candidate
 
 - Unified Home with reader/session states, daily goals and persistent deduplicated milestones; collapsed occasional capture setup.
 - Linked recipe session output, existing exact quotes and planner yield/tax/expense assumptions; frozen receipts and bounded gross/net graphs.
@@ -8,6 +8,7 @@
 - Added reviewed, deduplicated Fairy journal receipts; retained unknown kills and separate collection ownership.
 - Reduced repeated Lite-mode work, used SQLite Home aggregates and bounded shared run history; no additional runtime dependency.
 - Isolated development/test histories and documented platform editing contracts in handbook chapter 19.
+- Read visible version from the shipped VERSION file; reject packaged identity mismatches.
 
 ## 1.12.1-rc.1 · OCR inspection and developer edition
 

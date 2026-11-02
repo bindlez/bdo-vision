@@ -8,7 +8,7 @@ Use focused branches, small meaningful commits and reviewable diffs. Commit code
 
 ## Versioned workflow
 
-Update both `VERSION` and `desktop/version.py` when making a new candidate. Prepare changelog/release notes describing the actual final behavior and remaining limitations. Run `python dev.py check`, inspect the report, then build source and Windows packages. A local package records source identity and whether source was dirty. For a final reproducible package, commit first and validate that exact source.
+Update `VERSION` when making a new candidate. `desktop/version.py` reads that same file from the checkout or shipped release root; there is no second version constant to maintain. Prepare changelog/release notes describing the actual final behavior and remaining limitations. Run `python dev.py check`, inspect the report, then build source and Windows packages. The extracted Windows check rejects a version mismatch between executable, manifest and source. A local package records source identity and whether source was dirty. For a final reproducible package, commit first and validate that exact source.
 
 ```powershell
 python dev.py check

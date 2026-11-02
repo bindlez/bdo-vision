@@ -1,4 +1,6 @@
-# BDO Vision 1.13.0-rc.2 - Integrated workspace and guarded tool readings
+# BDO Vision 1.13.0-rc.3 - Integrated workspace and guarded tool readings
+
+Release identity now reads the shipped VERSION file for source, installed and frozen builds. The extracted-package check rejects an executable/manifest/source version mismatch. This corrects the stale visible version discovered while checking rc.2; earlier candidate archives are retained.
 
 Visual review reduced repeated header detail, moved OCR-specific instructions/readouts into Live, kept recording state visible globally, renamed the populated Crafts page to Workshop, applied the shared dark-purple tab style to nested economics panels, and increased economic explanation typography.
 

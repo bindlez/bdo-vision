@@ -1,6 +1,6 @@
 # 19. Integrated platform workflows
 
-This chapter describes the 1.13.0-rc.2 candidate. Read [architecture](02-architecture.md), [storage](04-state-storage.md), [tools](06-tools.md), [economics](09-economy.md) and [bridge security](10-bridge-security.md) for the underlying contracts. The candidate keeps the existing Python/Tk runtime and Tesseract reader; the native experiment is not silently substituted.
+This chapter describes the 1.13.0-rc.3 candidate. Read [architecture](02-architecture.md), [storage](04-state-storage.md), [tools](06-tools.md), [economics](09-economy.md) and [bridge security](10-bridge-security.md) for the underlying contracts. The candidate keeps the existing Python/Tk runtime and Tesseract reader; the native experiment is not silently substituted.
 
 ## One source of observations
 
