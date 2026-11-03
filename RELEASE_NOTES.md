@@ -1,3 +1,17 @@
+# 1.13.0-rc.20 · Cooking execution and richer session views
+
+- Added explicit next-stage planning timers, duplicate-launch prevention and
+  bounded full-chain lowest-priced substitution choices. Deep real meals and
+  the exact Organic Feed variant are covered by shipped-page interaction tests.
+- Added budget, time and expected-output donut charts and a teal palette accent.
+- Added a dedicated cooking preview and manual acquisition guards for unknown
+  processing methods; make-all avoids automatically selecting these exchanges.
+- Added a compact native live grind window and independently opted-in local OBS
+  output, with optional clock/loot widgets and stale/offline clearing.
+- Added silver goals, current-price personal-best pacing, loot-value and
+  observed/excluded-time donuts. No new OCR loops or chart packages.
+- Recorded competitor gaps explicitly; this is not a claim of full app parity.
+
 # 1.13.0-rc.19 · Multilevel cooking and alchemy workshop
 
 - Added a production workshop with make-all/buy routes, recursive recipe choices,

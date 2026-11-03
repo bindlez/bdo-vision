@@ -1,4 +1,8 @@
-# BDO Vision · current test candidate 1.13.0-rc.19
+# BDO Vision · current test candidate 1.13.0-rc.20
+
+Cooking and alchemy include next-stage timer launch, budget/time/output pies and
+full-chain ingredient substitution choices. Grind adds a compact live window,
+opt-in local OBS source, silver goals and same-price personal-best pacing.
 
 Cooking and alchemy now include a multilevel **Production workshop**: make/buy
 intermediate routes, per-stage input quantities and batch instructions, economic

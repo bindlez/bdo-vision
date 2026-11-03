@@ -1,6 +1,7 @@
 """Build an offline, synthetic preview from the real planner UI. No loopback access."""
 from pathlib import Path
-import re,json
+import re,json,argparse
+parser=argparse.ArgumentParser();parser.add_argument("--cooking",action="store_true");args=parser.parse_args()
 root=Path(__file__).resolve().parents[1]
 html=(root/'bdo-market-intelligence.html').read_text(encoding='utf-8')
 html=html.replace('<head>',"<head><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; font-src 'none'; worker-src 'none'\">",1)
@@ -11,7 +12,7 @@ html=html.replace('setInterval(shareMarketPricesWithDesktop,5000);','/* Demo has
 html=html.replace('<body>','''<body><div class="demo-ribbon"><strong>CRAFTING STUDIO DEMO</strong><span>Dated NA market snapshot & simulated drops · no game OCR</span><button id="demoPlay">Play sample drops</button><button id="demoBlock">Block sample capture</button><span id="demoState" role="status">Ready</span><a href="https://github.com/bindlez/bdo-vision/releases">Get Windows app</a></div>''')
 html=html.replace('</style>','''.demo-ribbon{position:sticky;top:0;z-index:9999;display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#30203e;padding:12px 20px;color:#f7eaff;font:12px "Segoe UI",sans-serif;border-bottom:1px solid #806092}.demo-ribbon button,.demo-ribbon a{background:#18101f;color:#f0dfff;border:1px solid #8865aa;border-radius:6px;padding:7px 10px;font:inherit;text-decoration:none}.demo-ribbon>span{color:#dac5e9}.demo-ribbon strong{letter-spacing:.1em}.sidebar{padding-top:75px} .topbar{top:65px}
   </style>''',1)
-recipe=next(r['id'] for r in json.loads((root/'desktop/assets/recipes.json').read_text(encoding='utf-8')) if r['name']=='Elixir of Demihuman Hunt')
+recipe=next(r['id'] for r in json.loads((root/'desktop/assets/recipes.json').read_text(encoding='utf-8')) if r['name']==('Organic Feed' if args.cooking else 'Elixir of Demihuman Hunt'))
 snapshot=json.loads((root/'desktop/assets/demo-market-snapshot.json').read_text(encoding='utf-8'))
 boot=r'''
 /* Demo adapter. Everything below is generated sample data, separate from live OCR. */
@@ -42,9 +43,10 @@ pollBridge=async function(){
 document.getElementById('demoPlay').onclick=function(){demoCraft.running=!demoCraft.running;pollBridge();};
 document.getElementById('demoBlock').onclick=function(){demoCraft.blocked=!demoCraft.blocked;this.textContent=demoCraft.blocked?'Restore sample capture':'Block sample capture';pollBridge();};
 rememberPrices(demoQuotes);selectedRecipe=RECIPES.find(function(r){return r.id===DEMO_RECIPE;});lastCraftAmount=100;
-if(!craftStudioState.config[selectedRecipe.id])craftStudioState.config[selectedRecipe.id]={yield:2.5,seconds:5,retention:84.5,extra:0,goal:1000000,estimate:true};
-showView('craft');
+recipeTab=selectedRecipe.type;
+if(selectedRecipe.type==='alchemy'&&!craftStudioState.config[selectedRecipe.id])craftStudioState.config[selectedRecipe.id]={yield:2.5,seconds:5,retention:84.5,extra:0,goal:1000000,estimate:true};
+showView('craft');if(selectedRecipe.type==='cooking'){craftStudioChainRoute(selectedRecipe,true);craftStudioRender(selectedRecipe,lastCraftAmount);}
 '''.replace('DEMO_RECIPE',json.dumps(recipe)).replace('DEMO_MARKET_SNAPSHOT',json.dumps(snapshot['items'],separators=(',',':')))
 marker='    processTimers();ensureTick();updateNavBadge();'
 assert marker in html;html=html.replace(marker,boot+'\n'+marker,1)
-target=root/'demo/bdo-vision-crafting-demo.html';target.write_text(html,encoding='utf-8');print(target.name,target.stat().st_size,'bytes')
+target=root/'demo'/('bdo-vision-cooking-demo.html' if args.cooking else 'bdo-vision-crafting-demo.html');target.write_text(html,encoding='utf-8');print(target.name,target.stat().st_size,'bytes')

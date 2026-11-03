@@ -87,7 +87,7 @@ class App:
    'bg':'#0b0a10','panel':'#15131e','panel2':'#211c30','line':'#393047',
    'muted':'#b1a8c2','secondary':'#d1c9df','text':'#faf7ff',
    'violet':'#7744d4','violet2':'#6636bb','bright':'#d5baff',
-   'good':'#89e4bc','warning':'#ffc47b'
+   'good':'#89e4bc','warning':'#ffc47b','teal':'#63d9cf','teal_panel':'#153036'
   }
   c=self.colors
   style=ttk.Style();style.theme_use('clam')

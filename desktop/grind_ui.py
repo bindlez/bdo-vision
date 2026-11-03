@@ -31,14 +31,14 @@ def grind_summary(meta,rows,prices,now=None,available=False,reason=''):
             if canonical_item(event[2]).casefold()==canonical_item(target).casefold():last_target=event[1]
             else:since_target+=1
     return {'id':meta['id'],'label':meta.get('label') or 'Untitled run','spot':meta.get('spot') or meta.get('label') or 'Unspecified spot',
-            'started_at':meta['created_at'],'ended_at':meta.get('ended_at'),'observed_seconds':measured,
+            'started_at':meta['created_at'],'ended_at':meta.get('ended_at'),'observed_seconds':measured,'activity':meta.get('activity','Grinding'),
             'excluded_seconds':max(0,elapsed-measured),'coverage':measured/elapsed if elapsed else 0,
             'available':bool(available),'reason':reason,'value':0 if not rows else result['value'],
             'silver_hour':0 if not rows and measured>=60 else result['silver_hour'],
             'units':result['quantity'],'events':result['events'],'rare':result['rare'],'unpriced':result['unpriced'],
             'priced':result['priced_types'],'items':result['items'],'latest':latest,
             'target':target,'target_quantity':count,'goal':goal,'target_progress':min(1,count/goal) if target else None,
-            'pulse':pulse,'events_since_target':since_target,'last_target_at':last_target}
+            'pulse':pulse,'events_since_target':since_target,'last_target_at':last_target,'silver_goal':meta.get('silver_goal',0)}
 
 
 class GrindTracker:
@@ -48,6 +48,10 @@ class GrindTracker:
         self.spot=tk.StringVar();self.target=tk.StringVar();self.goal=tk.StringVar(value='1')
         self.state=tk.StringVar(value='Start a run to record your own results.');self.pursuit=tk.StringVar();self.benchmark=tk.StringVar()
         self.metrics=[tk.StringVar(value='—') for _ in range(4)]
+        from live_grind import LiveGrind
+        self.live=LiveGrind(self);self.obs_enabled=tk.BooleanVar(value=bool(tracker.platform_preferences.get('obs_enabled',False)))
+        self.silver_goal=tk.StringVar(value=str(tracker.platform_preferences.get('grind_silver_goal',0)));self.silver_progress=tk.StringVar()
+        self.insights.session.db.execute('CREATE TABLE IF NOT EXISTS grind_money_goals(session TEXT PRIMARY KEY, silver INTEGER NOT NULL)');self.insights.session.db.commit()
         self.insights.session.db.execute('CREATE TABLE IF NOT EXISTS grind_details (session TEXT PRIMARY KEY, spot TEXT NOT NULL, goal INTEGER NOT NULL)');self.insights.session.db.commit()
 
     def build(self,tabs):
@@ -64,6 +68,16 @@ class GrindTracker:
         self.tracker.app.text_button(actions,'FINISH RUN',self.finish).pack(side='left',padx=12)
         self.tracker.app.text_button(actions,'BIG DROPS',lambda:self.tracker.big_drops.open()).pack(side='left',padx=8)
         self.tracker.app.text_button(actions,'EXPORT RUN',self.export).pack(side='right')
+        live_actions=tk.Frame(frame,bg=c['bg']);live_actions.pack(fill='x',pady=5)
+        self.tracker.app.text_button(live_actions,'COMPACT LIVE WINDOW',self.live.open).pack(side='left')
+        ttk.Checkbutton(live_actions,text='Share with OBS · local only',variable=self.obs_enabled,command=self.live.obs_changed,style='Vision.TCheckbutton').pack(side='left',padx=12)
+        self.tracker.app.text_button(live_actions,'COPY OBS URL',self.live.copy_url).pack(side='left')
+        goals=tk.Frame(frame,bg=c['bg']);goals.pack(fill='x',pady=6)
+        tk.Label(goals,text='Recorded silver goal · 0 = off',bg=c['bg'],fg=c.get('teal',c['bright'])).pack(side='left')
+        ttk.Entry(goals,textvariable=self.silver_goal,width=15,style='Vision.TEntry').pack(side='left',padx=8)
+        self.tracker.app.text_button(goals,'APPLY GOAL',self.apply_silver_goal).pack(side='left')
+        tk.Label(frame,textvariable=self.silver_progress,bg=c['bg'],fg=c.get('teal',c['bright']),wraplength=700,justify='left').pack(anchor='w',pady=4)
+        self.money_bar=ttk.Progressbar(frame,maximum=100,style='Vision.Horizontal.TProgressbar');self.money_bar.pack(fill='x',pady=5)
         tk.Label(frame,textvariable=self.state,bg=c['bg'],fg=c['bright'],wraplength=700,justify='left',font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(0,10))
         cards=tk.Frame(frame,bg=c['bg']);cards.pack(fill='x')
         for index,label in enumerate(('RECORDED VALUE','SILVER / OBSERVED HOUR','OBSERVED / EXCLUDED','RARE-NOTICE UNITS')):
@@ -74,6 +88,9 @@ class GrindTracker:
         tk.Label(frame,textvariable=self.benchmark,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(10,5))
         tk.Label(frame,textvariable=self.pursuit,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10),wraplength=700,justify='left').pack(anchor='w',pady=(0,8))
         self.canvas=tk.Canvas(frame,height=66,bg=c['panel'],highlightthickness=0);self.canvas.pack(fill='x',pady=(0,10))
+        self.race=tk.StringVar();tk.Label(frame,textvariable=self.race,bg=c.get('teal_panel',c['panel']),fg=c.get('teal',c['bright']),wraplength=700,justify='left',padx=10,pady=9,font=('Segoe UI Semibold',10)).pack(fill='x')
+        from grind_charts import GrindCharts
+        self.charts=GrindCharts(frame,c)
         tk.Label(frame,text='RUN HISTORY · select a finished run to inspect it',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',8)).pack(anchor='w',pady=(0,5))
         box=tk.Frame(frame,bg=c['bg']);box.pack(fill='both',expand=True)
         self.history_tree=ttk.Treeview(box,columns=('spot','time','value','rate','coverage'),show='headings',style='Loot.Treeview',height=5)
@@ -88,15 +105,34 @@ class GrindTracker:
     def start(self):
         try:goal=max(1,min(1_000_000,int(self.goal.get())))
         except ValueError:self.state.set('Enter a whole number for the pursuit goal.');return
+        try:
+            silver=int(self.silver_goal.get().replace(',',''))
+            if not 0<=silver<=10**15:raise ValueError()
+        except ValueError:self.state.set('Enter a nonnegative whole-silver goal, or 0 to disable it.');return
         session=self.insights.session
         if session.id and not session.ended:session.finish(self.insights.prices.all(),self.insights.gate())
         spot=self.spot.get().strip()[:100] or 'Unnamed grind spot'
         session.start(self.insights.gate(),label=spot,activity='Grinding',targets=[self.target.get().strip()[:100]] if self.target.get().strip() else [])
         self.tracker.generation+=1;self.tracker.last_scan=0
-        with session.db:session.db.execute('INSERT INTO grind_details VALUES (?,?,?)',(session.id,spot,goal))
+        with session.db:
+            session.db.execute('INSERT INTO grind_details VALUES (?,?,?)',(session.id,spot,goal))
+            session.db.execute('INSERT INTO grind_money_goals VALUES (?,?)',(session.id,silver))
         self.tracker.crafting.set(False);self.tracker.app.save_quietly()
         if self.history_tree:self.history_tree.selection_remove(self.history_tree.selection())
         self.refresh()
+
+    def apply_silver_goal(self):
+        try:
+            value=int(self.silver_goal.get().replace(',',''))
+            if not 0<=value<=10**15:raise ValueError()
+        except ValueError:self.state.set('Enter a silver goal from 0 to 1,000,000,000,000,000.');return
+        self.tracker.platform_preferences['grind_silver_goal']=value
+        session=self.insights.session
+        if session.id and not session.ended:
+            meta=session.db.execute('SELECT activity FROM insight_sessions WHERE id=?',(session.id,)).fetchone()
+            if meta and meta[0] in ('Grinding','Treasure hunt'):
+                with session.db:session.db.execute('INSERT OR REPLACE INTO grind_money_goals VALUES (?,?)',(session.id,value))
+        self.tracker.app.save_quietly();self.refresh()
 
     def pause(self):
         session=self.insights.session
@@ -115,10 +151,12 @@ class GrindTracker:
     def summaries(self,limit=None):
         session=self.insights.session;ready,reason=self.tracker.capture_availability();current_prices=self.insights.prices.all()
         details={r[0]:{'spot':r[1],'goal':r[2]} for r in session.db.execute('SELECT session,spot,goal FROM grind_details')}
+        money_goals=dict(session.db.execute('SELECT session,silver FROM grind_money_goals'))
         results=[]
         for meta in session.history():
             if meta['activity'] not in ('Grinding','Treasure hunt'):continue
             meta.update(details.get(meta['id'],{}))
+            meta['silver_goal']=money_goals.get(meta['id'],self.tracker.platform_preferences.get('grind_silver_goal',0) if meta['id']==session.id and not session.ended else 0)
             live=meta['id']==session.id and not session.ended
             if live:meta['active_seconds']=session.clock.seconds
             prices=json.loads(meta['price_snapshot']) if meta['ended_at'] is not None else current_prices
@@ -149,12 +187,18 @@ class GrindTracker:
 
     def refresh_cards(self,row):
         if not row:
+            for metric in self.metrics:metric.set('—')
+            if hasattr(self,'charts'):self.charts.draw(None);self.race.set('Race your best unlocks after a completed 10-minute run at this spot.')
+            self.silver_progress.set('Set an optional recorded-silver goal.');self.money_bar['value']=0
             self.state.set('Start a grind to measure your actual recorded results. Your existing loot history is preserved.')
             self.pursuit.set('Optional pursuit: track a treasure piece or rare item by name.');self.benchmark.set('Personal benchmarks unlock after three completed runs at the same spot.');return
         self.metrics[0].set('Unpriced' if row['value'] is None else f"{row['value']:,}")
         self.metrics[1].set('Measuring…' if row['silver_hour'] is None else f"{row['silver_hour']:,.0f}")
         self.metrics[2].set(duration(row['observed_seconds'])+' / '+duration(row['excluded_seconds']))
         self.metrics[3].set(str(row['rare']))
+        goal=row.get('silver_goal',0);value=row['value']
+        self.money_bar['value']=min(100,value/goal*100) if goal and value is not None else 0
+        self.silver_progress.set((f"SILVER GOAL · {value:,.0f} / {goal:,.0f} · "+('GOAL REACHED' if value>=goal else f'{goal-value:,.0f} to go')+(' · partial priced value' if row['unpriced'] else '')) if goal and value is not None else 'Silver goal waiting for priced recorded loot.' if goal else 'Silver goal off · item pursuits remain available.')
         self.state.set(('OBSERVING' if row['available'] else 'COMPLETED' if row['ended_at'] else 'PAUSED')+' · '+row['spot']+' · '+(row['reason'] or f"{row['events']} captured events")+f" · {row['unpriced']} unpriced types excluded")
         self.pursuit.set((f"PURSUIT · {row['target']}  {row['target_quantity']:,} / {row['goal']:,} · "+('GOAL REACHED' if row['target_quantity']>=row['goal'] else 'Only captured drops count')) if row['target'] else 'No pursuit selected · all captured loot still counts toward your session.')
         peers=[r['silver_hour'] for r in self.summaries() if r['id']!=row['id'] and r['ended_at'] and r['spot'].casefold()==row['spot'].casefold() and r['silver_hour'] is not None]
@@ -162,6 +206,11 @@ class GrindTracker:
             median=statistics.median(peers);self.benchmark.set(f"YOUR BASELINE · {median:,.0f} silver/hour median · this run {row['silver_hour']/median-1:+.1%} · {len(peers)} completed runs")
         else:self.benchmark.set(f"PERSONAL BASELINE · {len(peers)} / 3 completed runs at this spot. Compare your own results, with capture gaps visible.")
         self.draw_pulse(row)
+        if hasattr(self,'charts'):
+            self.charts.draw(row)
+            from grind_charts import personal_best
+            race=personal_best(row,self.summaries(),self.insights.prices.all())
+            self.race.set(f"RACE YOUR BEST · {race['pacePercent']:.1f}% of your best pace · {race['aheadSilver']:+,.0f} silver vs that pace\nBest {race['bestHour']:,.0f}/h · both runs valued on current prices; only observed time counts." if race else 'RACE YOUR BEST · needs 60 observed seconds, complete item prices, and a completed 10-minute run at the same spot.')
 
     def draw_pulse(self,row):
         if not self.canvas:return

@@ -66,6 +66,7 @@ class PlannerBridge:
         self.commands=[]
         self.cp_reading={'stage':'idle','message':'No CP snapshot requested'}
         self.cp_plan={}
+        self.stream_enabled=False;self.stream_snapshot={}
         self.cp_request_at=-1e9
         self.gear_ocr_gate=BoundedSemaphore(1)
         self.gear_job=None;self.gear_stop=Event()
@@ -150,6 +151,13 @@ class PlannerBridge:
 
             def do_GET(self):
                 route = urlsplit(self.path).path
+                if route=='/stream':
+                    from live_grind import stream_page
+                    self._send(stream_page(),content_type='text/html; charset=utf-8');return
+                if route=='/stream-state':
+                    with bridge._lock:enabled=bridge.stream_enabled;snapshot=copy.deepcopy(bridge.stream_snapshot)
+                    if not enabled:self._send({'error':'OBS sharing is off'},403);return
+                    self._send(snapshot);return
                 if route=='/cp-reading':
                     with bridge._lock:status=copy.deepcopy(bridge.cp_reading)
                     self._send(status)

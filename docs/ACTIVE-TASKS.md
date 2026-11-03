@@ -108,10 +108,11 @@ an aspirational complete-download goal; no feature removal or hidden extra downl
 ## P2 — Previously requested grind/live-window features
 
 - [x] Big Drops, Huge Drops, treasure exceptions and retrospective heat implemented.
-- [ ] Race Your Best: same-spot best-run pace and projection, comparable price basis,
+- [x] Race Your Best: same-spot best-run pace and projection, comparable price basis,
   excluded pauses/capture gaps; existing median benchmark is only partial.
 - [ ] Boss/night timers: regional schedule, day/night countdown, optional alerts.
-- [ ] OBS browser sources: live session, Twilight reserves and boss timer; no new OCR.
+- [x] OBS browser source for the live grind session; independent opt-in, clock/loot widgets.
+- [ ] Twilight reserves and boss sources; draggable widget layout.
 - [ ] F9 start/finish and F10 pause/resume; rebind/disable; handle conflicts.
 - [ ] Optional first-confirmed-drop session start and conservative spot suggestion.
 - [x] Manual pauses and known capture gaps excluded from rates.
@@ -165,3 +166,10 @@ snapshots → shared economics → comparisons/graphs → optional rewards and o
 - [x] Real cooking/alchemy chain regressions; preserve ledger/timer separation.
 - [ ] Exhaustive external competitor feature-parity audit remains unverified.
 - [ ] Core live accuracy acceptance remains required; no 100% OCR claim.
+
+## rc.20 · cooking execution and presentation
+
+- [x] Organic Feed and 20-plus-stage meal planning and explicit next-stage timers.
+- [x] Cached chain-wide substitutions, pie charts and teal accent.
+- [x] Compact live window, opt-in OBS, silver goals and comparable personal-best pacing.
+- [ ] Remaining competitor gaps: see [app audit](GARMOTH-APP-COMPARISON.md).

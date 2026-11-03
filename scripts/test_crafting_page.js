@@ -54,10 +54,14 @@ context.recipeSearch='flax';context.renderRecipeList();assert(nodes.get('recipeL
 context.craftStudioRender({...context.selectedRecipe,name:'<img src=x onerror=alert(1)>'},1);assert(nodes.get('craftDetail').innerHTML.includes('&lt;img'));assert(!nodes.get('craftDetail').innerHTML.includes('<img src=x'));
 
 // Actual multilevel cooking and alchemy workflows, not a separate mock calculator.
-for(const name of ['Balenos Meal','Elixir of Demihuman Hunt']){
+for(const name of ['Balenos Meal','Elixir of Demihuman Hunt','Organic Feed','Kamasylvia Meal']){
  const r=recipes.find(r=>r.name===name);context.selectedRecipe=r;context.lastCraftAmount=100;context.craftStudioRender(r,100);
  nodes.get('workshopMake').onclick();const chain=context.craftStudioPlan(r,100);
- assert(chain.steps.length>2,name+' needs real intermediate stages');
+ assert(chain.steps.length>2,name+' needs real intermediate stages');if(name==='Kamasylvia Meal')assert(chain.steps.length>20);
+ assert(nodes.get('craftDetail').innerHTML.includes('Expected retained output value'));assert(nodes.get('craftDetail').innerHTML.includes('Priced cash ingredient budget'));
+ nodes.get('workshopStartNext').onclick();assert.equal(started.r.id,chain.steps[0].recipeId);assert.equal(started.n,chain.steps[0].batches);
+ const once=started;nodes.get('workshopStartNext').onclick();assert.equal(started,once,'same stage must not start duplicate timers');
+ nodes.get('workshopSubstitutions').onclick();
  assert(chain.steps.at(-1).recipeId===r.id);assert(chain.steps.every(s=>s.inputs.length&&s.expected>=s.needed));
  assert(nodes.get('craftDetail').innerHTML.includes('Cash required'));assert(nodes.get('craftDetail').innerHTML.includes('Where your time and silver go'));
  let check=nodes.get('craftDetail').controls.find(n=>n.dataset.chainDone==='0');check.checked=true;check.onchange();
@@ -67,4 +71,5 @@ for(const name of ['Balenos Meal','Elixir of Demihuman Hunt']){
  nodes.get('workshopBuy').onclick();assert.equal(context.craftStudioPlan(r,101).steps.length,1,'buy route must remove every intermediate');
 }
 
+assert(context.craftStudioPie([{label:'<img src=x>',value:1}],'Budget','silver').includes('&lt;img'));assert(!context.craftStudioPie([{label:'<img src=x>',value:1}],'Budget','silver').includes('<img'));
 console.log('Shipped Crafting UI: rendering, target conversion, queue, export, timer linkage, tax, favorites, processing search and escaping passed.');
