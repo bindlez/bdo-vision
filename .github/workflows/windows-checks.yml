@@ -37,6 +37,8 @@ jobs:
         run: node scripts/test_cp.js
       - name: Check actual CP page interactions
         run: node scripts/test_cp_page.js
+      - name: Check Workerman CP payback interactions
+        run: node scripts/test_cp_workerman.js
       - name: Check crafting and imperial quick picks
         run: |
           node scripts/test_crafting.js
