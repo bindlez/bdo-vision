@@ -1,4 +1,8 @@
-# BDO Vision · current test candidate 1.13.0-rc.18
+# BDO Vision · current test candidate 1.13.0-rc.19
+
+Cooking and alchemy now include a multilevel **Production workshop**: make/buy
+intermediate routes, per-stage input quantities and batch instructions, economic
+comparisons, time/cash graphs, preparation milestones and full runbook export.
 
 CP Info now includes an optional **Workerman payback model** in the Windows app
 and paired planner: choose a worker job, confirm additional CP and costs, and see

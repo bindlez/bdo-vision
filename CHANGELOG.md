@@ -1,3 +1,15 @@
+# 1.13.0-rc.19 · Multilevel cooking and alchemy workshop
+
+- Added a production workshop with make-all/buy routes, recursive recipe choices,
+  ordered intermediate batches, exact per-stage inputs and retained surplus.
+- Added cash/economic-cost/time/profit route comparison, stage-time visualization,
+  priced purchase bars and full production runbook export.
+- Added a sequential manual preparation checklist with milestones. Changed stage
+  quantities reset progress; checkboxes never write inventory, loot or earnings.
+- Preserved recipe, mastery, rare yield, tax, processing, Imperial and queue models.
+- No OCR decision behavior changed. Core reader regressions are required; these
+  checks do not establish a live accuracy percentage.
+
 # 1.13.0-rc.18 · CP targets, native Imperial and Workerman payback
 
 - Added inverse target CP planning: each byproduct alone, owned mix, completed

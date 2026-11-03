@@ -155,3 +155,13 @@ an aspirational complete-download goal; no feature removal or hidden extra downl
 
 Dependency order: reliable observations → trusted quest state/alerts → owned account
 snapshots → shared economics → comparisons/graphs → optional rewards and overlays.
+
+## Cooking/alchemy workshop · rc.19
+
+- [x] Bounded recursive make/buy routes with deeper variant editing.
+- [x] Ordered stage batches, per-batch and total inputs, expected output/surplus.
+- [x] Cash versus economic input value, time and profit route comparison.
+- [x] Stage-time and purchase-cost graphs, manual milestones and runbook export.
+- [x] Real cooking/alchemy chain regressions; preserve ledger/timer separation.
+- [ ] Exhaustive external competitor feature-parity audit remains unverified.
+- [ ] Core live accuracy acceptance remains required; no 100% OCR claim.

@@ -52,4 +52,19 @@ nodes.get('studioFavorite').onclick();assert(context.craftStudioState.favorites.
 context.recipeTab='processing';context.renderRecipeList();assert(nodes.get('recipeList').innerHTML.includes('746 matching'));
 context.recipeSearch='flax';context.renderRecipeList();assert(nodes.get('recipeList').innerHTML.includes('Flax Fabric'));
 context.craftStudioRender({...context.selectedRecipe,name:'<img src=x onerror=alert(1)>'},1);assert(nodes.get('craftDetail').innerHTML.includes('&lt;img'));assert(!nodes.get('craftDetail').innerHTML.includes('<img src=x'));
+
+// Actual multilevel cooking and alchemy workflows, not a separate mock calculator.
+for(const name of ['Balenos Meal','Elixir of Demihuman Hunt']){
+ const r=recipes.find(r=>r.name===name);context.selectedRecipe=r;context.lastCraftAmount=100;context.craftStudioRender(r,100);
+ nodes.get('workshopMake').onclick();const chain=context.craftStudioPlan(r,100);
+ assert(chain.steps.length>2,name+' needs real intermediate stages');
+ assert(chain.steps.at(-1).recipeId===r.id);assert(chain.steps.every(s=>s.inputs.length&&s.expected>=s.needed));
+ assert(nodes.get('craftDetail').innerHTML.includes('Cash required'));assert(nodes.get('craftDetail').innerHTML.includes('Where your time and silver go'));
+ let check=nodes.get('craftDetail').controls.find(n=>n.dataset.chainDone==='0');check.checked=true;check.onchange();
+ assert.equal(context.craftStudioState.workshop.done.length,1);
+ context.lastCraftAmount=101;context.craftStudioRender(r,101);assert.equal(context.craftStudioState.workshop.done.length,0,'changed requirements reset progress');
+ nodes.get('workshopExport').onclick();assert(download[1].includes('STAGES'));assert(download[1].includes('/batch'));assert(download[1].includes('Expected quantities'));
+ nodes.get('workshopBuy').onclick();assert.equal(context.craftStudioPlan(r,101).steps.length,1,'buy route must remove every intermediate');
+}
+
 console.log('Shipped Crafting UI: rendering, target conversion, queue, export, timer linkage, tax, favorites, processing search and escaping passed.');
