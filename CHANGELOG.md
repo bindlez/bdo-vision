@@ -1,3 +1,10 @@
+# 1.13.0-rc.15 · Simpler Imperial comparisons
+
+- Cooking/Alchemy tabs and one remembered mastery input, with all tiers compared.
+- Buy and craft profit side by side; clickable descending profit rankings and
+  two best-option summaries. Missing prices and stock warnings remain explicit.
+- Removed tier and daily quantity setup from the quick comparison.
+
 # 1.13.0-rc.14 · Imperial quick picks
 
 - Four compact, cost-sorted Imperial turn-in lists: buy/craft cooking and alchemy.

@@ -1,4 +1,4 @@
-# 22 · Crafting platform: recipes, prices, models and extensions
+# 22 Â· Crafting platform: recipes, prices, models and extensions
 
 ## Ownership and editing order
 
@@ -87,7 +87,7 @@ use accepted events; blocked-capture projections never enter either ledger.
 
 ## Market request contracts
 
-`POST /craft-quotes` retains names compatibility and accepts exact `ids` (1–64)
+`POST /craft-quotes` retains names compatibility and accepts exact `ids` (1â€“64)
 plus NA/EU region. Selected plans use exact IDs and a five-minute cache. No catalog
 download is needed for those lookups. Common NPC-only ingredients and imperial
 outputs are excluded from unnecessary market requests. Zero stock is distinct from
@@ -142,15 +142,19 @@ The [reference matrix](../CRAFTING-REFERENCE-MATRIX.md) records supported capabi
 and known limits. The [project paper](../PROJECT-PAPER.md) explains the broader lessons.
 # Imperial quick picks
 
-The crafting page includes four cost-sorted lists: cooking buy/craft and alchemy
-buy/craft. Select a box tier for each life skill, mastery and today's box count.
-Refresh uses the existing on-demand `/craft-market` snapshot, with no new polling
-or OCR. Buy cost multiplies the required meal/elixir quantity by its exact-ID quote.
-Craft cost buys the recipe inputs, chooses cheapest priced substitutions and rounds
-expected batches up. Rare-output recipes use their rare yield. Surplus and side
-outputs receive no cost credit. Unpriced options are excluded from the top five.
-Delivery uses the existing imperial payout/mastery model, without market-sale tax.
-Eligibility, stock and remaining daily deliveries require checking in game.
-`VisionCraft.imperialRanks` owns pure calculations; `craftImperialRender` owns UI.
-Run `node scripts/test_imperial.js` for calculation regressions.
+The Imperial section has Cooking/Alchemy tabs and one mastery input, remembered
+per life skill. Two recommendations highlight the highest modeled buy and craft
+profit. One compact table compares costs and profit side by side; clicking either
+profit header ranks descending, with unknowns last. It shows 20 rows initially,
+with a Show all control. No grade, CP or quantity input is required. All tiers
+are compared, so life-skill eligibility and remaining delivery allowance still
+need checking in game. Stock warnings are explicit, not assumed availability.
 
+The existing on-demand `/craft-market` snapshot supplies exact-ID quotes; no new
+polling or OCR. Buy cost multiplies meal/elixir quantity by the quote. Craft cost
+buys inputs, chooses cheapest priced substitutions and rounds expected batches
+up. Rare-output recipes use their rare yield. Surplus and side outputs receive
+no cost credit. Delivery uses the existing imperial payout/mastery model without
+market-sale tax. Costs link to the corresponding recipe. `imperialRanks` owns
+calculations; `craftImperialRender` owns rendering. Run `node scripts/test_imperial.js`
+and `node scripts/test_crafting_page.js` to verify math and shipped controls.
