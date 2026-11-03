@@ -8,17 +8,17 @@ loot, change real inventory or control BDO.
 ## Player workflow
 
 1. Select the exact cooking, alchemy or processing recipe and substitutions.
-2. In **What should I grab?**, enter character maximum LT and current total LT.
+2. In **Your production line**, enter character maximum LT and current total LT.
    Current LT must already include equipment and all items currently carried.
 3. Leave a reserve. If relevant ingredients are already carried, enter their
-   counts in the packing table. Storage stock is deliberately separate.
-4. Read the exact **Grab from storage** column. **Use this load** applies the
+   counts under Already in your bag. Storage stock is deliberately separate.
+4. Read the exact **Grab extra** column. **Use max [recipe] load** applies the
    modeled maximum to the recipe's batch target; exporting makes a text checklist.
 5. **Rank cooking by longest load** compares the category using these same LT
    assumptions. Other sorts find most crafts/load or lightest inputs/craft.
 6. Under weight settings, choose an output allowance, tool-use cap and optional
-   rounding increment. Per-stage packing cards appear for intermediate recipes
-   when Make intermediates is enabled. Each card has its own planner timer.
+   rounding increment. Packing cards cover every known selected subrecipe in the production map,
+   independently of the financial Make/Buy route. Each has its own planner timer.
 7. Under **Where can this product go next?**, inspect consuming recipes up to four
    stages forward. Queueing a route keeps intermediate output for later stages.
 

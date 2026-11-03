@@ -199,3 +199,11 @@ snapshots → shared economics → comparisons/graphs → optional rewards and o
 - [x] Ordered queue with kept-output reuse, no double sale/cost and remaining stock.
 - [x] Shipped UI and conservation regressions, weight demo and developer contracts.
 - [ ] Live validation of carried LT, slot limits and actual yield remains user-owned.
+
+## rc.24 - simple complete production line
+
+- [x] Normalized item/recipe graph with exact variant/substitution relationships.
+- [x] Visible full upstream line, branch feed labels and capacity on each step.
+- [x] Linked ingredient totals, whole-craft leftovers and selected-load fit checks.
+- [x] One-click maximum packing, guarded selected-load timers, compact large chains.
+- [x] Exact Sungnyung chain, ratio, graph/cycle and actual shipped input regressions.

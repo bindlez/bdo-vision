@@ -1,3 +1,15 @@
+# 1.13.0-rc.24 - Connected production line and linked packing
+
+- Put the complete selected recipe chain above economics, with preparation-order
+  steps, explicit feeds-to relationships, capacity badges and compact packing cards.
+- Edit any ingredient to snap its companions to whole-craft ratios. Show leftovers,
+  modeled LT fit/overflow and per-load timer guards; max-fill is one click.
+- Use one normalized item/recipe graph with ID-based edges, selected substitutions,
+  variants, cycle guards and bounded traversal. Existing downstream uses remain
+  connected to the ordered production queue; no duplicated nested recipe catalog.
+- Added real Sungnyung / Nurungji / Cooked Rice UI and graph regressions.
+- No new runtime dependency, OCR call, capture or background polling.
+
 # 1.13.0-rc.23 · Carry loads and forward production planning
 
 - Added a weight-based packing calculator: entered max/current/reserved LT,

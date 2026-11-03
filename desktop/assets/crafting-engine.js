@@ -68,11 +68,39 @@ function carry(recipe,options={},context={}){
  let lo=0,hi=cap;while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(peak(mid)<=usedLimit+1e-8)lo=mid;else hi=mid-1;}
  const rawBatches=lo,roundTo=numeric(options.roundTo??1,'rounding increment',1e6);if(roundTo<1||!Number.isInteger(roundTo))throw Error('Rounding increment must be a positive whole number');lo=Math.floor(lo/roundTo)*roundTo;
  const ingredientMax=perBatch>0?Math.max(0,Math.floor((Math.max(0,usedLimit-current)+rows.reduce((s,m)=>s+m.bag*m.weight,0))/perBatch)):cap;
- return {available:true,maximum,current,reserve,free:Math.max(0,usedLimit-current),batches:lo,seconds:lo*cfg.seconds,mainOutput:lo*cfg.yield,
+ const at=b=>({batches:b,seconds:b*cfg.seconds,rows:rows.map(m=>({...m,required:b*m.qty,grab:Math.max(0,b*m.qty-m.bag),grabWeight:Math.max(0,b*m.qty-m.bag)*m.weight})),initialWeight:current+load(b),endWeight:outputsKnown?current+load(b)+b*(outputPerBatch-perBatch):null,peakWeight:peak(b),loadWeight:load(b),fits:peak(b)<=usedLimit+1e-8&&b<=cap,overBy:Math.max(0,peak(b)-usedLimit),exceedsTool:b>cap});
+ const selected=options.batches==null?null:at(Math.floor(numeric(options.batches,'load batches')));
+ return {available:true,selected,maximum,current,reserve,free:Math.max(0,usedLimit-current),batches:lo,seconds:lo*cfg.seconds,mainOutput:lo*cfg.yield,
    perBatch,outputPerBatch,mode,initialWeight:current+load(lo),endWeight:outputsKnown?current+load(lo)+lo*(outputPerBatch-perBatch):null,peakWeight:peak(lo),loadWeight:load(lo),
    rows:rows.map(m=>({...m,required:lo*m.qty,grab:Math.max(0,lo*m.qty-m.bag),grabWeight:Math.max(0,lo*m.qty-m.bag)*m.weight})),
    rawBatches,roundTo,rounded:rawBatches!==lo,outputLimited:mode!=='ingredients'&&rawBatches<Math.min(cap,ingredientMax),toolLimited:rawBatches===cap&&cap<1e9,unbounded:rawBatches===1e9,
    samples:Array.from({length:25},(_,i)=>({batches:Math.floor(lo*i/24),peak:peak(Math.floor(lo*i/24))}))};
+}
+// Catalog data stays normalized: edges hold IDs and per-craft ratios, not copies
+// of nested recipes. Build only the chosen variant/substitution route on demand.
+function productionGraph(recipe,context={}){
+ const index=context.index||indexRecipes(context.recipes||[recipe]),nodes=new Map(),edges=new Map(),steps=[],visited=new Set(),warnings=new Set();
+ const edge=(from,to,quantity,kind)=>{const k=from+'>'+to+':'+kind,old=edges.get(k);edges.set(k,{from,to,quantity:(old?.quantity||0)+quantity,kind});};
+ const item=id=>'item:'+id;
+ function visit(r,path,depth){
+  if(path.has(r.id)){warnings.add('Recipe cycle: '+r.name);return;}if(visited.has(r.id))return;
+  if(depth>12||nodes.size>=340||visited.size>=60){warnings.add('Production map limit reached');return;}
+  visited.add(r.id);nodes.set(r.id,{id:r.id,kind:'recipe',recipe:r});const cfg=configure(r,context.configFor?.(r)||{},context.spec||{}),output=item(r.itemId);nodes.set(output,{id:output,itemId:r.itemId,kind:'item'});edge(r.id,output,cfg.yield,'output');
+  if(r.rare){const rare=item(r.rare.itemId);nodes.set(rare,{id:rare,itemId:r.rare.itemId,kind:'item'});edge(r.id,rare,cfg.rareYield,'rareOutput');}
+  const trail=new Set([...path,r.id]);
+  for(const m of resolved(r,context)){const id=item(m.itemId);nodes.set(id,{id,itemId:m.itemId,kind:'item'});edge(id,r.id,m.qty,'input');
+   const variants=index.byItem.get(m.itemId)||[],sub=variants.find(v=>v.id===context.variants?.[m.itemId])||variants[0];
+   if(sub&&(sub.type!=='processing'||sub.method))visit(sub,trail,depth+1);
+  }steps.push(r.id);
+ }
+ visit(recipe,new Set(),0);return {nodes:[...nodes.values()],edges:[...edges.values()],steps,warnings:[...warnings]};
+}
+function ingredientRatio(recipe,itemId,quantity,context={}){
+ if(quantity===''||quantity==null||typeof quantity==='boolean'||!Number.isFinite(Number(quantity))||Number(quantity)<0||Number(quantity)>1e12||!Number.isInteger(Number(quantity)))throw Error('Enter a whole ingredient quantity');
+ const combined=new Map();for(const m of resolved(recipe,context)){const old=combined.get(m.itemId);combined.set(m.itemId,old?{...old,qty:old.qty+m.qty}:m);}
+ const rows=[...combined.values()],anchor=combined.get(Number(itemId));if(!anchor||!(anchor.qty>0))throw Error('Ingredient does not belong to this recipe');
+ const batches=Math.floor(Number(quantity)/anchor.qty);if(batches<1||batches>1e9)throw Error('Quantity must cover at least one whole craft, up to one billion crafts');
+ return {batches,entered:Number(quantity),used:batches*anchor.qty,leftover:Number(quantity)-batches*anchor.qty,rows:rows.map(m=>({...m,quantity:batches*m.qty}))};
 }
 const consumerCache=new WeakMap();
 function consumers(recipes,spec){
@@ -155,6 +183,6 @@ function imperialRanks(recipes,spec,quote,options={}){
  }
  return result;
 }
-root.VisionCraft={carry,downstream,productionQueue,imperialRanks,projection,key,settings,configure,rates,bracket,resolved,indexRecipes,plan,queue,scenarios,tax,series};
+root.VisionCraft={productionGraph,ingredientRatio,carry,downstream,productionQueue,imperialRanks,projection,key,settings,configure,rates,bracket,resolved,indexRecipes,plan,queue,scenarios,tax,series};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.VisionCraft;
 })(typeof globalThis!=='undefined'?globalThis:this);

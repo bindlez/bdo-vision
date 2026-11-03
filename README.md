@@ -1,4 +1,8 @@
-# BDO Vision · current test candidate 1.13.0-rc.23
+# BDO Vision · current test candidate 1.13.0-rc.24
+
+The complete **Production line** is visible above the economics: each step shows
+what it feeds and how much fits. Edit any ingredient in a packing card to snap the
+others to the right ratio, with whole-craft leftovers and overweight status.
 
 The recipe **Weight planner** gives exact ingredients to grab for the entered
 character LT, with output room and an optional tool limit. Rank recipes by longest

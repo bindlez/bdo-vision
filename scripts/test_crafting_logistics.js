@@ -1,9 +1,14 @@
 'use strict';
 const assert=require('assert'),C=require('../desktop/assets/crafting-engine.js'),recipes=require('../desktop/assets/recipes.json'),spec=require('../desktop/assets/crafting-data.json');
 const r={id:'soup',itemId:2,name:'Soup',type:'cooking',minProc:2,maxProc:2,secPerBatch:10,mats:[{itemId:1,name:'Raw',qty:1}]};
+const trio={...r,mats:[{itemId:10,name:'A',qty:1},{itemId:11,name:'B',qty:2},{itemId:12,name:'C',qty:3}]};
+assert.deepEqual(C.ingredientRatio(trio,10,1000).rows.map(m=>m.quantity),[1000,2000,3000]);
+assert.deepEqual(C.ingredientRatio(trio,11,14000).rows.map(m=>m.quantity),[7000,14000,21000]);
+assert.equal(C.ingredientRatio(trio,12,1000).leftover,1);assert.throws(()=>C.ingredientRatio(trio,12,2));assert.throws(()=>C.ingredientRatio(trio,10,''));assert.throws(()=>C.ingredientRatio(trio,99,1000));
 const ctx={spec:{items:{1:{weight:1},2:{weight:2}}},recipes:[r]};
 assert.equal(C.carry(r,{maximum:10,current:0,reserve:0,mode:'ingredients'},ctx).batches,10);
 let load=C.carry(r,{maximum:10,current:0,reserve:0},ctx);assert.equal(load.batches,2);assert.equal(load.peakWeight,8);assert(load.outputLimited);
+load=C.carry(r,{maximum:10,current:0,reserve:0,batches:3},ctx);assert(!load.selected.fits);assert.equal(load.selected.overBy,2);assert.equal(load.selected.rows[0].required,3);
 load=C.carry(r,{maximum:10,current:2,reserve:0,bag:{1:2},mode:'ingredients'},ctx);assert.equal(load.batches,10);assert.equal(load.rows[0].grab,8);assert.equal(load.loadWeight,8);
 assert.equal(C.carry(r,{maximum:10,current:0,reserve:3},ctx).batches,1);assert.equal(C.carry(r,{maximum:10,current:0,reserve:0,tool:1},ctx).batches,1);
 assert.equal(C.carry(r,{maximum:10,current:12,reserve:0},ctx).batches,0);
@@ -17,6 +22,10 @@ load=C.carry(nr,{maximum:100,current:10,reserve:5,mode:'ingredients'},real);asse
 assert(C.carry(nr,{maximum:100,current:10,reserve:5,mode:'expected'},real).batches<=772);
 assert.equal(C.carry(nr,{maximum:2700,current:0,reserve:0,mode:'ingredients',roundTo:100},real).batches,24500);
 const rice=recipes.find(r=>r.id==='recipe:820815:79c52fba90af');assert(rice);assert.equal(C.carry(rice,{maximum:2700,current:0,reserve:0,mode:'ingredients',roundTo:100},real).batches,5100);
+const sung=recipes.find(r=>r.id==='recipe:820833:5447701ae647');assert(sung);const graph=C.productionGraph(sung,real);
+assert.deepEqual(graph.steps,[rice.id,nr.id,sung.id]);assert.equal(new Set(graph.nodes.map(n=>n.id)).size,graph.nodes.length);assert(graph.edges.some(e=>e.from==='item:'+nr.itemId&&e.to===sung.id&&e.quantity===2));
+assert(graph.edges.some(e=>e.from==='item:'+rice.itemId&&e.to===nr.id));assert.equal(graph.warnings.length,0);
+assert(C.productionGraph(recipes.find(r=>r.name==='Kamasylvia Meal'),real).steps.length>10);
 const producer={id:'producer',name:'Intermediate',itemId:2,type:'cooking',minProc:2,maxProc:2,mats:[{name:'Raw',itemId:1,qty:1}]},consumer={id:'consumer',name:'Final',itemId:3,type:'cooking',minProc:1,maxProc:1,mats:[{name:'Intermediate',itemId:2,qty:2},{name:'Sugar',itemId:4,qty:1}]};
 const inventory={},context={recipes:[producer,consumer],inventory,quote:(name,id)=>({price:{1:10,2:50,3:100,4:1}[id]})};
 const targets=[{recipe:producer,batches:5,config:{keepMain:true,retention:100},carryOutputs:true},{recipe:consumer,batches:5,config:{retention:100}}];
@@ -25,6 +34,7 @@ assert.equal(C.productionQueue([...targets].reverse(),context).profit,-55,'later
 const fractional=C.productionQueue([{recipe:producer,batches:1,config:{yield:1.5,keepMain:true},carryOutputs:true}],{...context,inventory:{intermediate:'1'}});assert.equal(fractional.inventoryRemaining.intermediate,2,'only whole expected output units enter planning stock');
 let route=C.downstream(producer,10,context,{depth:4});assert.equal(route.nodes[0].batches,5);assert.equal(route.nodes[0].used,10);assert.equal(route.nodes[0].output,5);
 const cycle={...producer,id:'back',mats:[{name:'Final',itemId:3,qty:1}]};route=C.downstream(producer,10,{...context,recipes:[producer,consumer,cycle]},{depth:4});assert.equal(route.nodes.length,1);
+const actualCycle={...producer,mats:[{name:'Final',itemId:3,qty:1}]};assert(C.productionGraph(actualCycle,{...context,recipes:[actualCycle,consumer]}).warnings.some(w=>w.includes('cycle')));
 const beer=recipes.find(r=>r.name==='Beer');assert(C.downstream(beer,100,real,{depth:2}).nodes.length>0);
 const start=performance.now();for(const x of recipes.filter(r=>r.type==='cooking'))C.carry(x,{maximum:1500,current:200,reserve:25},real);
 console.log('Carry/production: exact Nurungji loads, accumulating output, bag reuse, limits, downstream cycles, queue conservation and no double sale passed. Cooking ranking '+(performance.now()-start).toFixed(1)+' ms.');

@@ -76,7 +76,7 @@ assert(context.craftStudioPie([{label:'<img src=x>',value:1}],'Budget','silver')
 
 const nursery=recipes.find(r=>r.id==='recipe:820831:8dd94cf6d723');context.selectedRecipe=nursery;context.lastCraftAmount=100;context.craftStudioState.queue=[];
 context.craftStudioState.carry={maximum:100,current:10,reserve:5,mode:'ingredients'};context.craftStudioRender(nursery,100);
-assert(nodes.get('craftDetail').innerHTML.includes('CRAFTS PER LOAD'));assert(nodes.get('craftDetail').innerHTML.includes('772'));assert(nodes.get('craftDetail').innerHTML.includes('Grab from storage'));
+assert(nodes.get('craftDetail').innerHTML.includes('crafts max'));assert(nodes.get('craftDetail').innerHTML.includes('772'));assert(nodes.get('craftDetail').innerHTML.includes('Grab extra'));
 nodes.get('carryApply').onclick();assert.equal(context.lastCraftAmount,772);nodes.get('carryRank').onclick();assert.equal(context.recipeSort,'carryTime');assert(nodes.get('recipeList').innerHTML.includes('crafts / load'));
 const ranked=recipes.filter(r=>r.type==='cooking').map(r=>({r,c:context.VisionCraft.carry(r,context.craftStudioCarrySettings(),context.craftStudioContext())})).sort((a,b)=>b.c.seconds-a.c.seconds||a.r.name.localeCompare(b.r.name));
 assert.equal(nodes.get('recipeList').controls.find(n=>n.dataset.id&&n.dataset.id!=='durability_timer').dataset.id,ranked[0].r.id);
@@ -88,10 +88,23 @@ context.craftStudioQuote=previousQuote;
 // The real subrecipe load controls start that stage, not the final recipe.
 context.craftStudioState.carry={maximum:2700,current:0,reserve:0,mode:'ingredients',roundTo:100};
 context.craftStudioChainRoute(nursery,true);context.craftStudioRender(nursery,100);
-const riceStage=nodes.get('craftDetail').controls.find(n=>n.dataset.carryStage==='recipe:820815:79c52fba90af');assert(riceStage);
-assert(nodes.get('craftDetail').innerHTML.includes('5,100 crafts / load'));
+const riceStage=nodes.get('craftDetail').controls.find(n=>n.dataset.startLoad==='recipe:820815:79c52fba90af');assert(riceStage);
+assert(nodes.get('craftDetail').innerHTML.includes('5,100 crafts max'));
 riceStage.onclick();assert.equal(started.r.name,'Cooked Rice');assert.equal(started.n,5100);assert.equal(started.opts.craftPlan.itemId,820815);
 context.activeTimers=[{status:'running',recipeId:started.r.id}];started=null;riceStage.onclick();assert.equal(started,null,'load control cannot duplicate an active timer');delete context.activeTimers;
 const roundInput=nodes.get('craftDetail').controls.find(n=>n.dataset.carry==='roundTo');roundInput.onchange();assert.equal(context.craftStudioCarrySettings().roundTo,'100');
 
+nodes.get('lineWiden').onclick();assert(context.craftStudioState.productionWide);assert(nodes.get('craftDetail').innerHTML.includes('production-line is-wide'));nodes.get('lineWiden').onclick();assert(!context.craftStudioState.productionWide);
+
+// Edit one ingredient in the real final-product card: companions and target snap.
+const sung=recipes.find(r=>r.id==='recipe:820833:5447701ae647');context.selectedRecipe=sung;context.lastCraftAmount=100;context.craftStudioRender(sung,100);
+assert(nodes.get('craftDetail').innerHTML.indexOf('Your production line')<nodes.get('craftDetail').innerHTML.indexOf('EXPECTED NET PROFIT'));
+assert(nodes.get('craftDetail').innerHTML.includes('Feeds Nurungji'));assert(nodes.get('craftDetail').innerHTML.includes('Feeds Sungnyung'));
+let anchor=nodes.get('craftDetail').controls.find(n=>n.dataset.ratioRecipe===sung.id&&n.dataset.ratioItem==='820831');anchor.value='14000';anchor.oninput();
+assert.equal(context.lastCraftAmount,7000);
+assert.equal(nodes.get('craftDetail').controls.find(n=>n.dataset.ratioRecipe===sung.id&&n.dataset.ratioItem==='9059').value,'21000');
+anchor=nodes.get('craftDetail').controls.find(n=>n.dataset.ratioRecipe===sung.id&&n.dataset.ratioItem==='9059');anchor.value='1000';anchor.oninput();assert.equal(context.lastCraftAmount,333);assert(nodes.get('craftDetail').innerHTML.includes('1 of the edited ingredient remain'));
+anchor=nodes.get('craftDetail').controls.find(n=>n.dataset.ratioRecipe===sung.id&&n.dataset.ratioItem==='9059');anchor.onblur();assert.equal(anchor.value,'999');
+anchor=nodes.get('craftDetail').controls.find(n=>n.dataset.ratioRecipe===sung.id&&n.dataset.ratioItem==='820831');anchor.value='140000';anchor.oninput();assert(nodes.get('craftDetail').innerHTML.includes('Does not fit'));
+started=null;nodes.get('craftDetail').controls.find(n=>n.dataset.startLoad===sung.id).onclick();assert.equal(started,null,'overweight load cannot start via a stale button');
 console.log('Shipped Crafting UI: rendering, target conversion, queue, export, timer linkage, tax, favorites, processing search and escaping passed.');

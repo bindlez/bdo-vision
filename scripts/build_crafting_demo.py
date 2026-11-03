@@ -12,7 +12,7 @@ html=html.replace('setInterval(shareMarketPricesWithDesktop,5000);','/* Demo has
 html=html.replace('<body>','''<body><div class="demo-ribbon"><strong>CRAFTING STUDIO DEMO</strong><span>Dated NA market snapshot & simulated drops · no game OCR</span><button id="demoPlay">Play sample drops</button><button id="demoBlock">Block sample capture</button><span id="demoState" role="status">Ready</span><a href="https://github.com/bindlez/bdo-vision/releases">Get Windows app</a></div>''')
 html=html.replace('</style>','''.demo-ribbon{position:sticky;top:0;z-index:9999;display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#30203e;padding:12px 20px;color:#f7eaff;font:12px "Segoe UI",sans-serif;border-bottom:1px solid #806092}.demo-ribbon button,.demo-ribbon a{background:#18101f;color:#f0dfff;border:1px solid #8865aa;border-radius:6px;padding:7px 10px;font:inherit;text-decoration:none}.demo-ribbon>span{color:#dac5e9}.demo-ribbon strong{letter-spacing:.1em}.sidebar{padding-top:75px} .topbar{top:65px}
   </style>''',1)
-recipe=next(r['id'] for r in json.loads((root/'desktop/assets/recipes.json').read_text(encoding='utf-8')) if r['name']==('Nurungji' if args.weight else 'Organic Feed' if args.cooking else 'Elixir of Demihuman Hunt'))
+recipe=next(r['id'] for r in json.loads((root/'desktop/assets/recipes.json').read_text(encoding='utf-8')) if r['name']==('Sungnyung' if args.weight else 'Organic Feed' if args.cooking else 'Elixir of Demihuman Hunt'))
 snapshot=json.loads((root/'desktop/assets/demo-market-snapshot.json').read_text(encoding='utf-8'))
 boot=r'''
 /* Demo adapter. Everything below is generated sample data, separate from live OCR. */
@@ -55,8 +55,8 @@ if args.weight:
     # Separate preview settings; never seed a real character's weight profile.
     html=html.replace('vision_demo_craft_state_v1','vision_demo_weight_state_v1').replace('vision_demo_craft_intel_v1','vision_demo_weight_intel_v1').replace('vision.demo.craft.studio.v1','vision.demo.weight.studio.v1')
     html=html.replace('CRAFTING STUDIO DEMO','WEIGHT & PRODUCTION DEMO').replace('Dated NA market snapshot & simulated drops · no game OCR','Example 2,700 LT character · editable sample values · no game OCR')
-    boot=boot.replace("showView('craft');", "craftStudioState.carry={maximum:2700,current:0,reserve:25,mode:'expected',roundTo:100,bag:{},at:Date.now()};\nshowView('craft');")
-    boot+="\ndocument.querySelector('[data-section=\"carry\"]').scrollIntoView({block:'start'});\n"
+    boot=boot.replace("showView('craft');", "craftStudioState.productionWide=true;craftStudioState.carry={maximum:2700,current:0,reserve:25,mode:'expected',roundTo:100,bag:{},at:Date.now()};\nshowView('craft');")
+    boot+="\ndocument.querySelector('.production-line').scrollIntoView({block:'start'});\n"
 marker='    processTimers();ensureTick();updateNavBadge();'
 assert marker in html;html=html.replace(marker,boot+'\n'+marker,1)
 target=root/'demo'/('bdo-vision-weight-demo.html' if args.weight else 'bdo-vision-cooking-demo.html' if args.cooking else 'bdo-vision-crafting-demo.html');target.write_text(html,encoding='utf-8');print(target.name,target.stat().st_size,'bytes')
