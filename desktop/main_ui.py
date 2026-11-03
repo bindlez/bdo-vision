@@ -67,9 +67,9 @@ def build_main_ui(app):
     nav = tk.Frame(main, bg=c['bg'])
     nav.pack(fill='x')
     for index, (label, action) in enumerate([
-        ('WORKSPACE', lambda: app.open_activity('home')),
-        ('WORKSHOP', lambda: app.open_activity('craft')),
-        ('TOOLS', app.open_tools),
+        ('HOME', lambda: app.open_activity('home')),
+        ('CRAFT', lambda: app.open_activity('craft')),
+        ('GRIND', lambda: app.open_activity('grind')),
     ]):
         nav.columnconfigure(index, weight=1, uniform='navigation')
         app.action(nav, label, action, flat=True).grid(row=0, column=index, sticky='ew', padx=2)
@@ -89,7 +89,8 @@ def build_main_ui(app):
     app.refresh_auto_scan_label()
     for index, (label, action) in enumerate([
         ('TOOL OCR DEBUG', app.tool_debug.open), ('QUESTS', app.open_guild_quest),
-        ('GRIND', lambda: app.open_activity('grind')), ('LOOT / SILVER', app.loot.open),
+        ('SILVER VALUE', lambda: app.open_activity('silver')),
+        ('TOOL DETAILS', app.open_tools),
         ('GEAR', app.open_gear_planner), ('FAIRY CODEX', app.open_fairy),
         ('CP INFO', lambda: app.open_activity('cp')), ('IMPERIAL', lambda: app.open_activity('imperial')),
         ('RESTORE BDO', app.restore_game), ('RESTORE FROM TRAY', app.super_restore_game),

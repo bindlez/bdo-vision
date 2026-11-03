@@ -30,6 +30,8 @@ def run_self_check(app_class,root_path,data_path):
         report['checks']['imperial_native_widgets']=bool(app.loot.imperial.frame.winfo_exists())
         from live_grind import stream_page
         report['checks']['stream_overlay_asset']=b'/stream-state' in stream_page()
+        from workspace_nav import WorkspaceNavigation
+        report['checks']['workspace_navigation_module']=callable(WorkspaceNavigation)
         report['checks']['cp_example']=app.loot.cp_info.report['routes'][1]['cp']==567
         report['checks']['history_integrity']=app.loot.ledger.db.execute('PRAGMA integrity_check').fetchone()[0]=='ok'
         report['checks']['bridge']=bool(app.bridge and app.bridge.server)

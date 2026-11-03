@@ -68,11 +68,16 @@ class GrindTracker:
         self.tracker.app.text_button(actions,'FINISH RUN',self.finish).pack(side='left',padx=12)
         self.tracker.app.text_button(actions,'BIG DROPS',lambda:self.tracker.big_drops.open()).pack(side='left',padx=8)
         self.tracker.app.text_button(actions,'EXPORT RUN',self.export).pack(side='right')
-        live_actions=tk.Frame(frame,bg=c['bg']);live_actions.pack(fill='x',pady=5)
+        extras=tk.Frame(frame,bg=c['bg'])
+        def toggle_extras():
+            if extras.winfo_manager():extras.pack_forget();extra_button.configure(text='GOALS & STREAMING ▾')
+            else:extras.pack(after=extra_button,fill='x',pady=5);extra_button.configure(text='HIDE GOALS & STREAMING ▴')
+        extra_button=self.tracker.app.text_button(frame,'GOALS & STREAMING ▾',toggle_extras);extra_button.pack(anchor='w',pady=5)
+        live_actions=tk.Frame(extras,bg=c['bg']);live_actions.pack(fill='x',pady=5)
         self.tracker.app.text_button(live_actions,'COMPACT LIVE WINDOW',self.live.open).pack(side='left')
         ttk.Checkbutton(live_actions,text='Share with OBS · local only',variable=self.obs_enabled,command=self.live.obs_changed,style='Vision.TCheckbutton').pack(side='left',padx=12)
         self.tracker.app.text_button(live_actions,'COPY OBS URL',self.live.copy_url).pack(side='left')
-        goals=tk.Frame(frame,bg=c['bg']);goals.pack(fill='x',pady=6)
+        goals=tk.Frame(extras,bg=c['bg']);goals.pack(fill='x',pady=6)
         tk.Label(goals,text='Recorded silver goal · 0 = off',bg=c['bg'],fg=c.get('teal',c['bright'])).pack(side='left')
         ttk.Entry(goals,textvariable=self.silver_goal,width=15,style='Vision.TEntry').pack(side='left',padx=8)
         self.tracker.app.text_button(goals,'APPLY GOAL',self.apply_silver_goal).pack(side='left')
@@ -98,7 +103,7 @@ class GrindTracker:
             self.history_tree.heading(name,text=title);self.history_tree.column(name,width=width,minwidth=70,stretch=name=='spot')
         self.history_tree.pack(side='left',fill='both',expand=True)
         scroll=ttk.Scrollbar(box,orient='vertical',command=self.history_tree.yview);scroll.pack(side='right',fill='y');self.history_tree.configure(yscrollcommand=scroll.set)
-        self.history_tree.bind('<<TreeviewSelect>>',lambda e:self.refresh_cards(self.selected()))
+        self.history_tree.bind('<<TreeviewSelect>>',lambda e:self.refresh_selected())
         tk.Label(frame,text='Value = captured quantity × market or verified NPC unit value. Rate = value ÷ observed seconds × 3,600. Capture gaps and manual pauses are excluded; missed drops are not estimated. Items without verified prices remain unpriced.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(10,0))
         self.refresh()
 
@@ -183,9 +188,14 @@ class GrindTracker:
             values=(row['spot'],duration(row['observed_seconds']),'Unpriced' if row['value'] is None else f"{row['value']:,}", 'Measuring…' if row['silver_hour'] is None else f"{row['silver_hour']:,.0f}",f"{row['coverage']:.0%}")
             if self.history_tree.exists(row['id']):self.history_tree.item(row['id'],values=values)
             else:self.history_tree.insert('','end',iid=row['id'],values=values)
-        self.refresh_cards(self.selected())
+        wanted=selected[0] if selected else self.insights.session.id
+        self.refresh_cards(next((r for r in results if r['id']==wanted),None),results)
 
-    def refresh_cards(self,row):
+    def refresh_selected(self):
+        rows=self.summaries();selection=self.history_tree.selection();wanted=selection[0] if selection else self.insights.session.id
+        self.refresh_cards(next((r for r in rows if r['id']==wanted),None),rows)
+
+    def refresh_cards(self,row,history=None):
         if not row:
             for metric in self.metrics:metric.set('—')
             if hasattr(self,'charts'):self.charts.draw(None);self.race.set('Race your best unlocks after a completed 10-minute run at this spot.')
@@ -201,7 +211,8 @@ class GrindTracker:
         self.silver_progress.set((f"SILVER GOAL · {value:,.0f} / {goal:,.0f} · "+('GOAL REACHED' if value>=goal else f'{goal-value:,.0f} to go')+(' · partial priced value' if row['unpriced'] else '')) if goal and value is not None else 'Silver goal waiting for priced recorded loot.' if goal else 'Silver goal off · item pursuits remain available.')
         self.state.set(('OBSERVING' if row['available'] else 'COMPLETED' if row['ended_at'] else 'PAUSED')+' · '+row['spot']+' · '+(row['reason'] or f"{row['events']} captured events")+f" · {row['unpriced']} unpriced types excluded")
         self.pursuit.set((f"PURSUIT · {row['target']}  {row['target_quantity']:,} / {row['goal']:,} · "+('GOAL REACHED' if row['target_quantity']>=row['goal'] else 'Only captured drops count')) if row['target'] else 'No pursuit selected · all captured loot still counts toward your session.')
-        peers=[r['silver_hour'] for r in self.summaries() if r['id']!=row['id'] and r['ended_at'] and r['spot'].casefold()==row['spot'].casefold() and r['silver_hour'] is not None]
+        history=self.summaries() if history is None else history
+        peers=[r['silver_hour'] for r in history if r['id']!=row['id'] and r['ended_at'] and r['spot'].casefold()==row['spot'].casefold() and r['silver_hour'] is not None]
         if len(peers)>=3 and row['silver_hour'] is not None and statistics.median(peers)>0:
             median=statistics.median(peers);self.benchmark.set(f"YOUR BASELINE · {median:,.0f} silver/hour median · this run {row['silver_hour']/median-1:+.1%} · {len(peers)} completed runs")
         else:self.benchmark.set(f"PERSONAL BASELINE · {len(peers)} / 3 completed runs at this spot. Compare your own results, with capture gaps visible.")
@@ -209,17 +220,13 @@ class GrindTracker:
         if hasattr(self,'charts'):
             self.charts.draw(row)
             from grind_charts import personal_best
-            race=personal_best(row,self.summaries(),self.insights.prices.all())
+            race=personal_best(row,history,self.insights.prices.all())
             self.race.set(f"RACE YOUR BEST · {race['pacePercent']:.1f}% of your best pace · {race['aheadSilver']:+,.0f} silver vs that pace\nBest {race['bestHour']:,.0f}/h · both runs valued on current prices; only observed time counts." if race else 'RACE YOUR BEST · needs 60 observed seconds, complete item prices, and a completed 10-minute run at the same spot.')
 
     def draw_pulse(self,row):
         if not self.canvas:return
         c=self.tracker.app.colors;canvas=self.canvas;canvas.delete('all');width=max(200,canvas.winfo_width());bins=[0]*24
-        session=self.insights.session
-        rows=session.rows(row['id']);end=row['ended_at'] or time.time();span=max(60,end-row['started_at'])
-        for event in rows:
-            try:index=min(23,max(0,int((datetime.fromisoformat(event[1]).timestamp()-row['started_at'])/span*24)));bins[index]+=event[3]
-            except ValueError:continue
+        bins=row.get('pulse') or bins
         maximum=max(bins,default=0) or 1;bar=max(1,(width-24)/24)
         for index,value in enumerate(bins):
             if value:canvas.create_rectangle(12+index*bar,57-36*value/maximum,12+(index+1)*bar-3,58,fill=c['violet'],outline='')

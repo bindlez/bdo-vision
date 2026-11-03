@@ -75,7 +75,6 @@ class LootTracker:
     def open(self):
         if self.window and self.window.winfo_exists():
             self.window.deiconify();self.window.lift()
-            if self.tabs and self.silver.frame:self.tabs.select(self.silver.frame)
             return
         self._history_display_cache={};self._totals_cache=None;self._crafts_cache=None;self._last_refresh_key=None
         c=self.app.colors
@@ -90,7 +89,6 @@ class LootTracker:
         controls=tk.Frame(self.setup_frame,bg=c['bg']);controls.pack(fill='x')
         self.app.action(controls,'SELECT ITEM DROP LOG',self.select_region).pack(side='left')
         self.app.action(controls,'SELECT RARE DROP LOG',lambda:self.select_region(True)).pack(side='left',padx=8)
-        ttk.Checkbutton(controls,text='Tracking ON',variable=self.enabled,command=self.toggle,style='Vision.TCheckbutton').pack(side='left',padx=8)
         ttk.Checkbutton(controls,text='Record loot',variable=self.recording,command=self.toggle_recording,style='Vision.TCheckbutton').pack(side='left',padx=8)
         options=tk.Frame(self.setup_frame,bg=c['bg']);options.pack(fill='x',pady=(12,0))
         ttk.Checkbutton(options,text='Crafting mode',variable=self.crafting,command=self.toggle,style='Vision.TCheckbutton').pack(side='left')
@@ -103,8 +101,9 @@ class LootTracker:
         ttk.Checkbutton(self.setup_frame,text='Save OCR diagnostic images locally (for troubleshooting)',variable=self.diagnostics,command=self.app.save_quietly,style='Vision.TCheckbutton').pack(anchor='w',pady=(0,8))
         self.setup_frame.pack_forget()
         state_row=tk.Frame(main,bg=c['bg']);state_row.pack(fill='x',pady=(0,10))
+        ttk.Checkbutton(state_row,text='Track loot',variable=self.enabled,command=self.toggle,style='Vision.TCheckbutton').pack(side='left',padx=(0,12))
         tk.Label(state_row,textvariable=self.capture_state,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10)).pack(side='left')
-        tk.Label(state_row,textvariable=self.last_saved,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',9),wraplength=510,justify='right').pack(side='right')
+        tk.Label(state_row,textvariable=self.last_saved,bg=c['bg'],fg=c['secondary'],font=('Segoe UI',8),wraplength=260,justify='right').pack(side='right')
         style=ttk.Style();style.configure('Loot.Treeview',borderwidth=0,relief='flat',lightcolor=c['panel'],darkcolor=c['panel'],bordercolor=c['line'],background=c['panel'],fieldbackground=c['panel'],foreground=c['text'],rowheight=24,font=('Segoe UI',9));style.configure('Loot.Treeview.Heading',relief='flat',borderwidth=0,lightcolor=c['panel2'],darkcolor=c['panel2'],bordercolor=c['panel2'],background=c['panel2'],foreground=c['text'],font=('Segoe UI Semibold',9));style.map('Loot.Treeview',background=[('selected',c['violet'])],foreground=[('selected',c['text'])]);style.configure('Loot.TNotebook',background=c['bg'],borderwidth=0);style.configure('Loot.TNotebook.Tab',borderwidth=0,focuscolor=c['panel2'],background=c['panel2'],foreground=c['text'],padding=(8,5));style.map('Loot.TNotebook.Tab',background=[('selected',c['violet'])])
         self.tabs=tabs=ttk.Notebook(main,style='Loot.TNotebook');tabs.pack(fill='both',expand=True)
         def table(title,columns):
@@ -146,11 +145,12 @@ class LootTracker:
         reader=tk.Frame(tabs,bg=c['bg']);tabs.add(reader,text='OCR reader')
         self.preview=tk.Label(reader,bg=c['panel'],fg=c['muted'],text='Latest capture will appear here.');self.preview.pack(fill='x',pady=8)
         self.debug_text=tk.Text(reader,height=10,bg=c['panel'],fg=c['text'],font=('Consolas',10),wrap='word',relief='flat',state='disabled');self.debug_text.pack(fill='both',expand=True)
+        from workspace_nav import WorkspaceNavigation
+        self.navigation=WorkspaceNavigation(main,tabs,self)
         footer=tk.Frame(main,bg=c['bg']);footer.pack(fill='x',pady=(12,0))
-        self.app.text_button(footer,'OPEN OCR DIAGNOSTICS',self.open_diagnostics).pack(side='left')
-        self.app.action(footer,'EXPORT CSV',self.export).pack(side='right')
+        tk.Label(footer,text='History saves locally · capture controls in Capture Setup · exports in History',bg=c['bg'],fg=c['muted'],font=('Segoe UI',8)).pack(anchor='w')
         self.refresh()
-        tabs.select(self.silver.frame)
+        tabs.select(self.home.frame)
 
     def toggle_setup(self):
         if self.setup_frame.winfo_ismapped():

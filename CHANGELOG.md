@@ -1,3 +1,14 @@
+# 1.13.0-rc.21 · Simpler navigation and next actions
+
+- Replaced the crowded desktop tab strip with Home/Craft/Grind/Quests and grouped
+  Planning, History and Readers menus. All original page routes remain available.
+- Workspace opens at Home and preserves your page when reopened. Loot tracking
+  stays visible beside its status; redundant Home/footer navigation was removed.
+- Cooking now leads with the next stage. Full stage lists, route comparisons and
+  extra actions expand on request. The main timer action cannot skip intermediates.
+- Native CP target graphs and Grind goal/streaming setup expand when wanted.
+- No history schema, valuation, OCR decision or capture scheduling changes.
+
 # 1.13.0-rc.20 · Cooking execution and richer session views
 
 - Added explicit next-stage planning timers, duplicate-launch prevention and

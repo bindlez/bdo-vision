@@ -148,7 +148,7 @@ class App:
 
  def open_activity(self,section):
   self.loot.open()
-  targets={'home':self.loot.home.frame,'craft':self.loot.craft_tab,'grind':self.loot.grind.frame,'reader':self.loot.preview.master,'sessions':self.loot.insights.sessions_frame,'quests':self.loot.guild.frame,'cp':self.loot.cp_info.frame,'imperial':self.loot.imperial.frame}
+  targets={'home':self.loot.home.frame,'craft':self.loot.craft_tab,'grind':self.loot.grind.frame,'reader':self.loot.preview.master,'sessions':self.loot.insights.sessions_frame,'quests':self.loot.guild.frame,'cp':self.loot.cp_info.frame,'imperial':self.loot.imperial.frame,'silver':self.loot.silver.frame}
   self.loot.tabs.select(targets[section])
 
  def open_fairy(self):

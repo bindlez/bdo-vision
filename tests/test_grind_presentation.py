@@ -51,6 +51,7 @@ class GrindPresentationTests(unittest.TestCase):
                 with patch('live_grind.time.time',return_value=first['updatedAt']+2):self.assertEqual(g.live.payload()['value'],100)
             g.silver_goal.set('-1');g.apply_silver_goal();self.assertEqual(g.summaries()[0]['silver_goal'],2000)
             g.finish();self.assertEqual(g.summaries()[0]['silver_goal'],2000)
+            with patch.object(g,'summaries',wraps=g.summaries) as summary:g.refresh();self.assertEqual(summary.call_count,1,'one visible refresh must reuse one history calculation')
         finally:app.loot.close();root.destroy()
 
 

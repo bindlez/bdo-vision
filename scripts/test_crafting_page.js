@@ -60,7 +60,8 @@ for(const name of ['Balenos Meal','Elixir of Demihuman Hunt','Organic Feed','Kam
  assert(chain.steps.length>2,name+' needs real intermediate stages');if(name==='Kamasylvia Meal')assert(chain.steps.length>20);
  assert(nodes.get('craftDetail').innerHTML.includes('Expected retained output value'));assert(nodes.get('craftDetail').innerHTML.includes('Priced cash ingredient budget'));
  nodes.get('workshopStartNext').onclick();assert.equal(started.r.id,chain.steps[0].recipeId);assert.equal(started.n,chain.steps[0].batches);
- const once=started;nodes.get('workshopStartNext').onclick();assert.equal(started,once,'same stage must not start duplicate timers');
+ const once=started;nodes.get('workshopStartNext').onclick();assert.equal(started,once,'same stage must not start duplicate timers');nodes.get('btnStartCraft').onclick();assert.equal(started,once,'main action must not skip intermediates');
+ assert(nodes.get('craftDetail').innerHTML.includes('workshop-next'));assert(!nodes.get('craftDetail').controls.find(n=>n.dataset.section==='all-stages').open);assert(!nodes.get('craftDetail').controls.find(n=>n.dataset.section==='route-comparison').open);
  nodes.get('workshopSubstitutions').onclick();
  assert(chain.steps.at(-1).recipeId===r.id);assert(chain.steps.every(s=>s.inputs.length&&s.expected>=s.needed));
  assert(nodes.get('craftDetail').innerHTML.includes('Cash required'));assert(nodes.get('craftDetail').innerHTML.includes('Where your time and silver go'));

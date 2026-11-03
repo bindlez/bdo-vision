@@ -173,3 +173,10 @@ snapshots → shared economics → comparisons/graphs → optional rewards and o
 - [x] Cached chain-wide substitutions, pie charts and teal accent.
 - [x] Compact live window, opt-in OBS, silver goals and comparable personal-best pacing.
 - [ ] Remaining competitor gaps: see [app audit](GARMOTH-APP-COMPARISON.md).
+
+## rc.21 · layout review
+
+- [x] Compact root shortcuts, grouped workspace navigation, Home default and page preservation.
+- [x] Next-stage cooking card, collapsed comparisons/full stage list, guarded primary action.
+- [x] CP graph disclosure, grouped Grind settings, retained readers/history/calculators.
+- [x] Reuse one visible Grind history calculation and existing pulse bins.

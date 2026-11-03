@@ -22,10 +22,16 @@ class CPTargetView:
             self.tree.heading(key,text=title);self.tree.column(key,width=width,minwidth=65,stretch=key in ('route','items'))
         self.tree.pack(fill='x');self.tree.bind('<<TreeviewSelect>>',lambda e:self.choose())
         self.details=tk.StringVar();tk.Label(self.frame,textvariable=self.details,bg=c['panel'],fg=c['text'],justify='left',wraplength=730,font=('Segoe UI',9)).pack(anchor='w',pady=8)
-        self.line=tk.Canvas(self.frame,bg=c['panel'],height=190,highlightthickness=0);self.line.pack(fill='x')
-        self.pie=tk.Canvas(self.frame,bg=c['panel'],height=190,highlightthickness=0);self.pie.pack(fill='x')
+        self.graph_button=owner.app.text_button(self.frame,'SHOW TARGET GRAPHS',self.toggle_graphs);self.graph_button.pack(anchor='w',pady=5)
+        self.graphs=tk.Frame(self.frame,bg=c['panel'])
+        self.line=tk.Canvas(self.graphs,bg=c['panel'],height=190,highlightthickness=0);self.line.pack(fill='x')
+        self.pie=tk.Canvas(self.graphs,bg=c['panel'],height=190,highlightthickness=0);self.pie.pack(fill='x')
         self.line.bind('<Configure>',lambda e:self.draw());self.pie.bind('<Configure>',lambda e:self.draw())
-        tk.Label(self.frame,text='Lines: items required for each target CP. Catalyst and Delicacy overlap; Delicacy is dashed. Pie: owned complete-bundle EXP coverage for the selected plan. Missing items and unpriced silver stay explicit. No future production is assumed.',bg=c['panel'],fg=c['muted'],font=('Segoe UI',9),wraplength=730,justify='left').pack(anchor='w')
+        tk.Label(self.graphs,text='Lines: items required for each target CP. Catalyst and Delicacy overlap; Delicacy is dashed. Pie: owned complete-bundle EXP coverage for the selected plan. Missing items and unpriced silver stay explicit. No future production is assumed.',bg=c['panel'],fg=c['muted'],font=('Segoe UI',9),wraplength=730,justify='left').pack(anchor='w')
+
+    def toggle_graphs(self):
+        if self.graphs.winfo_manager():self.graphs.pack_forget();self.graph_button.configure(text='SHOW TARGET GRAPHS')
+        else:self.graphs.pack(fill='x');self.graph_button.configure(text='HIDE TARGET GRAPHS');self.draw()
 
     def invalid(self,message):
         self.plan=None;self.routes={};self.status.set('Check your inputs: '+message)
@@ -59,7 +65,7 @@ class CPTargetView:
         self.details.set('\n'.join(lines));self.draw()
 
     def draw(self):
-        if not self.plan:return
+        if not self.plan or not self.graphs.winfo_manager():return
         c=self.line;c.delete('all');p=self.plan;w=max(380,c.winfo_width());max_items=max(1,max(point['items'] for row in p['lines'] for point in row['points']))
         c.create_text(10,10,text='REQUIRED ITEMS BY TARGET CP',anchor='w',fill='#d2bfeb',font=('Segoe UI Semibold',9))
         left=72;right=w-20;top=30;bottom=150
