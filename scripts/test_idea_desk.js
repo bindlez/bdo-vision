@@ -1,0 +1,13 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('fs'),vm=require('vm'),C=require('../sideapps/idea-desk/core.js');
+const note=(id,extra={})=>({id,title:'A precise task',details:'Actual observation',outcome:'Verify the expected outcome',area:'Crafting',kind:'Task',state:'Inbox',priority:'Normal',selected:true,created:1,updated:2,...extra});
+const bundle=notes=>({schema:'vision-idea-desk/v1',notes,brief:{goal:'Improve capture',context:'Vision rc.27',constraints:'Preserve history'}});
+assert.equal(C.validate(bundle([note('a')])).notes.length,1);
+for(const input of [null,{},bundle([note('a'),note('a')]),bundle([note('a',{state:'unknown'})]),bundle([note('a',{updated:NaN})]),bundle([note('a',{title:'   '})])])assert.throws(()=>C.validate(input));
+let original=note('a'),newer=note('a',{updated:3,title:'New version'});assert.equal(C.merge([original],[newer])[0].title,'New version');assert.equal(C.merge([newer],[original])[0].title,'New version');assert.equal(original.title,'A precise task');
+assert.equal(C.merge([original],[note('b')]).length,2);assert.throws(()=>C.merge(Array.from({length:5000},(_,i)=>note('n'+i)),[note('extra')]));
+const notes=[note('a',{kind:'Problem',priority:'Critical',title:'Observed problem'}),note('b',{kind:'Fix',title:'Proposed solution'}),note('c',{state:'Done',title:'Already done'}),note('d',{state:'Parked',title:'Parked'}),note('e',{selected:false,title:'Not selected'})];
+const prompt=C.brief(notes,bundle([]).brief);assert(prompt.includes('Observed problems'));assert(prompt.includes('verify before applying'));assert(prompt.includes('Success / verification:'));assert(prompt.includes('Preserve history'));for(const title of ['Already done','Parked','Not selected'])assert(!prompt.includes(title));assert.equal(C.brief([note('a',{state:'Done'})]),'');
+const backup=JSON.stringify(bundle(notes));assert.deepEqual(C.validate(JSON.parse(backup)).notes,notes);
+const html=fs.readFileSync('demo/vision-idea-desk.html','utf8');for(const match of html.matchAll(/<script>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);assert(html.includes("connect-src 'none'"));assert(!html.includes('/* APP */'));assert(html.replace(/\r\n/g,'\n').includes(fs.readFileSync('sideapps/idea-desk/core.js','utf8').replace(/\r\n/g,'\n')));
+console.log('Idea Desk: validation, safe merge, backup roundtrip, selected brief, completed exclusions and standalone scripts passed.');
