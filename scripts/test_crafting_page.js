@@ -73,4 +73,25 @@ for(const name of ['Balenos Meal','Elixir of Demihuman Hunt','Organic Feed','Kam
 }
 
 assert(context.craftStudioPie([{label:'<img src=x>',value:1}],'Budget','silver').includes('&lt;img'));assert(!context.craftStudioPie([{label:'<img src=x>',value:1}],'Budget','silver').includes('<img'));
+
+const nursery=recipes.find(r=>r.id==='recipe:820831:8dd94cf6d723');context.selectedRecipe=nursery;context.lastCraftAmount=100;context.craftStudioState.queue=[];
+context.craftStudioState.carry={maximum:100,current:10,reserve:5,mode:'ingredients'};context.craftStudioRender(nursery,100);
+assert(nodes.get('craftDetail').innerHTML.includes('CRAFTS PER LOAD'));assert(nodes.get('craftDetail').innerHTML.includes('772'));assert(nodes.get('craftDetail').innerHTML.includes('Grab from storage'));
+nodes.get('carryApply').onclick();assert.equal(context.lastCraftAmount,772);nodes.get('carryRank').onclick();assert.equal(context.recipeSort,'carryTime');assert(nodes.get('recipeList').innerHTML.includes('crafts / load'));
+const ranked=recipes.filter(r=>r.type==='cooking').map(r=>({r,c:context.VisionCraft.carry(r,context.craftStudioCarrySettings(),context.craftStudioContext())})).sort((a,b)=>b.c.seconds-a.c.seconds||a.r.name.localeCompare(b.r.name));
+assert.equal(nodes.get('recipeList').controls.find(n=>n.dataset.id&&n.dataset.id!=='durability_timer').dataset.id,ranked[0].r.id);
+const previousQuote=context.craftStudioQuote;context.craftStudioQuote=()=>({price:100,stock:100000});context.craftStudioRender(nursery,772);
+const routes=context.VisionCraft.downstream(nursery,Math.floor(context.craftStudioPlan(nursery,772).output),context.craftStudioContext(),{depth:2});const routeIndex=routes.nodes.findIndex(n=>n.batches>0&&n.level===1);assert(routeIndex>=0);
+nodes.get('craftDetail').controls.find(n=>n.dataset.futureRoute===String(routeIndex)).onclick();const staged=context.craftStudioQueuePlans();assert(staged.length===2);assert.equal(staged[0].p.proceeds,0);assert(!staged[1].p.purchases.some(m=>m.itemId===nursery.itemId));assert(nodes.get('studioQueuePanel').innerHTML.includes('Modeled remaining planning stock'));
+context.craftStudioQuote=previousQuote;
+
+// The real subrecipe load controls start that stage, not the final recipe.
+context.craftStudioState.carry={maximum:2700,current:0,reserve:0,mode:'ingredients',roundTo:100};
+context.craftStudioChainRoute(nursery,true);context.craftStudioRender(nursery,100);
+const riceStage=nodes.get('craftDetail').controls.find(n=>n.dataset.carryStage==='recipe:820815:79c52fba90af');assert(riceStage);
+assert(nodes.get('craftDetail').innerHTML.includes('5,100 crafts / load'));
+riceStage.onclick();assert.equal(started.r.name,'Cooked Rice');assert.equal(started.n,5100);assert.equal(started.opts.craftPlan.itemId,820815);
+context.activeTimers=[{status:'running',recipeId:started.r.id}];started=null;riceStage.onclick();assert.equal(started,null,'load control cannot duplicate an active timer');delete context.activeTimers;
+const roundInput=nodes.get('craftDetail').controls.find(n=>n.dataset.carry==='roundTo');roundInput.onchange();assert.equal(context.craftStudioCarrySettings().roundTo,'100');
+
 console.log('Shipped Crafting UI: rendering, target conversion, queue, export, timer linkage, tax, favorites, processing search and escaping passed.');

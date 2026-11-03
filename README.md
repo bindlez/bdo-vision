@@ -1,4 +1,9 @@
-# BDO Vision · current test candidate 1.13.0-rc.22
+# BDO Vision · current test candidate 1.13.0-rc.23
+
+The recipe **Weight planner** gives exact ingredients to grab for the entered
+character LT, with output room and an optional tool limit. Rank recipes by longest
+load, explore downstream uses, and queue production with retained intermediates
+reused once. Weight and future stock are entered/model data, not live OCR.
 
 **Current craft is automatic:** with a verified utensil and recorded loot capture,
 repeated output detects the cooking/alchemy family without selecting a recipe.

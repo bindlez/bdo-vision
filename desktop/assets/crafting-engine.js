@@ -46,6 +46,61 @@ function plan(recipe,batches,options={},context={}){
  return {count,cfg,output:outputQty,outputs,revenue:missing?null:knownRevenue,proceeds:missing?null:knownProceeds,cost:inputsMissing?null:cost,knownCost:cost,knownProceeds,profit,seconds,perHour:profit===null?null:profit*3600/seconds,unitPrice,breakEven,missing,unknown:[...unknown],purchases:cashRows,cash:cashMissing?null:cashRows.reduce((s,p)=>s+p.quantity*p.unit,0),steps,surplus,materials,warnings:[...warnings],economics,byproductValue,xp:count*(recipe.xp||0)*(1+cfg.xpBonus/100),ownedBatches,inventoryRemaining:inventory,weight:outputs.reduce((s,o)=>s+o.weight,0)};
 }
 function queue(targets,context){const inventory={...(context.inventory||{})},produced={},plans=targets.map(t=>plan(t.recipe,t.batches,t.config,{...context,sharedInventory:inventory,sharedProduced:produced}));return {plans,inventoryRemaining:inventory,profit:plans.some(p=>p.profit===null)?null:plans.reduce((s,p)=>s+p.profit,0),seconds:plans.reduce((s,p)=>s+p.seconds,0)};}
+function carry(recipe,options={},context={}){
+ const numeric=(v,name,maximum=1e9)=>{if(v===''||v==null||typeof v==='boolean'||!Number.isFinite(Number(v))||Number(v)<0||Number(v)>maximum)throw Error('Enter a valid '+name);return Number(v);};
+ const maximum=numeric(options.maximum,'maximum LT',1e6),current=numeric(options.current,'current LT',1e6),reserve=numeric(options.reserve??25,'reserved LT',1e6),spec=context.spec||{};
+ if(maximum<=0)throw Error('Maximum LT must be positive');
+ const combined=new Map();for(const m of resolved(recipe,context)){const old=combined.get(m.itemId);combined.set(m.itemId,old?{...old,qty:old.qty+m.qty}:m);}
+ const mats=[...combined.values()],missing=[],bag=options.bag||{},rows=mats.map(m=>{let weight=spec.items?.[m.itemId]?.weight;if(typeof weight!=='number'||!Number.isFinite(weight)||weight<0){missing.push(m.name);weight=null;}return {...m,weight,bag:numeric(bag[m.itemId]??0,'carried '+m.name)};});
+ if(rows.some(m=>!Number.isInteger(m.bag)))throw Error('Already-carried quantities must be whole items');
+ const cfg=configure(recipe,context.configFor?.(recipe)||{},spec),ratesModel=rates(recipe,context.configFor?.(recipe)||{},spec);
+ const outputRows=[{id:recipe.itemId,name:recipe.name,units:cfg.yield,max:Math.max(cfg.yield,recipe.maxProc||cfg.yield)}];
+ if(recipe.rare)outputRows.push({id:recipe.rare.itemId,name:spec.items?.[recipe.rare.itemId]?.name||'Rare output',units:Math.max(cfg.rareYield,ratesModel.rare),max:Math.max(cfg.rareYield,recipe.rare.maxProc||0)});
+ const by=spec.byproducts?.[recipe.type];if(by)outputRows.push({id:by.id,name:spec.items?.[by.id]?.name||'Byproduct',units:cfg.byproductRate,max:Math.max(1,cfg.byproductRate)});
+ const mode=options.mode||'expected';if(!['ingredients','expected','maxOutput'].includes(mode))throw Error('Choose a supported weight model');
+ for(const o of outputRows){o.weight=spec.items?.[o.id]?.weight;if(mode!=='ingredients'&&(typeof o.weight!=='number'||!Number.isFinite(o.weight)||o.weight<0))missing.push(o.name);}
+ if(missing.length)return {available:false,missing:[...new Set(missing)],maximum,current,reserve};
+ const perBatch=rows.reduce((s,m)=>s+m.qty*m.weight,0),outputsKnown=outputRows.every(o=>typeof o.weight==='number'&&Number.isFinite(o.weight)&&o.weight>=0),outputPerBatch=outputsKnown?outputRows.reduce((s,o)=>s+o.weight*(mode==='maxOutput'?o.max:o.units),0):null;
+ if(rows.reduce((s,m)=>s+m.bag*m.weight,0)>current+1e-6)throw Error('Carried ingredient weight exceeds current LT. Current LT must include those items.');
+ const cap=options.tool===''||options.tool==null?1e9:Math.floor(numeric(options.tool,'remaining tool uses'));
+ const usedLimit=Math.max(0,maximum-reserve),load=b=>rows.reduce((s,m)=>s+Math.max(0,b*m.qty-m.bag)*m.weight,0);
+ const peak=b=>current+load(b)+(mode==='ingredients'?0:Math.max(0,b*(outputPerBatch-perBatch)));
+ let lo=0,hi=cap;while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(peak(mid)<=usedLimit+1e-8)lo=mid;else hi=mid-1;}
+ const rawBatches=lo,roundTo=numeric(options.roundTo??1,'rounding increment',1e6);if(roundTo<1||!Number.isInteger(roundTo))throw Error('Rounding increment must be a positive whole number');lo=Math.floor(lo/roundTo)*roundTo;
+ const ingredientMax=perBatch>0?Math.max(0,Math.floor((Math.max(0,usedLimit-current)+rows.reduce((s,m)=>s+m.bag*m.weight,0))/perBatch)):cap;
+ return {available:true,maximum,current,reserve,free:Math.max(0,usedLimit-current),batches:lo,seconds:lo*cfg.seconds,mainOutput:lo*cfg.yield,
+   perBatch,outputPerBatch,mode,initialWeight:current+load(lo),endWeight:outputsKnown?current+load(lo)+lo*(outputPerBatch-perBatch):null,peakWeight:peak(lo),loadWeight:load(lo),
+   rows:rows.map(m=>({...m,required:lo*m.qty,grab:Math.max(0,lo*m.qty-m.bag),grabWeight:Math.max(0,lo*m.qty-m.bag)*m.weight})),
+   rawBatches,roundTo,rounded:rawBatches!==lo,outputLimited:mode!=='ingredients'&&rawBatches<Math.min(cap,ingredientMax),toolLimited:rawBatches===cap&&cap<1e9,unbounded:rawBatches===1e9,
+   samples:Array.from({length:25},(_,i)=>({batches:Math.floor(lo*i/24),peak:peak(Math.floor(lo*i/24))}))};
+}
+const consumerCache=new WeakMap();
+function consumers(recipes,spec){
+ if(consumerCache.has(recipes))return consumerCache.get(recipes);
+ const map=new Map();for(const r of recipes)r.mats.forEach((m,index)=>{const choices=m.groupId?(spec.groups?.[m.groupId]||[]):[{itemId:m.itemId,value:1}];
+  for(const o of choices){if(!map.has(o.itemId))map.set(o.itemId,new Map());const group=map.get(o.itemId),row=group.get(r.id)||{recipe:r,slots:[]};if(!row.slots.some(s=>s.index===index))row.slots.push({index,quantity:m.groupId?Math.ceil((m.required??m.qty)/o.value):m.qty});group.set(r.id,row);}
+ });consumerCache.set(recipes,map);return map;
+}
+function downstream(recipe,units,context={},options={}){
+ if(!Number.isFinite(units)||units<0||units>1e12)throw Error('Choose a valid product quantity');
+ const depth=Math.max(1,Math.min(4,Math.floor(options.depth||2))),limit=60,index=consumers(context.recipes||[],context.spec||{}),nodes=[];let truncated=false;
+ function visit(itemId,quantity,path,seen,choices,level){
+  if(level>depth)return;const candidates=[...(index.get(itemId)?.values()||[])].filter(c=>!seen.has(c.recipe.itemId)).sort((a,b)=>a.recipe.name.localeCompare(b.recipe.name));
+  for(const c of candidates){if(nodes.length>=limit){truncated=true;return;}const perBatch=c.slots.reduce((s,m)=>s+m.quantity,0);if(!perBatch)continue;
+   const batches=Math.floor(quantity/perBatch),cfg=configure(c.recipe,context.configFor?.(c.recipe)||{},context.spec||{}),selected={...choices};for(const m of c.slots)selected[c.recipe.id+':'+m.index]=itemId;
+   const next={recipe:c.recipe,batches,perBatch,inputId:itemId,used:batches*perBatch,leftover:quantity-batches*perBatch,output:batches*cfg.yield,seconds:batches*cfg.seconds,level,path:[...path,{recipeId:c.recipe.id,batches,inputId:itemId}],choices:selected};nodes.push(next);
+   if(batches>0)visit(c.recipe.itemId,next.output,next.path,new Set([...seen,c.recipe.itemId]),selected,level+1);
+  }
+ }
+ visit(options.itemId||recipe.itemId,units,[],new Set([options.itemId||recipe.itemId]),{},1);return {nodes,truncated,depth};
+}
+function productionQueue(targets,context={}){
+ const inventory=Object.fromEntries(Object.entries(context.inventory||{}).map(([k,v])=>[k,Number.isFinite(Number(v))?Math.max(0,Math.floor(Number(v))):0])),produced={},plans=[];
+ for(const t of targets){const p=plan(t.recipe,t.batches,t.config,{...context,sharedInventory:inventory,sharedProduced:produced,choices:t.choices||context.choices,make:t.make||context.make,variants:t.variants||context.variants});plans.push(p);
+  if(t.carryOutputs)for(const o of p.outputs)if(o.kept&&o.quantity>0&&['main','rare'].includes(o.kind)){const k=key(o.name),whole=Math.floor(o.quantity+1e-9);inventory[k]=(inventory[k]||0)+whole;produced[k]=(produced[k]||0)+whole;}
+ }
+ return {plans,inventoryRemaining:inventory,profit:plans.some(p=>p.profit===null)?null:plans.reduce((n,p)=>n+p.profit,0),seconds:plans.reduce((n,p)=>n+p.seconds,0)};
+}
 function scenarios(p){return [.8,.9,1,1.1,1.2].map(multiplier=>({multiplier,profit:p.missing?null:p.knownProceeds*multiplier-p.knownCost}));}
 function tax(options={}){return Math.min(100,65*(1+(options.valuePack?.3:0)+(options.merchantRing?.05:0)+bounded(options.familyFame,0,1.5,0)/100));}
 function series(points,limit=48){if(points.length<=limit)return points;return Array.from({length:limit},(_,i)=>points[Math.round(i*(points.length-1)/(limit-1))]);}
@@ -100,6 +155,6 @@ function imperialRanks(recipes,spec,quote,options={}){
  }
  return result;
 }
-root.VisionCraft={imperialRanks,projection,key,settings,configure,rates,bracket,resolved,indexRecipes,plan,queue,scenarios,tax,series};
+root.VisionCraft={carry,downstream,productionQueue,imperialRanks,projection,key,settings,configure,rates,bracket,resolved,indexRecipes,plan,queue,scenarios,tax,series};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.VisionCraft;
 })(typeof globalThis!=='undefined'?globalThis:this);

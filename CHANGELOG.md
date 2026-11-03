@@ -1,3 +1,17 @@
+# 1.13.0-rc.23 · Carry loads and forward production planning
+
+- Added a weight-based packing calculator: entered max/current/reserved LT,
+  optional carried ingredient quantities/tool limit, exact additional grab list,
+  output accumulation models, load time, charts and export.
+- Added cooking recipe rankings for longest carry run, most crafts per load and
+  lightest ingredients, using the same character limits and recipe assumptions.
+- Added downstream normal/rare product discovery, substitution-aware consumers,
+  bounded multi-stage paths and production-route queueing.
+- Kept outputs now feed subsequent plans once, without also counting them as
+  sold. Added queue ordering and modeled remaining-stock balances.
+- No OCR, weight polling or live inventory mutations added. Existing automatic
+  crafting and tool/quest/loot behavior is preserved.
+
 # 1.13.0-rc.22 · Automatic current-craft intelligence
 
 - Detect cooking/alchemy recipe families from repeated accepted output and a

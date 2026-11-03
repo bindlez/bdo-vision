@@ -188,3 +188,14 @@ snapshots → shared economics → comparisons/graphs → optional rewards and o
 - [x] Bounded graphs/pies, captured milestones, optional paired-site data.
 - [x] Derived activity membership without rewriting accepted loot; blocked-time/Lite guards.
 - [ ] Installed live acceptance for this inference feature; no perfect-OCR claim.
+
+## rc.23 - weight and forward production
+
+- [x] Exact extra-ingredient packing from entered maximum/current LT and bag counts.
+- [x] Reserve, expected/max-normal-rare output allowance, tool cap and round-down.
+- [x] Longest-time, most-crafts and lightest-input category rankings.
+- [x] Intermediate recipe load cards and guarded per-load planner timers.
+- [x] Bounded downstream consumers, rare root choice and whole-batch routes.
+- [x] Ordered queue with kept-output reuse, no double sale/cost and remaining stock.
+- [x] Shipped UI and conservation regressions, weight demo and developer contracts.
+- [ ] Live validation of carried LT, slot limits and actual yield remains user-owned.

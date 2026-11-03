@@ -43,6 +43,7 @@ jobs:
         run: |
           node scripts/test_crafting.js
           node scripts/test_crafting_page.js
+          node scripts/test_crafting_logistics.js
           node scripts/test_auto_craft_page.js
           node scripts/test_imperial.js
       - name: Compile sources
