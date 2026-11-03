@@ -62,6 +62,39 @@ function projection(timer,reading,now){
 }
 
 
-root.VisionCraft={projection,key,settings,configure,rates,bracket,resolved,indexRecipes,plan,queue,scenarios,tax,series};
+// Imperial costs are acquisition costs, not market-sale proceeds. Do not apply
+// market tax or credit side products against the cost of filling today's boxes.
+function imperialRanks(recipes,spec,quote,options={}){
+ const count=Math.floor(bounded(options.boxes,1,10000,1)),index=indexRecipes(recipes),result={};
+ for(const type of ['cooking','alchemy']){
+  const boxes=recipes.filter(r=>r.method==='imperial_'+type&&(!options.tiers?.[type]||r.itemId===Number(options.tiers[type]))),buy=[],craft=[];
+  const mastery=bounded(options.mastery?.[type],0,3000,0);
+  for(const box of boxes){
+   const boxYield=box.minProc||1,payout=(spec.items[box.itemId]?.imperialBase||0)*(2.5+(bracket(spec,type,mastery).imperialBonus||0));
+   if(box.mats.length!==1||!payout)continue;
+   const mat=box.mats[0],quantity=Math.ceil(mat.qty*count/boxYield),q=quote(mat.name,mat.itemId),price=q?.price??q?.unit_price;
+   const row={boxId:box.itemId,boxName:box.name,boxRecipeId:box.id,itemId:mat.itemId,name:mat.name,quantity,boxes:count,payout:payout*count,stock:q?.stock,updatedAt:q?.updatedAt||q?.updated_at};
+   const cost=Number.isFinite(price)&&price>0&&q?.price_basis!=='npc_vendor'?price*quantity:null;
+   buy.push({...row,cost,perBox:cost===null?null:cost/count,profit:cost===null?null:row.payout-cost});
+   // A rare proc can fill a box even when it has no dedicated recipe. Its
+   // acquisition cost uses the expected rare yield, with no main-output credit.
+   const sources=recipes.filter(r=>r.type===type&&(r.itemId===mat.itemId||r.rare?.itemId===mat.itemId));let best=null;
+   for(const source of sources){
+    const cfg=configure(source,{...(options.characters?.[type]||{}),mastery},spec),yieldQty=source.itemId===mat.itemId?cfg.yield:cfg.rareYield;
+    if(!(yieldQty>0))continue;
+    const runs=Math.ceil(quantity/yieldQty),choices={};
+    for(const [i,m] of source.mats.entries())if(m.groupId){let cheapest=null;for(const o of spec.groups[m.groupId]||[]){const meta=spec.items[o.itemId],p=quote(meta.name,o.itemId),market=p?.price??p?.unit_price,npc=meta.npcBuy;const unit=Math.min(Number.isFinite(market)&&market>0?market:Infinity,npc>0?npc:Infinity),total=unit*Math.ceil((m.required??m.qty)/o.value);if(Number.isFinite(total)&&(!cheapest||total<cheapest.total))cheapest={id:o.itemId,total};}if(cheapest)choices[source.id+':'+i]=cheapest.id;}
+    const p=plan(source,runs,{...cfg,keepMain:true,keepRare:true,includeExtras:false,includeByproduct:false},{spec,recipes,index,quote,choices});
+    const candidate={...row,cost:p.cost,perBox:p.cost===null?null:p.cost/count,profit:p.cost===null?null:row.payout-p.cost,recipeId:source.id,runs,expectedOutput:runs*yieldQty,surplus:runs*yieldQty-quantity};
+    if(!best||(candidate.cost!==null&&(best.cost===null||candidate.cost<best.cost)))best=candidate;
+   }
+   craft.push(best||{...row,cost:null,perBox:null,profit:null});
+  }
+  const sort=(a,b)=>(a.cost===null)-(b.cost===null)||(a.cost??Infinity)-(b.cost??Infinity)||a.name.localeCompare(b.name);
+  result[type]={buy:buy.sort(sort),craft:craft.sort(sort)};
+ }
+ return result;
+}
+root.VisionCraft={imperialRanks,projection,key,settings,configure,rates,bracket,resolved,indexRecipes,plan,queue,scenarios,tax,series};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.VisionCraft;
 })(typeof globalThis!=='undefined'?globalThis:this);

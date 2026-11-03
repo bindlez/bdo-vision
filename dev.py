@@ -78,6 +78,7 @@ def main():
             ('node', 'scripts/test_cp_page.js'),
             ('node', 'scripts/test_crafting.js'),
             ('node', 'scripts/test_crafting_page.js'),
+            ('node', 'scripts/test_imperial.js'),
             (sys.executable, '-m', 'compileall', '-q', 'desktop', 'scripts', 'tests', 'dev.py'),
             (sys.executable, 'scripts/build_handbook.py', '--check'),
         ):

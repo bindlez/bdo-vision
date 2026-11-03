@@ -15,7 +15,13 @@ let started=null,download=null;const context={console,Map,Set,URL,AbortSignal,st
 context.window=context;for(const q of snapshot.items){context.visionMarketById['na:'+q.id]=q.price;context.visionMarketQuoteDetails['na:'+q.id]=q;}
 vm.createContext(context);const html=fs.readFileSync('bdo-market-intelligence.html','utf8');
 for(const marker of ['CRAFTING_ENGINE_JS','CRAFTING_STUDIO_JS','RECIPE_BROWSER_JS']){const script=html.split('/* OWNED '+marker+' START */')[1]?.split('/* OWNED '+marker+' END */')[0];assert(script,marker);vm.runInContext(script,context);}
+nodes.set('imperialQuick',new Element());
 context.craftStudioRender(context.selectedRecipe,100);context.renderRecipeList();
+assert(nodes.get('imperialQuick').innerHTML.includes('Cooking · Buy meals / elixirs'));
+assert(nodes.get('imperialQuick').innerHTML.includes('Alchemy · Craft from ingredients'));
+nodes.get('imperialBoxes').onchange({target:{value:'245'}});assert.equal(context.imperialSettings.boxes,245);
+nodes.get('imperialTier_cooking').onchange({target:{value:'9855'}});assert.equal(context.imperialSettings.tiers.cooking,9855);
+nodes.get('imperialMastery_alchemy').onchange({target:{value:'1500'}});assert.equal(context.imperialSettings.mastery.alchemy,1500);
 assert(nodes.get('craftDetail').innerHTML.includes('EXPECTED NET PROFIT'));assert(nodes.get('craftDetail').innerHTML.includes('choose substitutions'));
 nodes.get('studioTarget').onchange({target:{value:'1000'}});assert.equal(context.lastCraftAmount,400);
 nodes.get('studioQueue').onclick();assert.equal(context.craftStudioState.queue.length,1);assert.equal(context.craftStudioState.queue[0].amount,400);

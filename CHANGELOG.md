@@ -1,3 +1,11 @@
+# 1.13.0-rc.14 · Imperial quick picks
+
+- Four compact, cost-sorted Imperial turn-in lists: buy/craft cooking and alchemy.
+- Tier, mastery and daily quantity controls; exact-ID cached quotes, stock warnings,
+  whole expected crafting batches and profit after acquisition cost.
+- Shared on-demand market refresh; no additional OCR, polling or dependencies.
+- Calculation and shipped-page controls covered by regression checks.
+
 # 1.13.0-rc.13 · Crafting Intelligence and market-first CP
 
 - Replaced the mixed 114-entry recipe book with 990 attributed variants and 105 concrete substitution groups; compatible saved IDs are preserved.

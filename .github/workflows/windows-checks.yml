@@ -37,6 +37,11 @@ jobs:
         run: node scripts/test_cp.js
       - name: Check actual CP page interactions
         run: node scripts/test_cp_page.js
+      - name: Check crafting and imperial quick picks
+        run: |
+          node scripts/test_crafting.js
+          node scripts/test_crafting_page.js
+          node scripts/test_imperial.js
       - name: Compile sources
         run: python -m compileall -q desktop scripts tests
       - name: Build and validate Developer Handbook

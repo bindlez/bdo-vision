@@ -140,3 +140,17 @@ The offline demo uses a dated compact market snapshot with simulated drops. Its
 network policy blocks connections. It has separate storage keys and cannot see BDO.
 The [reference matrix](../CRAFTING-REFERENCE-MATRIX.md) records supported capabilities
 and known limits. The [project paper](../PROJECT-PAPER.md) explains the broader lessons.
+# Imperial quick picks
+
+The crafting page includes four cost-sorted lists: cooking buy/craft and alchemy
+buy/craft. Select a box tier for each life skill, mastery and today's box count.
+Refresh uses the existing on-demand `/craft-market` snapshot, with no new polling
+or OCR. Buy cost multiplies the required meal/elixir quantity by its exact-ID quote.
+Craft cost buys the recipe inputs, chooses cheapest priced substitutions and rounds
+expected batches up. Rare-output recipes use their rare yield. Surplus and side
+outputs receive no cost credit. Unpriced options are excluded from the top five.
+Delivery uses the existing imperial payout/mastery model, without market-sale tax.
+Eligibility, stock and remaining daily deliveries require checking in game.
+`VisionCraft.imperialRanks` owns pure calculations; `craftImperialRender` owns UI.
+Run `node scripts/test_imperial.js` for calculation regressions.
+
