@@ -37,3 +37,37 @@ class GuildReminderTests(unittest.TestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+
+class NativeReminderIntegrationTests(unittest.TestCase):
+    def test_crafting_start_after_reader_and_completed_screen_produce_one_actionable_sound(self):
+        import tkinter as tk
+        from unittest.mock import patch
+        from app import App
+        root=tk.Tk();root.withdraw()
+        with patch.object(App,'start_bridge'):app=App(root)
+        try:
+            guild=app.loot.guild
+            app.tool_report={'tools':[{'id':'tool','name':'Supreme Alchemy Tool'}],'active_id':'tool'}
+            guild.model.accept({'completion_observed':True,'completion_votes':2,'completion_basis':'mission_message','completion_evidence':'The guild mission is complete.'},at=100)
+            app.running=False
+            with patch('guild_quest_ui.time.time',return_value=101),patch('guild_quest_ui.winsound.MessageBeep') as beep:
+                guild.check_crafting_quest();self.assertIsNone(guild.reminder_payload)
+                app.running=True;guild.check_crafting_quest()
+                self.assertEqual(guild.reminder_payload['key'],'complete');self.assertIn('accept',app.status.get())
+                guild.check_crafting_quest();self.assertEqual(beep.call_count,1)
+            with patch('guild_quest_ui.time.time',return_value=200),patch('guild_quest_ui.winsound.MessageBeep') as beep:
+                guild.check_crafting_quest();self.assertEqual(guild.reminder_payload['key'],'unverified');beep.assert_not_called()
+        finally:app.loot.close();root.destroy()
+
+    def test_completion_and_reminder_in_same_pass_do_not_double_beep(self):
+        import tkinter as tk
+        from unittest.mock import patch
+        from app import App
+        root=tk.Tk();root.withdraw()
+        with patch.object(App,'start_bridge'):app=App(root)
+        try:
+            guild=app.loot.guild
+            with patch('guild_quest_ui.winsound.MessageBeep') as beep:
+                guild.alert('complete');guild.play_alert_sound();self.assertEqual(beep.call_count,1)
+        finally:app.loot.close();root.destroy()

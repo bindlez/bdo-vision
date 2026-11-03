@@ -239,6 +239,15 @@ class App:
   bridge=getattr(self,'bridge',None)
   if bridge and self._tool_bridge_revision!=view['revision']:
    bridge.update_tool_status(view);self._tool_bridge_revision=view['revision']
+  if bridge and hasattr(bridge,'update_companion_status'):
+   try:
+    self.update_value()
+    active=next((r for r in view['tools'] if r['id']==view['active_id']),None)
+    bridge.update_companion_status({'remaining':max(0,float(self.value)),'maximum':max(1,int(self.maximum.get())),
+      'seconds':max(.05,float(self.speed.get())),'running':bool(self.running),'has_reading':bool(self.has_reading),
+      'updated_at':time.time(),'observed_at':view['last_read_at'] if self.last_good_ocr is not None else None,'name':active['name'] if active else 'Craft timer',
+      'source':self.source.get()[:150],'lite':self.lite_use.get()})
+   except (ValueError,TypeError):pass
   self.refresh_tools(view)
 
  def refresh_tools(self,view=None):
@@ -372,6 +381,12 @@ class App:
   elif report.get('confirmation')=='Place Mode position':
    self.source.set('PLACE MODE SELECTED · verified durability');self.status.set('Countdown started for '+active['name']+'. Checking durability use next.')
   else:self.status.set('Tracking '+active['name']+'. All readings are in VIEW TOOLS.')
+
+ def open_planning_page(self,section):
+  if section not in ('cp','imperial'):return
+  if not self.bridge or not self.bridge.server:
+   self.status.set('Local planner is unavailable. Check the connection in Settings.');return
+  webbrowser.open_new_tab(self.bridge.base_url+'/planner#'+section)
 
  def open_planner(self):
   """Serve the paired planner from our own bridge; no cross-origin file permissions."""

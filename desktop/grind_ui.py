@@ -67,6 +67,9 @@ class GrindTracker:
         self.tracker.app.text_button(actions,'PAUSE / RESUME',self.pause).pack(side='left',padx=12)
         self.tracker.app.text_button(actions,'FINISH RUN',self.finish).pack(side='left',padx=12)
         self.tracker.app.text_button(actions,'BIG DROPS',lambda:self.tracker.big_drops.open()).pack(side='left',padx=8)
+        overlay_actions=tk.Frame(frame,bg=c['bg']);overlay_actions.pack(fill='x',pady=(0,5))
+        self.tracker.app.text_button(overlay_actions,'OPEN GAME OVERLAY',self.live.open).pack(side='left')
+        self.tracker.app.text_button(overlay_actions,'OVERLAY SETTINGS',self.live.settings).pack(side='left',padx=12)
         self.tracker.app.text_button(actions,'EXPORT RUN',self.export).pack(side='right')
         extras=tk.Frame(frame,bg=c['bg'])
         def toggle_extras():
@@ -74,7 +77,6 @@ class GrindTracker:
             else:extras.pack(after=extra_button,fill='x',pady=5);extra_button.configure(text='HIDE GOALS & STREAMING ▴')
         extra_button=self.tracker.app.text_button(frame,'GOALS & STREAMING ▾',toggle_extras);extra_button.pack(anchor='w',pady=5)
         live_actions=tk.Frame(extras,bg=c['bg']);live_actions.pack(fill='x',pady=5)
-        self.tracker.app.text_button(live_actions,'COMPACT LIVE WINDOW',self.live.open).pack(side='left')
         ttk.Checkbutton(live_actions,text='Share with OBS · local only',variable=self.obs_enabled,command=self.live.obs_changed,style='Vision.TCheckbutton').pack(side='left',padx=12)
         self.tracker.app.text_button(live_actions,'COPY OBS URL',self.live.copy_url).pack(side='left')
         goals=tk.Frame(extras,bg=c['bg']);goals.pack(fill='x',pady=6)

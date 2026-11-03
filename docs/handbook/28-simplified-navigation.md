@@ -5,14 +5,14 @@
 | Surface | Result |
 | --- | --- |
 | Compact main timer | Keep scan/send/tray controls; clear Home/Craft/Grind shortcuts; secondary tool details remain in More controls |
-| Native workspace | Replace the overflowing tab strip with Home/Craft/Grind/Quests plus Planning/History/Readers menus |
+| Native workspace | Replace the overflowing tab strip with Home/Craft/Grind/Quests plus visible Planning/History/Readers destination rows |
 | Home | Status and goals first; remove the second row of duplicate navigation |
 | Capture setup | Keep crop/feed/interval controls together; keep Track loot visible beside its status |
 | Crafting calculator | Highlight the next stage; expand all stages, route comparisons and extra actions only when requested |
 | CP Info | Keep quantities and allocation visible; target graphs expand on request |
 | Imperial | Retain the four comparison cards and table, with existing advanced details collapsed |
 | Grind | Keep session controls, result metrics and progress; fold goal/streaming setup into one expandable group |
-| Readers | Keep all loot/tool/quest diagnostics under a named Readers menu |
+| Readers | Keep all loot/tool/quest diagnostics under the visible Readers destination row |
 | History/export | Keep every recorded page and export under History; remove ambiguous global export footer action |
 
 The layout hides secondary controls, not calculations or features. Core OCR,
@@ -65,3 +65,6 @@ graph expansion without plan changes. Presentation tests assert a single history
 calculation per visible refresh. Shipped-page cooking tests verify collapsed
 secondary sections, the next card and prevention of intermediate-stage bypass.
 Full reader, valuation, privacy, history and packaged checks remain required.
+
+
+rc.27 restores direct access to essential crafting sections and removes native destination menus; see [the current desk and overlay contract](34-overlays-and-crafting-desk.md). No original page is removed.

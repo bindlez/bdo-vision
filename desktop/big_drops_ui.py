@@ -1,7 +1,6 @@
 """Quiet until a big drop: native journal, heat ribbon and one optional reveal."""
 import time,webbrowser
 import tkinter as tk
-import ctypes
 from tkinter import ttk
 from big_drops import BigDropBook,classify
 
@@ -22,6 +21,8 @@ class BigDrops:
         self.compare=tk.StringVar();self.source=None;self.meter=None
         self._snapshot_key=None;self._snapshot=None
         self.pending={};self._pending_price_revision=-1
+        from drop_reveal import DropReveals
+        self.reveals=DropReveals(self)
 
     def snapshot(self):
         ready,_=self.tracker.capture_availability()
@@ -58,6 +59,7 @@ class BigDrops:
 
     def toggle(self):
         self.tracker.platform_preferences['big_drop_celebrations']=self.celebrate.get();self.app.save_quietly()
+        if not self.celebrate.get():self.close_toast()
 
     def open(self):
         self.book._cache_key=None;self._snapshot_key=None
@@ -69,6 +71,9 @@ class BigDrops:
         top=tk.Frame(frame,bg=c['bg']);top.pack(fill='x')
         tk.Label(top,text='BIG DROPS / THE TROPHY ROOM',bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',12)).pack(side='left')
         ttk.Checkbutton(top,text='Drop reveals',variable=self.celebrate,command=self.toggle,style='Vision.TCheckbutton').pack(side='right')
+        tools=tk.Frame(frame,bg=c['bg']);tools.pack(fill='x',pady=(5,0))
+        self.app.text_button(tools,'OVERLAY SETTINGS',self.tracker.grind.live.settings).pack(side='left')
+        self.app.text_button(tools,'TEST DROP PREVIEW',self.preview).pack(side='left',padx=12)
         hero=tk.Frame(frame,bg=c['panel'],highlightbackground=c['violet'],highlightthickness=1,padx=14,pady=14);hero.pack(fill='x',pady=(10,8))
         tk.Label(hero,textvariable=self.title,bg=c['panel'],fg='#ffe2a8',font=('Segoe UI Semibold',21),wraplength=680,justify='left').pack(anchor='w')
         tk.Label(hero,textvariable=self.subtitle,bg=c['panel'],fg=c['secondary'],font=('Segoe UI',10),wraplength=680,justify='left').pack(anchor='w',pady=(5,0))
@@ -125,33 +130,13 @@ class BigDrops:
         if self.source:webbrowser.open_new_tab(self.source)
 
     def reveal(self,event):
-        self.close_toast();c=self.app.colors;win=self.toast=tk.Toplevel(self.app.root,takefocus=False)
-        win.withdraw()
-        win.overrideredirect(True);win.attributes('-topmost',True);win.configure(bg='#ffe2a8' if event['category']=='Huge Drop' else c['violet'])
-        win.geometry(f'330x135+{max(0,win.winfo_screenwidth()-350)}+{max(0,win.winfo_screenheight()-210)}')
-        box=tk.Frame(win,bg=c['panel'],padx=14,pady=12);box.pack(fill='both',expand=True,padx=1,pady=1)
-        tk.Label(box,text='✦ '+event['category'].upper(),bg=c['panel'],fg='#ffe2a8',font=('Segoe UI Semibold',11)).pack(anchor='w')
-        tk.Label(box,text=event['item']+' ×'+str(event['quantity']),bg=c['panel'],fg=c['text'],font=('Segoe UI Semibold',12),wraplength=295,justify='left').pack(anchor='w',pady=6)
-        tk.Button(box,text='VIEW TROPHY',command=lambda:(self.close_toast(),self.open()),bg=c['violet'],fg=c['text'],relief='flat',takefocus=False).pack(side='left')
-        tk.Button(box,text='×',command=self.close_toast,bg=c['panel'],fg=c['muted'],relief='flat',takefocus=False).pack(side='right')
-        # A celebration must never steal BDO's focus and interrupt capture.
-        # This changes only our own newly-created window, before it is shown.
-        try:
-            win.update_idletasks();user32=ctypes.windll.user32
-            user32.GetAncestor.argtypes=[ctypes.c_void_p,ctypes.c_uint];user32.GetAncestor.restype=ctypes.c_void_p
-            user32.GetWindowLongW.argtypes=[ctypes.c_void_p,ctypes.c_int]
-            user32.SetWindowLongW.argtypes=[ctypes.c_void_p,ctypes.c_int,ctypes.c_long]
-            handle=user32.GetAncestor(win.winfo_id(),2)
-            style=user32.GetWindowLongW(handle,-20);user32.SetWindowLongW(handle,-20,style|0x08000000|0x00000080)
-            if not user32.GetWindowLongW(handle,-20)&0x08000000:raise RuntimeError('Passive window style unavailable')
-            win.deiconify()
-        except (AttributeError,OSError,tk.TclError,RuntimeError):
-            self.close_toast();return  # Journal and status remain; never force focus.
-        self.toast_job=self.app.root.after(6500,self.close_toast)
+        self.reveals.offer(event)
+
+    def preview(self):
+        if not self.celebrate.get():
+            self.app.status.set('Enable Drop reveals to test the overlay. No loot was recorded.');return
+        self.reveals.offer({'category':'Big Drop','item':"Kabua's Artifact",'quantity':1,
+                            'value':9_350_000_000,'preview':True})
 
     def close_toast(self):
-        if self.toast_job is not None:self.app.root.after_cancel(self.toast_job);self.toast_job=None
-        if self.toast is not None:
-            try:self.toast.destroy()
-            except tk.TclError:pass
-            self.toast=None
+        self.reveals.close()

@@ -35,6 +35,19 @@ class BridgeTests(unittest.TestCase):
         with urllib.request.urlopen(request, timeout=3) as response:
             return json.load(response)
 
+    def test_companion_reuses_existing_poll_and_does_not_opt_in_loot(self):
+        state={'remaining':90,'seconds':1,'running':True,'has_reading':True,'updated_at':100,'image':'excluded'}
+        self.bridge.update_companion_status(state)
+        self.bridge.update_guild_status({'complete':True,'reminder':{'key':'complete','sound':True,'message':'Accept next quest'}})
+        _,payload=self.get('/durability');data=json.loads(payload)
+        self.assertEqual(data['companion']['remaining'],90);self.assertNotIn('image',data['companion'])
+        self.assertEqual(data['guild_status']['reminder']['key'],'complete')
+        self.assertNotIn('crafting_loot',data)
+        state['remaining']=1
+        _,payload=self.get('/durability');self.assertEqual(json.loads(payload)['companion']['remaining'],90)
+        with self.assertRaises(ValueError):self.bridge.update_companion_status({'name':'x'*1600})
+        with self.assertRaises(ValueError):self.bridge.update_companion_status({'remaining':float('nan')})
+
     def test_serves_full_planner_same_origin(self):
         h, text = self.get('/planner')
         self.assertIn('text/html', h['Content-Type'])

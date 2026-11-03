@@ -1,4 +1,12 @@
-# BDO Vision · current test candidate 1.13.0-rc.26
+# BDO Vision · current test candidate 1.13.0-rc.27
+
+The **crafting desk** exposes overview and ingredients without nested menus, with
+one-click access to weight, production, costs/tax and graphs. The Windows companion
+keeps every original page accessible through visible destination buttons.
+**Grind → Open game overlay** provides the passive HUD, saved snapping and tiled
+Big Drop reveals; Overlay settings controls lock, motion, optional sound and snooze.
+See the [product checklist](docs/UX-RELEASE-PLAN.md) and
+[overlay/crafting guide](docs/handbook/34-overlays-and-crafting-desk.md).
 
 The Recipe planner now opens with a **whole production map and timeline**. Pick
 your product, choose a reachable finished product, inspect every required branch

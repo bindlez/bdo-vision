@@ -50,9 +50,11 @@ class WindowsOCR:
         self.info=self._receive(5)
         if self.info.get('ready') is not True:raise RuntimeError('Windows OCR unavailable')
 
-    def recognize(self,image,timeout=2):
+    def recognize(self,image,timeout=2,lock_timeout=None):
         if min(image.size)<1 or image.width*image.height>1_500_000:raise ValueError('OCR crop exceeds its pixel budget')
-        with self.lock:
+        if lock_timeout is None:self.lock.acquire()
+        elif not self.lock.acquire(timeout=lock_timeout):raise RuntimeError('Windows OCR worker is busy')
+        try:
             try:
                 self._start();buffer=io.BytesIO();image.convert('RGB').save(buffer,format='PNG');blob=buffer.getvalue()
                 if len(blob)>2_000_000:raise ValueError('OCR crop exceeds its transport budget')
@@ -68,6 +70,7 @@ class WindowsOCR:
                 return result
             except Exception:
                 self.close();raise
+        finally:self.lock.release()
 
     def close(self):
         process=self.process;self.process=None;self.info=None

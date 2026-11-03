@@ -16,3 +16,12 @@ console.log('Automatic craft: no manual recipe, displayed rates/tool projection,
 
 let opened=null,workspace=null;context.RECIPES=[{id:'wine',name:'Fruit Wine',type:'cooking'}];context.selectRecipe=id=>{opened=id;};context.craftWorkflowSet=mode=>{workspace=mode;};
 context.renderVisionAutomaticCraft(panel,{...payload,recipe:'Fruit Wine',kind:'cooking'});assert(!card.querySelector('[data-auto-map]').disabled);card.querySelector('[data-auto-map]').onclick();assert.equal(opened,'wine');assert.equal(workspace,'planner');
+
+// Fresh connection packets do not turn missing OCR into a verified tool or quest.
+let status=context.visionCraftStatusModel({companion:{updated_at:100,has_reading:false}},100);
+assert.equal(status.tool,'WAITING FOR TOOL');assert.equal(status.loot,'LOOT SHARING OFF');
+status=context.visionCraftStatusModel({companion:{updated_at:100,observed_at:90,has_reading:true,remaining:382,seconds:1,running:true,name:'Alchemy tool'},guild_status:{available:true,last_at:99,current:101,target:600},crafting_loot:{available:true,health:{holes:1,uncertain:2},auto_craft:{detected:true,recipe:'Fruit Wine',status:'Measured'}}},101);
+assert.equal(status.timer,382);assert.equal(status.tool,'COUNTDOWN ESTIMATE');assert.equal(status.guild,'101 / 600');assert(status.lootNote.includes('unreadable'));assert(status.lootNote.includes('overlap lost'));assert.equal(status.craft,'Fruit Wine');
+status=context.visionCraftStatusModel({companion:{updated_at:100,has_reading:true,remaining:382,seconds:1,running:true},guild_status:{complete:true,available:false,completion_seen_at:1}},200);
+assert.equal(status.tool,'WAITING FOR TOOL');assert(status.guild.startsWith('Last seen complete'));
+console.log('Craft status: tool estimates, capture gaps, optional sharing and stale quest distinctions passed');

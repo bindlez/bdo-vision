@@ -12,17 +12,24 @@ def stream_page():
 
 
 class LiveGrind:
-    def __init__(self,grind):self.grind=grind;self.window=None;self.last=None
+    def __init__(self,grind):self.grind=grind;self.window=None;self.hud=None;self.last=None
 
     def open(self):
-        if self.window and self.window.winfo_exists():self.window.deiconify();self.window.lift();return
-        app=self.grind.tracker.app;c=app.colors;self.window=tk.Toplevel(app.root)
-        self.window.title('Vision · Live grind');self.window.geometry('340x230');self.window.minsize(300,200);self.window.configure(bg=c['bg']);self.window.attributes('-topmost',True)
-        self.text=tk.StringVar();tk.Label(self.window,textvariable=self.text,bg=c['bg'],fg=c.get('teal',c['bright']),justify='left',anchor='nw',wraplength=315,font=('Segoe UI Semibold',11),padx=12,pady=12).pack(fill='both',expand=True)
-        row=tk.Frame(self.window,bg=c['bg']);row.pack(fill='x')
-        app.text_button(row,'PAUSE / RESUME',self.grind.pause).pack(side='left',padx=8)
-        app.text_button(row,'FINISH RUN',self.grind.finish).pack(side='right',padx=8)
+        if self.window and self.window.winfo_exists():return
+        from live_hud import LiveHUD
+        self.hud=LiveHUD(self)
+        if not self.hud.shown:
+            self.window=None;self.hud=None
+            self.grind.state.set('Windows could not create a passive overlay. The main tracker is still available.')
+            return
+        self.window=self.hud.surface.window
+        big=getattr(self.grind.tracker,'big_drops',None)
+        if big:big.reveals.retile()
         self.refresh()
+
+    def settings(self):
+        from live_hud import settings
+        settings(self)
 
     def payload(self):
         g=self.grind;s=g.insights.session
@@ -54,7 +61,7 @@ class LiveGrind:
                 'value':data['value'],'rate':data['value']*3600/observed if data['value'] is not None and observed>=60 else None,
                 'time':duration(observed)+' / '+duration(max(0,elapsed-observed)),
                 'goal':target,'count':count,'required':goal,'progress':min(1,count/goal) if target else None,
-                'unpriced':data['unpriced'],'latest':self.latest,'updatedAt':time.time(),'silverGoal':meta['silver_goal']}
+                'sessionActive':True,'unpriced':data['unpriced'],'latest':self.latest,'updatedAt':time.time(),'silverGoal':meta['silver_goal']}
 
     def refresh(self):
         visible=self.window and self.window.winfo_exists() and self.window.winfo_ismapped()
@@ -65,9 +72,7 @@ class LiveGrind:
         data=self.payload()
         if bridge:
             with bridge._lock:bridge.stream_snapshot=data if enabled else {}
-        if visible:
-            from insights_ui import number
-            self.text.set(data['status']+'\n\n'+number(data.get('value'))+' recorded silver\n'+number(data.get('rate'))+' / observed hour\n'+data.get('time','—')+'\n'+datetime.now().strftime('%H:%M:%S')+(f"\n{data['count']} / {data['required']} {data['goal']}" if data.get('goal') else ''))
+        if visible:self.hud.update(data)
 
     def obs_changed(self):
         self.grind.tracker.platform_preferences['obs_enabled']=self.grind.obs_enabled.get();self.grind.tracker.app.save_quietly();self.refresh()

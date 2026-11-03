@@ -1,3 +1,23 @@
+# 1.13.0-rc.27 - A visible crafting desk and game overlays
+
+- Kept all original features/pages; replaced native destination menus with visible
+  groups and destination buttons, plus direct website Crafting/CP/Imperial links.
+- Open crafting overview and ingredients by default, with a persistent quick-access
+  bar for weight, map/timeline, production, outputs, tax, graphs, character and queue.
+  Searchable recipes stay visible by default; calculations and timers are preserved.
+- Added a website live context strip for tool/time, automatic craft, loot capture
+  health and last-seen guild status through the existing bridge poll. Sharing stays optional.
+- Added compact passive game HUD, saved monitor-aware snapping and drag feedback,
+  dock buttons, click-through lock, tiled Big/Huge/Treasure reveals, bounded queue,
+  optional sound, reduced motion, snooze and synthetic preview controls.
+- Fresh guild completion now prompts for the next mission when crafting begins;
+  state checks use the existing tick, and sound is deduplicated. Unknown remains unknown.
+- Incomplete personal-loot reads get bounded two-pass physical-row recovery using
+  the existing Windows helper. One private eight-row failure now reads eight exact
+  rows instead of five; that replay took 0.75s, not a live accuracy/FPS guarantee.
+- No new runtime dependency, background capture loop or gameplay input. User history
+  is unchanged. Live drop recall, mixed-DPI snapping and quest alerts need game acceptance.
+
 # 1.13.0-rc.26 - Map-first production planning
 
 - Replaced the planner's primary screen with a connected recipe map, visible future

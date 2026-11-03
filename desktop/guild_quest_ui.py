@@ -16,7 +16,7 @@ class GuildQuestTracker:
         self.model=GuildQuestProgress(tracker.ledger.db)
         self.enabled=tk.BooleanVar(value=bool(settings.get('guild_quest_enabled',False)))
         self.missing_alert=tk.BooleanVar(value=bool(settings.get('guild_quest_missing_alert',True)))
-        self.missing_gate=ReminderGate();self.last_absence={}
+        self.missing_gate=ReminderGate();self.last_absence={};self.reminder_payload=None;self._reminder_stamp=None;self._last_alert_sound=0;self._last_sound_key=None
         self.watch=tk.BooleanVar(value=bool(settings.get('guild_quest_watch',False)))
         self.watch_pending=None;self.watch_box=None;self.watch_context=None;self._watch_read=False
         self.sound=tk.BooleanVar(value=bool(settings.get('guild_quest_sound',True)))
@@ -263,15 +263,21 @@ class GuildQuestTracker:
         if self.busy or self.waiting:return
         report=getattr(self.app,'tool_report',None) or {}
         active=next((r for r in report.get('tools',[]) if r['id']==report.get('active_id')),None)
-        if not active:return
+        if not active:
+            if self.reminder_payload is not None:self.reminder_payload=None;self._reminder_stamp=None;self.refresh()
+            return
         from tool_reader import family
         now=time.time();quest={**self.model.snapshot(now),**self.last_absence}
         decision=reminder_decision(quest,family(active['name']),now,enabled=self.missing_alert.get(),crafting=bool(self.app.running))
+        stamp=(getattr(self.app,'session_id',''),bool(self.app.running),active['id'],repr(decision),self.sound.get())
+        if stamp==self._reminder_stamp:return
+        self._reminder_stamp=stamp;self.reminder_payload=decision
         event=self.missing_gate.accept(decision,getattr(self.app,'session_id',''),now)
         if event:
             self.notice.set(event['message'])
             self.app.status.set(event['message'])
-            if event['sound'] and self.sound.get():winsound.MessageBeep(winsound.MB_ICONASTERISK)
+            if event['sound']:self.play_alert_sound(event['key'])
+        self.refresh()
 
     def failed(self,message,generation):
         self.busy=False;self.app.busy=False;self._watch_read=False
@@ -282,17 +288,22 @@ class GuildQuestTracker:
             if generation==self.generation:self.model.pause(message);self.refresh()
             self.schedule()
 
+    def play_alert_sound(self,key='complete'):
+        now=time.monotonic()
+        if self.sound.get() and (key!=self._last_sound_key or now-self._last_alert_sound>=2):
+            self._last_alert_sound=now;self._last_sound_key=key;winsound.MessageBeep(winsound.MB_ICONASTERISK)
+
     def alert(self,event):
         messages={'near':'Guild objective is nearly finished. Get ready to complete it and choose the next one.',
                   'complete':'Guild objective complete. Check BDO to finish the mission and accept the next one.',
                   'test':'Guild Quest test alert. This does not change your progress.'}
         message=messages[event];self.notice.set(message);self.app.status.set(message)
-        if self.sound.get():winsound.MessageBeep(winsound.MB_ICONASTERISK)
+        self.play_alert_sound(event)
 
     def refresh(self):
         view=self.model.snapshot();current=view['current'];target=view['target']
         bridge=getattr(self.app,'bridge',None)
-        published={**view,'enabled':self.enabled.get(),'threshold':self.safe_threshold()}
+        published={**view,'enabled':self.enabled.get(),'threshold':self.safe_threshold(),'reminder':self.reminder_payload}
         held=bool(getattr(self.app,'_tool_scan_latched',False) or self.app.lite_use.get() and getattr(self.app,'lite_scan_complete',False))
         if not self.enabled.get():next_action='Enable quest reader, then SCAN TOOL + QUEST.'
         elif self.busy:next_action='Reading the visible objective now.'

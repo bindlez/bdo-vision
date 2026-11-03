@@ -82,6 +82,8 @@ class LootInsights:
     def tick(self):
         if self.closed:return
         try:
+            guild=getattr(self.tracker,'guild',None)
+            if guild:guild.check_crafting_quest()  # state only; never captures or runs OCR
             lite=self.tracker.app.lite_use.get()
             if lite:
                 if self.last_lite_mode is not True:

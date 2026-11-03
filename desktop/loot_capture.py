@@ -71,7 +71,7 @@ def notification_ink(image, threshold=80, colors=True, prepared=None):
     return ImageOps.invert(neutral).resize((image.width*3,image.height*3))
 
 
-def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics=True):
+def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics=True,positioned_worker=None):
     folder=Path(folder)
     if diagnostics:
         folder.mkdir(parents=True,exist_ok=True)
@@ -166,6 +166,14 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics
     order={e.item:i for i,e in reversed(list(enumerate(max(readings,key=len))))}
     events.sort(key=lambda e:order.get(e.item,999))
     if agreed_slots is not None:events=wide_events
+    if kind=='chat' and (agreed_slots is None or any(event is None for event in agreed_slots)) and positioned_worker is not None:
+        try:
+            from loot_positioned import recover_personal_feed
+            recovery=recover_personal_feed(image,positioned_worker,crafting,resolve_name,events)
+            if recovery:
+                events=recovery['events'];agreed_slots=recovery['slots'];logs.append(recovery['debug'])
+        except (RuntimeError,OSError,ValueError):
+            logs.append('Positioned recovery unavailable or busy; original consensus retained.')
     debug='\n'.join(logs)+f'\nAGREED: {events!r}'
     if diagnostics:(folder/'ocr_log.txt').write_text(debug,encoding='utf-8')
     # Empty text on all passes is only a candidate empty panel. UI requires two

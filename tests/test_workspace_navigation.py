@@ -17,7 +17,11 @@ class WorkspaceNavigationTests(unittest.TestCase):
             tabs=app.loot.tabs;nav=app.loot.navigation
             self.assertEqual(tabs.select(),str(app.loot.home.frame))
             self.assertEqual(set(tabs.tabs()),set(nav.locations))
-            self.assertEqual(set(nav.menus),{'Planning','History','Readers'})
+            self.assertTrue({'Planning','History','Readers','Home','Craft','Grind','Quests'}<=set(nav.groups))
+            self.assertFalse(any(isinstance(w,tk.Menubutton) for w in nav.frame.winfo_children()))
+            nav.choose('Readers');self.assertEqual(len(nav.destination_buttons),5)
+            self.assertEqual(nav.destination_buttons[1].cget('text'),'Loot OCR reader')
+            nav.choose('History');self.assertEqual(len(nav.destination_buttons),7)
             for page,title in nav.locations.items():
                 tabs.select(page);nav.sync();self.assertEqual(nav.location.get(),title)
             with patch.object(app.loot.window,'deiconify'),patch.object(app.loot.window,'lift'):app.open_activity('cp')

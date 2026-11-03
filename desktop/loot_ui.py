@@ -49,7 +49,7 @@ class LootTracker:
         self.summary=tk.StringVar();self.raw=tk.StringVar(value='No item notifications read yet.')
         self.last_read=tk.StringVar(value='Last read: no item identified yet')
         self.last_saved=tk.StringVar(value='Recording is ON — item names, quantities and times save locally.' if self.recording.get() else 'Preview only — recording is OFF.')
-        self.last_scan_finished=0;self.capture_time=None;self.visible_tree=None;self.last_ocr_duration=0;self.scan_count=0;self.last_capture_gap=0
+        self.last_result_health={};self.last_saved_at=None;self.last_scan_finished=0;self.capture_time=None;self.visible_tree=None;self.last_ocr_duration=0;self.scan_count=0;self.last_capture_gap=0
         self.tabs=None;self.window=None;self.tree=None;self.totals_tree=None;self.crafts_tree=None;self.preview=None;self.photo=None;self.debug_text=None
         self.closed=False;self.busy=False;self.generation=0;self.last_scan=0
         self.snapshots=LootSnapshots();self.channels={};self.empty_counts={};self.recent=[];self._baseline_persisted={}
@@ -298,7 +298,7 @@ class LootTracker:
                     key=FeedCache.key(image,tess,name,crafting)+(generation,) if cache and name=='chat' and not diagnostics else None
                     result=cache.get(key) if key else None
                     if result is None:
-                        result=recognize_feed(image,tess,name,crafting,self.path/'loot-diagnostics'/name,resolve_name=self.insights.prices.resolve_name,diagnostics=diagnostics)
+                        result=recognize_feed(image,tess,name,crafting,self.path/'loot-diagnostics'/name,resolve_name=self.insights.prices.resolve_name,diagnostics=diagnostics,positioned_worker=getattr(self.app,'windows_ocr',None))
                         if key:cache.put(key,result)
                     results[name]=result
                 except Exception as exc:
@@ -339,6 +339,7 @@ class LootTracker:
         observed_at=datetime.fromtimestamp(self.capture_time).astimezone().isoformat(timespec='milliseconds') if self.capture_time else None
         ident=self.ledger.add(event.item,event.quantity,{'normal':'Item Drop Log','rare':'Rare Drop Log','chat':'Text feed'}[feed],self.session,recorded_at=observed_at,kind=event.kind)
         self.insights.observe(ident)
+        self.last_saved_at=time.time()
         self.auto_craft.observe(ident,event.item,event.quantity,self.capture_time)
         self.big_drops.observe(ident,event)
         self.insights.prices.notice_item(event.item)
@@ -409,6 +410,7 @@ class LootTracker:
         holes=sum(sum(event is None for event in r.get('slots') or []) for r in results.values())
         if holes:self.status.set(self.status.get()+f' · {holes} unreadable message rows; retrying automatically')
         if skipped:self.status.set(self.status.get()+' · feed overlap lost; some drops could not be counted safely')
+        self.last_result_health={'saved':saved,'recognized':recognized,'uncertain':skipped,'unmatched':unresolved,'holes':holes,'errors':len(errors)}
         self.refresh()
 
     def close(self):
@@ -431,6 +433,7 @@ class LootTracker:
         return {'scope':'All recorded loot','available':fresh,'status':'current' if fresh else 'paused','reason':reason,
                 'updated_at':time.time(),'last_capture_at':self.last_scan_finished or None,
                 'history_id':self.capture_clock.history_id,'crafting_mode':self.crafting.get(),
+                'health':{**self.last_result_health,'last_saved_at':self.last_saved_at,'capture_at':self.capture_time,'finished_at':self.last_scan_finished,'reader_seconds':self.last_ocr_duration,'capture_gap':self.last_capture_gap,'busy':self.busy,'feed':self.feed.get()},
                 'capture_clock':self.capture_clock.snapshot(),'grind':self.grind.snapshot(),'big_drops':self.big_drops.snapshot(),'auto_craft':self.auto_craft.snapshot(fresh),**self._shared_summary}
 
     def refresh_shared_loot(self):

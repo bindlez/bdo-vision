@@ -74,3 +74,9 @@ function craftSimulatorExport(recipe){
  if(r.plan)text+='\nSTAGES\n'+r.plan.steps.map(s=>s.name+': '+s.batches+' crafts; '+s.inputs.map(m=>m.name+' x '+m.quantity).join(' + ')).join('\n')+'\nBUY\n'+r.plan.purchases.map(m=>m.name+' x '+m.quantity).join('\n')+'\nREMAINING\n'+r.remaining.filter(m=>m.quantity>0).map(m=>m.name+' x '+m.quantity).join('\n');
  intelDownload('bdo-vision-production-simulation.txt',text,'text/plain');
 }
+
+// Launcher shortcuts land in the website-owned workspace directly.
+if(typeof window.addEventListener==='function'){
+ var craftWorkspaceRoute=()=>{if(location.hash==='#imperial'){showView('craft');craftWorkflowSet('imperial');}};
+ window.addEventListener('hashchange',craftWorkspaceRoute);window.addEventListener('load',craftWorkspaceRoute);
+}

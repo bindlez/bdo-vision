@@ -30,6 +30,13 @@ def run_self_check(app_class,root_path,data_path):
         report['checks']['imperial_native_widgets']=bool(app.loot.imperial.frame.winfo_exists())
         from live_grind import stream_page
         report['checks']['stream_overlay_asset']=b'/stream-state' in stream_page()
+        from game_overlay import OverlaySurface
+        from drop_reveal import DropReveals
+        surface=OverlaySurface(root,'Packaged overlay check',(320,246),{})
+        report['checks']['native_overlay_widgets']=surface.body.winfo_exists() and callable(DropReveals)
+        surface.close()
+        from loot_positioned import physical_rows
+        report['checks']['positioned_loot_module']=physical_rows([])==[]
         from workspace_nav import WorkspaceNavigation
         report['checks']['workspace_navigation_module']=callable(WorkspaceNavigation)
         from auto_craft_ui import CurrentCraftView

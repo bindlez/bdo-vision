@@ -1,3 +1,12 @@
+# Current UI and reader work - November 3, 2026
+
+See [the normalized brief and ordered checklist](UX-RELEASE-PLAN.md). rc.27 adds the
+visible crafting desk, accessible native destinations, shared live context, passive
+snapping overlays, quest-reminder repair and bounded missing-row recovery. No
+legacy feature or history was removed. Live known-count drops and quest-screen
+acceptance remain to be checked; the older P0 reader matrix below is not superseded
+by a UI test count or one successful frame replay.
+
 # Active product checklist — November 2, 2026
 
 Statuses describe evidence, not promises. A test pass is not a live-game acceptance

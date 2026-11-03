@@ -15,7 +15,7 @@ def reminder_decision(quest,activity,now,*,enabled=True,crafting=False):
     absent=quest.get('absence_observed') and quest.get('absence_votes')==2 and isinstance(quest.get('absence_at'),(float,int)) and 0<=now-quest['absence_at']<=35
     if absent:return {'key':'absent','sound':True,'message':'No active guild quest confirmed. Accept a '+activity+' guild quest in BDO.'}
     if quest.get('complete') and quest.get('available'):
-        return {'key':'complete','sound':False,'message':'Guild quest complete. Claim it and accept the next '+activity+' quest in BDO.'}
+        return {'key':'complete','sound':True,'message':'Guild quest complete. Claim it and accept the next '+activity+' quest in BDO.'}
     identity=(str(quest.get('label',''))+' '+str(quest.get('objective',''))).casefold()
     matching=activity in identity or activity=='alchemy' and re.search(r'a[li]chem[yv]',identity)
     if fresh and quest.get('current') is not None and matching:return None

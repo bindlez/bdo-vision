@@ -183,3 +183,6 @@ for a later backend; backend persistence is not required for this local feature.
 Run `python dev.py check`, regenerate every relevant demo, then package a new
 version. Keep source-ID data, expected planning quantities and observed loot as
 three separate concepts throughout later extensions.
+
+
+In rc.27 the map remains directly reachable through Map & timeline, alongside the visible crafting desk. Packing and calculations are no longer hidden behind the outer disclosure; the recipe list stays visible by default. See [the updated layout contract](34-overlays-and-crafting-desk.md).

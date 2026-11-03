@@ -73,6 +73,7 @@ class PlannerBridge:
         self.ocr_paused=False
         self.gear_store_lock=Lock()
         self.tool_status={'stage':'idle','title':'Waiting for the native reader','tools':[]}
+        self.companion_status={}
         self.guild_status={'enabled':False,'available':False,'current':None,'target':None}
         self.data = {
             'current': int(current), 'maximum': int(maximum),
@@ -202,6 +203,8 @@ class PlannerBridge:
                 elif route == '/durability':
                     with bridge._lock:
                         value = dict(bridge.data)
+                        value['companion']=copy.deepcopy(bridge.companion_status)
+                        value['guild_status']=copy.deepcopy(bridge.guild_status)
                     shared=value.get('crafting_loot')
                     revision=parse_qs(urlsplit(self.path).query).get('loot_revision',[''])[0]
                     if shared and revision and revision==shared.get('summary_revision'):
@@ -445,10 +448,17 @@ class PlannerBridge:
         with self._lock:self.tool_status=copy.deepcopy(value)
 
     def update_guild_status(self,status):
-        allowed=('current','target','label','objective','available','last_at','percent','remaining','eta','complete','reason','enabled','threshold','completion_at','completion_seen_at','completion_basis','completion_evidence','read_stage','next_action','read_attempts','last_read_seconds')
+        allowed=('current','target','label','objective','available','last_at','percent','remaining','eta','complete','reason','enabled','threshold','completion_at','completion_seen_at','completion_basis','completion_evidence','read_stage','next_action','read_attempts','last_read_seconds','reminder')
         value={key:status[key] for key in allowed if key in status}
         if len(json.dumps(value,allow_nan=False))>4000:raise ValueError('Guild status too large')
         with self._lock:self.guild_status=copy.deepcopy(value)
+
+    def update_companion_status(self,status):
+        # Small current timer context; no images, paths, inventory or loot sharing.
+        allowed=('remaining','maximum','seconds','running','has_reading','updated_at','observed_at','name','source','lite')
+        value={key:status[key] for key in allowed if key in status}
+        if len(json.dumps(value,allow_nan=False))>1500:raise ValueError('Companion status too large')
+        with self._lock:self.companion_status=copy.deepcopy(value)
 
     def consume_show_request(self):
         with self._lock:

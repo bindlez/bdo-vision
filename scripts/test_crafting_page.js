@@ -100,7 +100,7 @@ nodes.get('lineWiden').onclick();assert(context.craftStudioState.productionWide)
 
 // Edit one ingredient in the real final-product card: companions and target snap.
 const sung=recipes.find(r=>r.id==='recipe:820833:5447701ae647');context.selectedRecipe=sung;context.lastCraftAmount=100;context.craftStudioRender(sung,100);
-assert(nodes.get('craftDetail').innerHTML.indexOf('Your production line')<nodes.get('craftDetail').innerHTML.indexOf('EXPECTED NET PROFIT'));
+assert(nodes.get('craftDetail').innerHTML.indexOf('EXPECTED NET PROFIT')<nodes.get('craftDetail').innerHTML.indexOf('Your production line'));
 assert(nodes.get('craftDetail').innerHTML.includes('Feeds Nurungji'));assert(nodes.get('craftDetail').innerHTML.includes('Feeds Sungnyung'));
 let anchor=nodes.get('craftDetail').controls.find(n=>n.dataset.ratioRecipe===sung.id&&n.dataset.ratioItem==='820831');anchor.value='14000';anchor.oninput();
 assert.equal(context.lastCraftAmount,7000);
@@ -139,7 +139,21 @@ nodes.get('lineOverview').onclick();assert(!context.craftStudioState.productionO
 
 // Map-first planner: real downstream goals, clickable nodes and a matching timeline.
 const wine=recipes.find(r=>r.name==='Fruit Wine'),serendia=recipes.find(r=>r.name==='Serendia Meal');context.selectedRecipe=wine;context.lastCraftAmount=100;context.craftStudioRender(wine,100);
-assert(nodes.get('craftDetail').innerHTML.includes('From ingredient to finished product'));assert(!nodes.get('craftDetail').controls.find(n=>n.dataset.section==='single-recipe').open);
+assert(nodes.get('craftDetail').innerHTML.includes('From ingredient to finished product'));
+// Essential information stays visible; navigation never needs a disclosure menu.
+let deskHTML=nodes.get('craftDetail').innerHTML;
+for(const id of ['craftWorkbench','craftIngredients','craftWeight','craftCharacter','craftEconomy','craftOutputs','craftAnalysis','craftProduction'])assert(deskHTML.includes('id="'+id+'"'),id);
+for(const key of ['single-recipe','materials','character','economy','outputs','analysis','shopping','workshop'])assert(!new RegExp('<details[^>]*data-section="'+key+'"').test(deskHTML),key);
+assert(deskHTML.indexOf('EXPECTED NET PROFIT')<deskHTML.indexOf('id="craftIngredients"'));
+assert(deskHTML.indexOf('id="craftIngredients"')<deskHTML.indexOf('id="craftWeight"'));
+assert(deskHTML.indexOf('id="craftWeight"')<deskHTML.indexOf('id="productionRoadmap"'));
+assert.equal(context.craftRoadState.wide,false,'recipe book remains visible by default');
+const jump=nodes.get('craftDetail').controls.find(n=>n.dataset.craftJump==='craftIngredients');
+let navigated=false;nodes.get('craftIngredients').scrollIntoView=()=>navigated=true;
+const savedBeforeJump=JSON.stringify(context.craftStudioState);jump.onclick();assert(navigated);assert.equal(jump['aria-current'],'true');assert.equal(JSON.stringify(context.craftStudioState),savedBeforeJump);
+const nested=context.craftStudioDeskMarkup('<details data-section="materials"><summary>Ingredients</summary><details><summary>Optional</summary>x</details></details>');
+assert.equal(nested,'<section data-section="materials" id="craftIngredients" tabindex="-1"><h4 class="craft-desk-heading">Ingredients</h4><details><summary>Optional</summary>x</details></section>');
+
 const routeState=JSON.stringify([context.craftStudioState.make,context.craftStudioState.choices,context.craftStudioState.inventory]);
 assert(nodes.get('roadGoal').innerHTML.includes(serendia.id));assert(!nodes.get('roadGoal').innerHTML.includes('value="'+meal.id+'"'));
 nodes.get('roadGoal').onchange({target:{value:serendia.id}});assert.equal(context.craftRoadLive.goal.id,serendia.id);assert(nodes.get('productionRoadmap').innerHTML.includes('Production timeline'));
