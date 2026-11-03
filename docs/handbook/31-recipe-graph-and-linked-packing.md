@@ -43,6 +43,15 @@ uses the same entered current/max/reserve LT; deposit/update between stages.
 Independent max loads are not a balanced quantity plan for the entire chain.
 Use the Production workshop's required stage batches for that plan.
 
+**Full chain overview** is an optional alternative to the focused view. It renders
+every bounded recipe packing card beside an expandable dependency tree, with a
+four-part cost/net/time summary. Below 1,000 px, the tree moves below the cards.
+The tree/totals are a view-only full-make preview for the final target and current
+owned stock. They do not change the selected Make/Buy map or adopt all the packing
+maxima as one production plan. **Plan entire chain** explicitly adopts Make.
+The preview is computed only while overview is open; no background work is added.
+Generate its independent Balenos Meal example with `build_crafting_demo.py --overview`.
+
 ## Linked quantities
 
 `ingredientRatio(recipe, itemId, quantity, context)` resolves substitutions,

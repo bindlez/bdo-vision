@@ -3,7 +3,8 @@ var recipeSearch='',recipeMethod='',recipeFavoriteOnly=false,recipePage=0;
 var recipeSort='name',recipeMinProfit='',recipeVolume='',recipeMarketBusy=false;
 var recipeSearchIndex=null;
 function renderRecipeList(){
- craftImperialRender();
+ if(typeof craftWorkflowInit==='function')craftWorkflowInit();
+ if(!document.getElementById('craftWorkflows')||craftWorkflow==='imperial')craftImperialRender();
  var host=document.getElementById('recipeList'),esc=visionEscape;
  if(!recipeSearchIndex)recipeSearchIndex=new Map(RECIPES.map(r=>[r.id,VisionCraft.key(r.name+' '+r.mats.map(m=>m.name+' '+(m.groupId?(VISION_CRAFT_DATA.groups[m.groupId]||[]).map(o=>VISION_CRAFT_DATA.items[o.itemId].name).join(' '):'')).join(' '))]));
  var filter=VisionCraft.key(recipeSearch),all=RECIPES.filter(r=>r.type===recipeTab&&(!recipeMethod||r.method===recipeMethod)&&(!recipeFavoriteOnly||craftStudioState.favorites.includes(r.id))&&(!filter||recipeSearchIndex.get(r.id).includes(filter))),scores=new Map(),carryScores=new Map();

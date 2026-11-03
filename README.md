@@ -1,4 +1,9 @@
-# BDO Vision · current test candidate 1.13.0-rc.24
+# BDO Vision · current test candidate 1.13.0-rc.25
+
+The separate **Chain simulator** starts from any upstream ingredient or ready-made
+intermediate, using its own stock. Compare companion purchases versus stock-only
+production, inspect every stage and export the scenario. Crafting now separates
+Recipe planner, Chain simulator, Imperial turn-ins, and Timers & completions.
 
 The complete **Production line** is visible above the economics: each step shows
 what it feeds and how much fits. Edit any ingredient in a packing card to snap the

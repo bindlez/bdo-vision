@@ -1,3 +1,18 @@
+# 1.13.0-rc.25 - Isolated starting-stock simulator and Crafting workspaces
+
+- Added a separate whole-chain simulator: choose a final product and any upstream
+  raw material or intermediate as the starting stock. Buy missing companions or
+  require entered stock only, with shared branch allocation and fixed source supply.
+- Show stages, expected final/side outputs, purchases, leftovers, one-more-craft
+  limits, lazy time/cost graphs and labeled scenario export. Unknown prices remain
+  unvalued; current packing, queues, inventory and timers are never edited.
+- Separated Recipe planner, Chain simulator, Imperial turn-ins and Timers into
+  focused workspaces, preserving the timer engine and exposing its active count.
+- Added an optional large-chain card grid with expandable ingredient sidebar and
+  full-make economics/time summary; it does not change the current planning route.
+- No new OCR, runtime dependency or background polling. Added isolated-state and
+  real shipped-UI regression coverage plus a standalone simulator preview.
+
 # 1.13.0-rc.24 - Connected production line and linked packing
 
 - Put the complete selected recipe chain above economics, with preparation-order

@@ -8,13 +8,14 @@ class Element{
  get innerHTML(){return this.html||'';}
  querySelectorAll(selector){if(selector==='details[open]')return this.controls.filter(n=>n.dataset.section&&n.open);if(selector==='details')return this.controls.filter(n=>n.dataset.section);const attr=selector.match(/^\[data-([\w-]+)\]$/);if(attr){const k=attr[1].replace(/-([a-z])/g,(_,c)=>c.toUpperCase());return this.controls.filter(n=>Object.hasOwn(n.dataset,k));}return [];}
  insertBefore(){}querySelector(){return null;}focus(){}setSelectionRange(){}matches(){return false;}
+ setAttribute(k,v){this[k]=v;}removeAttribute(k){delete this[k];}
 }
 for(const id of ['craftDetail','recipeList'])nodes.set(id,new Element());
 const recipes=JSON.parse(fs.readFileSync('desktop/assets/recipes.json','utf8')),spec=JSON.parse(fs.readFileSync('desktop/assets/crafting-data.json','utf8')),snapshot=JSON.parse(fs.readFileSync('desktop/assets/demo-market-snapshot.json','utf8'));
 let started=null,download=null;const context={console,Map,Set,URL,AbortSignal,structuredClone,RECIPES:recipes,VISION_CRAFT_DATA:spec,region:'na',recipeTab:'alchemy',lastCraftAmount:100,selectedRecipe:recipes.find(r=>r.itemId===678),location:{protocol:'file:',hostname:''},bridgeSelectedOrigin:null,visionMarketById:{},visionMarketByName:{},visionMarketQuoteDetails:{},visionEscape:v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),visionName:n=>n.toLowerCase(),localStorage:{getItem:()=>null,setItem(){}},saveState(){},toast(){},fmtTime:n=>n.toFixed(1)+'s',setTimeout,clearTimeout,document:{getElementById:id=>nodes.get(id)||null,createElement:()=>new Element(),activeElement:new Element(),querySelectorAll:()=>[]},startCraft:(r,n,opts)=>{started={r,n,opts};},intelDownload:(...args)=>{download=args;},openModal(){},closeModal(){}};
 context.window=context;for(const q of snapshot.items){context.visionMarketById['na:'+q.id]=q.price;context.visionMarketQuoteDetails['na:'+q.id]=q;}
 vm.createContext(context);const html=fs.readFileSync('bdo-market-intelligence.html','utf8');
-for(const marker of ['CRAFTING_ENGINE_JS','CRAFTING_STUDIO_JS','RECIPE_BROWSER_JS']){const script=html.split('/* OWNED '+marker+' START */')[1]?.split('/* OWNED '+marker+' END */')[0];assert(script,marker);vm.runInContext(script,context);}
+for(const marker of ['CRAFTING_ENGINE_JS','CRAFTING_STUDIO_JS','CRAFTING_SIMULATOR_JS','RECIPE_BROWSER_JS']){const script=html.split('/* OWNED '+marker+' START */')[1]?.split('/* OWNED '+marker+' END */')[0];assert(script,marker);vm.runInContext(script,context);}
 nodes.set('imperialQuick',new Element());
 context.craftStudioRender(context.selectedRecipe,100);context.renderRecipeList();
 assert(nodes.get('imperialQuick').innerHTML.includes('BEST TO BUY & PACK'));
@@ -107,4 +108,32 @@ anchor=nodes.get('craftDetail').controls.find(n=>n.dataset.ratioRecipe===sung.id
 anchor=nodes.get('craftDetail').controls.find(n=>n.dataset.ratioRecipe===sung.id&&n.dataset.ratioItem==='9059');anchor.onblur();assert.equal(anchor.value,'999');
 anchor=nodes.get('craftDetail').controls.find(n=>n.dataset.ratioRecipe===sung.id&&n.dataset.ratioItem==='820831');anchor.value='140000';anchor.oninput();assert(nodes.get('craftDetail').innerHTML.includes('Does not fit'));
 started=null;nodes.get('craftDetail').controls.find(n=>n.dataset.startLoad===sung.id).onclick();assert.equal(started,null,'overweight load cannot start via a stale button');
+// Separate workspaces and starting-stock simulation exercise the shipped UI.
+for(const id of ['craftWorkflows','craftPlanningPanel','craftSimulatorPanel','craftImperialPanel','craftTimersPanel','craftHistoryPanel','craftRecordedPanel','chainSimulator','craftTimerCount'])nodes.set(id,new Element());
+nodes.get('craftWorkflows').innerHTML=['planner','simulator','imperial','timers'].map(mode=>'<button data-craft-workspace="'+mode+'"></button>').join('');
+const scenarioWrites=[];context.localStorage.setItem=(key,value)=>scenarioWrites.push(key);
+context.activeTimers=[{id:'preserved',status:'running',recipeId:sung.id}];
+const untouched=JSON.stringify([context.craftStudioState,context.lastCraftAmount,context.selectedRecipe,context.activeTimers]);
+context.craftSimulation={recipeId:sung.id,sourceId:820815,quantity:1000,stock:{}};context.craftWorkflowInit();
+nodes.get('craftWorkflows').controls.find(n=>n.dataset.craftWorkspace==='simulator').onclick();assert(!nodes.get('craftSimulatorPanel').hidden);assert(nodes.get('craftPlanningPanel').hidden);assert(nodes.get('craftImperialPanel').hidden);assert(nodes.get('craftTimersPanel').hidden);
+nodes.get('simulationRun').onclick();assert.equal(context.craftSimulationResult.batches,500);assert(nodes.get('chainSimulator').innerHTML.includes('Nurungji'));assert(nodes.get('chainSimulator').innerHTML.includes('Follow the whole production line'));
+assert(!nodes.get('simulationGraphBody').innerHTML);nodes.get('simulationGraphs').open=true;nodes.get('simulationGraphs').ontoggle();assert(nodes.get('simulationGraphBody').innerHTML.includes('role="img"'));
+nodes.get('simulationExport').onclick();assert(download[0].endsWith('production-simulation.txt'));assert(download[1].includes('ISOLATED PRODUCTION SIMULATION'));
+nodes.get('simulationQuantity').oninput({target:{value:'2000'}});assert.equal(context.craftSimulationResult,null);assert(nodes.get('simulationResults').innerHTML.includes('Scenario changed'));assert(nodes.get('simulationExport').disabled);
+nodes.get('simulationRun').onclick();assert.equal(context.craftSimulationResult.batches,1000);
+assert.equal(JSON.stringify([context.craftStudioState,context.lastCraftAmount,context.selectedRecipe,context.activeTimers]),untouched,'simulator must leave real planning/timer state unchanged');
+assert(scenarioWrites.every(key=>['vision.craft.simulator.v1','vision.craft.workspace.v1'].includes(key)),'simulator may write only its own state/workspace keys');
+nodes.get('craftWorkflows').controls.find(n=>n.dataset.craftWorkspace==='timers').onclick();assert(!nodes.get('craftTimersPanel').hidden);assert(!nodes.get('craftHistoryPanel').hidden);assert(nodes.get('craftSimulatorPanel').hidden);assert.equal(nodes.get('craftTimerCount').textContent,' (1)');
+nodes.get('craftWorkflows').controls.find(n=>n.dataset.craftWorkspace==='imperial').onclick();assert(!nodes.get('craftImperialPanel').hidden);assert(nodes.get('craftTimersPanel').hidden);assert(nodes.get('craftRecordedPanel').hidden);
+context.craftWorkflowSet('planner');assert(!nodes.get('craftPlanningPanel').hidden);assert(nodes.get('craftImperialPanel').hidden);delete context.activeTimers;
+
+// Optional all-card overview mirrors the large meal reference without changing routes.
+const meal=recipes.find(r=>r.name==='Balenos Meal');context.selectedRecipe=meal;context.lastCraftAmount=100000;context.craftStudioState.productionOverview=false;
+context.craftStudioRender(meal,100000);const makeBefore=JSON.stringify(context.craftStudioState.make),stockBefore=JSON.stringify(context.craftStudioState.inventory);
+assert.equal((nodes.get('craftDetail').innerHTML.match(/class="load-card"/g)||[]).length,1);
+nodes.get('lineOverview').onclick();const mealMap=context.VisionCraft.productionGraph(meal,context.craftStudioContext());
+assert.equal((nodes.get('craftDetail').innerHTML.match(/class="load-card"/g)||[]).length,mealMap.steps.length);assert(nodes.get('craftDetail').innerHTML.includes('Whole-chain ingredient tree'));assert(nodes.get('craftDetail').innerHTML.includes('Full make preview totals'));
+assert.equal(JSON.stringify(context.craftStudioState.make),makeBefore);assert.equal(JSON.stringify(context.craftStudioState.inventory),stockBefore);
+nodes.get('lineOverview').onclick();assert(!context.craftStudioState.productionOverview);assert.equal((nodes.get('craftDetail').innerHTML.match(/class="load-card"/g)||[]).length,1);
+
 console.log('Shipped Crafting UI: rendering, target conversion, queue, export, timer linkage, tax, favorites, processing search and escaping passed.');

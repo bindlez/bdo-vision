@@ -207,3 +207,14 @@ snapshots → shared economics → comparisons/graphs → optional rewards and o
 - [x] Linked ingredient totals, whole-craft leftovers and selected-load fit checks.
 - [x] One-click maximum packing, guarded selected-load timers, compact large chains.
 - [x] Exact Sungnyung chain, ratio, graph/cycle and actual shipped input regressions.
+
+## rc.25 - separate starting-stock simulation
+
+- [x] Isolated whole-chain simulation from raw or intermediate starting stock.
+- [x] Companion-buy/stock-only modes, single stock pool, leftovers and limits.
+- [x] Expected side-output totals, lazy graphs, quantity-first unpriced results/export.
+- [x] Separate Planner, Simulator, Imperial and Timers workspaces with timer count.
+- [x] No planner/inventory/queue/timer mutations; state-isolation regressions.
+- [x] Dedicated sample preview and linked developer documentation.
+- [x] Optional complete card grid, expandable dependency sidebar and full-make
+  cost/time summary matching the large-meal reference; focused mode preserved.

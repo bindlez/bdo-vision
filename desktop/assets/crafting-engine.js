@@ -78,7 +78,7 @@ function carry(recipe,options={},context={}){
 }
 // Catalog data stays normalized: edges hold IDs and per-craft ratios, not copies
 // of nested recipes. Build only the chosen variant/substitution route on demand.
-function productionGraph(recipe,context={}){
+function productionGraph(recipe,context={},options={}){
  const index=context.index||indexRecipes(context.recipes||[recipe]),nodes=new Map(),edges=new Map(),steps=[],visited=new Set(),warnings=new Set();
  const edge=(from,to,quantity,kind)=>{const k=from+'>'+to+':'+kind,old=edges.get(k);edges.set(k,{from,to,quantity:(old?.quantity||0)+quantity,kind});};
  const item=id=>'item:'+id;
@@ -90,7 +90,7 @@ function productionGraph(recipe,context={}){
   const trail=new Set([...path,r.id]);
   for(const m of resolved(r,context)){const id=item(m.itemId);nodes.set(id,{id,itemId:m.itemId,kind:'item'});edge(id,r.id,m.qty,'input');
    const variants=index.byItem.get(m.itemId)||[],sub=variants.find(v=>v.id===context.variants?.[m.itemId])||variants[0];
-   if(sub&&(sub.type!=='processing'||sub.method))visit(sub,trail,depth+1);
+   if(sub&&m.itemId!==Number(options.stopItemId)&&(sub.type!=='processing'||sub.method))visit(sub,trail,depth+1);
   }steps.push(r.id);
  }
  visit(recipe,new Set(),0);return {nodes:[...nodes.values()],edges:[...edges.values()],steps,warnings:[...warnings]};
@@ -101,6 +101,39 @@ function ingredientRatio(recipe,itemId,quantity,context={}){
  const rows=[...combined.values()],anchor=combined.get(Number(itemId));if(!anchor||!(anchor.qty>0))throw Error('Ingredient does not belong to this recipe');
  const batches=Math.floor(Number(quantity)/anchor.qty);if(batches<1||batches>1e9)throw Error('Quantity must cover at least one whole craft, up to one billion crafts');
  return {batches,entered:Number(quantity),used:batches*anchor.qty,leftover:Number(quantity)-batches*anchor.qty,rows:rows.map(m=>({...m,quantity:batches*m.qty}))};
+}
+// A separate what-if calculation. Never mutate planner inventory or route choices.
+function simulateProduction(recipe,options={},context={}){
+ if(/^imperial_/.test(recipe.method||''))throw Error('Use the separate Imperial turn-ins workspace for box delivery calculations');
+ if(recipe.type==='processing'&&!recipe.method)throw Error('This target has no verified production method');
+ const graph=productionGraph(recipe,context,{stopItemId:options.sourceId});if(graph.warnings.length)throw Error('Resolve the production map warnings before simulating: '+graph.warnings.join('; '));
+ const spec=context.spec||{},inputIds=new Set(graph.edges.filter(e=>e.kind==='input').map(e=>Number(e.from.slice(5)))),sourceId=Number(options.sourceId);
+ if(!inputIds.has(sourceId)||sourceId===recipe.itemId)throw Error('Choose a starting ingredient in this production line');
+ const whole=(v,label)=>{if(v===''||v==null||typeof v==='boolean'||!Number.isSafeInteger(Number(v))||Number(v)<0||Number(v)>1e12)throw Error('Enter a whole '+label+' between zero and one trillion');return Number(v);};
+ const quantity=whole(options.quantity,'starting quantity');if(!quantity)throw Error('Starting quantity must be positive');
+ const inventory={},names=new Map(),items=[];
+ for(const id of inputIds){const name=spec.items?.[id]?.name||context.recipes?.flatMap(r=>r.mats).find(m=>m.itemId===id)?.name;
+  if(!name)throw Error('Missing item identity for '+id);const k=key(name);if(names.has(k)&&names.get(k)!==id)throw Error('Ambiguous item names in this line; exact stock allocation is unavailable');names.set(k,id);
+  const amount=id===sourceId?quantity:whole(options.stock?.[id]??0,'stock quantity');inventory[k]=amount;items.push({itemId:id,name,quantity:amount});
+ }
+ const producedIds=new Set(graph.nodes.filter(n=>n.kind==='recipe').map(n=>n.recipe.itemId)),make={};
+ for(const row of items)make[key(row.name)]=producedIds.has(row.itemId)&&row.itemId!==sourceId;
+ const cfg={...(context.configFor?.(recipe)||{}),keepMain:true,keepRare:true,includeRare:true,includeExtras:false,includeByproduct:false},ctx={...context,inventory,make,sharedInventory:undefined,sharedProduced:undefined},cap=1e9;let evaluations=0;
+ function evaluate(batches){evaluations++;const p=plan(recipe,batches,cfg,ctx);
+  if(p.warnings.some(w=>/limit reached|Recipe cycle/.test(w)))throw Error('Production calculation reached a safety limit; choose a shorter route');
+  const forbidden=p.purchases.filter(m=>m.quantity>0&&(options.stockOnly===true||m.itemId===sourceId));return {p,feasible:forbidden.length===0,forbidden};
+ }
+ const first=evaluate(1);
+ if(!first.feasible)return {batches:0,plan:null,inputs:items,remaining:items,shortfalls:first.forbidden,quantity,sourceId,stockOnly:options.stockOnly===true,evaluations,capped:false};
+ let lo=1,hi=2;
+ while(hi<cap&&evaluate(hi).feasible){lo=hi;hi=Math.min(cap,hi*2);}
+ while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(evaluate(mid).feasible)lo=mid;else hi=mid-1;}
+ const p=evaluate(lo).p,next=lo<cap?evaluate(lo+1):null,sideOutputs=[];
+ for(const stage of p.steps){if(stage.recipeId===recipe.id)continue;const r=(context.recipes||[]).find(r=>r.id===stage.recipeId);if(!r)continue;const c=configure(r,context.configFor?.(r)||{},spec),by=spec.byproducts?.[r.type];
+  if(r.rare&&!c.useRareInputs&&c.rareYield>0)sideOutputs.push({itemId:r.rare.itemId,name:spec.items?.[r.rare.itemId]?.name||'Rare output',quantity:stage.batches*c.rareYield,kind:'Intermediate rare / kept'});
+  if(by&&c.byproductRate>0)sideOutputs.push({itemId:by.id,name:spec.items?.[by.id]?.name||'Byproduct',quantity:stage.batches*c.byproductRate,kind:'Intermediate byproduct / kept'});
+ }
+ return {batches:lo,plan:p,sideOutputs,inputs:items,remaining:items.map(m=>({...m,quantity:p.inventoryRemaining[key(m.name)]||0})),shortfalls:next?.forbidden||[],quantity,sourceId,stockOnly:options.stockOnly===true,evaluations,capped:lo===cap};
 }
 const consumerCache=new WeakMap();
 function consumers(recipes,spec){
@@ -183,6 +216,6 @@ function imperialRanks(recipes,spec,quote,options={}){
  }
  return result;
 }
-root.VisionCraft={productionGraph,ingredientRatio,carry,downstream,productionQueue,imperialRanks,projection,key,settings,configure,rates,bracket,resolved,indexRecipes,plan,queue,scenarios,tax,series};
+root.VisionCraft={simulateProduction,productionGraph,ingredientRatio,carry,downstream,productionQueue,imperialRanks,projection,key,settings,configure,rates,bracket,resolved,indexRecipes,plan,queue,scenarios,tax,series};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.VisionCraft;
 })(typeof globalThis!=='undefined'?globalThis:this);

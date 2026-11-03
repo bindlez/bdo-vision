@@ -383,6 +383,9 @@
 .production-line{border:1px solid #3c625f;border-top:3px solid #63d9cf;border-radius:10px;background:#131c21;padding:14px;margin:16px 0;scroll-margin-top:100px}.line-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.line-heading h4{margin:3px 0;color:#edf8f6;font-size:15px}.line-heading small{font-size:10px;color:#9edbd4}.line-heading button{width:auto;margin:0}.line-steps{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.line-step{display:grid;gap:5px;flex:1;min-width:145px;padding:10px;background:#1c202c;border:1px solid #50515e;border-radius:7px;text-align:left;color:#eae0f7;font:inherit;font-size:12px;cursor:pointer}.line-step small,.line-step span{font-size:10px;color:#b8c9cb}.line-step[aria-pressed=true]{border-color:#72d8cb;background:#203739}.line-weight-settings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.line-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}.load-card{padding:12px;background:#171824;border:1px solid #454452;border-radius:8px;min-width:0}.load-card table{width:100%;font-size:11px;border-collapse:collapse}.load-card th,.load-card td{padding:7px 5px;border-bottom:1px solid #373541;text-align:left}.load-card th{font-size:10px;color:#bdb2cb}.load-card input[data-ratio-item]{width:95px;max-width:100%;padding:7px;background:#0d111a;border:1px solid #6d6090;border-radius:5px;color:#fff;font:inherit;font-variant-numeric:tabular-nums}.load-card [aria-invalid=true]{outline:2px solid #f5b18a}.load-card .studio-actions{margin-top:8px;gap:7px}.load-card .studio-actions button{min-width:95px;font-size:11px;padding:8px}.load-capacity{font-size:12px;color:#a9e4db}.load-status{font-size:11px;margin:8px 0;line-height:1.6}.load-meter{width:100%;height:6px;accent-color:#63d9cf}.production-line .studio-muted{font-size:11px;line-height:1.55}.production-line [data-carry-bag]{max-width:100px}.production-line details{margin-top:12px;font-size:11px}.production-line [data-carry-bag]{background:#11101b;border:1px solid #665279;border-radius:5px;color:#fff;padding:6px}@media(max-width:520px){.line-weight-settings{grid-template-columns:1fr}.production-line{padding:10px}.line-step{min-width:120px}}
 
 .craft-layout:has(.production-line.is-wide){grid-template-columns:1fr}.craft-layout:has(.production-line.is-wide)>.card:first-child{display:none}.line-actions{display:flex;gap:8px;flex-wrap:wrap}.line-actions button{font-size:11px;padding:8px}
+.craft-layout:has(.production-line.is-overview){grid-template-columns:1fr}.craft-layout:has(.production-line.is-overview)>.card:first-child{display:none}.is-overview #lineWiden{display:none}.is-overview .line-overview-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,300px);gap:16px;align-items:start}.line-overview-tree{padding:12px;background:#100e18;border:1px solid #45364f;border-radius:8px;max-height:75vh;overflow:auto;position:sticky;top:100px;min-width:0;font-size:11px}.line-overview-tree h4{margin:0;color:#a7e8dd}.line-overview-tree .studio-dependency-tree ul{padding-left:8px}.line-overview-tree .studio-dependency-tree li{padding-left:7px;overflow-wrap:anywhere}.line-overview-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px;margin-top:14px;border:1px solid #4e3f5e;background:#191522;border-radius:8px}.line-overview-summary small,.line-overview-summary span{display:block;font-size:10px;color:#b6a9c6}.line-overview-summary b{display:block;font-size:16px;color:#8fe4cf;margin:7px 0;font-variant-numeric:tabular-nums}@media(max-width:1000px){.is-overview .line-overview-layout{grid-template-columns:1fr}.line-overview-tree{position:static;max-height:450px}.line-overview-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.craft-workflows{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;padding:8px;border:1px solid #42334e;border-radius:9px;background:#15101d}.craft-workflows button{flex:1;min-width:130px;border:1px solid transparent;border-radius:6px;background:transparent;color:#c9bad8;padding:10px;font:600 12px system-ui;cursor:pointer}.craft-workflows button[aria-pressed=true]{background:#3d2955;color:#fff;border-color:#ad8bd8}.craft-workflows button:focus-visible{outline:2px solid #73ded1;outline-offset:2px}#viewCraft>[hidden]{display:none!important}.simulation-stock{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:14px 0}#chainSimulator{max-width:1200px;margin:auto}#chainSimulator input,#chainSimulator select{max-width:100%}.simulation-stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;padding-left:20px}.simulation-stages li{padding:12px;border:1px solid #415b5b;background:#142226;border-radius:7px;font-size:12px}.simulation-stages span{display:block;color:#9ed6ce;margin:6px 0}#simulationResults table{border-collapse:collapse;width:100%;font-size:12px}#simulationResults th,#simulationResults td{padding:8px;border-bottom:1px solid #45374f;text-align:left}#chainSimulator details{margin:14px 0;font-size:12px}#chainSimulator summary{cursor:pointer;color:#d8c2ef}#chainSimulator .studio-warning{max-width:900px}
 /* OWNED CRAFTING_STUDIO_CSS END */
 
 /* VISION BIG DROPS CSS START */
@@ -526,7 +529,8 @@
               <p>Select a recipe or <strong>Durability Timer</strong>. Plan bulk crafts (1M batches), track costs &amp; progress. <span class="bridge-pill off" id="bridgePill">App offline</span></p>
             </div>
           </section>
-          <section class="card">
+          <nav id="craftWorkflows" class="craft-workflows" aria-label="Crafting workspaces"><button data-craft-workspace="planner" aria-pressed="true">Recipe planner</button><button data-craft-workspace="simulator" aria-pressed="false">Chain simulator</button><button data-craft-workspace="imperial" aria-pressed="false">Imperial turn-ins</button><button data-craft-workspace="timers" aria-pressed="false">Timers &amp; completions<span id="craftTimerCount"></span></button></nav>
+          <section class="card" id="craftTimersPanel" hidden>
             <div class="card-head">
               <h2>⏱ Active Timers</h2>
               <span class="meta" id="activeTimerMeta">None running</span>
@@ -535,14 +539,15 @@
               <p style="color:var(--text-dim);font-size:0.85rem;">No active crafts. Start one from the plan panel.</p>
             </div>
           </section>
-          <section class="card vision-summary" id="visionCraftingLoot" hidden>
+          <div id="craftRecordedPanel"><section class="card vision-summary" id="visionCraftingLoot" hidden>
             <div class="card-head"><h2>Saved loot from Vision</h2><span class="meta" id="visionLootState">Optional sharing</span></div>
             <div class="card-body"><div class="vision-summary-grid"><div><span class="vision-eyebrow">ALL RECORDED ITEM VALUE</span><h3 id="visionLootSilver"></h3></div><p id="visionLootCounts"></p></div>
             <p class="meta" id="visionLootCoverage"></p><details class="vision-records"><summary>Inspect recorded items & market matches</summary><div class="vision-records-scroll"><table><thead><tr><th>Recorded item</th><th>Quantity</th><th>Unit silver</th><th>Total silver</th><th>Group</th></tr></thead><tbody id="visionLootItems"></tbody></table></div></details>
             <p class="vision-footnote">Your saved history stays here across days. Active timers measure only new drops after they attach. Recorded totals never include inferred loot. Optional crafting forecasts appear separately on active recipe timers.</p></div>
           </section>
-          <section class="card"><div class="card-head"><h2>Imperial · what makes the most silver?</h2><span class="meta">Buy or craft · profit per box</span></div><div class="card-body" id="imperialQuick"></div></section>
-          <div class="craft-layout">
+          </div><section class="card" id="craftImperialPanel" hidden><div class="card-head"><h2>Imperial · what makes the most silver?</h2><span class="meta">Buy or craft · profit per box</span></div><div class="card-body" id="imperialQuick"></div></section>
+          <section class="card" id="craftSimulatorPanel" hidden><div class="card-body" id="chainSimulator"></div></section>
+          <div class="craft-layout" id="craftPlanningPanel">
             <section class="card">
               <div class="card-head"><h2>Recipes</h2><span class="meta" id="recipeCountMeta">Full recipe book</span></div>
               <div class="card-body"><div class="recipe-list" id="recipeList"></div></div>
@@ -557,7 +562,7 @@
             </section>
           </div>
 
-          <section class="card">
+          <section class="card" id="craftHistoryPanel" hidden>
             <div class="card-head"><h2>📜 Recent Completions</h2></div>
             <div class="card-body" id="historyBody">
               <p style="color:var(--text-dim);font-size:0.85rem;">Completed crafts will appear here.</p>
@@ -1221,6 +1226,7 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
     }
 
     function renderActiveTimers() {
+      if(typeof craftWorkflowBadge==='function')craftWorkflowBadge();
       var body = document.getElementById("activeTimersBody");
       var meta = document.getElementById("activeTimerMeta");
       var running = activeTimers.filter(function(t) { return t.status === "running"; }).length;
@@ -1294,7 +1300,8 @@ var recipeSearch='',recipeMethod='',recipeFavoriteOnly=false,recipePage=0;
 var recipeSort='name',recipeMinProfit='',recipeVolume='',recipeMarketBusy=false;
 var recipeSearchIndex=null;
 function renderRecipeList(){
- craftImperialRender();
+ if(typeof craftWorkflowInit==='function')craftWorkflowInit();
+ if(!document.getElementById('craftWorkflows')||craftWorkflow==='imperial')craftImperialRender();
  var host=document.getElementById('recipeList'),esc=visionEscape;
  if(!recipeSearchIndex)recipeSearchIndex=new Map(RECIPES.map(r=>[r.id,VisionCraft.key(r.name+' '+r.mats.map(m=>m.name+' '+(m.groupId?(VISION_CRAFT_DATA.groups[m.groupId]||[]).map(o=>VISION_CRAFT_DATA.items[o.itemId].name).join(' '):'')).join(' '))]));
  var filter=VisionCraft.key(recipeSearch),all=RECIPES.filter(r=>r.type===recipeTab&&(!recipeMethod||r.method===recipeMethod)&&(!recipeFavoriteOnly||craftStudioState.favorites.includes(r.id))&&(!filter||recipeSearchIndex.get(r.id).includes(filter))),scores=new Map(),carryScores=new Map();
@@ -2191,7 +2198,7 @@ function carry(recipe,options={},context={}){
 }
 // Catalog data stays normalized: edges hold IDs and per-craft ratios, not copies
 // of nested recipes. Build only the chosen variant/substitution route on demand.
-function productionGraph(recipe,context={}){
+function productionGraph(recipe,context={},options={}){
  const index=context.index||indexRecipes(context.recipes||[recipe]),nodes=new Map(),edges=new Map(),steps=[],visited=new Set(),warnings=new Set();
  const edge=(from,to,quantity,kind)=>{const k=from+'>'+to+':'+kind,old=edges.get(k);edges.set(k,{from,to,quantity:(old?.quantity||0)+quantity,kind});};
  const item=id=>'item:'+id;
@@ -2203,7 +2210,7 @@ function productionGraph(recipe,context={}){
   const trail=new Set([...path,r.id]);
   for(const m of resolved(r,context)){const id=item(m.itemId);nodes.set(id,{id,itemId:m.itemId,kind:'item'});edge(id,r.id,m.qty,'input');
    const variants=index.byItem.get(m.itemId)||[],sub=variants.find(v=>v.id===context.variants?.[m.itemId])||variants[0];
-   if(sub&&(sub.type!=='processing'||sub.method))visit(sub,trail,depth+1);
+   if(sub&&m.itemId!==Number(options.stopItemId)&&(sub.type!=='processing'||sub.method))visit(sub,trail,depth+1);
   }steps.push(r.id);
  }
  visit(recipe,new Set(),0);return {nodes:[...nodes.values()],edges:[...edges.values()],steps,warnings:[...warnings]};
@@ -2214,6 +2221,39 @@ function ingredientRatio(recipe,itemId,quantity,context={}){
  const rows=[...combined.values()],anchor=combined.get(Number(itemId));if(!anchor||!(anchor.qty>0))throw Error('Ingredient does not belong to this recipe');
  const batches=Math.floor(Number(quantity)/anchor.qty);if(batches<1||batches>1e9)throw Error('Quantity must cover at least one whole craft, up to one billion crafts');
  return {batches,entered:Number(quantity),used:batches*anchor.qty,leftover:Number(quantity)-batches*anchor.qty,rows:rows.map(m=>({...m,quantity:batches*m.qty}))};
+}
+// A separate what-if calculation. Never mutate planner inventory or route choices.
+function simulateProduction(recipe,options={},context={}){
+ if(/^imperial_/.test(recipe.method||''))throw Error('Use the separate Imperial turn-ins workspace for box delivery calculations');
+ if(recipe.type==='processing'&&!recipe.method)throw Error('This target has no verified production method');
+ const graph=productionGraph(recipe,context,{stopItemId:options.sourceId});if(graph.warnings.length)throw Error('Resolve the production map warnings before simulating: '+graph.warnings.join('; '));
+ const spec=context.spec||{},inputIds=new Set(graph.edges.filter(e=>e.kind==='input').map(e=>Number(e.from.slice(5)))),sourceId=Number(options.sourceId);
+ if(!inputIds.has(sourceId)||sourceId===recipe.itemId)throw Error('Choose a starting ingredient in this production line');
+ const whole=(v,label)=>{if(v===''||v==null||typeof v==='boolean'||!Number.isSafeInteger(Number(v))||Number(v)<0||Number(v)>1e12)throw Error('Enter a whole '+label+' between zero and one trillion');return Number(v);};
+ const quantity=whole(options.quantity,'starting quantity');if(!quantity)throw Error('Starting quantity must be positive');
+ const inventory={},names=new Map(),items=[];
+ for(const id of inputIds){const name=spec.items?.[id]?.name||context.recipes?.flatMap(r=>r.mats).find(m=>m.itemId===id)?.name;
+  if(!name)throw Error('Missing item identity for '+id);const k=key(name);if(names.has(k)&&names.get(k)!==id)throw Error('Ambiguous item names in this line; exact stock allocation is unavailable');names.set(k,id);
+  const amount=id===sourceId?quantity:whole(options.stock?.[id]??0,'stock quantity');inventory[k]=amount;items.push({itemId:id,name,quantity:amount});
+ }
+ const producedIds=new Set(graph.nodes.filter(n=>n.kind==='recipe').map(n=>n.recipe.itemId)),make={};
+ for(const row of items)make[key(row.name)]=producedIds.has(row.itemId)&&row.itemId!==sourceId;
+ const cfg={...(context.configFor?.(recipe)||{}),keepMain:true,keepRare:true,includeRare:true,includeExtras:false,includeByproduct:false},ctx={...context,inventory,make,sharedInventory:undefined,sharedProduced:undefined},cap=1e9;let evaluations=0;
+ function evaluate(batches){evaluations++;const p=plan(recipe,batches,cfg,ctx);
+  if(p.warnings.some(w=>/limit reached|Recipe cycle/.test(w)))throw Error('Production calculation reached a safety limit; choose a shorter route');
+  const forbidden=p.purchases.filter(m=>m.quantity>0&&(options.stockOnly===true||m.itemId===sourceId));return {p,feasible:forbidden.length===0,forbidden};
+ }
+ const first=evaluate(1);
+ if(!first.feasible)return {batches:0,plan:null,inputs:items,remaining:items,shortfalls:first.forbidden,quantity,sourceId,stockOnly:options.stockOnly===true,evaluations,capped:false};
+ let lo=1,hi=2;
+ while(hi<cap&&evaluate(hi).feasible){lo=hi;hi=Math.min(cap,hi*2);}
+ while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(evaluate(mid).feasible)lo=mid;else hi=mid-1;}
+ const p=evaluate(lo).p,next=lo<cap?evaluate(lo+1):null,sideOutputs=[];
+ for(const stage of p.steps){if(stage.recipeId===recipe.id)continue;const r=(context.recipes||[]).find(r=>r.id===stage.recipeId);if(!r)continue;const c=configure(r,context.configFor?.(r)||{},spec),by=spec.byproducts?.[r.type];
+  if(r.rare&&!c.useRareInputs&&c.rareYield>0)sideOutputs.push({itemId:r.rare.itemId,name:spec.items?.[r.rare.itemId]?.name||'Rare output',quantity:stage.batches*c.rareYield,kind:'Intermediate rare / kept'});
+  if(by&&c.byproductRate>0)sideOutputs.push({itemId:by.id,name:spec.items?.[by.id]?.name||'Byproduct',quantity:stage.batches*c.byproductRate,kind:'Intermediate byproduct / kept'});
+ }
+ return {batches:lo,plan:p,sideOutputs,inputs:items,remaining:items.map(m=>({...m,quantity:p.inventoryRemaining[key(m.name)]||0})),shortfalls:next?.forbidden||[],quantity,sourceId,stockOnly:options.stockOnly===true,evaluations,capped:lo===cap};
 }
 const consumerCache=new WeakMap();
 function consumers(recipes,spec){
@@ -2296,7 +2336,7 @@ function imperialRanks(recipes,spec,quote,options={}){
  }
  return result;
 }
-root.VisionCraft={productionGraph,ingredientRatio,carry,downstream,productionQueue,imperialRanks,projection,key,settings,configure,rates,bracket,resolved,indexRecipes,plan,queue,scenarios,tax,series};
+root.VisionCraft={simulateProduction,productionGraph,ingredientRatio,carry,downstream,productionQueue,imperialRanks,projection,key,settings,configure,rates,bracket,resolved,indexRecipes,plan,queue,scenarios,tax,series};
 if(typeof module!=='undefined'&&module.exports)module.exports=root.VisionCraft;
 })(typeof globalThis!=='undefined'?globalThis:this);
 /* OWNED CRAFTING_ENGINE_JS END */
@@ -2334,7 +2374,7 @@ function craftImperialRender(){
  var expand=document.getElementById('imperialExpand');if(expand)expand.onclick=()=>{imperialSettings.expanded=!imperialSettings.expanded;craftImperialRender();};
  document.getElementById('imperialMastery').onchange=e=>{imperialSettings.mastery[type]=Math.max(0,Math.min(3000,Number(e.target.value)||0));craftStudioState.characters[type]={...craftStudioState.characters[type],mastery:imperialSettings.mastery[type]};craftStudioSave();craftImperialRender();};
  document.getElementById('imperialRefresh').onclick=async()=>{var label=document.getElementById('imperialStatus');if(label)label.textContent='Refreshing market prices…';await craftStudioLoadMarket();craftImperialRender();var status=document.getElementById('recipeMarketStatus');label=document.getElementById('imperialStatus');if(label)label.textContent=status?.textContent||'Refresh finished. Review available quotes.';};
- host.querySelectorAll('[data-imperial-plan]').forEach(b=>b.onclick=()=>{lastCraftAmount=Number(b.dataset.imperialAmount);selectRecipe(b.dataset.imperialPlan);document.getElementById('craftDetail')?.scrollIntoView?.({behavior:'smooth',block:'start'});});
+ host.querySelectorAll('[data-imperial-plan]').forEach(b=>b.onclick=()=>{if(typeof craftWorkflowSet==='function')craftWorkflowSet('planner');lastCraftAmount=Number(b.dataset.imperialAmount);selectRecipe(b.dataset.imperialPlan);document.getElementById('craftDetail')?.scrollIntoView?.({behavior:'smooth',block:'start'});});
 }
 function craftImperialAnalysis(ranks,recommendations){
  var esc=visionEscape,money=craftStudioMoney;
@@ -2498,8 +2538,19 @@ function craftStudioLinePanel(recipe,plan,settings,rootLoad,error){
  var active=craftStudioState.lineStage?.[recipe.id];if(!recipes.has(active))active=graph.steps[0];
  var loads=new Map();for(var id of graph.steps){try{loads.set(id,VisionCraft.carry(recipes.get(id),settings,ctx));}catch(e){loads.set(id,{available:false,error:e.message});}}
  var field=(key,label,value)=>'<label class="studio-field">'+label+'<input data-carry="'+key+'" type="number" min="0" step="'+(['tool','roundTo'].includes(key)?'1':'.01')+'" value="'+esc(value)+'"></label>';
- var valid=rootLoad?.available,shown=graph.steps.length<=4?graph.steps:[active];
- return '<section class="production-line'+(craftStudioState.productionWide?' is-wide':'')+'" aria-label="Full production line"><div class="line-heading"><div><small>PLAN / PACK / COOK</small><h4>Your production line</h4></div><div class="line-actions"><button id="lineWiden" class="btn-secondary">'+(craftStudioState.productionWide?'Show recipe list':'Expand planner')+'</button><button id="lineMakeAll" class="btn-secondary">Plan entire chain</button></div></div><p class="studio-muted">Every selected subrecipe, in preparation order. Each step says what it feeds; separate branches do not consume one another. '+(graph.steps.length>4?'Choose a step to see its packing card.':'')+'</p><div class="line-steps" role="group" aria-label="Production stages">'+graph.steps.map((id,i)=>{var r=recipes.get(id),load=loads.get(id),feeds=graph.edges.filter(e=>e.kind==='input'&&e.from==='item:'+r.itemId).map(e=>recipes.get(e.to)?.name).filter(Boolean);return '<button class="line-step" data-line-stage="'+esc(id)+'" aria-pressed="'+(id===active)+'"><small>STEP '+(i+1)+(id===recipe.id?' / FINAL':'')+'</small><b>'+esc(r.name)+'</b><span>'+(load?.available?load.batches.toLocaleString()+' crafts max / load':'Enter character LT')+'</span><small>'+(feeds.length?'Feeds '+esc(feeds.join(', ')):'Final planned product')+'</small></button>';}).join('')+'</div>'+graph.warnings.map(w=>'<p class="studio-warning">'+esc(w)+'</p>').join('')+'<div class="line-weight-settings">'+field('maximum','Character maximum LT',settings.maximum)+field('current','Current total carried LT',settings.current)+field('reserve','Keep free LT',settings.reserve)+'</div><p class="studio-muted">Output allowance: '+esc({expected:'Expected outputs',ingredients:'Ingredients only / outputs may stop you sooner',maxOutput:'Normal + rare maximum procs'}[settings.mode])+'; times use saved mastery/speed. Entered weight, not OCR. Current LT includes everything already carried. Pack amounts below are totals; Grab subtracts only ingredients you mark as already in your bag.</p><div class="line-cards">'+shown.map(id=>craftStudioLoadCard(recipes.get(id),id===recipe.id?plan.count:null,settings,loads.get(id))).join('')+'</div><div class="studio-actions"><button id="carryApply" class="btn-primary" '+(!valid||rootLoad.batches<1||rootLoad.unbounded?'disabled':'')+'>Use max '+esc(recipe.name)+' load</button><button id="carryRank" class="btn-secondary">Rank '+esc(recipe.type)+' by longest load</button><button id="carryExport" class="btn-secondary" '+(!valid?'disabled':'')+'>Export max packing list</button></div><details data-section="carry-settings"><summary>Weight model, limits & graphs</summary><div class="studio-fields">'+field('tool','Remaining tool uses / blank = no cap',settings.tool)+field('roundTo','Round max batches down to multiples of',settings.roundTo)+'<label class="studio-field">Output allowance<select data-carry="mode">'+[['expected','Expected outputs'],['ingredients','Ingredients fit only'],['maxOutput','Normal + rare maximum procs']].map(([v,l])=>'<option value="'+v+'" '+(settings.mode===v?'selected':'')+'>'+l+'</option>').join('')+'</select></label></div>'+(valid?craftStudioGraph(rootLoad.samples.map(s=>[s.batches,s.peak]),'Modeled peak carried LT against batches')+craftStudioPie(rootLoad.rows.map(m=>({label:m.name,value:m.grabWeight})),'Max-load ingredient weight','LT'):'<p class="studio-warning">'+esc(error||'Weight data unavailable')+'</p>')+'<p class="studio-muted">Each packing card is an independent load with the same entered current LT. Deposit/update between stages. Initial LT = current LT + extra ingredients. Modeled final LT also subtracts consumed inputs and adds outputs. Ingredients-only mode ignores accumulating output. Neither expected nor normal/rare maximum mode guarantees all random alchemy extras; keep a reserve and verify slots and game weights. Times use saved mastery/speed, excluding bank trips. No automatic withdrawals or new OCR.</p></details></section>';
+ var overview=craftStudioState.productionOverview===true,valid=rootLoad?.available,shown=overview||graph.steps.length<=4?graph.steps:[active],preview=overview?craftStudioOverviewPlan(recipe,plan,graph):null;
+ return '<section class="production-line'+(craftStudioState.productionWide?' is-wide':'')+(overview?' is-overview':'')+'" aria-label="Full production line"><div class="line-heading"><div><small>PLAN / PACK / COOK</small><h4>Your production line</h4></div><div class="line-actions"><button id="lineWiden" class="btn-secondary">'+(craftStudioState.productionWide?'Show recipe list':'Expand planner')+'</button><button id="lineOverview" class="btn-secondary">'+(overview?'Focused packing':'Full chain overview')+'</button><button id="lineMakeAll" class="btn-secondary">Plan entire chain</button></div></div><p class="studio-muted">Every selected subrecipe, in preparation order. Each step says what it feeds; separate branches do not consume one another. '+(graph.steps.length>4&&!overview?'Choose a step to see its packing card.':'')+'</p><div class="line-steps" role="group" aria-label="Production stages">'+graph.steps.map((id,i)=>{var r=recipes.get(id),load=loads.get(id),feeds=graph.edges.filter(e=>e.kind==='input'&&e.from==='item:'+r.itemId).map(e=>recipes.get(e.to)?.name).filter(Boolean);return '<button class="line-step" data-line-stage="'+esc(id)+'" aria-pressed="'+(id===active)+'"><small>STEP '+(i+1)+(id===recipe.id?' / FINAL':'')+'</small><b>'+esc(r.name)+'</b><span>'+(load?.available?load.batches.toLocaleString()+' crafts max / load':'Enter character LT')+'</span><small>'+(feeds.length?'Feeds '+esc(feeds.join(', ')):'Final planned product')+'</small></button>';}).join('')+'</div>'+graph.warnings.map(w=>'<p class="studio-warning">'+esc(w)+'</p>').join('')+'<div class="line-weight-settings">'+field('maximum','Character maximum LT',settings.maximum)+field('current','Current total carried LT',settings.current)+field('reserve','Keep free LT',settings.reserve)+'</div><p class="studio-muted">Output allowance: '+esc({expected:'Expected outputs',ingredients:'Ingredients only / outputs may stop you sooner',maxOutput:'Normal + rare maximum procs'}[settings.mode])+'; times use saved mastery/speed. Entered weight, not OCR. Current LT includes everything already carried. Pack amounts below are totals; Grab subtracts only ingredients you mark as already in your bag.</p><div class="line-overview-layout"><div class="line-cards">'+shown.map(id=>craftStudioLoadCard(recipes.get(id),id===recipe.id?plan.count:null,settings,loads.get(id))).join('')+'</div>'+(overview?craftStudioOverviewSidebar(preview):'')+'</div>'+(overview?craftStudioOverviewSummary(preview):'')+'<div class="studio-actions"><button id="carryApply" class="btn-primary" '+(!valid||rootLoad.batches<1||rootLoad.unbounded?'disabled':'')+'>Use max '+esc(recipe.name)+' load</button><button id="carryRank" class="btn-secondary">Rank '+esc(recipe.type)+' by longest load</button><button id="carryExport" class="btn-secondary" '+(!valid?'disabled':'')+'>Export max packing list</button></div><details data-section="carry-settings"><summary>Weight model, limits & graphs</summary><div class="studio-fields">'+field('tool','Remaining tool uses / blank = no cap',settings.tool)+field('roundTo','Round max batches down to multiples of',settings.roundTo)+'<label class="studio-field">Output allowance<select data-carry="mode">'+[['expected','Expected outputs'],['ingredients','Ingredients fit only'],['maxOutput','Normal + rare maximum procs']].map(([v,l])=>'<option value="'+v+'" '+(settings.mode===v?'selected':'')+'>'+l+'</option>').join('')+'</select></label></div>'+(valid?craftStudioGraph(rootLoad.samples.map(s=>[s.batches,s.peak]),'Modeled peak carried LT against batches')+craftStudioPie(rootLoad.rows.map(m=>({label:m.name,value:m.grabWeight})),'Max-load ingredient weight','LT'):'<p class="studio-warning">'+esc(error||'Weight data unavailable')+'</p>')+'<p class="studio-muted">Each packing card is an independent load with the same entered current LT. Deposit/update between stages. Initial LT = current LT + extra ingredients. Modeled final LT also subtracts consumed inputs and adds outputs. Ingredients-only mode ignores accumulating output. Neither expected nor normal/rare maximum mode guarantees all random alchemy extras; keep a reserve and verify slots and game weights. Times use saved mastery/speed, excluding bank trips. No automatic withdrawals or new OCR.</p></details></section>';
+}
+function craftStudioOverviewPlan(recipe,plan,graph){
+ var ctx=craftStudioContext(),made=new Set(graph.nodes.filter(n=>n.kind==='recipe').map(n=>n.recipe.itemId)),make={};
+ for(var id of made){var name=VISION_CRAFT_DATA.items[id]?.name;if(name)make[VisionCraft.key(name)]=true;}
+ return VisionCraft.plan(recipe,plan.count,craftStudioConfig(recipe),{...ctx,make});
+}
+function craftStudioOverviewSidebar(preview){
+ return '<aside class="line-overview-tree"><h4>Whole-chain ingredient tree</h4><p class="studio-muted">Full make preview for '+preview.count.toLocaleString()+' final crafts, using entered owned stock and saved yields/substitutions. Expand or collapse branches. Viewing this does not change your selected make/buy route.</p>'+craftStudioTree(preview)+preview.warnings.map(w=>'<p class="studio-warning">'+visionEscape(w)+'</p>').join('')+'</aside>';
+}
+function craftStudioOverviewSummary(preview){
+ return '<section class="line-overview-summary" aria-label="Full make preview totals"><div><small>ECONOMIC INPUT VALUE</small><b>'+craftStudioMoney(preview.cost)+'</b><span>Cash needed '+craftStudioMoney(preview.cash)+'</span></div><div><small>EXPECTED NET / FULL MAKE</small><b>'+craftStudioMoney(preview.profit)+'</b><span>Saved sale deductions and keep settings</span></div><div><small>EXPECTED NET / HOUR</small><b>'+craftStudioMoney(preview.perHour)+'</b><span>Production time only</span></div><div><small>ALL-STAGE TIME</small><b>'+fmtTime(preview.seconds)+'</b><span>View-only forecast, not a running timer</span></div></section><p class="studio-muted">Packing cards are independent loads. The tree and totals describe the final production target, not the sum of those max loads. Use Plan entire chain to adopt the full make route.</p>';
 }
 function craftStudioLoadCard(recipe,rootBatches,settings,capacity){
  var esc=visionEscape,ctx=craftStudioContext(),saved=rootBatches??craftStudioState.loadAmounts?.[recipe.id],batches=Number.isFinite(Number(saved))&&Number(saved)>=1&&Number(saved)<=1e9?Math.floor(Number(saved)):(capacity?.available&&capacity.batches>0?capacity.batches:100),load,error='',rows;
@@ -2519,6 +2570,7 @@ function craftStudioLogistics(recipe,p){
 }
 function craftStudioBindLogistics(recipe,p,redraw){
  var el=document.getElementById('craftDetail');el.querySelectorAll('[data-carry]').forEach(input=>input.onchange=()=>{craftStudioState.carry={...craftStudioCarrySettings(),[input.dataset.carry]:input.value,at:Date.now()};redraw();if(typeof recipeSort==='string'&&recipeSort.startsWith('carry'))renderRecipeList();});
+ document.getElementById('lineOverview').onclick=()=>{craftStudioState.productionOverview=!craftStudioState.productionOverview;redraw();};
  document.getElementById('lineWiden').onclick=()=>{craftStudioState.productionWide=!craftStudioState.productionWide;redraw();};
  document.getElementById('lineMakeAll').onclick=()=>{craftStudioChainRoute(recipe,true);redraw();};
  el.querySelectorAll('[data-line-stage]').forEach(button=>button.onclick=()=>{craftStudioState.lineStage={...craftStudioState.lineStage,[recipe.id]:button.dataset.lineStage};redraw();});
@@ -2592,6 +2644,84 @@ function craftStudioReceipt(t){
  return {gross:gross,units:v.units||0,cost:cost,net:cost===null?null:gross*c.retention/100-cost,region:v.region,model:'Captured main quantity / assumed yield × locked input cost. Rare-only batches may be incomplete.'};
 }
 /* OWNED CRAFTING_STUDIO_JS END */
+/* OWNED CRAFTING_SIMULATOR_JS START */
+/* Isolated what-if scenarios and separate Crafting workspaces. No OCR or timers. */
+var craftWorkflow='planner';
+try{var storedWorkflow=localStorage.getItem('vision.demo.craft.workspace.v1');if(['planner','simulator','imperial','timers'].includes(storedWorkflow))craftWorkflow=storedWorkflow;}catch(e){}
+var craftSimulation=(function(){try{var s=JSON.parse(localStorage.getItem('vision.demo.craft.simulator.v1'));return s&&typeof s==='object'&&!Array.isArray(s)?s:{};}catch(e){return {};}})();
+if(!craftSimulation.stock||typeof craftSimulation.stock!=='object'||Array.isArray(craftSimulation.stock))craftSimulation.stock={};
+var craftSimulationResult=null,craftSimulationAt=0;
+
+function craftWorkflowInit(){
+ var nav=document.getElementById('craftWorkflows');if(!nav||nav.dataset.bound)return;
+ nav.dataset.bound='yes';nav.querySelectorAll('[data-craft-workspace]').forEach(button=>button.onclick=()=>craftWorkflowSet(button.dataset.craftWorkspace));
+ craftWorkflowSet(craftWorkflow);
+}
+function craftWorkflowSet(mode){
+ if(!['planner','simulator','imperial','timers'].includes(mode))return;
+ craftWorkflow=mode;try{localStorage.setItem('vision.demo.craft.workspace.v1',mode);}catch(e){}
+ for(var [id,owner] of [['craftPlanningPanel','planner'],['craftSimulatorPanel','simulator'],['craftImperialPanel','imperial'],['craftTimersPanel','timers'],['craftHistoryPanel','timers']]){var el=document.getElementById(id);if(el)el.hidden=owner!==mode;}
+ var recorded=document.getElementById('craftRecordedPanel');if(recorded)recorded.hidden=!['planner','timers'].includes(mode);
+ var nav=document.getElementById('craftWorkflows');if(nav)nav.querySelectorAll('[data-craft-workspace]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.craftWorkspace===mode)));
+ if(mode==='simulator')craftSimulatorRender();
+ if(mode==='imperial')craftImperialRender();
+ if(mode==='timers'){if(typeof renderActiveTimers==='function')renderActiveTimers();if(typeof renderHistory==='function')renderHistory();}
+ craftWorkflowBadge();
+}
+function craftWorkflowBadge(){
+ var count=typeof activeTimers==='undefined'?0:activeTimers.filter(t=>t.status==='running'||t.status==='paused').length;
+ var badge=document.getElementById('craftTimerCount');if(badge)badge.textContent=count?' ('+count+')':'';
+}
+function craftSimulatorSave(){try{localStorage.setItem('vision.demo.craft.simulator.v1',JSON.stringify(craftSimulation));}catch(e){toast('Scenario storage','Export this simulation to keep a copy.',false);}}
+function craftSimulatorChanged(message){
+ craftSimulationResult=null;craftSimulatorSave();var results=document.getElementById('simulationResults');if(results)results.innerHTML='<p role="status" class="studio-muted">'+visionEscape(message||'Scenario changed. Run the simulation to update the results.')+'</p>';
+ var exportButton=document.getElementById('simulationExport');if(exportButton)exportButton.disabled=true;
+}
+function craftSimulatorRecipe(){
+ return RECIPES.find(r=>r.id===craftSimulation.recipeId&&craftSimulatorTarget(r))||RECIPES.find(r=>r.id===selectedRecipe?.id&&craftSimulatorTarget(r))||RECIPES.find(r=>r.type==='cooking');
+}
+function craftSimulatorTarget(r){return r.mats?.length&&!/^imperial_/.test(r.method||'')&&(r.type!=='processing'||!!r.method);}
+function craftSimulatorRender(){
+ var host=document.getElementById('chainSimulator');if(!host)return;
+ var esc=visionEscape,recipe=craftSimulatorRecipe();craftSimulation.recipeId=recipe.id;
+ var type=['cooking','alchemy','processing'].includes(craftSimulation.type)?craftSimulation.type:recipe.type;
+ var search=String(craftSimulation.search||''),matching=RECIPES.filter(r=>r.type===type&&craftSimulatorTarget(r)&&VisionCraft.key(r.name).includes(VisionCraft.key(search))).slice(0,120);
+ if(!matching.some(r=>r.id===recipe.id))matching.unshift(recipe);
+ var graph=VisionCraft.productionGraph(recipe,craftStudioContext()),inputIds=[...new Set(graph.edges.filter(e=>e.kind==='input').map(e=>Number(e.from.slice(5))))];
+ var items=inputIds.map(id=>({id,name:VISION_CRAFT_DATA.items[id]?.name||String(id)})).sort((a,b)=>a.name.localeCompare(b.name));
+ if(!inputIds.includes(Number(craftSimulation.sourceId)))craftSimulation.sourceId=items[0]?.id;
+ if(craftSimulation.quantity==null)craftSimulation.quantity=1000;
+ host.innerHTML='<div class="studio-eyebrow">SEPARATE WHAT-IF SCENARIO / NO LIVE INVENTORY CHANGES</div><h3>What can these ingredients become?</h3><p class="studio-muted">Choose the final product, then start anywhere along its ingredient chain: a raw material or a ready-made intermediate. This scenario has its own stock and never changes your packing cards, queue or running timers.</p><div class="studio-fields"><label class="studio-field">Recipe category<select id="simulationType">'+['cooking','alchemy','processing'].map(t=>'<option value="'+t+'" '+(t===type?'selected':'')+'>'+t+'</option>').join('')+'</select></label><label class="studio-field">Find final product<input id="simulationSearch" type="search" value="'+esc(search)+'" placeholder="Meal, elixir, processing product"></label><label class="studio-field">Final recipe / variant<select id="simulationRecipe">'+matching.map(r=>'<option value="'+esc(r.id)+'" '+(r.id===recipe.id?'selected':'')+'>'+esc(r.name+' / '+r.mats.map(m=>m.qty+' '+m.name).join(', '))+'</option>').join('')+'</select></label><label class="studio-field">Starting ingredient<select id="simulationSource">'+items.map(m=>'<option value="'+m.id+'" '+(m.id===Number(craftSimulation.sourceId)?'selected':'')+'>'+esc(m.name)+'</option>').join('')+'</select></label><label class="studio-field">Total starting ingredient<input id="simulationQuantity" type="number" min="1" max="1000000000000" step="1" value="'+esc(craftSimulation.quantity)+'"></label><label class="studio-field">Companion ingredients<select id="simulationMode"><option value="buy" '+(!craftSimulation.stockOnly?'selected':'')+'>Buy missing companions</option><option value="stock" '+(craftSimulation.stockOnly?'selected':'')+'>Use only the stock entered below</option></select></label></div><p class="studio-muted">At most 120 matching variants are listed; search to narrow them. The starting ingredient is a fixed supply: it is never bought or manufactured to extend the run.</p><details data-section="simulation-stock"><summary>Other ingredients already available / '+items.filter(m=>m.id!==Number(craftSimulation.sourceId)&&Number(craftSimulation.stock[m.id])>0).length+' with stock</summary><div class="simulation-stock">'+items.filter(m=>m.id!==Number(craftSimulation.sourceId)).map(m=>'<label class="studio-field">'+esc(m.name)+'<input data-simulation-stock="'+m.id+'" type="number" min="0" max="1000000000000" step="1" value="'+esc(craftSimulation.stock[m.id]??0)+'"></label>').join('')+'</div><p class="studio-muted">Only this scenario’s entered quantities count. Bag/planner stock and recorded loot are not imported. Stock is allocated once across shared branches.</p></details><div class="studio-actions"><button id="simulationRun" class="btn-primary">Simulate entire line</button><button id="simulationExport" class="btn-secondary" '+(!craftSimulationResult?'disabled':'')+'>Export simulation</button></div><div id="simulationResults">'+(craftSimulationResult?craftSimulatorResults(craftSimulationResult,recipe):'<p role="status" class="studio-muted">Ready. Nothing runs until you choose Simulate.</p>')+'</div>';
+ document.getElementById('simulationType').onchange=e=>{craftSimulation.type=e.target.value;craftSimulation.search='';craftSimulatorChanged();craftSimulatorRender();};
+ document.getElementById('simulationSearch').oninput=e=>{var value=e.target.value;craftSimulation.search=value;craftSimulatorChanged();craftSimulatorRender();var input=document.getElementById('simulationSearch');input.focus();input.setSelectionRange?.(value.length,value.length);};
+ document.getElementById('simulationRecipe').onchange=e=>{craftSimulation.recipeId=e.target.value;delete craftSimulation.sourceId;craftSimulatorChanged();craftSimulatorRender();};
+ document.getElementById('simulationSource').onchange=e=>{craftSimulation.sourceId=Number(e.target.value);craftSimulatorChanged();craftSimulatorRender();};
+ document.getElementById('simulationQuantity').oninput=e=>{craftSimulation.quantity=e.target.value;craftSimulatorChanged();};
+ document.getElementById('simulationMode').onchange=e=>{craftSimulation.stockOnly=e.target.value==='stock';craftSimulatorChanged();};
+ host.querySelectorAll('[data-simulation-stock]').forEach(input=>input.oninput=()=>{craftSimulation.stock[input.dataset.simulationStock]=input.value;craftSimulatorChanged();});
+ document.getElementById('simulationRun').onclick=()=>{
+  try{craftSimulationResult=VisionCraft.simulateProduction(recipe,craftSimulation,craftStudioContext());craftSimulationAt=Date.now();craftSimulatorSave();craftSimulatorRender();}
+  catch(e){craftSimulationResult=null;document.getElementById('simulationResults').innerHTML='<p role="alert" class="studio-warning">'+esc(e.message)+'</p>';document.getElementById('simulationExport').disabled=true;}
+ };
+ document.getElementById('simulationExport').onclick=()=>craftSimulatorExport(recipe);
+ var graphs=document.getElementById('simulationGraphs');if(graphs&&craftSimulationResult?.plan)graphs.ontoggle=()=>{if(!graphs.open)return;var p=craftSimulationResult.plan;document.getElementById('simulationGraphBody').innerHTML='<div class="workshop-pies">'+craftStudioPie(p.steps.map(s=>({label:s.name,value:s.seconds})),'Time by production stage','seconds')+craftStudioPie(p.purchases.filter(m=>m.unit!==null).map(m=>({label:m.name,value:m.quantity*m.unit})),'Cash for missing ingredients','silver')+'</div>'+craftStudioGraph(p.steps.reduce((points,s)=>{points.push([points.length,points.at(-1)[1]+s.seconds]);return points;},[[0,0]]),'Cumulative modeled production seconds by completed stage');};
+}
+function craftSimulatorResults(result,recipe){
+ var esc=visionEscape,p=result.plan,number=n=>Number(n).toLocaleString(undefined,{maximumFractionDigits:3});
+ if(!p)return '<p class="studio-warning" role="status">Not enough stock for one modeled final craft. Enter companion stock or choose Buy missing companions.</p>'+craftSimulatorShortfalls(result.shortfalls);
+ var finalOutputs=p.outputs.filter(o=>['main','rare'].includes(o.kind)),valued=finalOutputs.every(o=>o.net!=null),potential=valued?finalOutputs.reduce((sum,o)=>sum+o.net,0):null;
+ var outputMap=new Map();for(var o of [...p.outputs,...result.sideOutputs]){var prev=outputMap.get(o.itemId);outputMap.set(o.itemId,prev?{...prev,quantity:prev.quantity+o.quantity,kind:prev.kind.includes(o.kind)?prev.kind:prev.kind+' / '+o.kind}:{...o});}
+ var outputs=[...outputMap.values()],remaining=result.remaining.filter(m=>m.quantity>0);
+ return '<p class="studio-muted" role="status">Scenario calculated '+esc(new Date(craftSimulationAt).toLocaleString())+' / '+(result.stockOnly?'entered stock only':'starting stock + companion purchases')+'. Saved recipe/mastery/substitution assumptions; expected yields, not guaranteed production.'+(result.capped?' Calculation cap reached; reduce the scenario.':'')+'</p><div class="studio-kpis"><div><small>MODELED FINAL CRAFTS</small><strong>'+number(result.batches)+'</strong></div><div><small>EXPECTED FINAL MAIN ITEMS</small><strong>'+number(p.output)+'</strong></div><div><small>PRODUCTION TIME / ALL STAGES</small><strong>'+fmtTime(p.seconds)+'</strong></div><div><small>CASH FOR MISSING COMPANIONS</small><strong>'+craftStudioMoney(p.cash)+'</strong></div></div><h4>Follow the whole production line</h4><ol class="simulation-stages">'+p.steps.map(s=>'<li><b>'+esc(s.name)+'</b><span>'+number(s.batches)+' crafts / '+fmtTime(s.seconds)+' / '+number(s.expected)+' expected main or equivalent units</span><p>'+s.inputs.map(m=>esc(m.name)+' x '+number(m.quantity)).join(' + ')+'</p></li>').join('')+'</ol><details open><summary>Expected products and kept extras</summary><div class="studio-table-wrap"><table><thead><tr><th>Product</th><th>Expected units</th><th>Type</th></tr></thead><tbody>'+outputs.map(o=>'<tr><td>'+esc(o.name)+'</td><td>'+number(o.quantity)+'</td><td>'+esc(o.kind)+'</td></tr>').join('')+'</tbody></table></div><p class="studio-muted">Main intermediate output feeds its consumers. Unused main surplus is in remaining stock. Intermediate rare procs used as normal equivalents are not also listed as kept. Random alchemy extras are excluded; quantities are model averages.</p></details><details><summary>Purchases, leftovers and one-more-craft limits</summary><h4>Buy missing companions</h4>'+(p.purchases.length?p.purchases.map(m=>'<p>'+esc(m.name)+' x '+number(m.quantity)+' / '+craftStudioMoney(m.unit===null?null:m.quantity*m.unit)+' / '+esc(m.basis)+'</p>').join(''):'<p>No purchases needed.</p>')+'<h4>Remaining scenario stock</h4>'+(remaining.length?remaining.map(m=>'<p>'+esc(m.name)+' x '+number(m.quantity)+'</p>').join(''):'<p>No entered/input stock remains.</p>')+'<h4>Missing for one more final craft</h4>'+craftSimulatorShortfalls(result.shortfalls)+'</details><details id="simulationGraphs"><summary>Time, costs and graphs</summary><div id="simulationGraphBody"></div><p>Potential final main/rare sale value after configured deductions: '+craftStudioMoney(potential)+'. Economic input value (including starting stock): '+craftStudioMoney(p.cost)+'. Potential difference: '+craftStudioMoney(potential===null||p.cost===null?null:potential-p.cost)+'. Kept byproducts, intermediate surplus and side rares receive no silver credit here. Unknown prices stay unvalued.</p></details><p class="studio-muted">This simulates quantities/time using expected yields. It does not simulate one bag across every stage, LT restocks, market stock reservations, inventory slots or travel. Use packing cards separately for LT. No inventory/loot/timer changes or gameplay commands.</p>';
+}
+function craftSimulatorShortfalls(rows){return rows?.length?rows.map(m=>'<p>'+visionEscape(m.name)+' x '+Number(m.quantity).toLocaleString(undefined,{maximumFractionDigits:3})+' missing</p>').join(''):'<p>No further limiting input within the calculation cap.</p>';}
+function craftSimulatorExport(recipe){
+ var r=craftSimulationResult;if(!r)return;
+ var text='BDO Vision / ISOLATED PRODUCTION SIMULATION\n'+recipe.name+'\n'+new Date(craftSimulationAt).toISOString()+'\nExpected yields, not verified inventory or loot.\nStarting stock:\n'+r.inputs.map(m=>m.name+' x '+m.quantity).join('\n');
+ if(r.plan)text+='\nSTAGES\n'+r.plan.steps.map(s=>s.name+': '+s.batches+' crafts; '+s.inputs.map(m=>m.name+' x '+m.quantity).join(' + ')).join('\n')+'\nBUY\n'+r.plan.purchases.map(m=>m.name+' x '+m.quantity).join('\n')+'\nREMAINING\n'+r.remaining.filter(m=>m.quantity>0).map(m=>m.name+' x '+m.quantity).join('\n');
+ intelDownload('bdo-vision-production-simulation.txt',text,'text/plain');
+}
+/* OWNED CRAFTING_SIMULATOR_JS END */
 
 /* OWNED VISION_TIMERS_JS START */
 /* Optional recorded earnings for one active timer. A craft ETA is a separate estimate. */
@@ -2994,7 +3124,7 @@ document.getElementById('demoBlock').onclick=function(){demoCraft.blocked=!demoC
 rememberPrices(demoQuotes);selectedRecipe=RECIPES.find(function(r){return r.id==="alc_elixir_of_demihuman_hunt_9";});lastCraftAmount=100;
 recipeTab=selectedRecipe.type;
 if(selectedRecipe.type==='alchemy'&&!craftStudioState.config[selectedRecipe.id])craftStudioState.config[selectedRecipe.id]={yield:2.5,seconds:5,retention:84.5,extra:0,goal:1000000,estimate:true};
-showView('craft');if(selectedRecipe.type==='cooking'){craftStudioChainRoute(selectedRecipe,true);craftStudioRender(selectedRecipe,lastCraftAmount);}
+craftWorkflow='planner';showView('craft');if(selectedRecipe.type==='cooking'){craftStudioChainRoute(selectedRecipe,true);craftStudioRender(selectedRecipe,lastCraftAmount);}
 
     processTimers();ensureTick();updateNavBadge();
     scheduleBridgePoll(2000);
