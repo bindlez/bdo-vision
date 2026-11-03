@@ -45,9 +45,16 @@ def parse_objectives(text):
     return rows[:8]
 
 
+def guild_heading_family(text):
+    letters=re.sub(r'[^a-z]','',str(text).casefold())
+    family='alchemy' if re.search(r'a[li]chem[yv]',letters) else 'cooking' if 'cooking' in letters else None
+    guild=any(word in letters for word in ('guild','guld','quild','gud'))
+    return family if family and guild and any(word in letters for word in ('supp','mission','quest')) else None
+
+
 def parse_quest_text(text):
     text=str(text)[:6000];lines=[line.strip() for line in text.splitlines() if line.strip()]
-    start=next((i for i,line in enumerate(lines) if 'guild' in line.casefold() and 'alchemy' in line.casefold() and any(w in line.casefold() for w in ('mission','quest','supp'))),None)
+    start=next((i for i,line in enumerate(lines) if guild_heading_family(line)),None)
     if start is None:return None
     scope=[]
     for line in lines[start:start+24]:
@@ -137,7 +144,7 @@ def focused_quest_read(image,tess,deadline,diagnostic=None):
         if not source:continue
         header=read(ImageOps.autocontrast(heading.convert('RGB').getchannel('R')).resize((heading.width*3,heading.height*3),Image.Resampling.LANCZOS),7).strip()
         folded=header.casefold()
-        is_guild='guild' in folded and 'alchemy' in folded and any(w in folded for w in ('supp','mission','quest'))
+        is_guild=bool(guild_heading_family(header))
         is_side=bool(re.search(r'\[(?:Daily|Bonus)\]',header,re.I))
         if not (is_guild or is_side):continue
         stop=min(image.height,source[3]+125)
@@ -181,6 +188,10 @@ def recognize_quest(image,tess,diagnostic=None):
     a,b=readings
     agreed=a if a and b and (a['current'],a['target'])==(b['current'],b['target']) else None
     completions=[parse_guild_completion(text) for text in texts]
+    from guild_reminder import explicit_absence
+    absence=[explicit_absence(text) for text in texts]
+    if all(absence) and not any(readings) and not any(completions):
+        return {'absence_observed':True,'absence_votes':2,'absence_evidence':absence[0]},'\n\n'.join(texts)[:10000]
     conflict=any(completions) and any(row and row['current']<row['target'] for row in readings)
     if all(completions) and not conflict:
         agreed={**completions[0],'completion_votes':2}
@@ -198,7 +209,7 @@ def recognize_quest(image,tess,diagnostic=None):
             except subprocess.TimeoutExpired:break
             header=result.stdout.decode('utf-8','replace').strip()[:240] if not result.returncode else ''
             folded=header.casefold()
-            guild_header='guild' in folded and 'alchemy' in folded and any(w in folded for w in ('supp','mission','quest'))
+            guild_header=bool(guild_heading_family(header))
             if guild_header:
                 a,b=[parse_quest_text(header+'\n'+text) for text in texts[:2]]
                 if a and b and (a['current'],a['target'])==(b['current'],b['target']):agreed=a

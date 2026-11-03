@@ -253,7 +253,10 @@ def anchored_title_family(text):
     Never repair or guess digits. A damaged title can identify a generic family;
     two literal numeric reads and bar consistency still have to verify its value.
     """
-    prefix=re.split(r'[({]|\d',text,maxsplit=1)[0]
+    # A decorative icon can be recognized as a leading digit. It must not
+    # truncate the real name before we even reach the utensil title.
+    title=re.sub(r'^[^A-Za-z]+','',text)
+    prefix=re.split(r'[({]|\d',title,maxsplit=1)[0]
     letters=re.sub('[^a-z]','',prefix.casefold())[-45:]
     if re.search(r'alchem[yv]i?[tl]o[oc]l$',letters):return 'Alchemy Tool'
     for target,name in (('alchemytool','Alchemy Tool'),('cookingutensil','Cooking Utensil')):
@@ -296,6 +299,11 @@ def discover_bar_labels(image,tess,known=(),anchor=None):
         if not kind and name!=PARTIAL_NAME and 'traditional' not in text.casefold():continue
         candidates=list(re.finditer(r'[(\{][^(){}]{3,24}[)\}]',text))
         if not candidates:candidates=list(re.finditer(r'[\dOIlS?][\dOIlS?,.:]{0,12}[/|][\dOIlS?,.:]{1,12}',text))
+        if not candidates and anchor and kind:
+            # A damaged slash/open bracket is a location hint only. Crop the
+            # complete tail and require fresh literal numeric consensus below;
+            # never turn these corrupted characters into a durability value.
+            candidates=list(re.finditer(r'\d[\dA-Za-z?,.:/|]{3,22}[)}]',text))
         for match in candidates:
             boxes=[b for _,b in parser.chars[match.start():match.end()]]
             if not boxes or sum(c.isdigit() for c in match.group())<3:continue
@@ -346,6 +354,8 @@ def read_bands(tsv,bands):
 
 
 def counter_context_error(current,maximum,region):
+    if region.get('os_pair') is not None and tuple(region['os_pair'])!=(current,maximum):
+        return 'Independent Windows OCR and literal numeric verification disagree'
     coarse=region.get('coarse_pair')
     if coarse and coarse[0]==0 and current!=0:
         return 'Numeric crop conflicts with the full-label empty tool counter'
@@ -665,7 +675,8 @@ class ToolInventory:
 
 
 class AutomaticToolReader:
-    def __init__(self):
+    def __init__(self,scene_locator=None):
+        self.scene_locator=scene_locator
         self.regions=[];self.context=None;self.inventory=ToolInventory()
         self.last_discovery=-1e9;self.next_due=0;self.misses=0
         self.anchor=None
@@ -753,7 +764,7 @@ class AutomaticToolReader:
             image=grab((left,top,right,bottom)).convert('RGB')
             scene=image
             captured_mono=time.monotonic();captured_at=time.time()
-            self.regions,self.anchor,used_calls=discover_scene(image,tess);calls+=used_calls
+            self.regions,self.anchor,used_calls=(self.scene_locator or discover_scene)(image,tess);calls+=used_calls
             self.last_discovery=now
             crops=[image.crop(r['box']) for r in self.regions]
             del image
@@ -763,7 +774,11 @@ class AutomaticToolReader:
         shifted=not discover and any(not signature_matches(self.signatures.get(tuple(r['box'])),label_signature(crop,r)) for r,crop in zip(self.regions,crops))
         observations,used_calls=verify_labels(crops,self.regions,tess,self.numeric_cache) if crops and not shifted else ([],0)
         calls+=used_calls
-        if discover and scene is not None and not observations and 'focused durability bar' in (self.anchor or {}).get('evidence','') and _budget.deadline-time.monotonic()>1:
+        # Reading a nearby empty utensil is not success at finding the current
+        # tool. A valid but irrelevant neighbor must not suppress reacquisition.
+        needs_current=not place_selected({'anchor':self.anchor,'tools':observations},height)
+        focused_locator=any(s in (self.anchor or {}).get('evidence','') for s in ('focused durability bar','positioned Windows OCR'))
+        if discover and scene is not None and needs_current and focused_locator and _budget.deadline-time.monotonic()>1:
             self.regions,self.anchor,used_calls=discover_scene(scene,tess,focused=False);calls+=used_calls
             crops=[scene.crop(r['box']) for r in self.regions]
             observations,used_calls=verify_labels(crops,self.regions,tess,self.numeric_cache) if crops else ([],0);calls+=used_calls
@@ -773,7 +788,7 @@ class AutomaticToolReader:
             image=grab((left,top,right,bottom)).convert('RGB')
             scene=image
             captured_mono=time.monotonic();captured_at=time.time()
-            self.regions,self.anchor,used_calls=discover_scene(image,tess);calls+=used_calls
+            self.regions,self.anchor,used_calls=(self.scene_locator or discover_scene)(image,tess);calls+=used_calls
             crops=[image.crop(r['box']) for r in self.regions]
             del image
             observations,used_calls=verify_labels(crops,self.regions,tess,self.numeric_cache) if crops else ([],0)
@@ -811,6 +826,8 @@ class AutomaticToolReader:
         delay=max(3,min(120,interval)) if report['active_id'] else min(30,3*max(1,self.quiet_reads-2)) if observations else (3,10,30,60,120)[min(4,self.misses-1)]
         self.next_due=time.monotonic()+delay
         report.update(duration=time.monotonic()-started,ocr_calls=calls,discovery=discover,
+                      engine='Positioned Windows OCR + independent numeric verification' if any(r.get('os_pair') for r in self.regions) else 'Tesseract locator + numeric verification',
+                      locator_error=getattr(self.scene_locator,'last_error',''),
                       next_seconds=delay,visible_limit=MAX_TOOLS,anchor=self.anchor,
                       captured_mono=captured_mono,captured_at=captured_at,unreadable=unreadable,
                       cache_hits=sum(bool(r.get('cache_hit')) for r in observations),camera_reacquired=shifted)

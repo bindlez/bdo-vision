@@ -14,6 +14,7 @@ def run_self_check(app_class,root_path,data_path):
                           'recipes':Path(__file__).parent/'assets/recipes.json',
                           'item_names':Path(__file__).parent/'assets/item-names.json',
                           'cp_data':Path(__file__).parent/'assets/cp-data.json',
+                          'structured_helper':root_path/'assets/vision-windows-ocr.exe',
                           'icon':root_path/'assets/bdo-lite.png'}.items():
             report['checks'][name]=path.is_file()
         root=tk.Tk();root.withdraw();app=app_class(root);root.update_idletasks()

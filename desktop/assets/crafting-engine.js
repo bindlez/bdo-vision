@@ -67,7 +67,7 @@ function projection(timer,reading,now){
 function imperialRanks(recipes,spec,quote,options={}){
  const count=Math.floor(bounded(options.boxes,1,10000,1)),index=indexRecipes(recipes),result={};
  for(const type of ['cooking','alchemy']){
-  const boxes=recipes.filter(r=>r.method==='imperial_'+type&&(!options.tiers?.[type]||r.itemId===Number(options.tiers[type]))),buy=[],craft=[],craftInStock=[];
+  const boxes=recipes.filter(r=>r.method==='imperial_'+type&&(!options.guruOnly||[9856,9871].includes(r.itemId))&&(!options.tiers?.[type]||r.itemId===Number(options.tiers[type]))),buy=[],craft=[],craftInStock=[];
   const mastery=bounded(options.mastery?.[type],0,3000,0);
   for(const box of boxes){
    const boxYield=box.minProc||1,payout=(spec.items[box.itemId]?.imperialBase||0)*(2.5+(bracket(spec,type,mastery).imperialBonus||0));

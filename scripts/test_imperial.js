@@ -27,6 +27,8 @@ const rare={...meal,rare:{itemId:2,minProc:1,maxProc:1}};
 r=C.imperialRanks([rare,other],spec,quote);assert.equal(r.cooking.craft[0].runs,50);assert.equal(r.cooking.craft[0].cost,500);
 const fs=require('node:fs'),real=JSON.parse(fs.readFileSync('desktop/assets/recipes.json')),data=JSON.parse(fs.readFileSync('desktop/assets/crafting-data.json'));
 const start=performance.now();r=C.imperialRanks(real,data,()=>({price:100}),{boxes:245,tiers:{cooking:9856,alchemy:9871}});
+const guru=C.imperialRanks(real,data,()=>({price:100}),{guruOnly:true});
+assert(guru.cooking.buy.every(r=>r.boxId===9856));assert(guru.alchemy.buy.every(r=>r.boxId===9871));
 assert(r.cooking.buy.length>0&&r.alchemy.buy.length>0);assert(r.cooking.craft.some(x=>x.cost>0));
 for(const type of ['cooking','alchemy'])for(const mode of ['buy','craft']){let known=r[type][mode].filter(x=>x.cost!==null);assert(known.every((x,i)=>!i||x.cost>=known[i-1].cost));}
 console.log('Imperial: box-normalized buying, whole crafting batches, rare output, missing prices, tiers and full catalog rankings passed in '+(performance.now()-start).toFixed(1)+' ms.');

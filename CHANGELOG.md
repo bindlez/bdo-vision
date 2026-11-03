@@ -1,3 +1,15 @@
+# 1.13.0-rc.17 · Structured core reader candidate
+
+- Added a lazy, persistent positioned Windows OCR worker and independent numeric/
+  guild-card verification, with conservative compatibility fallback.
+- Recovery handles damaged utensil titles without repairing numeric values;
+  cooking/alchemy guild headings and wrapped counters remain scoped.
+- Optional missing-matching-quest reminders reuse existing acquisitions, distinguish
+  unreadable from confirmed absence, deduplicate and support ten-minute snooze.
+- Added the saved Guru-only Imperial filter and a complete prioritized task list.
+- 392 Python regressions passed. Saved/live-reference checks are scoped evidence;
+  a changing installed-game run and broader held-out acceptance remain open.
+
 # 1.13.0-rc.16 · Stock-aware Imperial daily planning
 
 - Four recommendations separate overall and fully stocked buy/craft choices.

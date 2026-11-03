@@ -17,7 +17,7 @@ report=[];total=0;failed=[]
 for module in modules:
     with tempfile.TemporaryDirectory(prefix='vision-tests-') as folder:
         env=dict(os.environ,BDO_VISION_DATA_DIR=folder,PYTHONUTF8='1')
-        Path(folder,'settings.json').write_text(json.dumps({'loot_enabled':False,'auto_scan':False}))
+        Path(folder,'settings.json').write_text(json.dumps({'loot_enabled':False,'auto_scan':False,'structured_reader':False}))
         sqlite3.connect(Path(folder,'loot-history.sqlite3')).close()
         try:
             result=subprocess.run([sys.executable,'-m','unittest','discover','-s','tests','-p',module.name],

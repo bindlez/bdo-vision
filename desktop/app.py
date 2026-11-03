@@ -53,7 +53,7 @@ class App:
   self.lite_use=tk.BooleanVar(value=bool(config.get('lite_use',False)));self.lite_scan_complete=False
   if self.lite_use.get():self.auto_tools.set(True);self.auto_enabled.set(True)
   self._tool_scan_latched=False;self._tool_timer_estimated=False
-  self.tool_reader=AutomaticToolReader();self.tool_report=None;self.tool_window=None;self.tool_tree=None;self._active_tool_key=None
+  self.windows_ocr=None;self.tool_reader=App.make_tool_reader(self);self.tool_report=None;self.tool_window=None;self.tool_tree=None;self._active_tool_key=None
   self.tool_debug=OCRReaderView(self,'Tool OCR reader',self.rescan_tools)
   self.tool_status=ToolStatus();self._tool_view_at=0.;self._tool_bridge_revision=-1
   self.tool_title=tk.StringVar(value='Ready to find tools');self.tool_preview=tk.StringVar(value='Visible counters will appear here')
@@ -157,9 +157,22 @@ class App:
 
  def tool_mode_changed(self):
   self.lite_scan_complete=False;self._tool_scan_latched=False
-  self.tool_reader=AutomaticToolReader();self.last_scan_started=0
+  self.tool_reader=App.make_tool_reader(self);self.last_scan_started=0
   self.set_tool_stage('idle' if self.auto_tools.get() else 'off','Show tool labels in BDO.' if self.auto_tools.get() else 'Manual capture area is selected in Settings.')
   self.save_quietly()
+
+ def make_tool_reader(self):
+  worker=getattr(self,'windows_ocr',None)
+  if worker is None and config.get('structured_reader',True):
+   helper=ROOT/'assets'/'vision-windows-ocr.exe'
+   if not helper.is_file() and not getattr(sys,'frozen',False):helper=ROOT.parent/'build'/'native'/'vision-windows-ocr.exe'
+   if helper.is_file():
+    from windows_ocr import WindowsOCR
+    worker=WindowsOCR(helper);self.windows_ocr=worker
+  if worker is not None:
+   from structured_reader import StructuredLocator
+   return AutomaticToolReader(StructuredLocator(worker))
+  return AutomaticToolReader()
 
  def open_tools(self):
   if self.tool_window and self.tool_window.winfo_exists():self.tool_window.deiconify();self.tool_window.lift();return
@@ -294,7 +307,7 @@ class App:
     captured_at=time.time();captured_mono=time.monotonic()
     report=reader.read(tess,bounds,grab,interval=interval,confirm_pair=not self.lite_use.get())
     if debug_frames:
-     detail=json.dumps({k:report.get(k) for k in ('reason','confirmation','pair_result','anchor','tools','unreadable','duration','ocr_calls','cache_hits','camera_reacquired')},indent=2)+'\n\nOCR PASSES\n'+report.pop('_debug_raw','Unchanged verified crops reused; no new OCR text.')
+     detail=json.dumps({k:report.get(k) for k in ('reason','confirmation','pair_result','anchor','tools','unreadable','duration','ocr_calls','cache_hits','camera_reacquired','engine','locator_error')},indent=2)+'\n\nOCR PASSES\n'+report.pop('_debug_raw','Unchanged verified crops reused; no new OCR text.')
      image=debug_frames[0]
      self.root.after(0,lambda:self.tool_debug.show(debug_token,image,detail,report.get('captured_at')))
     self.root.after(0,lambda:self.finish_tool_attempt(report,reader,automatic,captured_at,captured_mono,quest_sample,guild_generation))
@@ -310,6 +323,7 @@ class App:
   guild=self.loot.guild
   if reader is self.tool_reader and guild_generation is not None and guild_generation==guild.generation and guild.enabled.get():
    guild.scan(paired=True,sample=quest_sample)
+  elif reader is self.tool_reader and hasattr(guild,'check_crafting_quest'):guild.check_crafting_quest()
 
  def tool_failed(self,message,reader):
   self.busy=False
@@ -659,7 +673,7 @@ class App:
   self.root.after(400,self.tick)
  def change_lite_use(self):
   self.lite_scan_complete=bool(self.lite_use.get() and self.running and self.has_reading and self.last_good_ocr is not None)
-  self.tool_reader=AutomaticToolReader()
+  self.tool_reader=App.make_tool_reader(self)
   self.loot.generation+=1;self.loot.guild.generation+=1;self.loot.guild.waiting=False
   if self.loot.guild.pending is not None:self.root.after_cancel(self.loot.guild.pending);self.loot.guild.pending=None
   self.loot.guild.schedule()
@@ -994,6 +1008,7 @@ class App:
    if self.bridge:self.bridge.close()
   except Exception:pass
   self.loot.close()
+  if getattr(self,'windows_ocr',None) is not None:self.windows_ocr.close()
   self.root.destroy()
 
 if __name__=='__main__':

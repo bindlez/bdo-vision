@@ -11,6 +11,15 @@ from tool_reader import AutomaticToolReader
 
 
 class CraftTimerPipelineTests(unittest.TestCase):
+    def test_missing_quest_reminder_is_quiet_deduplicated_and_suppressed_by_active_quest(self):
+        import time
+        self.feed();guild=self.app.loot.guild;guild.missing_alert.set(True)
+        with patch('guild_quest_ui.winsound.MessageBeep') as sound:
+            guild.check_crafting_quest();self.assertIn('not verified',guild.notice.get())
+            guild.notice.set('sentinel');guild.check_crafting_quest();self.assertEqual(guild.notice.get(),'sentinel')
+            guild.model.accept({'current':0,'target':600,'label':'[Alchemy] Guild Supply Mission'},at=time.time())
+            guild.check_crafting_quest();self.assertEqual(guild.notice.get(),'sentinel');sound.assert_not_called()
+
     def test_paired_quest_waits_for_busy_loot_then_expires_without_sticking(self):
         guild=self.app.loot.guild;guild.enabled.set(True);self.app.loot.busy=True;callbacks=[]
         with patch.object(self.root,'after',side_effect=lambda delay,fn:callbacks.append(fn) or 'queued'):

@@ -22,6 +22,8 @@ assert(nodes.get('imperialQuick').innerHTML.includes('BEST TO CRAFT & PACK'));
 assert(nodes.get('imperialQuick').innerHTML.includes('BEST TO BUY & PACK · IN STOCK'));
 assert(nodes.get('imperialQuick').innerHTML.includes('BEST TO CRAFT & PACK · IN STOCK'));
 assert(nodes.get('imperialQuick').innerHTML.includes('Turn-in silver'));
+nodes.get('imperialGuruOnly').onchange({target:{checked:true}});assert(context.imperialSettings.guruOnly);
+nodes.get('imperialGuruOnly').onchange({target:{checked:false}});assert(!context.imperialSettings.guruOnly);
 assert(!nodes.get('imperialAnalysis').innerHTML);
 const oldQuote=context.craftStudioQuote;context.craftStudioQuote=()=>({price:100,stock:100000});context.craftImperialRender();
 nodes.get('imperialAdvanced').ontoggle({target:{open:true}});

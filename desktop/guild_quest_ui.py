@@ -7,6 +7,7 @@ from PIL import ImageGrab,Image
 from guild_quest import GuildQuestProgress,recognize_quest
 from ocr_debug import OCRReaderView,preview_image,source_image
 from windows_bdo import visible_bdo_capture_bounds,item_regions_visible
+from guild_reminder import ReminderGate,reminder_decision
 
 
 class GuildQuestTracker:
@@ -14,6 +15,8 @@ class GuildQuestTracker:
         self.tracker=tracker;self.app=tracker.app;self.root=tracker.root
         self.model=GuildQuestProgress(tracker.ledger.db)
         self.enabled=tk.BooleanVar(value=bool(settings.get('guild_quest_enabled',False)))
+        self.missing_alert=tk.BooleanVar(value=bool(settings.get('guild_quest_missing_alert',True)))
+        self.missing_gate=ReminderGate();self.last_absence={}
         self.watch=tk.BooleanVar(value=bool(settings.get('guild_quest_watch',False)))
         self.watch_pending=None;self.watch_box=None;self.watch_context=None;self._watch_read=False
         self.sound=tk.BooleanVar(value=bool(settings.get('guild_quest_sound',True)))
@@ -37,6 +40,7 @@ class GuildQuestTracker:
 
     def settings(self):
         return {'guild_quest_enabled':self.enabled.get(),'guild_quest_watch':self.watch.get(),'guild_quest_region':self.region,
+                'guild_quest_missing_alert':self.missing_alert.get(),
                 'guild_quest_threshold':self.safe_threshold(),'guild_quest_sound':self.sound.get()}
 
     def safe_threshold(self):
@@ -50,7 +54,8 @@ class GuildQuestTracker:
         ttk.Checkbutton(row,text='Enable quest reader',variable=self.enabled,command=self.toggle,style='Vision.TCheckbutton').pack(side='left')
         ttk.Checkbutton(row,text='Sound alerts',variable=self.sound,command=self.app.save_quietly,style='Vision.TCheckbutton').pack(side='right')
         ttk.Checkbutton(frame,text='Smart quest watch while crafting (optional · 15s checks; Lite Use stops it)',variable=self.watch,command=self.watch_changed,style='Vision.TCheckbutton').pack(anchor='w',pady=(8,0))
-        tk.Label(frame,text='ALCHEMY · GUILD QUEST',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(12,4))
+        ttk.Checkbutton(frame,text='Remind if crafting has no verified matching guild quest',variable=self.missing_alert,command=self.app.save_quietly,style='Vision.TCheckbutton').pack(anchor='w',pady=(5,0))
+        tk.Label(frame,text='COOKING / ALCHEMY · GUILD QUEST',bg=c['bg'],fg=c['muted'],font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(12,4))
         tk.Label(frame,textvariable=self.progress,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',26)).pack(anchor='w')
         self.bar=ttk.Progressbar(frame,maximum=100,style='Vision.Horizontal.TProgressbar');self.bar.pack(fill='x',pady=(10,14))
         tk.Label(frame,textvariable=self.state,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',11)).pack(anchor='w')
@@ -68,6 +73,7 @@ class GuildQuestTracker:
         self.app.text_button(buttons,'LIVE OCR READER',self.reader_view.open).pack(side='left',padx=12)
         self.app.text_button(buttons,'CUSTOM AREA',self.select_region).pack(side='right')
         self.app.text_button(buttons,'USE AUTO AREA',self.auto_region).pack(side='right',padx=12)
+        self.app.text_button(buttons,'SNOOZE REMINDER 10m',lambda:self.missing_gate.snooze(time.time())).pack(side='right',padx=8)
         tk.Label(frame,text='LAST SEEN · Default: quests accompany tool scans. Optional Smart watch rechecks a small visible guild card while the craft timer runs, without rescanning tools. Exact unchanged pixels reuse verified text. No quest progress is estimated; Lite Use stops Smart watch. Vision never accepts quests automatically.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(18,8))
         tk.Label(frame,textvariable=self.debug,bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w')
         tk.Label(frame,text='DAILY & BONUS · LAST VERIFIED',bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',10)).pack(anchor='w',pady=(12,5))
@@ -110,7 +116,7 @@ class GuildQuestTracker:
         self.notice.set('Automatic right-hand quest widget area selected.')
 
     def next_quest(self):
-        self.model.reset();self.cache=None;self.generation+=1;self.notice.set('Previous progress archived. Show the next alchemy guild mission.');self.refresh()
+        self.model.reset();self.cache=None;self.last_absence={};self.generation+=1;self.notice.set('Previous progress archived. Show the next cooking or alchemy guild mission.');self.refresh()
 
     def poll(self):
         self.watch_pending=None
@@ -194,7 +200,13 @@ class GuildQuestTracker:
                 diagnostic(image,'CAPTURE RECEIVED\nRegion: '+str(box)+'\nRecognition is starting. This frame is retained if a later OCR pass fails.')
                 key=(tess,box,hashlib.sha256(image.tobytes()).digest());cached=self.cache
                 if cached and cached[0]==key and time.monotonic()-cached[1]<60:reading,raw=cached[2],cached[3];reused=True
-                else:reading,raw=recognize_quest(image,tess,diagnostic=diagnostic if debug_token is not None else None);reused=False
+                else:
+                    worker=getattr(self.app,'windows_ocr',None)
+                    if worker is not None:
+                        from structured_reader import recognize_quest_structured
+                        reading,raw=recognize_quest_structured(image,tess,worker,diagnostic=diagnostic if debug_token is not None else None)
+                    else:reading,raw=recognize_quest(image,tess,diagnostic=diagnostic if debug_token is not None else None)
+                    reused=False
                 if reading:self.cache=(key,time.monotonic(),reading,raw)
                 if reading and reading.get('card_box'):
                     sx=(box[2]-box[0])/image.width;sy=(box[3]-box[1])/image.height;a,b,c,d=reading['card_box']
@@ -214,6 +226,9 @@ class GuildQuestTracker:
         if self.closed:return
         if generation!=self.generation:self.schedule();return
         verified=bool(reading and ('current' in reading or reading.get('completion_observed')))
+        absent=bool(reading and reading.get('absence_observed') and reading.get('absence_votes')==2)
+        if absent:self.last_absence={**reading,'absence_at':captured}
+        elif verified:self.last_absence={}
         if was_watch and not verified:self.watch_box=None;self.watch_context=None
         self.last_seconds=round(duration,3);self.phase='verified' if verified else 'retry'
         self.pipeline.set(('Verified last-seen snapshot' if verified else 'No agreed guild counter · inspect LIVE OCR READER, then retry')+f' · {duration:.2f}s'+(' · exact pixels reused' if reused else ''))
@@ -225,7 +240,7 @@ class GuildQuestTracker:
                 self.phase='confirming';self.pipeline.set('A different quest counter was seen · saved progress is retained until a second verified read, or use NEXT QUEST after accepting a new mission')
             if reading.get('_card_region'):
                 self.watch_box=tuple(reading['_card_region']);self.watch_context=visible_bdo_capture_bounds()
-        else:self.model.pause('No agreed guild counter or completion message. Keep the quest widget visible.')
+        else:self.model.pause('Verified explicit no-active-guild-mission message' if absent else 'No agreed guild counter or completion message. Keep the quest widget visible.')
         for row in (reading or {}).get('objectives',[]):
             value={**row,'last_at':captured};previous=self.objective_rows.get(row['key'])
             self.objective_rows[row['key']]=value
@@ -241,7 +256,22 @@ class GuildQuestTracker:
         self.debug.set(f"Reader {duration:.2f}s · "+('unchanged verified pixels reused' if reused else 'two OCR passes')+' · no screenshot saved')
         self.read_failures=0 if verified else self.read_failures+1
         self.refresh()
+        self.check_crafting_quest()
         self.schedule()
+
+    def check_crafting_quest(self):
+        if self.busy or self.waiting:return
+        report=getattr(self.app,'tool_report',None) or {}
+        active=next((r for r in report.get('tools',[]) if r['id']==report.get('active_id')),None)
+        if not active:return
+        from tool_reader import family
+        now=time.time();quest={**self.model.snapshot(now),**self.last_absence}
+        decision=reminder_decision(quest,family(active['name']),now,enabled=self.missing_alert.get(),crafting=bool(self.app.running))
+        event=self.missing_gate.accept(decision,getattr(self.app,'session_id',''),now)
+        if event:
+            self.notice.set(event['message'])
+            self.app.status.set(event['message'])
+            if event['sound'] and self.sound.get():winsound.MessageBeep(winsound.MB_ICONASTERISK)
 
     def failed(self,message,generation):
         self.busy=False;self.app.busy=False;self._watch_read=False
@@ -253,7 +283,7 @@ class GuildQuestTracker:
             self.schedule()
 
     def alert(self,event):
-        messages={'near':'Alchemy guild objective is nearly finished. Get ready to complete it and choose the next one.',
+        messages={'near':'Guild objective is nearly finished. Get ready to complete it and choose the next one.',
                   'complete':'Guild objective complete. Check BDO to finish the mission and accept the next one.',
                   'test':'Guild Quest test alert. This does not change your progress.'}
         message=messages[event];self.notice.set(message);self.app.status.set(message)
@@ -277,7 +307,9 @@ class GuildQuestTracker:
             if variable.get()!=value:variable.set(value)
         changed(self.progress,'Complete' if view['complete'] else f'{current:,} / {target:,}' if current is not None else '— / —')
         if self.bar and float(self.bar['value'])!=view['percent']:self.bar['value']=view['percent']
-        if view['complete']:state='Guild quest: Complete · '+('claim your rewards in BDO' if view['available'] else 'last seen; '+view['reason'])+(' · tracking off' if not self.enabled.get() else '')
+        absent=self.last_absence.get('absence_at')
+        if absent is not None and 0<=time.time()-absent<=35:state='NO ACTIVE GUILD MISSION · explicit message verified; accept a mission in BDO'
+        elif view['complete']:state='Guild quest: Complete · '+('claim your rewards in BDO' if view['available'] else 'last seen; '+view['reason'])+(' · tracking off' if not self.enabled.get() else '')
         elif not self.enabled.get():state='MANUAL SNAPSHOT · automatic tracking off' if view['available'] else 'TRACKING OFF · saved progress retained'
         elif not view['available']:state=('LAST SEEN · saved snapshot' if current is not None else 'NO QUEST SNAPSHOT YET')+(' · Smart quest watch armed' if held and self.watch.get() and not self.app.lite_use.get() else ' · tool timer holds OCR' if held else ' · scan both readers when the objective is visible')
         else:state=f"LAST SEEN · {view['percent']:.1f}% · {view['remaining']:,} remaining"

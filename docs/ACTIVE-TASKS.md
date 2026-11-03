@@ -1,0 +1,150 @@
+# Active product checklist — November 2, 2026
+
+Statuses describe evidence, not promises. A test pass is not a live-game acceptance
+pass. The latest user direction puts the three core reader tasks ahead of all
+other features. Size measurement and dependency work are paused. Under 7 MB remains
+an aspirational complete-download goal; no feature removal or hidden extra download.
+
+## P0 — Current tool: acquire once, verify, run the timer
+
+- [x] Reproduce a failed saved frame; 2491/3000 was missed while a neighboring empty
+  tool was returned. A scoped recovery now reads the correct tool; this does not
+  establish overall accuracy.
+- [x] Build a separate persistent Windows OCR engine transport and test its English
+  engine availability locally. New frames travel through RAM/pipes, not disk.
+- [x] Use positioned OS-recognized words and Place Mode to locate complete numeric
+  fields. Text damage may locate a field; it must never manufacture its digits.
+- [x] Check the complete number with independent recognition and existing context
+  checks; retain the compatibility locator for overlapping labels.
+- [ ] Associate tool identity with its current scene/window/scale; invalidate on
+  camera movement, overlapping labels, tool swap and window movement.
+- [ ] Start the countdown immediately after a verified positional acquisition;
+  confirm actual decreasing use on the next bounded acquisition.
+- [ ] Preserve the 1.5-second comparison as a scheduled second observation; exclude
+  the wait from recognition work and reject ambiguous simultaneous changes.
+- [ ] Stop tool scans once active crafting is confirmed. Preserve the countdown
+  through covered/minimized game windows; label it an estimate.
+- [ ] Preserve Lite Use: initial tool acquisition and optional paired quest
+  snapshot, then all OCR stops. No hidden health polling or new capture loop.
+- [ ] Reader Debug must show actual input, crop bounds, engine results, rejected
+  alternatives, selection reason and stage timings. Unknown is actionable.
+- [ ] Compare labeled failed captures, held-out recordings and a live decreasing
+  counter. Measure exact value precision, acquisition success and false selections
+  separately, plus latency/capture count/process launches. No 100% accuracy claim.
+
+## P0 — Guild quest: scoped progress, both wrapped heights, honest state
+
+- [ ] Locate the guild card before reading numbers; keep Daily/Bonus cards separate.
+- [ ] Read the whole counter area including both possible wrapped rows. Cover
+  `49/` above `600`, `50/600`, and `101/600` shifted onto the second row.
+- [ ] Support cooking and alchemy mission identity, including damaged headings,
+  with strong mission context; never borrow a personal quest's matching fraction.
+- [ ] Compare independent evidence for the same objective and target. Preserve
+  last-seen progress through unreadable/covered frames and scene changes.
+- [ ] Keep completed, active, explicitly absent, disabled and unreadable distinct.
+- [ ] Preserve confirmed completion and safe new-mission rollover, 95% warning,
+  Daily/Bonus tracking and last-seen planner receipts.
+- [ ] Keep paired tool/quest acquisition by default. Smart watch stays opt-in;
+  Lite Use stops it. Reuse a single capture where possible.
+- [ ] Verify Quest Debug input, raw output, boundaries and precise rejection reason.
+- [ ] Replay both wrapped heights, completed cards, overlapping objectives, no
+  mission and negative frames, then verify installed live progress.
+
+## P0 — No active guild quest alert while crafting
+
+- [x] Add an optional reminder for active cooking/alchemy with no confirmed matching
+  mission, shown separately from positive evidence of no active mission.
+- [x] Confirm absence only from an explicit readable game statement/state; a hidden
+  right-side card is not proof that no mission exists.
+- [x] Use existing acquisitions; no additional OCR merely to run this alert.
+- [x] If status is unreadable, show a quiet 'quest not verified' action instead of
+  an authoritative absent-quest alarm.
+- [x] Deduplicate by crafting run and quest status; ten-minute snooze; reset when a new
+  matching quest is confirmed. No repeated alarm every timer tick.
+- [ ] Completed missions point to claiming/accepting the next quest. Never accept
+  quests or send game inputs automatically.
+- [ ] Test active matching/mismatching quests, complete, absent, disabled, stale,
+  occluded, Lite Use, restarts and changing tools.
+
+## P1 — CP Info, complete in the desktop app
+
+- [x] Existing native calculator, target CP input, market-first exchanges, payback
+  model and browser graphs exist. These are the starting point, not a reason to
+  call the requested desktop feature set complete.
+- [ ] Add a clear target selector linked to the existing target calculation.
+- [ ] Calculate required quantity of **each** supported byproduct from current CP
+  and progress %, including complete exchange bundles and leftovers.
+- [ ] Provide a distinct **Reach my target CP** inverse-planning section: target in,
+  exact single-byproduct and mixed-byproduct exchange plans out. The existing
+  stock-to-result calculator does not satisfy this request by itself.
+- [ ] Mixed plans include owned-only feasibility, shortages, bundle-rounded
+  quantities, overshoot/leftovers and modeled silver opportunity cost. Explain
+  the optimization objective; do not call an unpriced combination most profitable.
+- [ ] Show owned amount, shortage, resulting CP, EXP to target and silver opportunity
+  cost for each route. Never value the same byproducts as both spent and retained.
+- [ ] Plot one target-progress line per byproduct with visible units and shared
+  endpoints; support a text/table equivalent.
+- [ ] Add a pie breakdown with explicit meaning: owned contribution EXP versus
+  remaining target EXP, plus quantities/percentages and an unknown-data state.
+- [ ] Bring the full existing payback comparisons, route simulations, controls,
+  graphs and detailed explanations into the desktop workflow.
+- [ ] Share the existing calculation engine/data; test browser/native parity and
+  retained settings. Keep optional one-shot CP OCR frugal.
+
+## P1 — Imperial, complete in the desktop app
+
+- [x] Browser comparison: buy/craft costs and profit, payout/items per box, sorting,
+  mastery and CP allowance, potential daily totals, stock-aware recommendations.
+- [x] Advanced disclosure: bounded profit graphs, ingredient quantities/stock,
+  expected surplus and return on input cost. Built only when opened.
+- [x] Add 'Guru boxes only' checkbox; filter both recommendations and the table.
+- [ ] Bring all those controls, rankings, four recommendations and advanced details
+  into the desktop app, with shared calculation/data contracts.
+- [ ] Preserve exact market IDs, unknown prices, whole-run costs and stock checks
+  for the full CP allowance. Reuse caches; no new background market/OCR loops.
+- [ ] Clarify potential daily totals versus actual deliveries; verify both
+  cooking/alchemy, taxes excluded from delivery, region and saved-state behavior.
+
+## P2 — Previously requested grind/live-window features
+
+- [x] Big Drops, Huge Drops, treasure exceptions and retrospective heat implemented.
+- [ ] Race Your Best: same-spot best-run pace and projection, comparable price basis,
+  excluded pauses/capture gaps; existing median benchmark is only partial.
+- [ ] Boss/night timers: regional schedule, day/night countdown, optional alerts.
+- [ ] OBS browser sources: live session, Twilight reserves and boss timer; no new OCR.
+- [ ] F9 start/finish and F10 pause/resume; rebind/disable; handle conflicts.
+- [ ] Optional first-confirmed-drop session start and conservative spot suggestion.
+- [x] Manual pauses and known capture gaps excluded from rates.
+- [ ] Optional inactivity pause/resume; distinguish no drops from blocked capture.
+
+## P2 — Workerman and account intelligence
+
+- [x] Investigate upstream public Workerman data/source. It contains static item,
+  node, house/storage-capacity, worker and production data; no authenticated
+  character-account feed has been verified. Do not promise private inventory via it.
+- [ ] Document and version a small attributed adapter for useful static metadata:
+  worker output origins, production materials, node/CP cost and storage capacity.
+- [ ] Verify license/redistribution terms before bundling upstream data/assets.
+- [ ] Define reviewed inventory/storage snapshots by character/town, item ID,
+  quantity, observed time and completeness; imports never equal captured loot.
+- [ ] Add explicit on-demand import/OCR for visible inventory/storage information;
+  do not imply that unseen items are known or that absent rows mean zero stock.
+- [ ] Track life-skill levels/mastery with source/time and character identity.
+- [ ] Add optional HP/stamina snapshots after core readers pass; no continuous HUD
+  scan by default and no stale value presented as current health.
+- [ ] Asset views: priced/unpriced value, location distribution, useful stock,
+  recipe readiness/shortfalls, change history, bars and pies. Avoid double counting
+  transfers, owned inventory, worker forecasts and accepted loot.
+
+## P3 — Integration and release acceptance
+
+- [ ] Compact UI consistency/accessibility and recovery walkthrough for each view.
+- [ ] Preserve sessions, real history, explicit estimates, exports, Fairy links,
+  gear/planner controls, tray restoration and one-shot Lite Use.
+- [ ] Run required regressions and isolated packaged checks; obtain live acceptance
+  for the three core features before making a reliability claim.
+- [ ] Commit source, publish the current default branch/release, preserve previous
+  packages and verify a history backup before replacing an installed app.
+
+Dependency order: reliable observations → trusted quest state/alerts → owned account
+snapshots → shared economics → comparisons/graphs → optional rewards and overlays.
