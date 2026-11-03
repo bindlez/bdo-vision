@@ -46,6 +46,9 @@ class AutoCraftTests(unittest.TestCase):
         byproduct=spec['items'][str(spec['byproducts']['alchemy']['id'])]['name'];e.observe(3,byproduct,5,CONTEXT,2)
         d=e.snapshot(CONTEXT,QUOTES,True);self.assertEqual(d['recordedValue'],200);self.assertFalse(d['unpriced'])
         self.assertIsNone(e.snapshot(CONTEXT,{},True)['model']['toolValue'])
+        e=CraftInference();e.observe(1,ITEM,4,CONTEXT,0)
+        self.assertFalse(e.observe(2,byproduct,5,CONTEXT,.2));self.assertIsNone(e.run)
+        e.observe(3,ITEM,4,CONTEXT,1);self.assertEqual(e.run['counts'][byproduct],5);self.assertIn(2,e.run['ids'])
 
     def test_recipe_changes_restart_forecast_and_retained_state_cannot_resume_on_restart(self):
         e=self.detected();other=next(g['name'] for g in families()[0].values() if g['kind']=='alchemy' and g['name']!=ITEM and identify(g['name'],'alchemy'))

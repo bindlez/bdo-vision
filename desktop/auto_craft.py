@@ -93,6 +93,10 @@ class CraftInference:
         self.last_id=ident
         if not context or not context.get('active') or type(quantity) is not int or quantity<=0:return False
         family=identify(item,context['kind'])
+        pending=self.pending
+        if not family and pending and pending['tool']==context['tool'] and 0<=at-pending['at']<=90 and related(item,families()[0][pending['family']]):
+            self.add(pending,item,quantity);pending['ids'].append(ident);pending['lastId']=ident
+            return False  # Extra/byproduct evidence never confirms a recipe alone.
         same=self.run and self.run['tool']==context['tool']
         if same and related(item,families()[0][self.run['family']]) and (not family or family['key']==self.run['family']):
             self.add(self.run,item,quantity);self.run['lastId']=ident;self.revision+=1;return True
