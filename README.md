@@ -1,4 +1,10 @@
-# BDO Vision · current test candidate 1.13.0-rc.25
+# BDO Vision · current test candidate 1.13.0-rc.26
+
+The Recipe planner now opens with a **whole production map and timeline**. Pick
+your product, choose a reachable finished product, inspect every required branch
+and select a stage for its inputs/time or an explicit timer. Exact item-ID links
+connect subrecipes and their future consumers; earlier packing/calculation tools
+remain available underneath. Cooking and alchemy each remember their stopping rule: tool durability by default, ingredient stock, hybrid (the first limit), or a manual target. Inventory limits use entered bag quantities; synced tool counters reuse the existing feed.
 
 The separate **Chain simulator** starts from any upstream ingredient or ready-made
 intermediate, using its own stock. Compare companion purchases versus stock-only

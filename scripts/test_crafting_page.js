@@ -4,7 +4,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),vm=require('vm');
 const nodes=new Map();
 class Element{
  constructor(){this.dataset={};this.style={};this.value='';this.checked=false;this.open=false;this.children=[];this.controls=[];}
- set innerHTML(value){this.html=value;this.controls=[];for(const match of value.matchAll(/<(input|select|button|details|div|section|p)\b([^>]*)>/g)){const n=new Element(),attrs=match[2];n.checked=/\bchecked\b/.test(attrs);n.open=/\bopen\b/.test(attrs);for(const a of attrs.matchAll(/([\w-]+)="([^"]*)"/g)){if(a[1].startsWith('data-'))n.dataset[a[1].slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=a[2];else n[a[1]]=a[2];}if(match[1]==='select'){const options=value.slice(match.index+match[0].length,value.indexOf('</select>',match.index));n.value=(options.match(/<option value="([^"]*)" selected/)||options.match(/<option value="([^"]*)"/))?.[1]||'';}if(n.id)nodes.set(n.id,n);this.controls.push(n);}}
+ set innerHTML(value){this.html=value;this.controls=[];for(const match of value.matchAll(/<(input|select|button|details|div|section|p|a)\b([^>]*)>/g)){const n=new Element(),attrs=match[2];n.checked=/\bchecked\b/.test(attrs);n.open=/\bopen\b/.test(attrs);for(const a of attrs.matchAll(/([\w-]+)="([^"]*)"/g)){if(a[1].startsWith('data-'))n.dataset[a[1].slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=a[2];else n[a[1]]=a[2];}if(match[1]==='select'){const options=value.slice(match.index+match[0].length,value.indexOf('</select>',match.index));n.html=options;n.value=(options.match(/<option value="([^"]*)" selected/)||options.match(/<option value="([^"]*)"/))?.[1]||'';}if(n.id)nodes.set(n.id,n);if(n.id==='productionRoadmap')n.innerHTML=value.slice(match.index+match[0].length,value.indexOf('</section>',match.index));this.controls.push(n);}}
  get innerHTML(){return this.html||'';}
  querySelectorAll(selector){if(selector==='details[open]')return this.controls.filter(n=>n.dataset.section&&n.open);if(selector==='details')return this.controls.filter(n=>n.dataset.section);const attr=selector.match(/^\[data-([\w-]+)\]$/);if(attr){const k=attr[1].replace(/-([a-z])/g,(_,c)=>c.toUpperCase());return this.controls.filter(n=>Object.hasOwn(n.dataset,k));}return [];}
  insertBefore(){}querySelector(){return null;}focus(){}setSelectionRange(){}matches(){return false;}
@@ -15,8 +15,9 @@ const recipes=JSON.parse(fs.readFileSync('desktop/assets/recipes.json','utf8')),
 let started=null,download=null;const context={console,Map,Set,URL,AbortSignal,structuredClone,RECIPES:recipes,VISION_CRAFT_DATA:spec,region:'na',recipeTab:'alchemy',lastCraftAmount:100,selectedRecipe:recipes.find(r=>r.itemId===678),location:{protocol:'file:',hostname:''},bridgeSelectedOrigin:null,visionMarketById:{},visionMarketByName:{},visionMarketQuoteDetails:{},visionEscape:v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),visionName:n=>n.toLowerCase(),localStorage:{getItem:()=>null,setItem(){}},saveState(){},toast(){},fmtTime:n=>n.toFixed(1)+'s',setTimeout,clearTimeout,document:{getElementById:id=>nodes.get(id)||null,createElement:()=>new Element(),activeElement:new Element(),querySelectorAll:()=>[]},startCraft:(r,n,opts)=>{started={r,n,opts};},intelDownload:(...args)=>{download=args;},openModal(){},closeModal(){}};
 context.window=context;for(const q of snapshot.items){context.visionMarketById['na:'+q.id]=q.price;context.visionMarketQuoteDetails['na:'+q.id]=q;}
 vm.createContext(context);const html=fs.readFileSync('bdo-market-intelligence.html','utf8');
-for(const marker of ['CRAFTING_ENGINE_JS','CRAFTING_STUDIO_JS','CRAFTING_SIMULATOR_JS','RECIPE_BROWSER_JS']){const script=html.split('/* OWNED '+marker+' START */')[1]?.split('/* OWNED '+marker+' END */')[0];assert(script,marker);vm.runInContext(script,context);}
+for(const marker of ['RECIPE_NETWORK_JS','CRAFTING_ENGINE_JS','CRAFTING_STUDIO_JS','CRAFTING_SIMULATOR_JS','PRODUCTION_ROADMAP_JS','RECIPE_BROWSER_JS']){const script=html.split('/* OWNED '+marker+' START */')[1]?.split('/* OWNED '+marker+' END */')[0];assert(script,marker);vm.runInContext(script,context);}
 nodes.set('imperialQuick',new Element());
+context.craftRoadState.runModes={cooking:'manual',alchemy:'manual'};
 context.craftStudioRender(context.selectedRecipe,100);context.renderRecipeList();
 assert(nodes.get('imperialQuick').innerHTML.includes('BEST TO BUY & PACK'));
 assert(nodes.get('imperialQuick').innerHTML.includes('BEST TO CRAFT & PACK'));
@@ -136,4 +137,39 @@ assert.equal((nodes.get('craftDetail').innerHTML.match(/class="load-card"/g)||[]
 assert.equal(JSON.stringify(context.craftStudioState.make),makeBefore);assert.equal(JSON.stringify(context.craftStudioState.inventory),stockBefore);
 nodes.get('lineOverview').onclick();assert(!context.craftStudioState.productionOverview);assert.equal((nodes.get('craftDetail').innerHTML.match(/class="load-card"/g)||[]).length,1);
 
+// Map-first planner: real downstream goals, clickable nodes and a matching timeline.
+const wine=recipes.find(r=>r.name==='Fruit Wine'),serendia=recipes.find(r=>r.name==='Serendia Meal');context.selectedRecipe=wine;context.lastCraftAmount=100;context.craftStudioRender(wine,100);
+assert(nodes.get('craftDetail').innerHTML.includes('From ingredient to finished product'));assert(!nodes.get('craftDetail').controls.find(n=>n.dataset.section==='single-recipe').open);
+const routeState=JSON.stringify([context.craftStudioState.make,context.craftStudioState.choices,context.craftStudioState.inventory]);
+assert(nodes.get('roadGoal').innerHTML.includes(serendia.id));assert(!nodes.get('roadGoal').innerHTML.includes('value="'+meal.id+'"'));
+nodes.get('roadGoal').onchange({target:{value:serendia.id}});assert.equal(context.craftRoadLive.goal.id,serendia.id);assert(nodes.get('productionRoadmap').innerHTML.includes('Production timeline'));
+assert(context.craftRoadLive.timeline.rows.some(s=>s.recipeId===wine.id));assert.equal(context.craftRoadLive.timeline.rows.at(-1).recipeId,serendia.id);
+const focusLink=nodes.get('productionRoadmap').controls.find(n=>n.dataset.roadFocus===serendia.id);focusLink.onclick({preventDefault(){}});assert.equal(context.craftRoadLive.focus,serendia.id);
+nodes.get('roadCount').onchange({target:{value:'200'}});assert.equal(context.craftRoadLive.count,200);assert.equal(context.lastCraftAmount,100,'future goal quantities do not overwrite the selected ingredient packing target');
+assert.equal(JSON.stringify([context.craftStudioState.make,context.craftStudioState.choices,context.craftStudioState.inventory]),routeState,'viewing a full map must not adopt a make route or consume stock');
+nodes.get('roadExport').onclick();const exported=JSON.parse(download[1]);assert.equal(exported.goalRecipeId,serendia.id);assert.equal(exported.estimated,true);assert(exported.stages.some(s=>s.recipeId===wine.id));
+context.activeTimers=[];started=null;nodes.get('roadStart').onclick();assert.equal(started.r.id,serendia.id);assert.equal(started.n,200);assert.equal(context.craftWorkflow,'timers');
+context.activeTimers=[{status:'running',recipeId:serendia.id}];started=null;nodes.get('roadStart').onclick();assert.equal(started,null,'do not duplicate a running stage timer');delete context.activeTimers;
+
+// Cooking/alchemy remember independent tool/ingredient/hybrid stopping rules.
+context.selectedRecipe=wine;context.lastCraftAmount=100;context.craftRoadTool=null;context.craftRoadState.runModes={};context.craftRoadState.toolFallback={};context.craftStudioRender(wine,100);
+assert.equal(context.craftRoadLive.limit.mode,'tool');assert(!context.craftRoadLive.limit.available);assert.equal(context.craftRoadLive.timeline.rows.length,0);
+nodes.get('roadToolFallback').onchange({target:{value:'10'}});assert.equal(context.craftRoadLive.limit.batches,10);assert.equal(context.craftRoadLive.timeline.rows.find(s=>s.recipeId===wine.id).batches,10);
+const runStock={};for(const m of context.craftRoadInputs(wine,context.craftRoadLive.ctx))runStock[m.itemId]=m.qty*5;context.craftRoadState.runStock[wine.id]=runStock;
+nodes.get('roadRunMode').onchange({target:{value:'ingredients'}});assert.equal(context.craftRoadLive.limit.batches,5);assert.equal(context.craftRoadLive.timeline.rows.find(s=>s.recipeId===wine.id).batches,5);
+nodes.get('roadRunMode').onchange({target:{value:'hybrid'}});assert.equal(context.craftRoadLive.limit.batches,5);assert.equal(context.craftRoadMode(recipes.find(r=>r.type==='alchemy')),'tool');
+const stamp=Date.now()+100;context.craftRoadAcceptToolReading({signal:1,current:4,maximum:100,seconds_per_craft:1,observed_at:stamp/1000,instance_id:'test',session_id:'new-tool',source:'ocr'});assert.equal(context.craftRoadToolNow('cooking',stamp+2000).remaining,2);assert.equal(context.craftRoadLive.limit.batches,4);assert.equal(context.craftRoadLive.timeline.rows.find(s=>s.recipeId===wine.id).batches,4);
+const currentLink=nodes.get('productionRoadmap').controls.find(n=>n.dataset.roadFocus===wine.id);currentLink.onclick({preventDefault(){}});started=null;nodes.get('roadStart').onclick();assert.equal(started.r.id,wine.id);assert.equal(started.n,4);assert.equal(started.opts.craftPlan.seconds,1);assert.equal(started.r.secPerBatch,1);
+for(const id of Object.keys(runStock))runStock[id]=0;context.craftRoadState.runStock[wine.id]=runStock;nodes.get('roadApplyLimit').onclick();assert.equal(context.craftRoadLive.limit.batches,0);assert.equal(context.craftRoadLive.timeline.rows.length,0);
+let rebuilds=0;const priorRefresh=context.craftRoadToolRefresh;context.craftRoadToolRefresh=()=>{rebuilds++;priorRefresh();};context.craftRoadAcceptToolReading({signal:2,current:4,maximum:100,seconds_per_craft:1,observed_at:stamp/1000,instance_id:'test',session_id:'new-tool',source:'ocr'});assert.equal(rebuilds,0,'ordinary tool ticks must not replan the whole map');
+
 console.log('Shipped Crafting UI: rendering, target conversion, queue, export, timer linkage, tax, favorites, processing search and escaping passed.');
+
+// Whole-route pricing: fixed choices, bounded requests and offline retry recovery.
+(async()=>{
+ const load=context.craftStudioLoadPrices,vm=context.craftRoadLive,ids=context.craftStudioIds(vm.goal,vm.ctx);assert(ids.includes(wine.itemId));assert(ids.includes(serendia.itemId));assert(ids.length<=256);
+ context.bridgeSelectedOrigin=null;const offline=await load(vm.goal,false,vm.ctx);assert.equal(offline.ok,false);await Promise.resolve();assert.equal(context.craftStudioPricePending.size,0);
+ let requests=0;context.bridgeSelectedOrigin='http://127.0.0.1:7288';context.visionRememberMarketQuotes=()=>{};context.fetch=async(url,opts)=>{requests++;assert(url.endsWith('/craft-quotes'));const body=JSON.parse(opts.body);assert(body.ids.length<=64);assert.equal(body.region,'NA');return {ok:true,json:async()=>({items:[]})};};
+ const online=await load(vm.goal,false,vm.ctx);assert(online.ok);assert(requests>0);const before=requests;assert((await load(vm.goal,false,vm.ctx)).cached);assert.equal(requests,before);
+ console.log('Whole-line price requests: route IDs, 64-item batches, offline recovery and shared cache passed.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

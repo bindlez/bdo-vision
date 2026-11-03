@@ -32,3 +32,6 @@ Add pure rules in a small JS module where possible, test those rules with Node, 
 
 The separate Chain simulator/workspaces are owned by `crafting-simulator.js` and
 embedded by `build_crafting.py`. See [starting-stock scenarios and state isolation](32-starting-stock-simulator.md).
+
+The primary map/timeline uses `recipe-network.js` and `production-roadmap.js`;
+see [map architecture and navigation](33-production-map-and-timeline.md).

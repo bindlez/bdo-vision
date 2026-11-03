@@ -218,3 +218,14 @@ snapshots → shared economics → comparisons/graphs → optional rewards and o
 - [x] Dedicated sample preview and linked developer documentation.
 - [x] Optional complete card grid, expandable dependency sidebar and full-make
   cost/time summary matching the large-meal reference; focused mode preserved.
+
+## rc.26 - map-first product architecture
+
+- [x] Shared exact-ID producer/consumer network across all 990 variants and groups.
+- [x] Visible future uses, goal selection and a full connected dependency map.
+- [x] Prerequisite-first timeline with stage inputs, quantities and relative times.
+- [x] Explicit stage timer/export actions; old packing/economics retained underneath.
+- [x] Route/stock isolation, invalid-connection and actual shipped interaction tests.
+
+- [x] Cooking/alchemy default to tool-run limits; independent ingredient/hybrid/manual
+  settings, unknown/zero guards and whole-run projections from the selected product.

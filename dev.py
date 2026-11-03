@@ -81,6 +81,8 @@ def main():
             ('node', 'scripts/test_crafting_page.js'),
             ('node', 'scripts/test_crafting_logistics.js'),
             ('node', 'scripts/test_crafting_simulator.js'),
+            ('node', 'scripts/test_recipe_network.js'),
+            ('node', 'scripts/test_run_limits.js'),
             ('node', 'scripts/test_auto_craft_page.js'),
             ('node', 'scripts/test_imperial.js'),
             (sys.executable, '-m', 'compileall', '-q', 'desktop', 'scripts', 'tests', 'dev.py'),

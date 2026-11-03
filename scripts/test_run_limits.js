@@ -1,0 +1,15 @@
+'use strict';
+const assert=require('node:assert/strict'),C=require('../desktop/assets/crafting-engine.js');
+const r={id:'run',name:'Run',type:'cooking',mats:[{itemId:1,name:'A',qty:1},{itemId:2,name:'B',qty:2},{itemId:3,name:'C',qty:3}]};
+assert.equal(C.runLimit(r).mode,'tool');assert(!C.runLimit(r).available);assert(!C.runLimit({...r,type:'alchemy'}).available);
+assert.equal(C.runLimit(r,{tool:{available:true,remaining:25}}).batches,25);
+const stock={1:1000,2:14000,3:300};assert.equal(C.runLimit(r,{mode:'ingredients',stock}).batches,100);
+assert.equal(C.runLimit(r,{mode:'hybrid',stock,tool:{available:true,remaining:25}}).batches,25);
+assert.equal(C.runLimit(r,{mode:'hybrid',stock,tool:{available:true,remaining:1000}}).batches,100);
+assert.equal(C.runLimit(r,{mode:'hybrid',stock,tool:{available:true,remaining:1000}}).limiting,'ingredients');
+assert(!C.runLimit(r,{mode:'hybrid',stock}).available);assert(!C.runLimit(r,{mode:'ingredients',stock:{1:4,2:10}}).available);
+assert.equal(C.runLimit(r,{mode:'tool',tool:{available:true,remaining:0}}).batches,0);
+assert.equal(C.runLimit(r,{mode:'ingredients',stock:{1:0,2:0,3:0}}).batches,0);
+assert.equal(C.runLimit(r,{mode:'manual',count:123}).batches,123);
+const dup={...r,mats:[{itemId:1,name:'A',qty:1},{itemId:1,name:'A',qty:2}]};assert.equal(C.runLimit(dup,{mode:'ingredients',stock:{1:10}}).batches,3);
+console.log('Run limits: cooking/alchemy default to tool; ingredient/hybrid minima, unknown values, zero stock, manual targets and duplicate inputs passed.');

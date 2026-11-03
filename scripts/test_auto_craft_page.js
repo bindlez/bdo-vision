@@ -13,3 +13,6 @@ context.renderVisionAutomaticCraft(panel,payload);const card=nodes.get('visionAu
 card.querySelector('details').open=true;card.querySelector('details').ontoggle();assert(card.querySelector('[data-auto-graphs]').innerHTML.includes('actual series'));assert(card.querySelector('[data-auto-details]').textContent.includes('60 observed seconds'));
 context.renderVisionAutomaticCraft(panel,null);assert(card.hidden);
 console.log('Automatic craft: no manual recipe, displayed rates/tool projection, paused status, text-safe names and lazy charts passed');
+
+let opened=null,workspace=null;context.RECIPES=[{id:'wine',name:'Fruit Wine',type:'cooking'}];context.selectRecipe=id=>{opened=id;};context.craftWorkflowSet=mode=>{workspace=mode;};
+context.renderVisionAutomaticCraft(panel,{...payload,recipe:'Fruit Wine',kind:'cooking'});assert(!card.querySelector('[data-auto-map]').disabled);card.querySelector('[data-auto-map]').onclick();assert.equal(opened,'wine');assert.equal(workspace,'planner');

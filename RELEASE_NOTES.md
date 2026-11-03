@@ -1,3 +1,19 @@
+# 1.13.0-rc.26 - Map-first production planning
+
+- Replaced the planner's primary screen with a connected recipe map, visible future
+  products, a goal selector, ordered relative timeline and clickable stage details.
+- Introduced a canonical cached item/recipe network shared by the planner: exact
+  input slots, substitution conversions, main/rare producers and reverse consumers.
+- Goal previews preserve the selected product's actual recipe/substitutions and
+  leave saved inventory, Make/Buy choices and packing targets untouched.
+- Stage timers use exact direct-input models and retain duplicate/chunk guards.
+  Previous packing, economics and workshop tools remain in a disclosure underneath.
+- Cooking and alchemy now have separate saved run limits: both default to current
+  tool durability, with ingredient-only, hybrid-first-limit and manual alternatives.
+  Reuse the existing tool feed; no new OCR or polling.
+- Verified all 990 variants and actual Fruit Wine/Meal connections; no invented
+  Fruit Wine-to-Balenos route. No new OCR, polling or runtime dependency.
+
 # 1.13.0-rc.25 - Isolated starting-stock simulator and Crafting workspaces
 
 - Added a separate whole-chain simulator: choose a final product and any upstream

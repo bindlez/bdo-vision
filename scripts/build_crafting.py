@@ -13,10 +13,16 @@ def json_script(value):
 def build():
     target = ROOT / 'bdo-market-intelligence.html'
     html = target.read_text(encoding='utf-8')
-    for name in ('crafting-engine.js', 'crafting-studio.js', 'crafting-simulator.js', 'vision-timers.js',
+    for name in ('recipe-network.js', 'crafting-engine.js', 'crafting-studio.js', 'crafting-simulator.js', 'production-roadmap.js', 'vision-timers.js',
                  'crafting-loot-view.js', 'crafting-studio.css', 'recipe-browser.js'):
         marker = name.upper().replace('.', '_').replace('-', '_')
         start, end = f'/* OWNED {marker} START */', f'/* OWNED {marker} END */'
+        if name == 'recipe-network.js' and start not in html:
+            anchor = '/* OWNED CRAFTING_ENGINE_JS START */'
+            html = html.replace(anchor, start + '\n' + end + '\n' + anchor, 1)
+        if name == 'production-roadmap.js' and start not in html:
+            anchor = '/* OWNED CRAFTING_SIMULATOR_JS END */'
+            html = html.replace(anchor, anchor + '\n' + start + '\n' + end, 1)
         if name == 'crafting-simulator.js' and start not in html:
             anchor = '/* OWNED CRAFTING_STUDIO_JS END */'
             html = html.replace(anchor, anchor + '\n' + start + '\n' + end, 1)

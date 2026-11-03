@@ -95,3 +95,6 @@ substitution groups instead of hardcoded special cases. Regenerate owned HTML an
 all demos after changing UI/engine assets. The `--weight` preview is explicitly
 synthetic and has separate storage. See [weight model](30-weight-and-production.md)
 for assumptions and [build ownership](08-planner.md) for release instructions.
+
+The main planner now leads with the [production map and timeline](33-production-map-and-timeline.md).
+The packing/overview controls described here remain under its detailed-tools disclosure.
