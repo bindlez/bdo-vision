@@ -20,6 +20,8 @@ class CraftDashboard:
         c=tracker.app.colors
         self.frame=tk.Frame(parent,bg=c['bg'],padx=16,pady=12)
         self.frame.pack(side='top',fill='x')
+        from auto_craft_ui import CurrentCraftView
+        self.current=CurrentCraftView(self.frame,tracker.auto_craft)
         tk.Label(self.frame,text='CRAFTING · TODAY',bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',18)).pack(anchor='w')
         self.summary=tk.StringVar()
         tk.Label(self.frame,textvariable=self.summary,bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',12),wraplength=820,justify='left').pack(anchor='w',pady=8)
@@ -28,7 +30,8 @@ class CraftDashboard:
         self.note=tk.StringVar()
         self.market=tk.StringVar(value='Market valuation appears as quotes become available.')
         tk.Label(self.frame,textvariable=self.market,bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',11),wraplength=820,justify='left').pack(anchor='w',pady=8)
-        scopes=ttk.Notebook(self.frame,style='Loot.TNotebook');scopes.pack(fill='x',pady=8)
+        self.manual_button=tracker.app.text_button(self.frame,'OPTIONAL MANUAL BUDGETS & LINKED SESSIONS',self.toggle_manual);self.manual_button.pack(anchor='w')
+        self.scopes=scopes=ttk.Notebook(self.frame,style='Loot.TNotebook')
         self.recipe_frame=tk.Frame(scopes,bg=c['bg']);scopes.add(self.recipe_frame,text='Recipe session profit')
         manual_frame=tk.Frame(scopes,bg=c['bg'],padx=10,pady=10);scopes.add(manual_frame,text='Manual daily estimate')
         tk.Label(manual_frame,text='Independent daily budget estimate. Do not add this to session profit.',bg=c['bg'],fg=c['secondary'],wraplength=800,justify='left').pack(anchor='w',pady=8)
@@ -55,6 +58,10 @@ class CraftDashboard:
         self.session_cost=SessionCostView(tracker,self.recipe_frame)
         self.canvas.bind('<Configure>',lambda event:self.draw())
         self.update([])
+
+    def toggle_manual(self):
+        if self.scopes.winfo_manager():self.scopes.pack_forget()
+        else:self.scopes.pack(after=self.manual_button,fill='x',pady=8)
 
     def refresh_profit(self):
         if self.last_value is None:return

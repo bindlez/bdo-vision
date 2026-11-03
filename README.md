@@ -1,4 +1,9 @@
-# BDO Vision · current test candidate 1.13.0-rc.21
+# BDO Vision · current test candidate 1.13.0-rc.22
+
+**Current craft is automatic:** with a verified utensil and recorded loot capture,
+repeated output detects the cooking/alchemy family without selecting a recipe.
+Craft shows captured value/hour, the scanned-tool forecast, remaining value,
+current-price charts and milestones. Forecasts and modeled costs stay labeled.
 
 Cooking and alchemy include next-stage timer launch, budget/time/output pies and
 full-chain ingredient substitution choices. Grind adds a compact live window,

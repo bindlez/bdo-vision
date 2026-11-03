@@ -13,9 +13,11 @@ def progress_totals(rows,today):
 
 def ledger_totals(db,today):
     """Aggregate inside SQLite; Home need not allocate the complete loot history."""
-    row=db.execute("""SELECT COALESCE(SUM(quantity),0),
+    automatic=db.execute("SELECT 1 FROM sqlite_master WHERE name='auto_craft_members'").fetchone()
+    craft_kind="(kind IN ('Crafted','Rare craft') OR id IN (SELECT loot_id FROM auto_craft_members))" if automatic else "kind IN ('Crafted','Rare craft')"
+    row=db.execute(f"""SELECT COALESCE(SUM(quantity),0),
         COALESCE(SUM(CASE WHEN substr(recorded_at,1,10)=? THEN quantity ELSE 0 END),0),
-        COALESCE(SUM(CASE WHEN substr(recorded_at,1,10)=? AND kind IN ('Crafted','Rare craft') THEN quantity ELSE 0 END),0),
+        COALESCE(SUM(CASE WHEN substr(recorded_at,1,10)=? AND {craft_kind} THEN quantity ELSE 0 END),0),
         COALESCE(SUM(CASE WHEN substr(recorded_at,1,10)=? AND kind IN ('Rare drop','Rare craft') THEN quantity ELSE 0 END),0),
         COUNT(CASE WHEN substr(recorded_at,1,10)=? THEN 1 END) FROM loot""",(today,)*4).fetchone()
     return dict(zip(('lifetime_units','today_units','crafted','rare','events'),row))

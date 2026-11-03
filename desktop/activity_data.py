@@ -13,7 +13,9 @@ def timer_earnings(path,prices,after_id=0,before=None,since=None,kind=None):
     with closing(sqlite3.connect(str(path))) as db:
         query='SELECT id,recorded_at,item,quantity,source,session,kind FROM loot WHERE id>?'
         args=[after_id]
-        if kind=='craft':query+=" AND kind IN ('Crafted','Rare craft')"
+        if kind=='craft':
+            automatic=db.execute("SELECT 1 FROM sqlite_master WHERE name='auto_craft_members'").fetchone()
+            query+=(" AND (kind IN ('Crafted','Rare craft') OR id IN (SELECT loot_id FROM auto_craft_members))" if automatic else " AND kind IN ('Crafted','Rare craft')")
         elif kind is not None:raise ValueError('Invalid activity filter')
         if before is not None:
             end=float(before)

@@ -1,3 +1,17 @@
+# 1.13.0-rc.22 · Automatic current-craft intelligence
+
+- Detect cooking/alchemy recipe families from repeated accepted output and a
+  verified active utensil. No recipe/session selection or Crafting mode needed.
+- Show captured item value/hour, expected main+rare value/hour, scanned-tool value
+  and remaining-durability value, plus explicit modeled ingredient-profit ranges.
+- Add bounded current-price value graphs, output/coverage donuts and captured-unit
+  milestones. Share the detected craft with the paired site only when sharing is on.
+- Save inferred runs and event membership separately; never rewrite accepted
+  quantities or original activity labels. Derive automatic craft labels for views
+  and include those accepted events in optional crafting-timer earnings.
+- Reuse the existing app tick and OCR. Exact recipe price lookup is cached and
+  backgrounded. Capture gaps freeze measured time; Lite Use stops inference/extra OCR.
+
 # 1.13.0-rc.21 · Simpler navigation and next actions
 
 - Replaced the crowded desktop tab strip with Home/Craft/Grind/Quests and grouped

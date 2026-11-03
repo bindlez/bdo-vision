@@ -89,11 +89,13 @@ class LootInsights:
                     self.session.clock.gate=False;self.session.tick(False)
                     self.tracker.refresh_shared_loot()
                 self.last_lite_mode=True
+                self.tracker.auto_craft.tick(False)
                 self.tracker.grind.live.refresh()
                 home=getattr(self.tracker,'home',None)
                 if home and home.frame.winfo_exists() and home.frame.winfo_ismapped():home.refresh()
                 return
             ready,reason=self.tracker.capture_availability()
+            self.tracker.auto_craft.tick(ready)
             self.tracker.capture_clock.tick(ready,reason)
             if not ready:self.session.clock.gate=False
             self.session.tick(ready)
@@ -106,7 +108,7 @@ class LootInsights:
             home=getattr(self.tracker,'home',None)
             if home and home.frame.winfo_exists() and home.frame.winfo_ismapped():home.refresh()
             workshop=getattr(self.tracker,'craft_dashboard',None)
-            if workshop and self.tracker.craft_tab.winfo_exists() and self.tracker.craft_tab.winfo_ismapped():workshop.session_cost.refresh()
+            if workshop and workshop.recipe_frame.winfo_ismapped():workshop.session_cost.refresh()
             if self.frame and self.frame.winfo_exists() and self.frame.winfo_ismapped():self.refresh()
             if self.sessions_frame and self.sessions_frame.winfo_exists() and self.sessions_frame.winfo_ismapped():self.refresh_sessions()
             if self.tracker.grind.frame and self.tracker.grind.frame.winfo_exists() and self.tracker.grind.frame.winfo_ismapped():self.tracker.grind.refresh()

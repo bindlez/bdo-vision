@@ -2060,6 +2060,7 @@ function renderVisionCraftingLoot(reading){
   var data=reading && reading.crafting_loot;
   if(!data){panel.hidden=true;visionLootLast=null;return;}
   visionLootLast=reading;panel.hidden=false;
+  renderVisionAutomaticCraft(panel,data.auto_craft);
   var age=data.updated_at?Math.max(0,Date.now()/1000-Number(data.updated_at)):Infinity;
   var stamp=data.updated_at?new Date(Number(data.updated_at)*1000).toLocaleTimeString():'no reading yet';
   document.getElementById('visionLootState').textContent=data.available===true && age<=15?'Observed '+stamp:'Unavailable now · '+(data.reason||'reading is no longer current')+' · last observation '+stamp;
@@ -2084,6 +2085,20 @@ function renderVisionCraftingLoot(reading){
   });
   document.getElementById('visionLootSilver').textContent=priced?total.toLocaleString()+' silver of recorded item value':'Waiting for matched market prices';
   document.getElementById('visionLootCoverage').textContent=unpriced?'Partial total: '+unpriced+' unmatched / unpriced item types excluded.':'Quantity × market or verified NPC sell value. No costs or fees deducted.';
+}
+function renderVisionAutomaticCraft(panel,data){
+ var card=document.getElementById('visionAutomaticCraft');
+ if(!data||!data.detected){if(card)card.hidden=true;return;}
+ if(!card){card=document.createElement('section');card.id='visionAutomaticCraft';card.className='workshop-next';card.innerHTML='<small>CURRENT CRAFT · AUTOMATIC</small><h3 data-auto-title></h3><p data-auto-state role="status"></p><div class="studio-kpis"><div><small>Captured item value / observed hour</small><strong data-auto-rate></strong></div><div><small>Projected main + rare value / hour</small><strong data-auto-model></strong></div><div><small>Projected scanned-tool value</small><strong data-auto-tool></strong></div></div><p data-auto-note></p><details><summary>Craft graphs & forecast details</summary><div data-auto-graphs></div><p data-auto-details></p></details>';panel.prepend(card);}
+ card.hidden=!data||!data.detected;if(card.hidden)return;
+ var num=n=>typeof n==='number'&&Number.isFinite(n)?Math.round(n).toLocaleString():'Unavailable',m=data.model;
+ card.querySelector('[data-auto-title]').textContent=data.recipe+' · '+data.kind;
+ card.querySelector('[data-auto-state]').textContent=data.status;
+ card.querySelector('[data-auto-rate]').textContent=data.recordedPerHour==null?'Measuring / unpriced':num(data.recordedPerHour);
+ card.querySelector('[data-auto-model]').textContent=num(m?.perHour);card.querySelector('[data-auto-tool]').textContent=num(m?.toolValue);
+ card.querySelector('[data-auto-note]').textContent=num(data.recordedValue)+' captured silver value · '+num(data.units)+' units · '+num(data.remainingValue)+' remaining estimate · next milestone '+num(data.nextGoal)+(data.unpriced?.length?' · partial value: '+data.unpriced.length+' unpriced outputs':'');
+ var details=card.querySelector('details');function graphs(){if(!details.open)return;card.querySelector('[data-auto-graphs]').innerHTML=craftStudioGraph((data.points||[]).filter(p=>Number.isFinite(p[1])),'Captured craft value at current prices over observed seconds')+craftStudioPie((data.items||[]).filter(p=>Number.isFinite(p.value)).map(p=>({label:p.item,value:p.value})),'Captured output value','silver');card.querySelector('[data-auto-details]').textContent='Recipe inferred from repeated output and the tracked utensil. Tool forecast assumes this recipe uses the scanned '+num(data.scannedActions)+' actions, or remaining estimated actions after a recipe change. It does not assume maximum tool capacity. Model yields, speed and sale prices are estimates. Captured rates exclude unreadable/blocked time and need 60 observed seconds. Kept byproducts are excluded; forecasts omit random alchemy extras. '+(m?'Mastery '+m.mastery+'; modeled profit/hour '+num(m.netPerHourLow)+' to '+num(m.netPerHourHigh)+' at '+m.retention+'% retention and cheapest priced ingredient substitutions; actual consumed inputs are unknown.':'Forecast is paused until a verified active tool is available.');}
+ details.ontoggle=graphs;graphs();
 }
 /* OWNED CRAFTING_LOOT_VIEW_JS END */
 
@@ -2801,6 +2816,10 @@ refreshVisionTimerEarnings=async function(base,reading){
 pollBridge=async function(){
  var d=demoCraft,now=Date.now(),dt=Math.min(5,(now-d.last)/1000);d.last=now;if(d.running){if(d.blocked)d.paused+=dt;else{d.observed+=dt;d.count++;var q=demoQuotes[d.count%4===0?1:0];d.events.push({id:d.events.length+1,at:now,item:q.name,price:q.price,quantity:d.count%4===0?1:4,rare:d.count%4===0});if(d.count%9===0)d.events.push({id:d.events.length+1,at:now,item:'Shining Powder',price:demoQuotes.find(q=>q.id===9733).price,quantity:1});}if(d.count>=160)d.running=false;}
  var items=demoItemRows(d.events),data={history_id:'synthetic-crafting-demo',last_event_id:d.events.length,crafting_mode:true,available:d.running&&!d.blocked,reason:d.blocked?'Item area is covered by demo window':d.running?'':'Sample playback paused',updated_at:now/1000,capture_clock:{observed_seconds:d.observed,paused_seconds:d.paused},items:items,captured_items_available:items.length>0,elixir_units:items.filter(function(i){return i.group==='Elixirs';}).reduce(function(s,i){return s+i.quantity;},0),extra_units:items.filter(function(i){return i.group!=='Elixirs';}).reduce(function(s,i){return s+i.quantity;},0),rare_units:items.reduce(function(s,i){return s+i.rare;},0)};
+
+ if(d.count>=2){var detectedRecipe=RECIPES.find(r=>r.itemId===678),plan=VisionCraft.plan(detectedRecipe,1,{yield:2.5,seconds:5,retention:84.5},{...craftStudioContext(),make:{},inventory:{}}),perBatch=plan.revenue;
+ var captured=items.reduce((sum,i)=>sum+i.quantity*i.unit_price,0),units=items.reduce((sum,i)=>sum+i.quantity,0);
+ data.auto_craft={detected:true,recipe:detectedRecipe.name,kind:'alchemy',status:'DEMO · '+(data.available?'observing synthetic craft outputs':'capture paused'),recordedValue:captured,recordedPerHour:d.observed>=60?captured*3600/d.observed:null,units:units,nextGoal:Math.ceil((units+1)/100)*100,unpriced:[],scannedActions:1000,remainingValue:perBatch==null?null:Math.max(0,1000-(d.observed+d.paused)/5)*perBatch,model:{perHour:perBatch==null?null:perBatch*720,toolValue:perBatch==null?null:perBatch*1000,mastery:0,retention:84.5,netPerHourLow:plan.perHour,netPerHourHigh:plan.perHour},items:items.map(i=>({item:i.item,value:i.quantity*i.unit_price})),points:[[0,0],[d.observed,captured]]};}
  bridgeWasConnected=true;bridgeStatus(true,'Synthetic demo · no native connection');document.getElementById('demoState').textContent=d.running?(d.blocked?'Capture blocked · projection only':'Playing sample drops'):'Ready / paused';document.getElementById('demoPlay').textContent=d.running?'Pause sample drops':'Play sample drops';
  renderVisionCraftingLoot({crafting_loot:data});await refreshVisionTimerEarnings('',{crafting_loot:data});if(currentView==='craft')renderActiveTimers();
 };

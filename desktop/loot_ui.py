@@ -63,6 +63,8 @@ class LootTracker:
         self.cp_info=CPInfo(self,settings)
         from imperial_ui import ImperialInfo
         self.imperial=ImperialInfo(self,settings)
+        from auto_craft_ui import AutomaticCrafting
+        self.auto_craft=AutomaticCrafting(self)
         self.root.after(250,self.poll)
 
     def settings(self):
@@ -162,7 +164,7 @@ class LootTracker:
         key=(self.ledger.revision,time.strftime('%Y-%m-%d'))
         if getattr(self,'_last_refresh_key',None)==key:return
         self._last_refresh_key=key
-        rows=self.ledger.rows();today=time.strftime('%Y-%m-%d');current=[r for r in rows if r[1][:10]==today];totals={};crafts={}
+        rows=self.auto_craft.rows();today=time.strftime('%Y-%m-%d');current=[r for r in rows if r[1][:10]==today];totals={};crafts={}
         for row in current:
             key=(row[2],row[6]);totals[key]=totals.get(key,0)+row[3]
             if row[6] in ('Crafted','Rare craft'):crafts[row[2]]=crafts.get(row[2],0)+row[3]
@@ -337,6 +339,7 @@ class LootTracker:
         observed_at=datetime.fromtimestamp(self.capture_time).astimezone().isoformat(timespec='milliseconds') if self.capture_time else None
         ident=self.ledger.add(event.item,event.quantity,{'normal':'Item Drop Log','rare':'Rare Drop Log','chat':'Text feed'}[feed],self.session,recorded_at=observed_at,kind=event.kind)
         self.insights.observe(ident)
+        self.auto_craft.observe(ident,event.item,event.quantity,self.capture_time)
         self.big_drops.observe(ident,event)
         self.insights.prices.notice_item(event.item)
         self.recent.append({'id':ident,'key':key,'feed':feed,'at':now,'paired':False})
@@ -409,6 +412,7 @@ class LootTracker:
         self.refresh()
 
     def close(self):
+        self.auto_craft.save()
         self.big_drops.close_toast()
         self.closed=True;self.generation+=1;self.guild.close();self.capture_clock.tick(False,'Application closing');self.capture_clock.save();self.silver.close();self.insights.close();self.ledger.close()
 
@@ -417,7 +421,7 @@ class LootTracker:
         quotes=prices.all()
         key=(self.ledger.revision,prices.revision,id(quotes))
         if getattr(self,'_shared_summary_key',None)!=key:
-            rows=self.ledger.rows()
+            rows=self.auto_craft.rows()
             self._shared_summary={**silver_snapshot(rows,quotes),
                 'last_event_id':max((r[0] for r in rows),default=0),'captured_items_available':bool(rows),
                 'crafted_units':sum(r[3] for r in rows if r[6] in ('Crafted','Rare craft'))}
@@ -427,7 +431,7 @@ class LootTracker:
         return {'scope':'All recorded loot','available':fresh,'status':'current' if fresh else 'paused','reason':reason,
                 'updated_at':time.time(),'last_capture_at':self.last_scan_finished or None,
                 'history_id':self.capture_clock.history_id,'crafting_mode':self.crafting.get(),
-                'capture_clock':self.capture_clock.snapshot(),'grind':self.grind.snapshot(),'big_drops':self.big_drops.snapshot(),**self._shared_summary}
+                'capture_clock':self.capture_clock.snapshot(),'grind':self.grind.snapshot(),'big_drops':self.big_drops.snapshot(),'auto_craft':self.auto_craft.snapshot(fresh),**self._shared_summary}
 
     def refresh_shared_loot(self):
         bridge=getattr(self.app,'bridge',None)

@@ -180,3 +180,11 @@ snapshots → shared economics → comparisons/graphs → optional rewards and o
 - [x] Next-stage cooking card, collapsed comparisons/full stage list, guarded primary action.
 - [x] CP graph disclosure, grouped Grind settings, retained readers/history/calculators.
 - [x] Reuse one visible Grind history calculation and existing pulse bins.
+
+## rc.22 · automatic current craft
+
+- [x] Repeated normal/rare output plus verified tool detects recipe family automatically.
+- [x] Captured value/hour, scanned-tool and remaining forecasts, modeled profit ranges.
+- [x] Bounded graphs/pies, captured milestones, optional paired-site data.
+- [x] Derived activity membership without rewriting accepted loot; blocked-time/Lite guards.
+- [ ] Installed live acceptance for this inference feature; no perfect-OCR claim.

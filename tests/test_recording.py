@@ -39,7 +39,7 @@ class RecordingTests(unittest.TestCase):
 
     def test_unchanged_capture_avoids_history_reload_and_baseline_write(self):
         t=self.tracker;e=ItemEvent('Milk',3,'Drop')
-        with patch.object(t.ledger,'rows',wraps=t.ledger.rows) as rows:
+        with patch.object(t.auto_craft,'rows',wraps=t.auto_craft.rows) as rows:
             t.finish(self.result([e]),t.generation)
             first=t.ledger.db.execute('SELECT saved_at FROM notification_baselines').fetchone()[0]
             t.finish(self.result([e]),t.generation)
@@ -48,7 +48,7 @@ class RecordingTests(unittest.TestCase):
 
     def test_shared_summary_reuses_history_until_loot_or_prices_change(self):
         t=self.tracker
-        with patch.object(t.grind,'snapshot',return_value={}),patch.object(t,'capture_availability',return_value=(True,'')),patch.object(t.ledger,'rows',wraps=t.ledger.rows) as rows:
+        with patch.object(t.grind,'snapshot',return_value={}),patch.object(t,'capture_availability',return_value=(True,'')),patch.object(t.auto_craft,'rows',wraps=t.auto_craft.rows) as rows:
             first=t.planner_loot_snapshot();t.planner_loot_snapshot()
             self.assertEqual(rows.call_count,1)
             t.ledger.add('Milk',2,kind='Crafted');second=t.planner_loot_snapshot()
