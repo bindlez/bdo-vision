@@ -1,3 +1,13 @@
+# 1.13.0-rc.16 · Stock-aware Imperial daily planning
+
+- Four recommendations separate overall and fully stocked buy/craft choices.
+- Available crafting variants/substitutions and NPC purchase fallback are priced
+  independently; unknown stock never qualifies as available.
+- Remembered total CP sets the daily allowance and whole-run crafting costs;
+  per-box and potential daily profit/payout are shown separately.
+- Added items per box, turn-in silver, and lazy advanced profit graphs,
+  ingredient breakdowns, expected surplus and return on input cost.
+
 # 1.13.0-rc.15 · Simpler Imperial comparisons
 
 - Cooking/Alchemy tabs and one remembered mastery input, with all tiers compared.

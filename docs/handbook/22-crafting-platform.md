@@ -158,3 +158,21 @@ no cost credit. Delivery uses the existing imperial payout/mastery model without
 market-sale tax. Costs link to the corresponding recipe. `imperialRanks` owns
 calculations; `craftImperialRender` owns rendering. Run `node scripts/test_imperial.js`
 and `node scripts/test_crafting_page.js` to verify math and shipped controls.
+
+### Stock, daily totals and advanced analysis
+
+Total CP is optional and remembered in the existing Studio state. When supplied,
+the comparison models `floor(CP / 2)` boxes, amortizes whole-batch crafting cost
+over that allowance, and shows both per-box and potential daily profit. It assumes
+the entire allowance is unused and never writes forecasts into recorded history.
+The two additional in-stock recommendations require enough known market stock
+for that full run. Unknown/zero/insufficient stock is excluded. Cooking/alchemy
+recipe variants and group substitutions are reconsidered for availability; an
+NPC input is allowed at its labeled purchase price. Input requirements aggregate
+by item ID before checking stock. NPC fallback can cost more than an unavailable
+market quote. Stock remains a snapshot, not a reservation. Missing stock is not zero.
+
+The table includes both items per box and Imperial payout per box. Advanced graphs
+are built only when their disclosure is opened. They show bounded top-six expected
+buy/craft profits with a zero baseline, plus recommendation breakdowns of ingredient
+quantity, cost, available stock, expected surplus and return on input cost.

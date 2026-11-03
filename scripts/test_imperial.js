@@ -10,6 +10,17 @@ assert.equal(r.cooking.buy[0].name,'Other'); // cheapest unit price is NOT cheap
 assert.equal(r.cooking.buy[0].cost,300);assert.equal(r.cooking.buy[1].cost,360);
 assert.equal(r.cooking.buy[0].profit,200);assert.equal(r.cooking.buy[0].stock,0);
 assert.equal(r.cooking.craft[0].runs,18);assert.equal(r.cooking.craft[0].cost,180);
+assert.equal(r.cooking.buy[0].inStock,false);assert.equal(r.cooking.craftInStock.length,0);
+const stocked=(n,id)=>({...quote(n,id),stock:id===3?45:18});
+r=C.imperialRanks(recipes,spec,stocked);assert(r.cooking.buy.every(x=>x.inStock));assert.equal(r.cooking.craftInStock[0].cost,90);
+r=C.imperialRanks(recipes,spec,(n,id)=>({...quote(n,id),stock:undefined}));assert(!r.cooking.buy.some(x=>x.inStock));assert.equal(r.cooking.craftInStock.length,0);
+const alternate={...meal,id:'alternate',mats:[{itemId:4,name:'Other Grain',qty:5}]};
+r=C.imperialRanks([...recipes,alternate],spec,(n,id)=>id===4?{price:3,stock:45}:quote(n,id));
+assert.equal(r.cooking.craft[0].recipeId,'meal');assert.equal(r.cooking.craftInStock[0].recipeId,'alternate');assert.equal(r.cooking.craftInStock[0].cost,135);
+const npcSpec={...spec,items:{...spec.items,3:{npcBuy:5}}};
+r=C.imperialRanks(recipes,npcSpec,quote);assert.equal(r.cooking.craftInStock[0].cost,225);assert.equal(r.cooking.craftInStock[0].ingredients[0].basis,'NPC purchase');
+const grouped={...meal,mats:[{itemId:3,name:'Grain',qty:5,required:5,groupId:1}]},groupSpec={...spec,items:{...spec.items,3:{name:'Grain'},4:{name:'Other Grain'}},groups:{1:[{itemId:3,value:1},{itemId:4,value:1}]}};
+r=C.imperialRanks([grouped,box],groupSpec,(n,id)=>id===4?{price:3,stock:45}:quote(n,id));assert.equal(r.cooking.craftInStock[0].choices['meal:0'],4);
 r=C.imperialRanks(recipes,spec,()=>null);assert.equal(r.cooking.buy[0].cost,null);assert.equal(r.cooking.craft[0].cost,null);
 assert.equal(C.imperialRanks(recipes,spec,quote,{tiers:{cooking:99}}).cooking.buy.length,0);
 const rare={...meal,rare:{itemId:2,minProc:1,maxProc:1}};
