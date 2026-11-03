@@ -4,12 +4,13 @@ import time
 import uuid
 import json
 import sqlite3
+import math
 from contextlib import closing
 import webbrowser
 import tkinter as tk
 from tkinter import ttk
-from cp_planner import calculate,data
-from cp_forecast import analyze,income_at
+from cp_planner import calculate,data,build_route
+from cp_forecast import analyze,income_at,productive_days
 from ocr_debug import OCRReaderView
 
 
@@ -55,32 +56,50 @@ class CPInfo:
             self.stock[p['key']]=tk.StringVar(value=str(self.saved.get('counts',{}).get(p['key'],default)))
             ttk.Entry(cell,textvariable=self.stock[p['key']],width=20,style='Vision.TEntry').pack(fill='x')
         self.options=tk.Frame(body,bg=c['panel'],padx=8,pady=8)
-        options=[('deploy','Max new CP actually used',100),('delay','Income delay · days',0),('utilization','Uptime / utilization %',100),('ramp','Ramp to full income · days',0),('setup','One-time setup silver',0),('reserve','Minimum cash to keep',0),('grindRate','Optional grind silver / hour',0)]
+        options=[('deploy','Max new CP actually used',100),('delay','Income delay · days',0),('utilization','Uptime / utilization %',100),('ramp','Ramp to full income · days',0),('setup','One-time setup silver',0),('reserve','Minimum cash to keep',0),('grindRate','Optional grind silver / hour',0),('split','Custom stock to CP %',50)]
         for i,(key,label,default) in enumerate(options):
             cell=tk.Frame(self.options,bg=c['panel']);cell.grid(row=i//3,column=i%3,sticky='ew',padx=5,pady=5);self.options.columnconfigure(i%3,weight=1)
             tk.Label(cell,text=label,bg=c['panel'],fg=c['secondary'],font=('Segoe UI',9)).pack(anchor='w')
             self.fields[key]=tk.StringVar(value=str(self.saved.get(key,default)));ttk.Entry(cell,textvariable=self.fields[key],width=16,style='Vision.TEntry').pack(fill='x')
         self.fields['incomeMode']=tk.StringVar(value='Whole project / day' if self.saved.get('incomeMode')=='project' else 'Per deployed CP / day')
-        ttk.Combobox(self.options,textvariable=self.fields['incomeMode'],values=('Per deployed CP / day','Whole project / day'),state='readonly',style='Vision.TCombobox',width=23).grid(row=2,column=1,columnspan=2,sticky='ew',padx=5)
+        ttk.Combobox(self.options,textvariable=self.fields['incomeMode'],values=('Per deployed CP / day','Whole project / day'),state='readonly',style='Vision.TCombobox',width=23).grid(row=3,column=0,columnspan=2,sticky='ew',padx=5)
+        policy_names={'market':'Material exchanges','vendor':'Direct NPC sale','best':'Best priced option'}
+        self.fields['cashPolicy']=tk.StringVar(value=policy_names.get(self.saved.get('cashPolicy','market'),'Material exchanges'))
+        ttk.Combobox(self.options,textvariable=self.fields['cashPolicy'],values=tuple(policy_names.values()),state='readonly',style='Vision.TCombobox',width=20).grid(row=3,column=2,sticky='ew',padx=5)
         self.control_row=row=tk.Frame(body,bg=c['bg']);row.pack(fill='x',pady=8)
         self.app.action(row,'CALCULATE + SAVE',self.recalculate,primary=True).pack(side='left')
         self.app.text_button(row,'REFRESH EXISTING MARKET PRICES',self.refresh_prices).pack(side='left',padx=14)
         self.app.text_button(row,'ASSUMPTIONS',self.toggle_options).pack(side='left')
         self.note=tk.StringVar(value='Saved scenario · edit stock and income assumptions, then calculate.' if self.saved else 'First-use example: 750,000 catalysts at 490 CP + 19.26%. Edit to your actual stock. Income defaults to zero.')
         tk.Label(body,textvariable=self.note,bg=c['bg'],fg=c['bright'],wraplength=740,justify='left').pack(fill='x',pady=6)
-        self.selected=tk.StringVar(value='Target, then cash');picker=ttk.Combobox(body,textvariable=self.selected,values=('Cash everything','All CP','Target, then cash','50% split'),state='readonly',style='Vision.TCombobox');picker.pack(fill='x',pady=6);picker.bind('<<ComboboxSelected>>',lambda event:self.recalculate(save=False))
+        from cp_target_ui import CPTargetView
+        self.target_view=CPTargetView(body,self)
+        from cp_workerman_ui import CPWorkermanView
+        self.workerman=CPWorkermanView(body,self,self.saved.get('workerman'))
+        self.selected=tk.StringVar(value='Target, then cash');picker=ttk.Combobox(body,textvariable=self.selected,values=('Cash everything','All CP','Target, then cash','Custom split'),state='readonly',style='Vision.TCombobox');picker.pack(fill='x',pady=6);picker.bind('<<ComboboxSelected>>',lambda event:self.recalculate(save=False))
         pages=ttk.Notebook(body,style='Vision.TNotebook');pages.pack(fill='x',pady=8)
         self.text_views={}
-        for title in ('Decision','Payback','Milestones','Model'):
+        for title in ('Decision','Payback','Milestones','Model','Exchanges','CP curve'):
             panel=tk.Frame(pages,bg=c['panel']);pages.add(panel,text=title)
             text=tk.Text(panel,height=11,bg=c['panel'],fg=c['text'],font=('Consolas',10),relief='flat',wrap='word',state='disabled');scroll=ttk.Scrollbar(panel,command=text.yview);text.configure(yscrollcommand=scroll.set);scroll.pack(side='right',fill='y');text.pack(fill='both',expand=True);self.text_views[title]=text
         self.results=self.text_views['Decision']
+        self.chart_mode=tk.StringVar(value='Cash outcomes');chart_picker=ttk.Combobox(body,textvariable=self.chart_mode,values=('Cash outcomes','Allocation frontier','Income sensitivity'),state='readonly',style='Vision.TCombobox');chart_picker.pack(fill='x',pady=4);chart_picker.bind('<<ComboboxSelected>>',lambda e:self.draw_chart())
         self.chart=tk.Canvas(body,height=145,bg=c['panel'],highlightthickness=0);self.chart.pack(fill='x')
+        self.chart.bind('<Button-1>',self.choose_frontier)
+        self.elapsed=tk.DoubleVar(value=0);self.recovery=tk.StringVar(value='Modeled recovery · not recorded income')
+        self.simulation_scale=ttk.Scale(body,from_=0,to=90,variable=self.elapsed,command=lambda day:self.update_recovery(float(day)));self.simulation_scale.pack(fill='x')
+        tk.Label(body,textvariable=self.recovery,bg=c['bg'],fg=c['secondary'],wraplength=730,justify='left').pack(anchor='w')
+        self.recovery_bar=ttk.Progressbar(body,maximum=100);self.recovery_bar.pack(fill='x',pady=5)
+        solvers=tk.Frame(body,bg=c['bg']);solvers.pack(fill='x',pady=4)
+        self.app.text_button(solvers,'APPLY BEST AFFORDABLE TARGET',self.apply_best).pack(side='left')
+        self.payback_goal=tk.StringVar(value='90');ttk.Combobox(solvers,textvariable=self.payback_goal,values=(30,90,180,365,730),width=6,style='Vision.TCombobox').pack(side='left',padx=8)
+        self.app.text_button(solvers,'SET INCOME FOR PAYBACK DAYS',self.solve_income).pack(side='left')
         self.chart.bind('<Configure>',lambda e:self.draw_chart())
         tk.Label(body,text='Current market quotes from the existing price book. Market material exchanges are the primary cash route. Unknown exchange prices remain unpriced; leftovers stay in inventory. Future income is modeled, never added to your loot history.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=740,justify='left').pack(fill='x',pady=8)
         self.recalculate(save=False)
+        tabs.bind('<<NotebookTabChanged>>',lambda event:self.recalculate(save=False) if tabs.select()==str(self.frame) else None,add='+')
 
-    def settings(self):return {'cp_plan':self.saved}
+    def settings(self):return {'cp_plan':{**self.saved,**({'workerman':self.workerman.settings()} if hasattr(self,'workerman') else {})}}
 
     def toggle_options(self):
         if self.options.winfo_manager():self.options.pack_forget()
@@ -90,18 +109,25 @@ class CPInfo:
         if not self.fields:return
         state={k:v.get() for k,v in self.fields.items()};state['counts']={k:v.get() for k,v in self.stock.items()}
         state['incomeMode']='project' if state['incomeMode']=='Whole project / day' else 'per_cp'
+        state['cashPolicy']={'Material exchanges':'market','Direct NPC sale':'vendor','Best priced option':'best'}.get(state['cashPolicy'],state['cashPolicy'])
         try:report=calculate(state,self.tracker.insights.prices.all())
-        except ValueError as exc:self.note.set('Check your values: '+str(exc));return False
+        except ValueError as exc:
+            self.note.set('Check your values: '+str(exc));self.target_view.invalid(str(exc));self.report=None;self.chart.delete('all');self.workerman.update();return False
         self.saved=state;self.report=report
+        self.target_view.update(report)
+        self.workerman.update()
+        self.populate_reference(report)
         if self.app.bridge:
             with self.app.bridge._lock:self.app.bridge.cp_plan=json.loads(json.dumps(state))
         if save:self.app.save_quietly();self.note.set('Saved locally. No extra CP income is assumed until you enter it.' if report['income']==0 else 'Saved scenario · future income is an assumption, not recorded silver.')
-        selected_key={'Cash everything':'cash','All CP':'cp','Target, then cash':'target','50% split':'split'}[self.selected.get()]
+        selected_key=self.selected_key()
         if not report['cashComplete']:
             text='MARKET PRICES NEEDED\nRefresh existing market prices to calculate material-exchange value. No NPC fallback is used.\n\n'+f"All CP: {report['routes'][1]['cp']} CP (+{report['routes'][1]['gained']})\nTo {report['target']} CP: {report['targetBatches']:,} full batches / {report['targetXp']:,.0f} EXP\n\nUnquoted rewards: "+', '.join(report['missing'])
-            for view in self.text_views.values():view.configure(state='normal');view.delete('1.0','end');view.insert('1.0',text);view.configure(state='disabled')
-            self.draw_chart();return True
+            for key in ('Decision','Payback','Milestones','Model'):
+                view=self.text_views[key];view.configure(state='normal');view.delete('1.0','end');view.insert('1.0',text);view.configure(state='disabled')
+            self.analysis=None;self.update_recovery(0);self.draw_chart();return True
         a=analyze(report,selected_key);chosen=next(row for row in report['routes'] if row['key']==selected_key)
+        self.analysis=a;self.simulation_scale.configure(to=report['days']);self.elapsed.set(min(self.elapsed.get(),report['days']));self.update_recovery(self.elapsed.get())
         labels=('CASH EVERYTHING','ALL AVAILABLE CP','TARGET, THEN CASH','50% OF BATCHES TO CP')
         lines=[f"To next CP: {report['nextXp']:,.2f} EXP / {report['nextBatches']:,} batches",f"To {report['target']} CP: {report['targetXp']:,.2f} EXP / {report['targetBatches']:,} batches",f"Available: {report['totalXp']:,} EXP · optional NPC alternative {silver(report['vendorTotal'])} silver",'']
         for title,r in zip(labels,report['routes']):
@@ -120,10 +146,79 @@ class CPInfo:
         self.draw_chart()
         return True
 
+    def selected_key(self):return {'Cash everything':'cash','All CP':'cp','Target, then cash':'target','Custom split':'split'}[self.selected.get()]
+
+    def populate_reference(self,report):
+        exchanges=['ALL EXCHANGE OPTIONS · one reward per bundle, not all rewards together','Market material exchanges are the default. NPC sale is only used if explicitly selected.','']
+        for p in report['products']:
+            exchanges.extend([p['name']+f" · {p['batch']} items → {p['xp']} CP EXP",'Exchange NPC: '+p['npc']])
+            for r in p['routes']:
+                exchanges.append(f"  {r['item']} × {r['units']} / bundle · unit {silver(r['unit'])} · stock net {silver(r['net'])} · {r['source']}")
+            exchanges.append('')
+        spec=data();curve=['CURRENT CP → NEXT POINT · EXP REQUIRED','Complete exchange quantities always round up. Higher brackets apply as you gain CP.','']
+        for i,(start,xp) in enumerate(spec['curve']):
+            end=spec['curve'][i+1][0]-1 if i+1<len(spec['curve']) else 599
+            curve.append(f"{start}–{end} CP: {xp:,} EXP / point · {xp/90:,.2f} 10-item byproducts or {xp/45:,.2f} Blush Leaves per CP (continuous efficiency).")
+        for title,lines in [('Exchanges',exchanges),('CP curve',curve)]:
+            widget=self.text_views[title];widget.configure(state='normal');widget.delete('1.0','end');widget.insert('1.0','\n'.join(lines));widget.configure(state='disabled')
+
+    def update_recovery(self,day):
+        r=getattr(self,'report',None)
+        if not r or not hasattr(self,'recovery_bar'):return
+        if not r['cashComplete']:self.recovery.set('Refresh exchange prices to model recovery. Quantities remain available.');self.recovery_bar['value']=0;return
+        route=next(a for a in r['routes'] if a['key']==self.selected_key());earned=income_at(r,route,max(0,min(r['days'],day)));investment=route['investment']
+        recovered=min(100,earned/investment*100) if investment else 100
+        self.recovery_bar['value']=recovered;self.recovery.set(f"SIMULATION · day {day:.1f}: {silver(earned)} extra income · {recovered:.1f}% investment recovered · versus cash {silver(earned-investment)}. Not recorded silver.")
+
+    def apply_best(self):
+        analysis=getattr(self,'analysis',None);best=analysis.get('optimized') if analysis else None
+        if not best:self.note.set('Refresh prices and check your cash reserve before solving a target.');return
+        self.fields['target'].set(str(best['cp']));self.selected.set('Target, then cash');self.recalculate()
+
+    def solve_income(self):
+        r=getattr(self,'report',None)
+        if not r or not r['cashComplete']:self.note.set('Refresh prices before solving income.');return
+        try:days=float(self.payback_goal.get())
+        except ValueError:self.note.set('Enter valid payback days.');return
+        if not math.isfinite(days) or not 0<days<=3650:self.note.set('Payback days must be 1–3,650.');return
+        route=next(a for a in r['routes'] if a['key']==self.selected_key());effective=productive_days(days,r['delay'],r['ramp']);factor=route['deployed']*r['utilization']/100
+        if not effective or not factor:self.note.set('The route needs deployed new CP, uptime and productive days to repay its cost.');return
+        income=math.ceil(route['investment']/(effective*factor)*(r['referenceDeployed'] if r['incomeMode']=='project' else 1))
+        self.fields['income'].set(str(income));self.recalculate()
+
+    def choose_frontier(self,event):
+        points=getattr(self,'frontier_points',[])
+        if not points:return
+        best=min(points,key=lambda p:(p[0]-event.x)**2+(p[1]-event.y)**2)
+        if (best[0]-event.x)**2+(best[1]-event.y)**2>144:return
+        self.fields['split'].set(str(best[2]));self.selected.set('Custom split');self.recalculate(save=False)
+
+    def draw_analysis_chart(self,r,mode):
+        c=self.chart;w=max(380,c.winfo_width())
+        if mode=='Allocation frontier':
+            samples=[build_route(r,'split',math.floor(r['totalBatches']*i/20)) for i in range(21)]
+            points=[(v['gained'],v['cash'],i*5) for i,v in enumerate(samples)];title='ALLOCATION FRONTIER · CLICK A POINT TO CHOOSE YOUR SPLIT';xlabel='new whole CP'
+        else:
+            a=getattr(self,'analysis',None)
+            if not a:return
+            points=[(p['multiplier'],p['difference'],None) for p in a['sensitivity']];title='INCOME SENSITIVITY · 0× TO 2× YOUR EXTRA INCOME';xlabel='income multiplier'
+        if not points:return
+        xmax=max(1,max(p[0] for p in points));low=min(0,min(p[1] for p in points));high=max(1,max(p[1] for p in points));xx=lambda x:68+x/xmax*(w-88);yy=lambda y:109-(y-low)/(high-low)*77
+        c.create_text(10,12,text=title,anchor='w',fill='#cbbbdc',font=('Segoe UI',9))
+        if low<0:c.create_line(68,yy(0),w-20,yy(0),fill='#67526f')
+        c.create_line(*[v for p in points for v in (xx(p[0]),yy(p[1]))],fill='#c3a0ff',width=2)
+        c.create_text(62,32,text=silver(high),anchor='e',fill='#b9adcb',font=('Segoe UI',8));c.create_text(62,109,text=silver(low),anchor='e',fill='#b9adcb',font=('Segoe UI',8));c.create_text(w-20,130,text=str(xmax)+' '+xlabel,anchor='e',fill='#b9adcb',font=('Segoe UI',8))
+        if mode=='Allocation frontier':
+            self.frontier_points=[(xx(p[0]),yy(p[1]),p[2]) for p in points]
+            for x,y,_ in self.frontier_points:c.create_oval(x-3,y-3,x+3,y+3,fill='#f2ca79',outline='')
+
     def draw_chart(self):
-        if not getattr(self,'chart',None) or not hasattr(self,'report'):return
+        if not getattr(self,'chart',None) or not getattr(self,'report',None):return
         c=self.chart;c.delete('all');r=self.report
-        if not r['cashComplete']:return
+        self.frontier_points=[]
+        if not r['cashComplete']:c.create_text(12,20,text='Refresh exchange prices to unlock silver graphs.',anchor='w',fill='#b9adcb');return
+        mode=self.chart_mode.get()
+        if mode!='Cash outcomes':self.draw_analysis_chart(r,mode);return
         w=max(380,c.winfo_width());maximum=max(1,max(a['future'] for a in r['routes'][:3]));minimum=min(0,min(a['cash'] for a in r['routes'][:3]))
         c.create_text(10,12,text='CASH + EXTRA MODELED INCOME · DAY 0 → '+str(r['days']),anchor='w',fill='#cbbbdc',font=('Segoe UI',9))
         for n,(a,color) in enumerate(zip(r['routes'][:3],('#70e6b3','#c3a0ff','#f2ca79'))):

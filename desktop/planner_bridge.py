@@ -245,7 +245,7 @@ class PlannerBridge:
 
             def do_POST(self):
                 route=urlsplit(self.path).path
-                if route not in ('/ack','/market-prices','/craft-quotes','/craft-market','/craft-model','/show','/grind-command','/cp-read','/gear/ocr','/gear/sweep','/gear/builds'):
+                if route not in ('/ack','/market-prices','/craft-quotes','/craft-market','/craft-model','/show','/grind-command','/cp-read','/workerman','/gear/ocr','/gear/sweep','/gear/builds'):
                     self._send({'error': 'Unknown endpoint'}, 404)
                     return
                 if not self._origin_allowed():
@@ -265,6 +265,25 @@ class PlannerBridge:
                     def reject_constant(value):raise ValueError('Finite JSON values required')
                     body = json.loads(self.rfile.read(length).decode('utf-8'),parse_constant=reject_constant)
                     if not isinstance(body,dict):raise ValueError('JSON object required')
+                    if route=='/workerman':
+                        if not bridge.price_book:self._send({'error':'Open the paired Windows app for Workerman modeling'},503);return
+                        from workerman import reference_for,model_job
+                        from cp_planner import calculate
+                        provider=reference_for(str(Path(bridge.price_book.path).parent))
+                        action=body.get('action')
+                        if action=='reference':
+                            try:reference=provider.refresh()
+                            except (OSError,ValueError):self._send({'error':'Reference refresh unavailable; existing cached reference preserved'},503);return
+                            self._send(reference);return
+                        if action!='model':raise ValueError('Choose reference or model')
+                        reference=provider.cached()
+                        if not reference:raise ValueError('Load Workerman reference first')
+                        job=next((j for j in reference['jobs'] if j['id']==str(body.get('node'))),None)
+                        if not job:raise ValueError('Unknown Workerman node')
+                        state=body.get('state');assumptions=body.get('assumptions',{})
+                        if not isinstance(state,dict) or not isinstance(assumptions,dict):raise ValueError('Invalid CP / worker scenario')
+                        quotes=bridge.price_book.all(body.get('region'))
+                        self._send(model_job(job,calculate(state,quotes),quotes,assumptions));return
                     if route=='/cp-read':
                         if body.get('instance_id')!=bridge.instance_id:self._send({'error':'Unknown instance'},409);return
                         if bridge.ocr_paused:self._send({'error':'Lite Use stops extra OCR; disable it for a CP snapshot'},403);return

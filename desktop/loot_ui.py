@@ -61,10 +61,12 @@ class LootTracker:
         self.guild=GuildQuestTracker(self,settings)
         from cp_ui import CPInfo
         self.cp_info=CPInfo(self,settings)
+        from imperial_ui import ImperialInfo
+        self.imperial=ImperialInfo(self,settings)
         self.root.after(250,self.poll)
 
     def settings(self):
-        return {'platform_preferences':self.platform_preferences,'craft_economy':self.craft_economy,'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings(),**self.cp_info.settings()}
+        return {'platform_preferences':self.platform_preferences,'craft_economy':self.craft_economy,'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings(),**self.cp_info.settings(),**self.imperial.settings()}
 
     def safe_interval(self):
         try:return max(.5,min(30,float(self.interval.get())))
@@ -138,6 +140,7 @@ class LootTracker:
         self.big_drops.build(tabs)
         self.guild.build(tabs)
         self.cp_info.build(tabs)
+        self.imperial.build(tabs)
         from platform_home import PlatformHome
         self.home=PlatformHome(self,tabs)
         reader=tk.Frame(tabs,bg=c['bg']);tabs.add(reader,text='OCR reader')

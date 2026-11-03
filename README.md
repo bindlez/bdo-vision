@@ -1,4 +1,25 @@
-# BDO Vision · current development candidate 1.13.0-rc.13
+# BDO Vision · current test candidate 1.13.0-rc.18
+
+CP Info now includes an optional **Workerman payback model** in the Windows app
+and paired planner: choose a worker job, confirm additional CP and costs, and see
+modeled net/day, break-even days and recovery graphs. Public reference data loads
+only on request; it does not access your account or add background OCR.
+
+
+**Native CP Info and Imperial planning** now run inside the Windows workspace.
+Choose a target CP to see exact single-byproduct and mixed plans, shortages,
+leftovers, opportunity cost, progress lines and EXP coverage pies. Imperial compares
+buy/craft profit and stocked alternatives, with mastery, CP daily totals and a
+Guru-only filter. Both planners reuse regional quotes and add no OCR loop.
+
+**Core reader candidate:** positioned Windows OCR locates tool fields and guild
+cards; independent numeric/card verification and the compatibility route remain.
+Missing-quest reminders distinguish unreadable from confirmed absence. Broader
+live reliability acceptance is still open; no 100% accuracy or FPS claim is made.
+
+[Current release downloads](https://github.com/bindlez/bdo-vision/releases) ·
+[Prioritized tasks and honest status](docs/ACTIVE-TASKS.md) ·
+[Native planning guide](docs/handbook/24-native-planning.md)
 
 **Crafting Intelligence** now has 990 real recipe variants across cooking, alchemy, processing and imperial packing, 105 substitution groups, mastery models, rare/optional extra outputs, shared-inventory queues, recursive buy/make trees, tax, weight/EXP, market-volume filters and lazy profit graphs. One shared engine supplies the legacy summary and linked native session costs. **CP cash comparisons now use market material exchanges by default**; missing prices are unpriced, and leftovers stay in inventory. [Try the dated market-snapshot demo](demo/bdo-vision-crafting-demo.html), read the [reference coverage matrix](docs/CRAFTING-REFERENCE-MATRIX.md) and [developer guide](docs/handbook/22-crafting-platform.md), or open the [project paper](demo/bdo-vision-project-paper.html) / [editable Markdown](docs/PROJECT-PAPER.md).
 

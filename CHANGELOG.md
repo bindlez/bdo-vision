@@ -1,3 +1,19 @@
+# 1.13.0-rc.18 · CP targets, native Imperial and Workerman payback
+
+- Added inverse target CP planning: each byproduct alone, owned mix, completed
+  mix and balanced mix, with exact bundles, shortages, leftovers and opportunity cost.
+- Added per-byproduct target lines and owned EXP coverage pies in browser and native CP.
+- Expanded native CP with exchanges, curve, custom split, frontier, income stress
+  graph, simulation recovery slider, affordable-target and payback-income solvers.
+- Added the native Imperial tab with four recommendations, mastery, shared current
+  CP, Guru filter, costs/payout/profit/daily totals and lazy advanced details/graphs.
+- Native/browser Imperial calculations share data and are parity-tested across
+  real recipes, mastery levels and stock conditions. Planning adds no OCR or polling.
+- Added optional Workerman CP payback: pinned public reference, exact-ID cached
+  market prices, full-job CP gating, declared costs/uptime, break-even days and
+  recovery graphs in native CP Info and the paired browser. No extra OCR or polling.
+- Preserved rc.17's structured core route and safe missing-quest reminders.
+
 # 1.13.0-rc.17 · Structured core reader candidate
 
 - Added a lazy, persistent positioned Windows OCR worker and independent numeric/

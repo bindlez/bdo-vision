@@ -10,6 +10,32 @@ function create(spec){
  const productiveDays=(day,delay=0,ramp=0)=>{const active=Math.max(0,day-delay);return ramp<=0?active:active<ramp?active*active/(2*ramp):active-ramp/2;};
  function paybackDays(investment,daily,delay=0,ramp=0){if(investment<=0)return 0;if(daily<=0)return null;const needed=investment/daily;return delay+(ramp>0&&needed<=ramp/2?Math.sqrt(2*ramp*needed):needed+ramp/2);}
  const incomeAt=(r,route,day,multiplier=1)=>route.daily*multiplier*productiveDays(day,r.delay,r.ramp);
+ function targetPlan(r){
+  const need=r.targetBatches,products=r.products;
+  if(products.some(p=>p.xp!==900))throw Error('Unsupported byproduct exchange EXP');
+  function make(key,label,counts){
+   let cost=0,known=true,ownedXp=0;
+   const allocation=products.map(p=>{
+    const batches=counts[p.key]||0,items=batches*p.batch,used=Math.min(p.batches,batches),value=p.best.known?batches*p.best.perBatch:null;
+    ownedXp+=used*900;if(batches&&!p.best.known)known=false;if(value!==null)cost+=value;
+    return {key:p.key,name:p.name,batch:p.batch,batches,items,owned:p.count,usedOwned:Math.min(p.count,items),shortage:Math.max(0,items-p.count),leftover:Math.max(0,p.count-items),xp:batches*900,ownedXp:used*900,opportunityCost:value,cashRoute:p.best.item};
+   });
+   const batches=allocation.reduce((s,p)=>s+p.batches,0);
+   return {key,label,allocation,batches,xp:batches*900,ownedXp,missingXp:Math.max(0,need*900-ownedXp),missingBatches:Math.max(0,need-batches),shortageItems:allocation.reduce((s,p)=>s+p.shortage,0),ownedOnly:allocation.every(p=>!p.shortage),opportunityCost:known?cost:null,reachesTarget:batches>=need,result:advance(r.cp,r.percent,batches*900)};
+  }
+  const singles=products.map(p=>make(p.key,p.name+' only',{[p.key]:need}));
+  const economicOrderKnown=products.filter(p=>p.batches).every(p=>p.best.known);
+  const ordered=economicOrderKnown?[...products].sort((a,b)=>a.best.perBatch-b.best.perBatch||a.key.localeCompare(b.key)):products;
+  let remaining=need;const counts={};
+  for(const p of ordered){counts[p.key]=Math.min(remaining,p.batches);remaining-=counts[p.key];}
+  const owned=make('owned',economicOrderKnown?'Owned combination · lowest opportunity cost':'Owned combination · unpriced economics',counts);
+  const additions=products.filter(p=>p.best.known).sort((a,b)=>a.best.perBatch-b.best.perBatch||a.key.localeCompare(b.key)),top=additions[0]||products[0];
+  const completion=make('completion','Owned mix + additional '+top.name,{...counts,[top.key]:(counts[top.key]||0)+remaining});
+  const balanced=make('balanced','Balanced combination · equal EXP shares',Object.fromEntries(products.map((p,i)=>[p.key,Math.floor(need/products.length)+(i<need%products.length?1:0)])));
+  const start=r.cp,target=r.target,levels=target>start?[...new Set([start,target,...Array.from({length:25},(_,i)=>Math.round(start+(target-start)*i/24))])].sort((a,b)=>a-b):[start];
+  const lines=products.map(p=>({key:p.key,name:p.name,points:levels.map(cp=>({cp,items:Math.ceil(Math.max(0,toTarget(start,r.percent,cp)-1e-7)/900)*p.batch}))}));
+  return {cp:r.cp,percent:r.percent,target:r.target,requiredXp:r.targetXp,requiredBatches:need,exchangeXp:need*900,overshootXp:Math.max(0,need*900-r.targetXp),finish:advance(r.cp,r.percent,need*900),singles,owned,completion,balanced,lines,economicOrderKnown,alreadyReached:need===0};
+ }
  function buildRoute(r,key,requested){
   let remaining=requested,foregone=0;const allocation=[...r.products].sort((a,b)=>a.best.perBatch-b.best.perBatch||a.key.localeCompare(b.key)).map(p=>{const batches=Math.min(remaining,p.batches);remaining-=batches;foregone+=batches*p.best.perBatch;return {key:p.key,name:p.name,batches,items:batches*p.batch,remaining:p.count-batches*p.batch,cashRoute:p.best.item};});
   const batches=requested-remaining,finish=advance(r.cp,r.percent,batches*900),deployed=Math.min(finish.gained,r.deploy),fullDaily=r.incomeMode==='per_cp'?deployed*r.income:r.referenceDeployed?r.income*deployed/r.referenceDeployed:0;
@@ -47,7 +73,7 @@ function create(spec){
   let title,reason;if(!route.gained){title='Keep the silver';reason='This route unlocks no new whole CP, so it has no additional CP income.';}else if(!route.deployed){title='Give those CP a job';reason='No new CP are deployed in this plan. Unused CP cannot repay the silver given up.';}else if(!route.daily){title='Set your income plan';reason='Enter the additional net income the new CP will actually unlock. Existing income does not count.';}else if(route.breakEvenDays!==null&&route.breakEvenDays<=r.days){title='Payback fits your horizon';reason='The modeled investment is recovered in '+route.breakEvenDays.toFixed(1)+' days, including setup and ramp-up.';}else{title='A longer commitment';reason='At this income rate, cash remains ahead at the selected horizon. Compare a smaller CP target or a longer timeline.';}
   return {selected:route.key,title,reason,elapsed,recovered:investment?Math.min(100,Math.max(0,earned/investment*100)):100,simulatedEarned:earned,simulatedProfit:earned-investment,milestones,scenarios,requirements,targets,timeline,sensitivity,optimized,candidates,reserveFeasible:!!optimized,grindHours:r.grindRate?investment/r.grindRate:null};
  }
- return {calculate,xpPerCp,advance,toTarget,buildRoute,productiveDays,paybackDays,incomeAt,analyze};
+ return {calculate,targetPlan,xpPerCp,advance,toTarget,buildRoute,productiveDays,paybackDays,incomeAt,analyze};
 }
 root.VisionCP={create};if(typeof module!=='undefined')module.exports=root.VisionCP;
 })(typeof globalThis!=='undefined'?globalThis:this);

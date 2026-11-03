@@ -52,6 +52,57 @@ def to_target(cp, percent, target):
     return max(0,xp_starts()[target]-xp_starts()[cp]-xp_per_cp(cp)*percent/100)
 
 
+def target_plan(report):
+    """Inverse planning: exact exchange quantities for a requested CP target.
+
+    Current products all award 900 EXP per complete exchange. Economic ranking
+    is withheld if any usable owned stock has no known alternative valuation.
+    """
+    need=report['targetBatches'];products=report['products']
+    if any(p['xp']!=900 for p in products):raise ValueError('Unsupported byproduct exchange EXP')
+    finish=advance(report['cp'],report['percent'],need*900)
+    def make(key,label,counts):
+        rows=[];cost=0;known=True;owned_xp=0
+        for p in products:
+            batches=counts.get(p['key'],0);items=batches*p['batch'];owned=min(p['count'],items)
+            used=min(p['batches'],batches);owned_xp+=used*900
+            priced=p['best']['known'];value=batches*p['best']['perBatch'] if priced else None
+            if batches and not priced:known=False
+            if value is not None:cost+=value
+            rows.append({'key':p['key'],'name':p['name'],'batch':p['batch'],'batches':batches,'items':items,
+                         'owned':p['count'],'usedOwned':owned,'shortage':max(0,items-p['count']),
+                         'leftover':max(0,p['count']-items),'xp':batches*900,'ownedXp':used*900,
+                         'opportunityCost':value,'cashRoute':p['best']['item']})
+        given=sum(r['batches'] for r in rows);result=advance(report['cp'],report['percent'],given*900)
+        return {'key':key,'label':label,'allocation':rows,'batches':given,'xp':given*900,
+                'ownedXp':owned_xp,'missingXp':max(0,need*900-owned_xp),'missingBatches':max(0,need-given),
+                'shortageItems':sum(r['shortage'] for r in rows),'ownedOnly':all(not r['shortage'] for r in rows),
+                'opportunityCost':cost if known else None,'reachesTarget':given>=need,'result':result}
+    singles=[make(p['key'],p['name']+' only',{p['key']:need}) for p in products]
+    prices_known=all(p['best']['known'] for p in products if p['batches'])
+    ordered=sorted(products,key=lambda p:(p['best']['perBatch'],p['key'])) if prices_known else products
+    remaining=need;allocation={}
+    for p in ordered:
+        batches=min(remaining,p['batches']);allocation[p['key']]=batches;remaining-=batches
+    owned=make('owned','Owned combination · lowest opportunity cost' if prices_known else 'Owned combination · unpriced economics',allocation)
+    additions=sorted((p for p in products if p['best']['known']),key=lambda p:(p['best']['perBatch'],p['key']))
+    top=additions[0] if additions else products[0];completed=dict(allocation)
+    completed[top['key']]=completed.get(top['key'],0)+remaining
+    completion=make('completion','Owned mix + additional '+top['name'],completed)
+    balanced=make('balanced','Balanced combination · equal EXP shares',{
+        p['key']:need//len(products)+(1 if i<need%len(products) else 0) for i,p in enumerate(products)})
+    lines=[]
+    start=report['cp'];target=report['target']
+    levels=sorted(set([start,target]+[math.floor(start+(target-start)*i/24+.5) for i in range(25)])) if target>start else [start]
+    for p in products:
+        points=[{'cp':level,'items':math.ceil(max(0,to_target(start,report['percent'],level)-1e-7)/900)*p['batch']} for level in levels]
+        lines.append({'key':p['key'],'name':p['name'],'points':points})
+    return {'cp':report['cp'],'percent':report['percent'],'target':report['target'],'requiredXp':report['targetXp'],
+            'requiredBatches':need,'exchangeXp':need*900,'overshootXp':max(0,need*900-report['targetXp']),
+            'finish':finish,'singles':singles,'owned':owned,'completion':completion,'balanced':balanced,'lines':lines,
+            'economicOrderKnown':prices_known,'alreadyReached':need==0}
+
+
 def build_route(report,key,requested):
     ordered=sorted(report['products'],key=lambda p:(p['best']['perBatch'],p['key']))
     remaining=requested;spent=0;allocation=[]

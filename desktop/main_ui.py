@@ -91,6 +91,7 @@ def build_main_ui(app):
         ('TOOL OCR DEBUG', app.tool_debug.open), ('QUESTS', app.open_guild_quest),
         ('GRIND', lambda: app.open_activity('grind')), ('LOOT / SILVER', app.loot.open),
         ('GEAR', app.open_gear_planner), ('FAIRY CODEX', app.open_fairy),
+        ('CP INFO', lambda: app.open_activity('cp')), ('IMPERIAL', lambda: app.open_activity('imperial')),
         ('RESTORE BDO', app.restore_game), ('RESTORE FROM TRAY', app.super_restore_game),
         ('TEST LINK', app.test_connection),
     ], start=1):

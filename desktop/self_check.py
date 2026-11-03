@@ -22,6 +22,12 @@ def run_self_check(app_class,root_path,data_path):
         from tkinter import ttk
         cp_tabs=ttk.Notebook(root);app.loot.cp_info.build(cp_tabs);root.update_idletasks()
         report['checks']['cp_native_widgets']=bool(app.loot.cp_info.frame.winfo_exists())
+        report['checks']['cp_target_widgets']=app.loot.cp_info.target_view.tree.exists('owned')
+        app.loot.cp_info.workerman.toggle()
+        report['checks']['workerman_native_widgets']=bool(app.loot.cp_info.workerman.frame.winfo_exists())
+        app.loot.cp_info.workerman.toggle()
+        app.loot.imperial.build(cp_tabs);app.loot.imperial.recalculate(save=False)
+        report['checks']['imperial_native_widgets']=bool(app.loot.imperial.frame.winfo_exists())
         report['checks']['cp_example']=app.loot.cp_info.report['routes'][1]['cp']==567
         report['checks']['history_integrity']=app.loot.ledger.db.execute('PRAGMA integrity_check').fetchone()[0]=='ok'
         report['checks']['bridge']=bool(app.bridge and app.bridge.server)

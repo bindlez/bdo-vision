@@ -9,7 +9,7 @@ craft=json.loads((assets/'crafting-data.json').read_text(encoding='utf-8'))
 ids={m['name']:m['id'] for m in craft['items'].values()}
 snapshot=json.loads((assets/'demo-market-snapshot.json').read_text(encoding='utf-8'))
 css=(assets/'cp-planner.css').read_text(encoding='utf-8')
-js='const VISION_CP_DATA='+json.dumps(spec,ensure_ascii=False,separators=(',',':'))+';\nconst VISION_CP_ITEM_IDS='+json.dumps({n:ids[n] for p in spec['products'] for n,_ in p['rewards']})+';\nconst VISION_CP_SNAPSHOT='+json.dumps(snapshot,separators=(',',':'))+';\n'+(assets/'cp-engine.js').read_text(encoding='utf-8')+'\n'+(assets/'cp-analysis.js').read_text(encoding='utf-8')+'\n'+(assets/'cp-planner.js').read_text(encoding='utf-8')
+js='const VISION_CP_DATA='+json.dumps(spec,ensure_ascii=False,separators=(',',':'))+';\nconst VISION_CP_ITEM_IDS='+json.dumps({n:ids[n] for p in spec['products'] for n,_ in p['rewards']})+';\nconst VISION_CP_SNAPSHOT='+json.dumps(snapshot,separators=(',',':'))+';\n'+(assets/'cp-engine.js').read_text(encoding='utf-8')+'\n'+(assets/'cp-target.js').read_text(encoding='utf-8')+'\n'+(assets/'cp-analysis.js').read_text(encoding='utf-8')+'\n'+(assets/'cp-workerman.js').read_text(encoding='utf-8')+'\n'+(assets/'cp-planner.js').read_text(encoding='utf-8')
 integration="""
 (function(){
  const nav=document.createElement('button');nav.className='nav-item';nav.dataset.view='cp';nav.id='navCP';nav.style.cssText='font:inherit;width:100%;text-align:left;background:none;border:0;color:inherit';nav.innerHTML='<span class="icon">◉</span> CP Intelligence';

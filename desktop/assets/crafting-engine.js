@@ -87,7 +87,7 @@ function imperialRanks(recipes,spec,quote,options={}){
     const needed=new Map();for(const m of resolved(source,{spec,choices}))needed.set(m.itemId,(needed.get(m.itemId)||0)+m.qty*runs);
     const stockQuote=(name,id)=>{const q=quote(name,id);return Number.isFinite(q?.stock)&&q.stock>=(needed.get(id)||0)?q:null;};
     const p=plan(source,runs,{...cfg,keepMain:true,keepRare:true,includeExtras:false,includeByproduct:false},{spec,recipes,index,quote:stockOnly?stockQuote:quote,choices});
-    const inStock=p.cost!==null&&p.purchases.every(m=>m.basis==='NPC purchase'||(Number.isFinite(m.stock)&&m.stock>=m.quantity));
+    const inStock=p.cost!==null&&p.purchases.every(m=>(m.basis==='NPC purchase'&&spec.items[m.itemId]?.npcBuy>0&&m.unit===spec.items[m.itemId].npcBuy)||(Number.isFinite(m.stock)&&m.stock>=m.quantity));
     const candidate={...row,cost:p.cost,perBox:p.cost===null?null:p.cost/count,profit:p.cost===null?null:row.payout-p.cost,recipeId:source.id,runs,expectedOutput:runs*yieldQty,surplus:runs*yieldQty-quantity,inStock,ingredients:p.purchases,choices};
     if(!stockOnly&&(!best||(candidate.cost!==null&&(best.cost===null||candidate.cost<best.cost))))best=candidate;
     if(inStock&&(!bestStock||candidate.cost<bestStock.cost))bestStock=candidate;

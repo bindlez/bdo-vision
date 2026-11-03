@@ -71,24 +71,24 @@ an aspirational complete-download goal; no feature removal or hidden extra downl
 - [x] Existing native calculator, target CP input, market-first exchanges, payback
   model and browser graphs exist. These are the starting point, not a reason to
   call the requested desktop feature set complete.
-- [ ] Add a clear target selector linked to the existing target calculation.
-- [ ] Calculate required quantity of **each** supported byproduct from current CP
+- [x] Add a clear target selector linked to the existing target calculation.
+- [x] Calculate required quantity of **each** supported byproduct from current CP
   and progress %, including complete exchange bundles and leftovers.
-- [ ] Provide a distinct **Reach my target CP** inverse-planning section: target in,
+- [x] Provide a distinct **Reach my target CP** inverse-planning section: target in,
   exact single-byproduct and mixed-byproduct exchange plans out. The existing
   stock-to-result calculator does not satisfy this request by itself.
-- [ ] Mixed plans include owned-only feasibility, shortages, bundle-rounded
+- [x] Mixed plans include owned-only feasibility, shortages, bundle-rounded
   quantities, overshoot/leftovers and modeled silver opportunity cost. Explain
   the optimization objective; do not call an unpriced combination most profitable.
-- [ ] Show owned amount, shortage, resulting CP, EXP to target and silver opportunity
+- [x] Show owned amount, shortage, resulting CP, EXP to target and silver opportunity
   cost for each route. Never value the same byproducts as both spent and retained.
-- [ ] Plot one target-progress line per byproduct with visible units and shared
+- [x] Plot one target-progress line per byproduct with visible units and shared
   endpoints; support a text/table equivalent.
-- [ ] Add a pie breakdown with explicit meaning: owned contribution EXP versus
+- [x] Add a pie breakdown with explicit meaning: owned contribution EXP versus
   remaining target EXP, plus quantities/percentages and an unknown-data state.
-- [ ] Bring the full existing payback comparisons, route simulations, controls,
+- [x] Bring the existing payback comparisons, route simulations, controls,
   graphs and detailed explanations into the desktop workflow.
-- [ ] Share the existing calculation engine/data; test browser/native parity and
+- [x] Share the existing calculation data/contracts; test browser/native parity and
   retained settings. Keep optional one-shot CP OCR frugal.
 
 ## P1 — Imperial, complete in the desktop app
@@ -98,9 +98,9 @@ an aspirational complete-download goal; no feature removal or hidden extra downl
 - [x] Advanced disclosure: bounded profit graphs, ingredient quantities/stock,
   expected surplus and return on input cost. Built only when opened.
 - [x] Add 'Guru boxes only' checkbox; filter both recommendations and the table.
-- [ ] Bring all those controls, rankings, four recommendations and advanced details
+- [x] Bring those controls, rankings, four recommendations and advanced details
   into the desktop app, with shared calculation/data contracts.
-- [ ] Preserve exact market IDs, unknown prices, whole-run costs and stock checks
+- [x] Preserve exact market IDs, unknown prices, whole-run costs and stock checks
   for the full CP allowance. Reuse caches; no new background market/OCR loops.
 - [ ] Clarify potential daily totals versus actual deliveries; verify both
   cooking/alchemy, taxes excluded from delivery, region and saved-state behavior.
@@ -118,6 +118,13 @@ an aspirational complete-download goal; no feature removal or hidden extra downl
 - [ ] Optional inactivity pause/resume; distinguish no drops from blocked capture.
 
 ## P2 — Workerman and account intelligence
+
+- [x] Integrate optional public Workerman worker-job models into native CP Info
+  and the paired browser: exact-ID market prices, CP opportunity cost, break-even
+  days, uptime/cost/delay/ramp assumptions and bounded recovery graphs. Require
+  full job funding; distinguish existing CP, shortages and unknown prices.
+- [x] Keep reference loads explicit, pinned to one revision and weekly cached;
+  no extra OCR/polling, no account-data claims or bundled upstream datasets.
 
 - [x] Investigate upstream public Workerman data/source. It contains static item,
   node, house/storage-capacity, worker and production data; no authenticated
