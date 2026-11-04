@@ -12,6 +12,7 @@ app=SimpleNamespace(root=root,save_quietly=lambda:None)
 tracker=SimpleNamespace(app=app,platform_preferences={'overlay':{'corner':'custom','position':[150,150],'seconds':14,'motion':False}})
 grind=SimpleNamespace(tracker=tracker,pause=lambda:None)
 live=SimpleNamespace(grind=grind,settings=lambda:None,window=None);grind.live=live;tracker.grind=grind
+live.craft_panel=SimpleNamespace(toggle=lambda:None,retile=lambda:None,close=lambda:None)
 live.hud=LiveHUD(live);live.window=live.hud.surface.window
 live.hud.update({'available':True,'sessionActive':True,'status':'Yzrahid Highlands / SAMPLE',
                  'value':1452000000,'rate':678000000,'time':'00:42:18 / 00:02:40',

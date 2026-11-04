@@ -135,7 +135,7 @@ class CraftInference:
         progress=max(0,min(1,1-context['remaining']/max(1,r['actions']))) if current else None
         units=sum(r['counts'].values());next_goal=next((n for n in (100,500,1000,2500,5000,10000,25000,50000) if n>units),((units//50000)+1)*50000)
         status='Observing detected craft' if current and ready else 'Capture paused · rates frozen; forecast remains an estimate' if current else 'Retained craft · waiting for a new verified tool/output'
-        return {'detected':True,'current':current,'available':bool(current and ready),'recipe':family['name'],'kind':family['kind'],
+        return {'detected':True,'toolSession':context['tool'] if current else None,'current':current,'available':bool(current and ready),'recipe':family['name'],'kind':family['kind'],
                 'status':status,'observedSeconds':r['observed'],'recordedValue':value,'recordedPerHour':value*3600/r['observed'] if value is not None and r['observed']>=60 else None,
                 'model':model if current else None,'remainingValue':model['perBatch']*context['remaining'] if current and model['perBatch'] is not None else None,
                 'scannedActions':r['actions'],'progress':progress,'items':items,'unpriced':unknown,'units':units,'nextGoal':next_goal,

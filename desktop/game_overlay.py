@@ -75,7 +75,7 @@ class OverlaySurface:
         # Slight translucency is static. No idle fade, pulse or frame loop.
         self.window.attributes('-alpha', .97)
         self.body = tk.Frame(self.window, bg=INK);self.body.pack(fill='both', expand=True, padx=1, pady=1)
-        self.rect = None;self.drag = None;self.feedback = None
+        self.rect = None;self.drag = None;self.feedback = None;self.follow = None
 
     def place(self, obstacle=None):
         p = self.options
@@ -85,8 +85,8 @@ class OverlaySurface:
         self.rect = tile(self.size, area, obstacle, p['corner']) if obstacle else dock(self.size, area, p['corner'], p.get('position'))
         geometry(self.window, self.rect)
 
-    def show(self):
-        if not passive(self.window, self.options['locked']):self.window.destroy();return False
+    def show(self, interactive=False):
+        if not interactive and not passive(self.window, self.options['locked']):self.window.destroy();return False
         self.window.deiconify();return True
 
     def draggable(self, *widgets):
@@ -101,6 +101,7 @@ class OverlaySurface:
         if self.drag:
             sx, sy, x, y = self.drag;self.rect = (x+event.x_root-sx, y+event.y_root-sy, *self.size)
             geometry(self.window, self.rect)
+            if self.follow:self.follow()
             target, corner = snap(self.rect, work_area(self.window))
             near = target != self.rect or corner != 'custom'
             self.window.configure(bg=TEAL if near else LINE)

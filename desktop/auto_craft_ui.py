@@ -20,10 +20,10 @@ class AutomaticCrafting:
         except (ValueError,TypeError):self.engine=CraftInference()
         self.view=None;self.last_save=0;self.saved_key=None;self.fetching=False;self.requests={};self.quote_notice='Cached market prices; unknown values remain unpriced.'
 
-    def context(self):
+    def context(self,allow_lite=False):
         a=self.app
         lite=getattr(a,'lite_use',None)
-        if not self.enabled.get() or (lite is not None and lite.get()) or not getattr(a,'running',False) or not getattr(a,'has_reading',False) or getattr(a,'last_good_ocr',None) is None or getattr(a,'_active_tool_key',None) is None:return None
+        if not self.enabled.get() or (lite is not None and lite.get() and not allow_lite) or not getattr(a,'running',False) or not getattr(a,'has_reading',False) or getattr(a,'last_good_ocr',None) is None or getattr(a,'_active_tool_key',None) is None:return None
         status=a.tool_status.snapshot();row=next((r for r in status['tools'] if r['id']==status['active_id']),None)
         if not row:return None
         name=row['name'].casefold();kind='alchemy' if 'alchemy' in name else 'cooking' if 'cooking' in name else None
@@ -48,6 +48,12 @@ class AutomaticCrafting:
             if before is not None and before is not self.engine.run:self.save(before)
             ids=self.engine.run.get('ids',[ident]) if before is not self.engine.run else [ident]
             with self.db:self.db.executemany('INSERT OR IGNORE INTO auto_craft_members VALUES (?,?)',[(i,self.run_id(self.engine.run)) for i in ids])
+            run=self.engine.run;units=sum(run['counts'].values());milestone=max([0]+[n for n in (100,500,1000,2500,5000,10000,25000,50000) if units>=n])
+            if milestone>run.get('announcedMilestone',0):
+                run['announcedMilestone']=milestone
+                if self.tracker.platform_preferences.get('craft_milestone_reveals',False):
+                    name=families()[0][run['family']]['name']
+                    self.tracker.big_drops.reveals.offer({'id':'craft:'+self.run_id(run)+':'+str(milestone),'category':'Craft milestone','item':name,'quantity':1,'value':None,'display_value':f'{milestone:,} CAPTURED UNITS','milestone':True})
             self.save()
             if before is not self.engine.run:self.refresh_prices()
 
@@ -58,7 +64,7 @@ class AutomaticCrafting:
     def tick(self,ready):
         context=self.context();self.engine.tick(context,ready and self.enabled.get(),time.monotonic())
         if self.app.lite_use.get():
-            if self.view and self.view.frame.winfo_exists() and self.view.title.get()!='Lite Use · automatic craft capture paused':self.view.title.set('Lite Use · automatic craft capture paused')
+            if self.view and self.view.frame.winfo_exists() and self.view.frame.winfo_ismapped():self.view.refresh()
             return
         run=self.engine.run
         key=(self.run_id(run),run['lastId'],run['observed']) if run else None
@@ -68,14 +74,16 @@ class AutomaticCrafting:
 
     def snapshot(self,ready=None):
         if ready is None:ready=self.tracker.capture_availability()[0]
-        context=self.context();run=self.engine.run;kind=families()[0].get(run['family'],{}).get('kind') if run else None
+        context=self.context(allow_lite=True);run=self.engine.run;kind=families()[0].get(run['family'],{}).get('kind') if run else None
         mastery=self.tracker.imperial.saved.get(kind,0) if kind else 0
         try:mastery=float(mastery);mastery=mastery if math.isfinite(mastery) and 0<=mastery<=3000 else 0
         except (ValueError,TypeError):mastery=0
         data=self.engine.snapshot(context,self.tracker.insights.prices.all() if run else {},ready,mastery)
         data['enabled']=self.enabled.get();data['priceStatus']=self.quote_notice
+        if not ready and not self.tracker.platform_preferences.get('craft_gap_forecast',True):
+            data['model']=None;data['remainingValue']=None;data['status']='Capture paused / gap forecasts disabled.'
         if not self.enabled.get():data['status']='Automatic craft recognition is off.';data['available']=False
-        elif getattr(self.app,'lite_use',None) is not None and self.app.lite_use.get():data['status']='Lite Use · loot OCR stopped; retained craft only.';data['available']=False
+        elif getattr(self.app,'lite_use',None) is not None and self.app.lite_use.get():data['status']='Lite Use / OCR stopped; tool-based forecasts remain estimates.';data['available']=False
         return data
 
     def refresh_prices(self):

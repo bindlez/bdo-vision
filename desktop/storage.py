@@ -43,7 +43,7 @@ def backup_profile(root,label='manual'):
     folder.mkdir(parents=True,exist_ok=False)
     if (root/'loot-history.sqlite3').exists():copy_database(root/'loot-history.sqlite3',folder/'loot-history.sqlite3')
     if (root/'settings.json').exists():shutil.copyfile(root/'settings.json',folder/'settings.json')
-    for name in ('gear-builds.json','gear-builds.previous.json'):
+    for name in ('gear-builds.json','gear-builds.previous.json','inventory-snapshot.json'):
         if (root/name).exists():shutil.copyfile(root/name,folder/name)
     (folder/'README.txt').write_text('Verified BDO Vision history and settings backup. Original data is retained.\n',encoding='utf-8')
     return folder

@@ -63,6 +63,8 @@ class App:
   self.selecting_region=False
   self.auto_health=tk.StringVar(value='Auto OCR: waiting for setup')
   self.loot=LootTracker(self,DATA_ROOT,config)
+  from inventory_reader import InventoryReader
+  self.inventory=InventoryReader(self)
   self.last_published=None;self.last_publish_mono=0;self.last_capture_mono=0;self.scan_stats={'ok':0,'failed':0,'last_duration':0};self.speed_estimator=SpeedEstimator()
   self.session_id=uuid.uuid4().hex;self.pending_signal=0;self.last_ack_seen=0;self.pending_since=0;self.ack_timed_out=False
   self.region=[tk.StringVar(value=str(v)) for v in config['region']]
@@ -150,6 +152,12 @@ class App:
   self.loot.open()
   targets={'home':self.loot.home.frame,'craft':self.loot.craft_tab,'grind':self.loot.grind.frame,'reader':self.loot.preview.master,'sessions':self.loot.insights.sessions_frame,'quests':self.loot.guild.frame,'cp':self.loot.cp_info.frame,'imperial':self.loot.imperial.frame,'silver':self.loot.silver.frame}
   self.loot.tabs.select(targets[section])
+
+ def open_fairy_desktop(self):
+  if not hasattr(self,'fairy_desktop'):
+   from fairy_desktop import FairyDesktop
+   self.fairy_desktop=FairyDesktop(self)
+  self.fairy_desktop.open()
 
  def open_fairy(self):
   if self.bridge and self.bridge.server:webbrowser.open_new_tab(self.bridge.base_url+'/fairy')
@@ -246,7 +254,7 @@ class App:
     bridge.update_companion_status({'remaining':max(0,float(self.value)),'maximum':max(1,int(self.maximum.get())),
       'seconds':max(.05,float(self.speed.get())),'running':bool(self.running),'has_reading':bool(self.has_reading),
       'updated_at':time.time(),'observed_at':view['last_read_at'] if self.last_good_ocr is not None else None,'name':active['name'] if active else 'Craft timer',
-      'source':self.source.get()[:150],'lite':self.lite_use.get()})
+      'source':self.source.get()[:150],'session_id':self.session_id,'lite':self.lite_use.get()})
    except (ValueError,TypeError):pass
   self.refresh_tools(view)
 

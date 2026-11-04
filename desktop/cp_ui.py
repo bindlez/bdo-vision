@@ -83,7 +83,7 @@ class CPInfo:
             panel=tk.Frame(pages,bg=c['panel']);pages.add(panel,text=title)
             text=tk.Text(panel,height=11,bg=c['panel'],fg=c['text'],font=('Consolas',10),relief='flat',wrap='word',state='disabled');scroll=ttk.Scrollbar(panel,command=text.yview);text.configure(yscrollcommand=scroll.set);scroll.pack(side='right',fill='y');text.pack(fill='both',expand=True);self.text_views[title]=text
         self.results=self.text_views['Decision']
-        self.chart_mode=tk.StringVar(value='Cash outcomes');chart_picker=ttk.Combobox(body,textvariable=self.chart_mode,values=('Cash outcomes','Allocation frontier','Income sensitivity'),state='readonly',style='Vision.TCombobox');chart_picker.pack(fill='x',pady=4);chart_picker.bind('<<ComboboxSelected>>',lambda e:self.draw_chart())
+        self.chart_mode=tk.StringVar(value='Cash outcomes');chart_picker=ttk.Combobox(body,textvariable=self.chart_mode,values=('Cash outcomes','Allocation frontier','Income sensitivity','Byproduct EXP mix','Opportunity cost mix'),state='readonly',style='Vision.TCombobox');chart_picker.pack(fill='x',pady=4);chart_picker.bind('<<ComboboxSelected>>',lambda e:self.draw_chart())
         self.chart=tk.Canvas(body,height=145,bg=c['panel'],highlightthickness=0);self.chart.pack(fill='x')
         self.chart.bind('<Button-1>',self.choose_frontier)
         self.elapsed=tk.DoubleVar(value=0);self.recovery=tk.StringVar(value='Modeled recovery · not recorded income')
@@ -216,6 +216,17 @@ class CPInfo:
         if not getattr(self,'chart',None) or not getattr(self,'report',None):return
         c=self.chart;c.delete('all');r=self.report
         self.frontier_points=[]
+        if self.chart_mode.get() in ('Byproduct EXP mix','Opportunity cost mix'):
+            mode=self.chart_mode.get();rows=[(p['name'],p['batches']*900 if mode=='Byproduct EXP mix' else p['best']['net']) for p in r['products']]
+            if mode=='Opportunity cost mix' and not r['cashComplete']:c.create_text(12,20,text='Refresh market quotes to compare opportunity cost.',anchor='w',fill='#b9adcb');return
+            total=sum(max(0,value or 0) for _,value in rows);colors=('#b99aed','#76d9c6','#f0c080');start=90
+            if not total:c.create_text(12,25,text='No complete exchanges to chart.',anchor='w',fill='#b9adcb');return
+            for i,(name,value) in enumerate(rows):
+                fraction=max(0,value or 0)/total
+                if fraction>=1:c.create_oval(15,15,135,135,fill=colors[i%3],outline='')
+                elif fraction:c.create_arc(15,15,135,135,start=start,extent=-360*fraction,fill=colors[i%3],outline='')
+                start-=360*fraction;c.create_text(155,28+i*36,text=f'{name}: {fraction:.1%} / {value or 0:,.0f}',anchor='w',fill=colors[i%3],font=('Segoe UI',9))
+            c.create_oval(48,48,102,102,fill=self.app.colors['panel'],outline='');return
         if not r['cashComplete']:c.create_text(12,20,text='Refresh exchange prices to unlock silver graphs.',anchor='w',fill='#b9adcb');return
         mode=self.chart_mode.get()
         if mode!='Cash outcomes':self.draw_analysis_chart(r,mode);return

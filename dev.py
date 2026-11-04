@@ -84,6 +84,8 @@ def main():
             ('node', 'scripts/test_recipe_network.js'),
             ('node', 'scripts/test_run_limits.js'),
             ('node', 'scripts/test_auto_craft_page.js'),
+            ('node', 'scripts/test_craft_companion.js'),
+            ('node', 'scripts/test_idea_desk.js'),
             ('node', 'scripts/test_imperial.js'),
             (sys.executable, '-m', 'compileall', '-q', 'desktop', 'scripts', 'tests', 'dev.py'),
             (sys.executable, 'scripts/build_handbook.py', '--check'),

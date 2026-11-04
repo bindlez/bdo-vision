@@ -1,4 +1,12 @@
-# BDO Vision · current test candidate 1.13.0-rc.27
+# BDO Vision · current test candidate 1.13.0-rc.28
+
+**Testing rc.28:** Open the game overlay, click **CRAFT**, then **WEBSITE** to
+open the dedicated companion tab. Search a recipe, enter LT or use a verified
+inventory snapshot, edit a quantity and press Enter. **TIMER** starts a planning
+timer; begin production in game yourself. Craft → Read inventory / Toggle I-key
+snapshots enables optional weight capture. Icon names and item stacks are currently
+unknown. Planning calculations reuse the website; keep its companion tab open.
+See [the test guide](docs/COMPANION-TEST.md).
 
 The **crafting desk** exposes overview and ingredients without nested menus, with
 one-click access to weight, production, costs/tax and graphs. The Windows companion

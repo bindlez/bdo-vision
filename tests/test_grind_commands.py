@@ -25,7 +25,7 @@ class GrindCommandTests(unittest.TestCase):
             with patch.object(app.loot,'can_capture',return_value=(False,'Covered')):
                 command('start',spot='Test personal route',target='Shining Powder',goal=2)
                 meta=app.loot.insights.session.history()[0]
-                self.assertEqual(meta['label'],'Test personal route');self.assertEqual(meta['activity'],'Grinding')
+                self.assertTrue(meta['label'].startswith('Grind · '));self.assertEqual(meta['activity'],'Grinding')
                 self.assertTrue(app.loot.insights.session.clock.running)
                 command('pause');self.assertFalse(app.loot.insights.session.clock.running)
                 command('pause');self.assertTrue(app.loot.insights.session.clock.running)

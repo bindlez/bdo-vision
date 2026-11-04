@@ -6,7 +6,7 @@ this avoids file:// -> localhost browser restrictions and stale mismatched files
 """
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from threading import Lock, Thread, BoundedSemaphore, Event
+from threading import Lock, Thread, BoundedSemaphore, Event, Condition
 import socket
 import os
 import json
@@ -73,7 +73,8 @@ class PlannerBridge:
         self.ocr_paused=False
         self.gear_store_lock=Lock()
         self.tool_status={'stage':'idle','title':'Waiting for the native reader','tools':[]}
-        self.companion_status={}
+        self.craft_condition=Condition(self._lock);self.craft_stream_token=None;self.craft_closed=False
+        self.companion_status={};self.craft_panel_request=None;self.craft_panel_result=None;self.inventory_snapshot={}
         self.guild_status={'enabled':False,'available':False,'current':None,'target':None}
         self.data = {
             'current': int(current), 'maximum': int(maximum),
@@ -165,6 +166,26 @@ class PlannerBridge:
                 elif route=='/cp-plan':
                     with bridge._lock:plan=copy.deepcopy(bridge.cp_plan)
                     self._send({'plan':plan})
+                elif route=='/craft-panel-events':
+                    token=uuid.uuid4().hex
+                    with bridge.craft_condition:
+                        bridge.craft_stream_token=token;bridge.craft_condition.notify_all()
+                    self.send_response(200);self.send_header('Content-Type','text/event-stream');self.send_header('Cache-Control','no-store');self.send_header('Connection','close');self.end_headers()
+                    last=None
+                    try:
+                        while True:
+                            with bridge.craft_condition:
+                                if bridge.craft_closed or bridge.craft_stream_token!=token:return
+                                request=copy.deepcopy(bridge.craft_panel_request)
+                                ident=request.get('id') if request else 'ready'
+                                if ident==last:
+                                    bridge.craft_condition.wait(timeout=20)
+                                    if bridge.craft_closed or bridge.craft_stream_token!=token:return
+                                    request=copy.deepcopy(bridge.craft_panel_request);ident=request.get('id') if request else 'ready'
+                                last=ident
+                            body={'instance_id':bridge.instance_id,'craft_panel_request':request}
+                            self.wfile.write(('data: '+json.dumps(body,allow_nan=False)+'\n\n').encode('utf-8'));self.wfile.flush()
+                    except (BrokenPipeError,ConnectionResetError,OSError):return
                 elif route=='/tool-reader':
                     with bridge._lock:status=copy.deepcopy(bridge.tool_status)
                     self._send(status)
@@ -204,6 +225,8 @@ class PlannerBridge:
                     with bridge._lock:
                         value = dict(bridge.data)
                         value['companion']=copy.deepcopy(bridge.companion_status)
+                        value['craft_panel_request']=copy.deepcopy(bridge.craft_panel_request)
+                        value['inventory_snapshot']=copy.deepcopy(bridge.inventory_snapshot)
                         value['guild_status']=copy.deepcopy(bridge.guild_status)
                     shared=value.get('crafting_loot')
                     revision=parse_qs(urlsplit(self.path).query).get('loot_revision',[''])[0]
@@ -256,7 +279,7 @@ class PlannerBridge:
 
             def do_POST(self):
                 route=urlsplit(self.path).path
-                if route not in ('/ack','/market-prices','/craft-quotes','/craft-market','/craft-model','/show','/grind-command','/cp-read','/workerman','/gear/ocr','/gear/sweep','/gear/builds'):
+                if route not in ('/ack','/market-prices','/craft-quotes','/craft-market','/craft-model','/craft-panel-result','/show','/grind-command','/cp-read','/workerman','/gear/ocr','/gear/sweep','/gear/builds'):
                     self._send({'error': 'Unknown endpoint'}, 404)
                     return
                 if not self._origin_allowed():
@@ -271,11 +294,23 @@ class PlannerBridge:
                     if self.headers.get('Content-Encoding','identity')!='identity':
                         raise ValueError('Encoded request bodies are not supported')
                     length = int(self.headers.get('Content-Length', 0))
-                    if length <= 0 or length > (3500000 if route=='/gear/ocr' else 900000 if route=='/gear/sweep' else 300000 if route=='/gear/builds' else 250000 if route=='/market-prices' else 16384 if route=='/craft-quotes' else 4096):
+                    if length <= 0 or length > (3500000 if route=='/gear/ocr' else 900000 if route=='/gear/sweep' else 300000 if route=='/gear/builds' else 250000 if route=='/market-prices' else 16384 if route=='/craft-quotes' else 16000 if route=='/craft-panel-result' else 4096):
                         raise ValueError('Invalid body length')
                     def reject_constant(value):raise ValueError('Finite JSON values required')
                     body = json.loads(self.rfile.read(length).decode('utf-8'),parse_constant=reject_constant)
                     if not isinstance(body,dict):raise ValueError('JSON object required')
+                    if route=='/craft-panel-result':
+                        if body.get('instance_id')!=bridge.instance_id:self._send({'error':'Unknown instance'},409);return
+                        with bridge._lock:
+                            request=bridge.craft_panel_request
+                            if not request or body.get('id')!=request['id']:self._send({'error':'Stale request'},409);return
+                            result=body.get('result')
+                            if not isinstance(result,dict) or len(json.dumps(result,allow_nan=False))>14000:raise ValueError('Invalid panel result')
+                            from craft_panel_contract import validate_reply
+                            result=validate_reply(result,request['recipe'])
+                            bridge.craft_panel_result={'id':request['id'],'at':time.time(),'result':copy.deepcopy(result)}
+                            bridge.craft_panel_request['start']=False
+                        self._send({'ok':True});return
                     if route=='/workerman':
                         if not bridge.price_book:self._send({'error':'Open the paired Windows app for Workerman modeling'},503);return
                         from workerman import reference_for,model_job
@@ -453,9 +488,18 @@ class PlannerBridge:
         if len(json.dumps(value,allow_nan=False))>4000:raise ValueError('Guild status too large')
         with self._lock:self.guild_status=copy.deepcopy(value)
 
+    def request_craft_panel(self,body):
+        from craft_economy import recipe_index
+        if body.get('recipe') not in recipe_index():raise ValueError('Unknown recipe')
+        if len(json.dumps(body,allow_nan=False))>4000:raise ValueError('Panel request too large')
+        request={**body,'id':uuid.uuid4().hex,'created':time.time()}
+        with self.craft_condition:
+            self.craft_panel_request=request;self.craft_panel_result=None;self.craft_condition.notify_all()
+        return request['id']
+
     def update_companion_status(self,status):
         # Small current timer context; no images, paths, inventory or loot sharing.
-        allowed=('remaining','maximum','seconds','running','has_reading','updated_at','observed_at','name','source','lite')
+        allowed=('remaining','maximum','seconds','running','has_reading','updated_at','observed_at','name','source','session_id','lite')
         value={key:status[key] for key in allowed if key in status}
         if len(json.dumps(value,allow_nan=False))>1500:raise ValueError('Companion status too large')
         with self._lock:self.companion_status=copy.deepcopy(value)
@@ -475,6 +519,7 @@ class PlannerBridge:
         with self._lock:self.data['crafting_loot']=copy.deepcopy(snapshot)
 
     def close(self):
+        with self.craft_condition:self.craft_closed=True;self.craft_condition.notify_all()
         self.gear_stop.set()
         if self.server:
             self.server.shutdown()

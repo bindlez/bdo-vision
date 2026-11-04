@@ -1,0 +1,544 @@
+[
+  {
+    "id": "telescope",
+    "name": "Upgraded Telescope",
+    "icon": "🔭",
+    "tag": "Ulukita",
+    "rarity": "Mythic",
+    "desc": "Teleport to another adventurer. Three unique parts plus gemstones.",
+    "benefit": "Join a party or guild member at their location",
+    "sources": [
+      "Official Treasures Guide",
+      "BDFoundry Telescope"
+    ],
+    "parts": [
+      [
+        "tp1",
+        "Telescope Part I",
+        "Tungrad Ruins · Tungrad Executioner",
+        "rare",
+        "drop"
+      ],
+      [
+        "tp2",
+        "Telescope Part II",
+        "City of the Dead · Darkseeker’s Retreat",
+        "rare",
+        "drop"
+      ],
+      [
+        "tp3",
+        "Telescope Part III",
+        "Ulukita locations; 3 Vodkhan compass pieces exchange",
+        "rare",
+        "drop"
+      ],
+      [
+        "diamond",
+        "Star Diamond",
+        "Processing / Central Market",
+        "material",
+        "material"
+      ],
+      [
+        "topaz",
+        "Gold Topaz",
+        "Processing / Central Market",
+        "material",
+        "material"
+      ]
+    ]
+  },
+  {
+    "id": "ring",
+    "name": "Rich Merchant’s Ring",
+    "icon": "💍",
+    "tag": "Merchant treasure",
+    "rarity": "Mythic",
+    "desc": "Five unique pieces, exceptionally long-term treasure.",
+    "benefit": "Extra 5% silver from Central Market sales after activation",
+    "sources": [
+      "Official Treasures Guide",
+      "BDFoundry Rich Merchant Ring"
+    ],
+    "parts": [
+      [
+        "r1",
+        "Ring Piece I",
+        "Ash Forest · Volkras",
+        "rare",
+        "drop"
+      ],
+      [
+        "r2",
+        "Ring Piece II",
+        "Padix Island · Drunk Treasure Hunter",
+        "rare",
+        "drop"
+      ],
+      [
+        "r3",
+        "Ring Piece III",
+        "Sycraia / Dark Rifts / some dungeon rewards",
+        "rare",
+        "drop"
+      ],
+      [
+        "r4",
+        "Ring Piece IV",
+        "Crypt of Resting Thoughts / sea monsters",
+        "rare",
+        "drop"
+      ],
+      [
+        "r5",
+        "Ring Piece V",
+        "Olun’s Valley / eligible other routes",
+        "rare",
+        "drop"
+      ],
+      [
+        "rcoral",
+        "Red Coral",
+        "Gathering / materials",
+        "material",
+        "material"
+      ],
+      [
+        "bcoral",
+        "Blue Coral",
+        "Gathering / materials",
+        "material",
+        "material"
+      ],
+      [
+        "rruby",
+        "Resplendent Ruby",
+        "Processing chain",
+        "material",
+        "material"
+      ]
+    ]
+  },
+  {
+    "id": "compass",
+    "name": "Upgraded Compass",
+    "icon": "🧭",
+    "tag": "Valencia",
+    "rarity": "Mythic",
+    "desc": "Three unique parts and three gemstones.",
+    "benefit": "Permanent location compass and summon function",
+    "sources": [
+      "Official Treasures Guide",
+      "BDFoundry Compass"
+    ],
+    "parts": [
+      [
+        "vod",
+        "Vodkhan Piece",
+        "Hystria Ruins · Vodkhan",
+        "rare",
+        "drop"
+      ],
+      [
+        "elt",
+        "Elten Piece",
+        "Hystria Ruins · Elten / Tukar Balten",
+        "rare",
+        "drop"
+      ],
+      [
+        "aak",
+        "Aakman Piece",
+        "Aakman Temple · elite guardians",
+        "rare",
+        "drop"
+      ],
+      [
+        "ruby",
+        "Blood Ruby",
+        "Processing / Market",
+        "material",
+        "material"
+      ],
+      [
+        "sapphire",
+        "Ocean Sapphire",
+        "Processing / Market",
+        "material",
+        "material"
+      ],
+      [
+        "topaz",
+        "Gold Topaz",
+        "Processing / Market",
+        "material",
+        "material"
+      ]
+    ]
+  },
+  {
+    "id": "map",
+    "name": "Archaeologist’s Map",
+    "icon": "🗺️",
+    "tag": "Valencia",
+    "rarity": "Legendary",
+    "desc": "Four unique fragments and four gems.",
+    "benefit": "Travel to a town, then return to your former location",
+    "sources": [
+      "Official Treasures Guide",
+      "BDFoundry Map"
+    ],
+    "parts": [
+      [
+        "tukar",
+        "Tukar Piece",
+        "Roud Sulfur Mine · Tukar",
+        "rare",
+        "drop"
+      ],
+      [
+        "dev",
+        "Devourer Piece",
+        "Roud Sulfur Mine · Lava Devourer",
+        "rare",
+        "drop"
+      ],
+      [
+        "ward",
+        "Warder Piece",
+        "Pila Ku Jail · Iron Fist Warder",
+        "rare",
+        "drop"
+      ],
+      [
+        "deport",
+        "Deportee Piece",
+        "Pila Ku Jail · Sordid Deportee",
+        "rare",
+        "drop"
+      ],
+      [
+        "ruby",
+        "Blood Ruby",
+        "Processing / Market",
+        "material",
+        "material"
+      ],
+      [
+        "sapphire",
+        "Ocean Sapphire",
+        "Processing / Market",
+        "material",
+        "material"
+      ],
+      [
+        "topaz",
+        "Gold Topaz",
+        "Processing / Market",
+        "material",
+        "material"
+      ],
+      [
+        "emerald",
+        "Forest Emerald",
+        "Processing / Market",
+        "material",
+        "material"
+      ]
+    ]
+  },
+  {
+    "id": "hp",
+    "name": "Ornette’s Spirit Essence",
+    "icon": "❤️",
+    "tag": "Infinite HP",
+    "rarity": "Legendary",
+    "desc": "Infinite HP potion: full pieces or pity progress.",
+    "benefit": "Reusable HP recovery",
+    "sources": [
+      "BDFoundry Infinite Potions"
+    ],
+    "parts": [
+      [
+        "kag",
+        "Ash Halfmoon Kagtunak",
+        "Blood Wolf Settlement",
+        "pity",
+        "pity"
+      ],
+      [
+        "ron",
+        "Ron’s Tintinnabulum",
+        "Forest Ronaros",
+        "pity",
+        "pity"
+      ],
+      [
+        "sher",
+        "Sherekhan’s Panacea",
+        "Sherekhan Necropolis",
+        "pity",
+        "pity"
+      ],
+      [
+        "gay",
+        "Gayak’s Courage Stone",
+        "Related quest / exchange",
+        "material",
+        "material"
+      ],
+      [
+        "music",
+        "Musical Spirit’s Sound Stone",
+        "Related quest / exchange",
+        "material",
+        "material"
+      ]
+    ]
+  },
+  {
+    "id": "mp",
+    "name": "Odore’s Spirit Essence",
+    "icon": "💠",
+    "tag": "Infinite MP",
+    "rarity": "Legendary",
+    "desc": "Infinite MP/WP/SP/EP potion with pity alternatives.",
+    "benefit": "Reusable resource recovery",
+    "sources": [
+      "BDFoundry Infinite Potions"
+    ],
+    "parts": [
+      [
+        "narc",
+        "Narc’s Crimson Tear",
+        "Manshaum Forest",
+        "pity",
+        "pity"
+      ],
+      [
+        "gland",
+        "Markthanan’s Gland",
+        "Tshira Ruins",
+        "pity",
+        "pity"
+      ],
+      [
+        "val",
+        "Valtarra’s Clairvoyance",
+        "Navarn Steppe · tanning",
+        "pity",
+        "pity"
+      ],
+      [
+        "prot",
+        "Krogdalo’s Protection Stone",
+        "Related quest / exchange",
+        "material",
+        "material"
+      ],
+      [
+        "dawn",
+        "Night Crow’s Dawn Stone",
+        "Related quest / exchange",
+        "material",
+        "material"
+      ]
+    ]
+  },
+  {
+    "id": "nol",
+    "name": "Ebenruth’s Nol",
+    "icon": "⛵",
+    "tag": "Sailing",
+    "rarity": "Mythic",
+    "desc": "Ocean treasure; progression also depends on Crow Coin routes.",
+    "benefit": "Enhanced ship movement with BreezySail",
+    "sources": [
+      "Official Treasures Guide",
+      "BDFoundry Ebenruth Nol"
+    ],
+    "parts": [
+      [
+        "nolpath",
+        "Ebenruth material / acquisition",
+        "Sailing, trading, or Crow Coin routes",
+        "rare",
+        "manual"
+      ],
+      [
+        "nolcraft",
+        "Craft / exchange requirements",
+        "Complete current in-game material list",
+        "material",
+        "manual"
+      ]
+    ]
+  },
+  {
+    "id": "nostos",
+    "name": "Star of Nostos",
+    "icon": "🌠",
+    "tag": "Gathering · 2026",
+    "rarity": "Mythic",
+    "desc": "Six gathering paths and their crafted intermediates.",
+    "benefit": "Return travel between campsite and residence/manor",
+    "sources": [
+      "May 2026 Official Update"
+    ],
+    "parts": [
+      [
+        "terra",
+        "Terrashard",
+        "Hoe · Cracked Terrashard",
+        "pity",
+        "material1000"
+      ],
+      [
+        "eon",
+        "Eonwood Round",
+        "Lumbering · Withered Wood Chip",
+        "pity",
+        "material1000"
+      ],
+      [
+        "life",
+        "Essence of Life intermediary",
+        "Fluid collecting · Thin Essence of Life",
+        "pity",
+        "material1000"
+      ],
+      [
+        "heart",
+        "Heartvein intermediary",
+        "Mining · Dim Heartvein Shard",
+        "pity",
+        "material1000"
+      ],
+      [
+        "wild",
+        "Wildsoul intermediary",
+        "Butchering · Faint Wildsoul",
+        "pity",
+        "material1000"
+      ],
+      [
+        "hide",
+        "Naturewoven intermediary",
+        "Tanning · Faded Naturewoven Hide",
+        "pity",
+        "material1000"
+      ]
+    ]
+  },
+  {
+    "id": "sanctuary",
+    "name": "Krogdalo’s Sanctuary",
+    "icon": "🐎",
+    "tag": "Mounts",
+    "rarity": "Epic",
+    "desc": "Prestige stable / horse treasure. Track your progression milestones.",
+    "benefit": "Convenience for your prized mounts",
+    "sources": [
+      "Official Treasures Guide"
+    ],
+    "parts": [
+      [
+        "mounts",
+        "Required mount progression",
+        "Check current in-game quest prerequisites",
+        "manual",
+        "manual"
+      ],
+      [
+        "sanquest",
+        "Sanctuary quests",
+        "Quest and reward completion",
+        "manual",
+        "manual"
+      ]
+    ]
+  },
+  {
+    "id": "lamp",
+    "name": "Lumaloft Lamp",
+    "icon": "🏮",
+    "tag": "Lifestyle",
+    "rarity": "Epic",
+    "desc": "Remitaronsom’s Lumaloft Lamp. Custom tracking while requirements are reviewed.",
+    "benefit": "Life-skill treasure collectible",
+    "sources": [
+      "Official Treasures Guide"
+    ],
+    "parts": [
+      [
+        "lampparts",
+        "Lamp requirements",
+        "See official guide for current recipe",
+        "manual",
+        "manual"
+      ]
+    ]
+  },
+  {
+    "id": "laorzeca",
+    "name": "La Orzeca Outfit",
+    "icon": "🖤",
+    "tag": "Prestige",
+    "rarity": "Epic",
+    "desc": "Optional collectible, featured for Landscape Paint crossover.",
+    "benefit": "Rare cosmetic collection",
+    "sources": [
+      "Official Paint Update"
+    ],
+    "parts": [
+      [
+        "left",
+        "Quturan’s Left Lung",
+        "Ash Forest / eligible Landscape Paint",
+        "pity",
+        "pity"
+      ],
+      [
+        "right",
+        "Quturan’s Right Lung",
+        "Crypt / eligible Landscape Paint",
+        "pity",
+        "pity"
+      ]
+    ]
+  },
+  {
+    "id": "general",
+    "name": "Personal Treasure Project",
+    "icon": "✨",
+    "tag": "Custom",
+    "rarity": "Custom",
+    "desc": "Use this slot for a new or event-specific treasure you wish to track.",
+    "benefit": "Flexible progression notebook",
+    "sources": [],
+    "parts": [
+      [
+        "custom1",
+        "Custom milestone 1",
+        "User-defined",
+        "manual",
+        "manual"
+      ],
+      [
+        "custom2",
+        "Custom milestone 2",
+        "User-defined",
+        "manual",
+        "manual"
+      ],
+      [
+        "custom3",
+        "Custom milestone 3",
+        "User-defined",
+        "manual",
+        "manual"
+      ]
+    ]
+  }
+]

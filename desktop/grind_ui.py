@@ -51,6 +51,10 @@ class GrindTracker:
         from live_grind import LiveGrind
         self.live=LiveGrind(self);self.obs_enabled=tk.BooleanVar(value=bool(tracker.platform_preferences.get('obs_enabled',False)))
         self.silver_goal=tk.StringVar(value=str(tracker.platform_preferences.get('grind_silver_goal',0)));self.silver_progress=tk.StringVar()
+        self.insights.session.db.execute('CREATE TABLE IF NOT EXISTS grind_identity(session TEXT PRIMARY KEY, automatic INTEGER NOT NULL, evidence TEXT NOT NULL)')
+        self.insights.session.db.commit()
+        restored=self.insights.session.db.execute('SELECT automatic,evidence FROM grind_identity WHERE session=?',(self.insights.session.id,)).fetchone()
+        self.auto_spot=bool(restored and restored[0]);self.spot_evidence=set(json.loads(restored[1])) if restored else set()
         self.insights.session.db.execute('CREATE TABLE IF NOT EXISTS grind_money_goals(session TEXT PRIMARY KEY, silver INTEGER NOT NULL)');self.insights.session.db.commit()
         self.insights.session.db.execute('CREATE TABLE IF NOT EXISTS grind_details (session TEXT PRIMARY KEY, spot TEXT NOT NULL, goal INTEGER NOT NULL)');self.insights.session.db.commit()
 
@@ -58,10 +62,16 @@ class GrindTracker:
         from ui_scroll import notebook_page
         c=self.tracker.app.colors;self.frame,frame=notebook_page(tabs,'Grind',c)
         top=tk.Frame(frame,bg=c['bg']);top.pack(fill='x')
-        for title,var,width in [('SPOT / ROUTE',self.spot,27),('TREASURE PURSUIT · OPTIONAL',self.target,28),('GOAL',self.goal,5)]:
+        for title,var,width in [('SPOT / AUTO DETECTION',self.spot,27),('TREASURE PURSUIT · OPTIONAL',self.target,28),('GOAL',self.goal,5)]:
             field=tk.Frame(top,bg=c['bg']);field.pack(side='left',fill='x',expand=title!='GOAL',padx=(0,12))
             tk.Label(field,text=title,font=('Segoe UI Semibold',8),bg=c['bg'],fg=c['muted']).pack(anchor='w')
-            ttk.Entry(field,textvariable=var,width=width,style='Vision.TEntry').pack(fill='x',pady=(5,0))
+            if var is self.spot:
+                from grind_identity import TRASH
+                picker=ttk.Combobox(field,textvariable=var,values=('Auto detect',*sorted(set(TRASH.values()))),state='readonly',width=width,style='Vision.TCombobox');picker.pack(fill='x',pady=(5,0));picker.bind('<<ComboboxSelected>>',lambda e:self.spot_override())
+            elif var is self.target:
+                from big_drops import CATALOG
+                ttk.Combobox(field,textvariable=var,values=('',*[r['item'] for r in CATALOG]),state='readonly',width=width,style='Vision.TCombobox').pack(fill='x',pady=(5,0))
+            else:ttk.Entry(field,textvariable=var,width=width,style='Vision.TEntry').pack(fill='x',pady=(5,0))
         actions=tk.Frame(frame,bg=c['bg']);actions.pack(fill='x',pady=(12,10))
         self.tracker.app.action(actions,'START GRIND',self.start,primary=True).pack(side='left')
         self.tracker.app.text_button(actions,'PAUSE / RESUME',self.pause).pack(side='left',padx=12)
@@ -118,15 +128,46 @@ class GrindTracker:
         except ValueError:self.state.set('Enter a nonnegative whole-silver goal, or 0 to disable it.');return
         session=self.insights.session
         if session.id and not session.ended:session.finish(self.insights.prices.all(),self.insights.gate())
-        spot=self.spot.get().strip()[:100] or 'Unnamed grind spot'
-        session.start(self.insights.gate(),label=spot,activity='Grinding',targets=[self.target.get().strip()[:100]] if self.target.get().strip() else [])
+        from grind_identity import session_label
+        spot=self.spot.get().strip()[:100]
+        self.auto_spot=spot in ('','Auto detect');spot='Awaiting trash loot' if self.auto_spot else spot
+        self.spot_evidence=set()
+        session.start(self.insights.gate(),label=session_label(),activity='Grinding',targets=[self.target.get().strip()[:100]] if self.target.get().strip() else [])
         self.tracker.generation+=1;self.tracker.last_scan=0
         with session.db:
             session.db.execute('INSERT INTO grind_details VALUES (?,?,?)',(session.id,spot,goal))
+            session.db.execute('INSERT OR REPLACE INTO grind_identity VALUES (?,?,?)',(session.id,int(self.auto_spot),'[]'))
             session.db.execute('INSERT INTO grind_money_goals VALUES (?,?)',(session.id,silver))
         self.tracker.crafting.set(False);self.tracker.app.save_quietly()
         if self.history_tree:self.history_tree.selection_remove(self.history_tree.selection())
         self.refresh()
+
+    def spot_override(self):
+        s=self.insights.session
+        self.auto_spot=self.spot.get()=='Auto detect';self.spot_evidence=set()
+        if not s.id or s.ended:return
+        spot='Awaiting trash loot' if self.auto_spot else self.spot.get()
+        with s.db:
+            s.db.execute('UPDATE grind_details SET spot=? WHERE session=?',(spot,s.id))
+            s.db.execute('INSERT OR REPLACE INTO grind_identity VALUES (?,?,?)',(s.id,int(self.auto_spot),'[]'))
+        self.refresh()
+
+    def observe_spot(self,item):
+        s=self.insights.session
+        if not s.id or s.ended or not getattr(self,'auto_spot',False):return
+        from grind_identity import TRASH
+        if item.casefold().strip() not in TRASH:return
+        self.spot_evidence.add(item)
+        from grind_identity import infer,pursuits
+        result=infer(self.spot_evidence);spot=result['spot'] or ('Ambiguous trash / choose spot' if result['ambiguous'] else 'Awaiting trash loot')
+        row=s.db.execute('SELECT spot FROM grind_details WHERE session=?',(s.id,)).fetchone()
+        if not row or row[0]==spot:return
+        with s.db:
+            s.db.execute('UPDATE grind_details SET spot=? WHERE session=?',(spot,s.id))
+            s.db.execute('INSERT OR REPLACE INTO grind_identity VALUES (?,?,?)',(s.id,1,json.dumps(sorted(self.spot_evidence))))
+        self.spot.set(spot)
+        suggested=pursuits(spot)
+        if suggested and not self.target.get():self.state.set('Spot inferred: '+spot+'. Suggested pursuit: '+', '.join(suggested[:2])+'. Choose one if desired.')
 
     def apply_silver_goal(self):
         try:

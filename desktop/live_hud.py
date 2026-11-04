@@ -16,14 +16,16 @@ class LiveHUD:
         head = tk.Frame(body, bg=INK);head.pack(fill='x', padx=12, pady=(3, 2))
         brand = label(head, '◇  VISION / GRIND', 9, VIOLET);brand.pack(side='left')
         button(head, '×', self.close).pack(side='right')
+        button(head, 'CRAFT', self.live.craft_panel.toggle, TEAL).pack(side='right')
         button(head, 'SETUP', self.live.settings).pack(side='right')
         self.surface.draggable(head, brand)
+        self.surface.follow=self.live.craft_panel.retile
         self.surface.feedback = lambda text:brand.configure(text=text)
         self.status = label(body, 'READY · Start a grind run', 9, TEAL, anchor='w');self.status.pack(fill='x', padx=12)
         metrics = tk.Frame(body, bg=INK);metrics.pack(fill='x', padx=12, pady=(5, 3))
         metrics.columnconfigure(0, weight=1);metrics.columnconfigure(1, weight=1)
-        label(metrics, 'RECORDED VALUE', 8, MUTED).grid(row=0, column=0, sticky='w')
-        label(metrics, 'SILVER / OBSERVED H', 8, MUTED).grid(row=0, column=1, sticky='w', padx=(8, 0))
+        self.value_label=label(metrics, 'RECORDED VALUE', 8, MUTED);self.value_label.grid(row=0, column=0, sticky='w')
+        self.rate_label=label(metrics, 'SILVER / OBSERVED H', 8, MUTED);self.rate_label.grid(row=0, column=1, sticky='w', padx=(8, 0))
         self.value = label(metrics, '—', 24 if wide else 22);self.value.grid(row=1, column=0, sticky='w')
         self.rate = label(metrics, '—', 18, TEAL);self.rate.grid(row=1, column=1, sticky='w', padx=(8, 0))
         self.goal = label(body, 'Set a silver goal in Grind', 9, MUTED, anchor='w');self.goal.pack(fill='x', padx=12)
@@ -38,10 +40,22 @@ class LiveHUD:
 
     def save_position(self, options):
         self.tracker.platform_preferences['overlay'] = dict(options);self.app.save_quietly()
+        self.live.craft_panel.retile()
         big = getattr(self.tracker, 'big_drops', None)
         if big and getattr(big, 'reveals', None):big.reveals.retile()
 
     def update(self, data):
+        if not data.get('sessionActive') and self.app.running and self.app.has_reading:
+            remaining=max(0,self.app.value);seconds=remaining*max(.05,float(self.app.speed.get()))
+            self.status.configure(text='CRAFT TIMER / COUNTDOWN ESTIMATE',fg=TEAL)
+            self.value_label.configure(text='TOOL USES LEFT');self.rate_label.configure(text='TIME LEFT')
+            self.value.configure(text=f'{remaining:,.0f}');self.rate.configure(text=f'{int(seconds)//3600}:{int(seconds)//60%60:02}:{int(seconds)%60:02}')
+            run=self.tracker.auto_craft.engine.run
+            from auto_craft import families
+            recipe=families()[0].get(run['family'],{}).get('name','Waiting for craft output') if run else 'Waiting for craft output'
+            self.latest.configure(text=recipe[:48]);self.goal.configure(text='CRAFT opens search, packing and estimates')
+            self.time.configure(text='Assumes crafting continues / no extra OCR');self.bar.coords(self.fill,0,0,0,3);self.key=None;return
+        self.value_label.configure(text='RECORDED VALUE');self.rate_label.configure(text='SILVER / OBSERVED H')
         key = repr({k:v for k,v in data.items() if k != 'updatedAt'})
         if key == self.key:return
         self.key = key
@@ -67,6 +81,7 @@ class LiveHUD:
         self.pause.configure(text='PAUSE' if data.get('available') else 'PAUSE / RESUME')
 
     def close(self):
+        self.live.craft_panel.close()
         self.surface.close();self.live.window = None;self.live.hud = None
 
 
@@ -109,7 +124,9 @@ def settings(live):
         for key, var in variables.items():updated[key] = int(var.get()) if key == 'seconds' else var.get()
         tracker.platform_preferences['overlay'] = preferences(updated);app.save_quietly()
         opened = live.window and live.window.winfo_exists()
+        panel_open=live.craft_panel.surface is not None
         if opened:live.hud.close();live.open()
+        if panel_open:live.craft_panel.open()
         big = tracker.big_drops
         big.reveals.retile()
         win.destroy()

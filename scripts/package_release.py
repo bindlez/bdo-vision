@@ -19,6 +19,7 @@ for directory,pattern in [('desktop','*.py'),('desktop','*.bat'),('desktop/asset
                           ('native','*.hpp'),('native','*.cpp'),('native','*.cmd')]:
     allowed.extend((root/directory).glob(pattern))
 allowed.extend((root/'docs/handbook').glob('*.md'))
+for pattern in ('*.html','*.js','*.css','*.md'):allowed.extend((root/'sideapps/idea-desk').glob(pattern))
 if (root/'demo').exists():allowed.extend((root/'demo').glob('*.html'))
 if (root/'demo').exists():allowed.extend((root/'demo').glob('*.md'))
 revision=subprocess.run(['git','rev-parse','HEAD'],cwd=root,capture_output=True,text=True)

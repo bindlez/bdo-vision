@@ -1,3 +1,16 @@
+# rc.28 companion test scope - November 3, 2026
+
+Implemented: shared-engine native crafting sidecar and explicit timers; event-driven
+website link; optional cross-engine weight snapshots with debug view; gap forecasts
+and opt-in captured-unit milestones; dated grind labels with two exact trash
+signatures; compact read-only Fairy treasure desk; additional native CP pies.
+See [the test guide](COMPANION-TEST.md) and [developer contract](handbook/35-connected-craft-companion.md).
+
+Open acceptance: actual I-key opening and weights at the user's UI scale; live
+craft timing and background browser behavior; mixed-DPI docking. Full inventory
+icon/stack recognition, broad spot coverage and native Fairy vault ownership sync
+remain explicit future work. Existing full website functionality is preserved.
+
 # Current UI and reader work - November 3, 2026
 
 See [the normalized brief and ordered checklist](UX-RELEASE-PLAN.md). rc.27 adds the

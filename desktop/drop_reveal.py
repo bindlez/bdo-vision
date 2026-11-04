@@ -18,7 +18,11 @@ class DropReveals:
 
     def obstacle(self):
         hud = getattr(self.big.tracker.grind.live, 'hud', None)
-        return hud.surface.rect if hud and hud.shown and hud.surface.window.winfo_exists() else None
+        panel=getattr(self.big.tracker.grind.live,'craft_panel',None)
+        rectangles=[]
+        if hud and hud.shown and hud.surface.window.winfo_exists():rectangles.append(hud.surface.rect)
+        if panel and panel.surface:rectangles.append(panel.surface.rect)
+        return rectangles or None
 
     def retile(self):
         if self.surface:
@@ -34,21 +38,21 @@ class DropReveals:
         self.surface = OverlaySurface(self.root, 'Vision · Drop reveal', (360, 204), p)
         self.big.toast = self.surface.window
         body = self.surface.body
-        accent = GOLD if event['category'] == 'Huge Drop' else TEAL if event.get('treasure') or event['category'] == 'Treasure' else VIOLET
+        accent = GOLD if event['category'] == 'Huge Drop' else TEAL if event.get('treasure') or event['category'] == 'Treasure' or event.get('milestone') else VIOLET
         self.accent = tk.Canvas(body, bg=INK, height=22, highlightthickness=0);self.accent.pack(fill='x')
         self.accent.create_line(0, 1, 360, 1, fill=accent, width=2)
         self.gem = self.accent.create_polygon(180, 5, 187, 12, 180, 19, 173, 12, fill=accent, outline='')
         header = tk.Frame(body, bg=INK);header.pack(fill='x', padx=14)
-        label(header, ('PREVIEW · ' if event.get('preview') else 'LOOT SECURED · ')+event['category'].upper(), 9, accent).pack(side='left')
+        label(header, ('PREVIEW · ' if event.get('preview') else 'PROGRESS SAVED · ' if event.get('milestone') else 'LOOT SECURED · ')+event['category'].upper(), 9, accent).pack(side='left')
         button(header, '×', self.dismiss).pack(side='right')
         label(body, event['item'], 16, wraplength=330, justify='left', anchor='w').pack(fill='x', padx=14)
-        value = 'Unpriced treasure' if event.get('value') is None else compact_silver(event['value'])+' SILVER'
+        value = event.get('display_value') or ('Unpriced treasure' if event.get('value') is None else compact_silver(event['value'])+' SILVER')
         row = tk.Frame(body, bg=INK);row.pack(fill='x', padx=14, pady=(6, 2))
         label(row, value, 22, accent).pack(side='left')
         label(row, '×'+str(event['quantity']), 12, MUTED).pack(side='right')
-        label(body, 'SAMPLE DATA · no loot recorded' if event.get('preview') else 'Recorded value · saved in your Trophy Room', 9, MUTED, anchor='w').pack(fill='x', padx=14)
+        label(body, 'SAMPLE DATA · no loot recorded' if event.get('preview') else 'Accepted output · forecasts excluded' if event.get('milestone') else 'Recorded value · saved in your Trophy Room', 9, MUTED, anchor='w').pack(fill='x', padx=14)
         footer = tk.Frame(body, bg=PANEL);footer.pack(side='bottom', fill='x')
-        button(footer, 'VIEW TROPHY ROOM', self.open_journal, accent).pack(side='left', padx=7)
+        button(footer, 'VIEW CRAFT' if event.get('milestone') else 'VIEW TROPHY ROOM', self.open_journal, accent).pack(side='left', padx=7)
         self.waiting = label(footer, '', 8, MUTED);self.waiting.pack(side='right', padx=10)
         self.life = tk.Canvas(body, height=2, bg=LINE, highlightthickness=0);self.life.pack(side='bottom', fill='x')
         self.life_fill = self.life.create_rectangle(0, 0, 358, 2, fill=accent, outline='')
@@ -80,9 +84,10 @@ class DropReveals:
 
     def open_journal(self):
         # Opening the full app is an explicit user action; never on drop receipt.
-        preview = self.event and self.event.get('preview')
+        preview = self.event and self.event.get('preview');milestone=self.event and self.event.get('milestone')
         self.close()
-        if not preview:self.big.open()
+        if milestone:self.big.app.open_activity('craft')
+        elif not preview:self.big.open()
 
     def snooze(self):self.until = time.monotonic()+600;self.close()
 

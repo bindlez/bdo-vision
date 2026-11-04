@@ -12,7 +12,9 @@ def stream_page():
 
 
 class LiveGrind:
-    def __init__(self,grind):self.grind=grind;self.window=None;self.hud=None;self.last=None
+    def __init__(self,grind):
+        from craft_panel import CraftPanel
+        self.grind=grind;self.window=None;self.hud=None;self.last=None;self.craft_panel=CraftPanel(self)
 
     def open(self):
         if self.window and self.window.winfo_exists():return
@@ -64,6 +66,7 @@ class LiveGrind:
                 'sessionActive':True,'unpriced':data['unpriced'],'latest':self.latest,'updatedAt':time.time(),'silverGoal':meta['silver_goal']}
 
     def refresh(self):
+        self.craft_panel.refresh()
         visible=self.window and self.window.winfo_exists() and self.window.winfo_ismapped()
         enabled=bool(self.grind.tracker.platform_preferences.get('obs_enabled',False));bridge=getattr(self.grind.tracker.app,'bridge',None)
         if bridge:

@@ -1,3 +1,26 @@
+# 1.13.0-rc.28 - Connected crafting companion (test candidate)
+
+- Native CRAFT sidecar: real recipe search, linked/independent quantities, max
+  packing, weight/tool limits, outputs, expected silver and explicit timer starts.
+  The dedicated paired website tab owns the calculation engine; event-driven
+  requests support background use without adding a capture or polling loop.
+- Optional I-key inventory snapshots verify the Inventory/Weight widget, locate
+  its row and cross-check Windows OCR with Tesseract. Currently weight only:
+  icon identities and stack quantities remain unknown. Lite Use prevents capture.
+  Includes a live Inventory reader/debug view and local snapshot backup.
+- Craft forecasts remain separate from observed loot, can be disabled for gaps,
+  and use matching tool sessions for remaining-value estimates. Lite Use retains
+  estimates without enabling capture. Optional captured-unit milestone reveals.
+- Timestamped grind session names; separate spot inference from two exact trash
+  signatures, ambiguity handling, a spot selector and persisted evidence. The
+  initial signatures cover Tungrad Ruins and Yzrahid Highlands; unknown stays unknown.
+- Added compact read-only Fairy treasure desk from the shared 12-treasure catalog,
+  recorded treasure-family finds and a full-vault shortcut. Website ownership is
+  retained; native view does not infer piece variants or duplicate vault ownership.
+- Added CP byproduct EXP and opportunity-cost pies using existing scenario data.
+- All prior features and history retained. Live inventory opening, actual craft
+  timing and fullscreen/mixed-display overlay behavior still need game testing.
+
 # 1.13.0-rc.27 - A visible crafting desk and game overlays
 
 - Kept all original features/pages; replaced native destination menus with visible

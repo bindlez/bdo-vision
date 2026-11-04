@@ -35,6 +35,13 @@ def run_self_check(app_class,root_path,data_path):
         surface=OverlaySurface(root,'Packaged overlay check',(320,246),{})
         report['checks']['native_overlay_widgets']=surface.body.winfo_exists() and callable(DropReveals)
         surface.close()
+        app.loot.grind.live.craft_panel.open(show=False)
+        report['checks']['craft_companion_widgets']=bool(app.loot.grind.live.craft_panel.surface.body.winfo_exists())
+        app.loot.grind.live.craft_panel.close()
+        from fairy_desktop import catalog
+        report['checks']['fairy_native_catalog']=len(catalog())==12
+        from inventory_reader import parse_weight
+        report['checks']['inventory_weight_parser']=parse_weight('Inventory Weight 100 / 3000 LT')=={'current':100.,'maximum':3000.}
         from loot_positioned import physical_rows
         report['checks']['positioned_loot_module']=physical_rows([])==[]
         from workspace_nav import WorkspaceNavigation

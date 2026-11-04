@@ -56,12 +56,14 @@ def tile(size, area, obstacle=None, corner='top-right'):
     """Try adjacent lanes, then corners; minimize obstruction on tiny monitors."""
     base = dock(size, area, corner)
     if obstacle is None:return base
-    x, y, w, h = obstacle;tw, th = size
-    candidates = [(x, y+h+GAP, tw, th), (x, y-th-GAP, tw, th),
-                  (x-tw-GAP, y, tw, th), (x+w+GAP, y, tw, th)]
-    candidates += [dock(size, area, c) for c in ('top-right', 'top-left', 'bottom-right', 'bottom-left')]
-    candidates = [clamp(c, area) for c in candidates]
-    return min(candidates, key=lambda c:overlap(c, obstacle))
+    obstacles=[obstacle] if len(obstacle)==4 and isinstance(obstacle[0],(int,float)) else obstacle
+    candidates=[];tw,th=size
+    for x,y,w,h in obstacles:
+        candidates += [(x,y+h+GAP,tw,th),(x,y-th-GAP,tw,th),(x-tw-GAP,y,tw,th),(x+w+GAP,y,tw,th)]
+    candidates += [dock(size,area,c) for c in ('top-right','top-left','bottom-right','bottom-left')]
+    candidates=[clamp(c,area) for c in candidates]
+    return min(candidates,key=lambda c:sum(overlap(c,o) for o in obstacles))
+
 
 
 class RevealQueue:

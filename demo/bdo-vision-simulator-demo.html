@@ -2094,11 +2094,14 @@ function visionRememberMarketQuotes(list){
 }
 function renderVisionCraftingLoot(reading){
   renderVisionCraftingStatus(reading);
+  visionCraftPanelReply(reading);
   var panel=document.getElementById('visionCraftingLoot');
   var data=reading && reading.crafting_loot;
   if(!data){panel.hidden=true;visionLootLast=null;return;}
   visionLootLast=reading;panel.hidden=false;
-  renderVisionAutomaticCraft(panel,data.auto_craft);
+  var auto=data.auto_craft,t=reading.companion;
+  if(auto?.model&&auto.toolSession&&auto.toolSession===t?.session_id&&t.running&&Date.now()/1000-t.updated_at<=6&&Number.isFinite(t.remaining))auto={...auto,remainingValue:auto.model.perBatch*t.remaining};
+  renderVisionAutomaticCraft(panel,auto);
   var age=data.updated_at?Math.max(0,Date.now()/1000-Number(data.updated_at)):Infinity;
   var stamp=data.updated_at?new Date(Number(data.updated_at)*1000).toLocaleTimeString():'no reading yet';
   document.getElementById('visionLootState').textContent=data.available===true && age<=15?'Observed '+stamp:'Unavailable now · '+(data.reason||'reading is no longer current')+' · last observation '+stamp;
@@ -2186,6 +2189,59 @@ function visionCraftStatusDisconnected(){
  strip.querySelector('[data-status-guild]').textContent='Last seen quest / connection lost';
  strip.querySelector('[data-craft-launcher]').disabled=true;
 }
+
+var visionPanelHandled=null;
+function visionCraftPanelCalculate(q){
+ const r=craftRecipeIndex.byRecipe.get(q.recipe);if(!r||!['cooking','alchemy'].includes(r.type))throw Error('Choose a cooking or alchemy recipe');
+ const ctx={...craftStudioContext(),inventory:{},make:{},configFor:x=>({...craftStudioConfig(x),...(x.id===r.id&&Number.isFinite(q.seconds)&&q.seconds>=.05&&q.seconds<=3600?{seconds:q.seconds}:{})})},cfg=VisionCraft.configure(r,ctx.configFor(r),VISION_CRAFT_DATA),mats=VisionCraft.resolved(r,ctx),amounts=q.amounts||{};
+ const merged=new Map();for(const m of mats){const old=merged.get(m.itemId);merged.set(m.itemId,old?{...old,qty:old.qty+m.qty}:m);}const rows=[...merged.values()];
+ const options={maximum:q.maximum,current:q.current,reserve:q.reserve??25,mode:'expected',bag:q.bag||{},tool:q.limit==='ingredients'?'':q.tool};
+ if(q.limit!=='ingredients'&&(!Number.isSafeInteger(q.tool)||q.tool<0))throw Error('Read a tool or enter its remaining uses.');
+ const capacity=VisionCraft.carry(r,options,ctx);if(!capacity.available)throw Error('Missing weight data: '+capacity.missing.join(', '));
+ let count=capacity.batches,linked=null;
+ if(q.anchor!=null&&!q.independent){linked=VisionCraft.ingredientRatio(r,q.anchor,amounts[q.anchor],ctx);count=linked.batches;}
+ else if(q.independent){if(rows.some(m=>amounts[m.itemId]==null||amounts[m.itemId]===''||!Number.isSafeInteger(Number(amounts[m.itemId]))||Number(amounts[m.itemId])<0||Number(amounts[m.itemId])>1e12))throw Error('Enter each ingredient quantity');count=Math.min(...rows.map(m=>Math.floor(Number(amounts[m.itemId])/m.qty)));}
+ if(!Number.isSafeInteger(count)||count<0||count>1e9)throw Error('Enter valid whole ingredient quantities');
+ const selected=VisionCraft.carry(r,{...options,batches:count},ctx).selected,p=VisionCraft.plan(r,Math.max(1,count),cfg,ctx);
+ return {recipe:r.id,name:r.name,batches:count,maxCrafts:capacity.batches,seconds:count*cfg.seconds,output:count*cfg.yield,
+  gross:count?p.revenue:null,profit:count?p.profit:null,perHour:count?p.perHour:null,fits:selected.fits,peak:selected.peakWeight,
+  rows:rows.map(m=>({id:m.itemId,name:m.name,ratio:m.qty,quantity:count*m.qty,leftover:q.independent?Number(amounts[m.itemId])-count*m.qty:linked&&m.itemId===Number(q.anchor)?linked.leftover:0})),
+  unpriced:p.missing,note:'Model: '+cfg.mastery+' mastery / '+cfg.seconds+'s per action / '+cfg.retention+'% sale retention. Expected outputs and cached prices; input value is deducted. '+(selected.fits?'Fits the selected weight/tool model.':'Exceeds the entered weight or tool budget.')};
+}
+async function visionCraftPanelReply(reading){
+ const q=reading?.craft_panel_request;if(!q||q.id===visionPanelHandled||!bridgeSelectedOrigin)return;visionPanelHandled=q.id;
+ let result;try{result=visionCraftPanelCalculate(q);
+ if(q.start===true){
+  if(!Number.isFinite(q.created)||Date.now()/1000-q.created>15)throw Error('Timer request expired; click TIMER again in Vision.');
+  if(!result.fits||result.batches<1)throw Error('Choose a positive load that fits weight and tool limits before starting.');
+  if(!activeTimers.some(t=>t.companionRequestId===q.id)){
+   const r=craftRecipeIndex.byRecipe.get(q.recipe),seconds=result.seconds/result.batches;
+   startCraft({...r,secPerBatch:seconds},result.batches);
+   const timer=activeTimers.find(t=>t.recipeId===r.id&&t.status==='running');if(timer){timer.companionRequestId=q.id;saveState();}
+  }
+  result.timerStarted=true;
+ }
+ }catch(e){result={error:String(e.message||e)};}
+ async function publish(value){const response=await fetch(bridgeSelectedOrigin+'/craft-panel-result',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:q.id,instance_id:reading.instance_id,result:value}),signal:AbortSignal.timeout(3000)});if(!response.ok&&response.status!==409)visionPanelHandled=null;}
+ try{await publish(result);}catch(e){visionPanelHandled=null;}
+ if(result.unpriced&&typeof craftStudioLoadPrices==='function'){
+  const r=craftRecipeIndex.byRecipe.get(q.recipe),ctx={...craftStudioContext(),make:{}};
+  craftStudioLoadPrices(r,false,ctx).then(async quote=>{if(!quote.ok||visionPanelHandled!==q.id)return;try{const updated=visionCraftPanelCalculate(q);if(result.timerStarted)updated.timerStarted=true;await publish(updated);}catch(e){}});
+ }
+
+}
+
+// Dedicated companion tab: event-driven requests keep hidden-tab timer throttling
+// out of the native editing path. No extra capture or price-poll loop.
+if(typeof window!=='undefined'&&typeof window.addEventListener==='function')window.addEventListener('load',()=>{
+ if(location.hash!=='#companion'||!['127.0.0.1','localhost'].includes(location.hostname)||typeof EventSource==='undefined')return;
+ bridgeSelectedOrigin=location.origin;
+ const source=new EventSource('/craft-panel-events');
+ source.onerror=()=>source.close();
+ source.onmessage=e=>{try{visionCraftPanelReply(JSON.parse(e.data));}catch(error){}};
+ window.addEventListener('pagehide',()=>source.close(),{once:true});
+ if(typeof showView==='function')showView('craft');
+});
 /* OWNED CRAFTING_LOOT_VIEW_JS END */
 
 

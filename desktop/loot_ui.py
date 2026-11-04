@@ -339,6 +339,7 @@ class LootTracker:
         observed_at=datetime.fromtimestamp(self.capture_time).astimezone().isoformat(timespec='milliseconds') if self.capture_time else None
         ident=self.ledger.add(event.item,event.quantity,{'normal':'Item Drop Log','rare':'Rare Drop Log','chat':'Text feed'}[feed],self.session,recorded_at=observed_at,kind=event.kind)
         self.insights.observe(ident)
+        self.grind.observe_spot(event.item)
         self.last_saved_at=time.time()
         self.auto_craft.observe(ident,event.item,event.quantity,self.capture_time)
         self.big_drops.observe(ident,event)
@@ -414,6 +415,9 @@ class LootTracker:
         self.refresh()
 
     def close(self):
+        inventory=getattr(self.app,'inventory',None)
+        if inventory:inventory.close()
+        self.grind.live.craft_panel.close()
         self.auto_craft.save()
         self.big_drops.close_toast()
         self.closed=True;self.generation+=1;self.guild.close();self.capture_clock.tick(False,'Application closing');self.capture_clock.save();self.silver.close();self.insights.close();self.ledger.close()
