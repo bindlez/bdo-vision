@@ -35,8 +35,15 @@ def build_main_ui(app):
     app.state_label = tk.Label(cap, textvariable=app.timer_state, bg=c['panel2'],
                                fg=c['good'], font=('Segoe UI Semibold', 8), padx=5, pady=2)
     app.state_label.pack(side='right')
-    tk.Label(hero, textvariable=app.durability_display, bg=c['panel'], fg=c['text'],
-             font=('Segoe UI Semibold', 27)).pack(anchor='w', pady=(2, 4))
+    headline = tk.Frame(hero, bg=c['panel']);headline.pack(fill='x', pady=(2, 4))
+    tk.Label(headline, textvariable=app.durability_display, bg=c['panel'], fg=c['text'],
+             font=('Segoe UI Semibold', 24)).pack(side='left')
+    quest = tk.Frame(headline, bg=c['panel']);quest.pack(side='right', padx=(8,0))
+    app.guild_summary = tk.StringVar(value='Read quest')
+    tk.Label(quest,text='GUILD · LAST SEEN',bg=c['panel'],fg=c['muted'],font=('Segoe UI',8)).pack(anchor='e')
+    tk.Button(quest,textvariable=app.guild_summary,command=app.open_guild_quest,
+              bg=c['panel'],fg=c['good'],activebackground=c['panel2'],activeforeground=c['text'],
+              relief='flat',font=('Segoe UI Semibold',9),cursor='hand2').pack(anchor='e')
     app.bar = ttk.Progressbar(hero, maximum=100, style='Vision.Horizontal.TProgressbar')
     app.bar.pack(fill='x', pady=(0, 7))
     tk.Label(hero, textvariable=app.tool_title, bg=c['panel'], fg=c['bright'],
@@ -51,6 +58,20 @@ def build_main_ui(app):
         tk.Label(col, text=title, bg=c['panel'], fg=c['muted'], font=('Segoe UI', 8)).pack(anchor='w')
         tk.Label(col, textvariable=value, bg=c['panel'], fg=c['bright'],
                  font=('Cascadia Mono', 16)).pack(anchor='w')
+
+    pace = tk.Frame(main, bg=c['bg']);pace.pack(fill='x', pady=(0,6))
+    tk.Label(pace,text='Seconds / craft',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9)).pack(side='left')
+    def apply_pace(event=None):
+        try:
+            app.change_craft_speed(float(pace_value.get()))
+        except ValueError:
+            pace_value.set(app.speed.get());app.status.set('Seconds per craft must be between 0.05 and 3600.')
+    pace_value=tk.StringVar(value=app.speed.get())
+    entry=ttk.Entry(pace,textvariable=pace_value,width=6);entry.pack(side='left',padx=6)
+    entry.bind('<Return>',apply_pace);entry.bind('<FocusOut>',apply_pace)
+    app.text_button(pace,'PAUSE / RESUME',app.toggle_craft_pause).pack(side='right')
+    tk.Label(main,text='Covered capture: countdown estimates continued crafting at this pace.',
+             bg=c['bg'],fg=c['muted'],font=('Segoe UI',8),wraplength=315,justify='left').pack(anchor='w',pady=(0,5))
 
     actions = tk.Frame(main, bg=c['bg'])
     actions.pack(fill='x')

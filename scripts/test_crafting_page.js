@@ -15,7 +15,7 @@ const recipes=JSON.parse(fs.readFileSync('desktop/assets/recipes.json','utf8')),
 let started=null,download=null;const context={console,Map,Set,URL,AbortSignal,structuredClone,RECIPES:recipes,VISION_CRAFT_DATA:spec,region:'na',recipeTab:'alchemy',lastCraftAmount:100,selectedRecipe:recipes.find(r=>r.itemId===678),location:{protocol:'file:',hostname:''},bridgeSelectedOrigin:null,visionMarketById:{},visionMarketByName:{},visionMarketQuoteDetails:{},visionEscape:v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),visionName:n=>n.toLowerCase(),localStorage:{getItem:()=>null,setItem(){}},saveState(){},toast(){},fmtTime:n=>n.toFixed(1)+'s',setTimeout,clearTimeout,document:{getElementById:id=>nodes.get(id)||null,createElement:()=>new Element(),activeElement:new Element(),querySelectorAll:()=>[]},startCraft:(r,n,opts)=>{started={r,n,opts};},intelDownload:(...args)=>{download=args;},openModal(){},closeModal(){}};
 context.window=context;for(const q of snapshot.items){context.visionMarketById['na:'+q.id]=q.price;context.visionMarketQuoteDetails['na:'+q.id]=q;}
 vm.createContext(context);const html=fs.readFileSync('bdo-market-intelligence.html','utf8');
-for(const marker of ['RECIPE_NETWORK_JS','CRAFTING_ENGINE_JS','CRAFTING_STUDIO_JS','CRAFTING_SIMULATOR_JS','PRODUCTION_ROADMAP_JS','RECIPE_BROWSER_JS']){const script=html.split('/* OWNED '+marker+' START */')[1]?.split('/* OWNED '+marker+' END */')[0];assert(script,marker);vm.runInContext(script,context);}
+for(const marker of ['RECIPE_NETWORK_JS','CRAFTING_ENGINE_JS','CRAFTING_STUDIO_JS','CRAFTING_SIMULATOR_JS','PRODUCTION_ROADMAP_JS','VISION_TIMERS_JS','RECIPE_BROWSER_JS']){const script=html.split('/* OWNED '+marker+' START */')[1]?.split('/* OWNED '+marker+' END */')[0];assert(script,marker);vm.runInContext(script,context);}
 nodes.set('imperialQuick',new Element());
 context.craftRoadState.runModes={cooking:'manual',alchemy:'manual'};
 context.craftStudioRender(context.selectedRecipe,100);context.renderRecipeList();
@@ -62,7 +62,8 @@ for(const name of ['Balenos Meal','Elixir of Demihuman Hunt','Organic Feed','Kam
  assert(chain.steps.length>2,name+' needs real intermediate stages');if(name==='Kamasylvia Meal')assert(chain.steps.length>20);
  assert(nodes.get('craftDetail').innerHTML.includes('Expected retained output value'));assert(nodes.get('craftDetail').innerHTML.includes('Priced cash ingredient budget'));
  nodes.get('workshopStartNext').onclick();assert.equal(started.r.id,chain.steps[0].recipeId);assert.equal(started.n,chain.steps[0].batches);
- const once=started;nodes.get('workshopStartNext').onclick();assert.equal(started,once,'same stage must not start duplicate timers');nodes.get('btnStartCraft').onclick();assert.equal(started,once,'main action must not skip intermediates');
+ context.renderActiveTimers=()=>{};
+const once=started;nodes.get('workshopStartNext').onclick();assert.equal(started,once,'same stage must not start duplicate timers');nodes.get('btnStartCraft').onclick();assert.equal(started,once,'main action must not skip intermediates');
  assert(nodes.get('craftDetail').innerHTML.includes('workshop-next'));assert(!nodes.get('craftDetail').controls.find(n=>n.dataset.section==='all-stages').open);assert(!nodes.get('craftDetail').controls.find(n=>n.dataset.section==='route-comparison').open);
  nodes.get('workshopSubstitutions').onclick();
  assert(chain.steps.at(-1).recipeId===r.id);assert(chain.steps.every(s=>s.inputs.length&&s.expected>=s.needed));
@@ -187,3 +188,11 @@ console.log('Shipped Crafting UI: rendering, target conversion, queue, export, t
  const online=await load(vm.goal,false,vm.ctx);assert(online.ok);assert(requests>0);const before=requests;assert((await load(vm.goal,false,vm.ctx)).cached);assert.equal(requests,before);
  console.log('Whole-line price requests: route IDs, 64-item batches, offline recovery and shared cache passed.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
+
+context.activeTimers=[{id:'conflicting-stage',status:'running',recipeId:serendia.id}];
+let focused=false;const conflictCard={dataset:{timerId:'conflicting-stage'},scrollIntoView(){},setAttribute(){},focus(){focused=true;}};
+const queryBefore=context.document.querySelectorAll;context.document.querySelectorAll=selector=>selector==='[data-timer-id]'?[conflictCard]:queryBefore(selector);
+context.visionRevealActiveTimer(serendia.id);assert.equal(context.craftWorkflow,'timers');assert(focused);assert.equal(context.activeTimers.length,1);
+console.log('Conflicting timer opens the existing card, focuses its controls and preserves timer/history state.');
+
+const deskCSS=fs.readFileSync('desktop/assets/crafting-studio.css','utf8');assert(deskCSS.includes('#craftPlanningPanel>#visionCraftStatus{grid-column:1 / -1'));assert(deskCSS.includes('>.card:has(#recipeList)'));

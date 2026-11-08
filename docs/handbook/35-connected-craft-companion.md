@@ -127,3 +127,32 @@ background-browser behavior and mixed-DPI/fullscreen docking still require user
 acceptance. Complete inventory item recognition and a native replica of the full
 Fairy vault are not implemented in this candidate; their website features remain
 available and unchanged. This scope is deliberate and must remain explicit.
+
+## rc.29 craft essentials and countdown boundary
+
+`guild_summary.py` formats the same retained `GuildQuestProgress.snapshot()` for
+native dashboard and live HUD. The dashboard updates with existing tool-view
+refreshes; the HUD with existing live ticks. No reader, timer or bridge poll is
+created. A completed snapshot stays labeled last-seen; a stale numeric snapshot
+is not promoted to a fresh observation. The website automatic craft card uses
+`visionCraftStatusModel` and the existing `guild_status` payload.
+
+The paired guild read still runs immediately after each completed tool attempt,
+including Lite Use's acquisition, under the existing visibility and OCR gates.
+It does not wait for a second timer cycle. User-enabled Smart Watch remains
+optional; this release does not silently enable background OCR.
+
+`change_craft_speed` settles elapsed monotonic time at the old pace before setting
+a new pace and re-sending a linked planner snapshot. Compact pause/resume keeps
+remaining fractional durability and the tool session. Covered capture cannot
+prove progress: forecasts continue at the displayed pace, while recorded loot
+remains observation-only. The reported early alarm needs a real-game comparison;
+no guaranteed hidden-game timing is claimed.
+
+`visionRevealActiveTimer` opens the existing timer workspace and focuses the
+conflicting card. Its Cancel button remains an explicit user action. The central
+`startCraft` guard also protects direct starts; native companion requests reject
+a conflicting start rather than falsely reporting a new timer.
+
+CP target inputs and calculations are unchanged. `cpShowSection` switches between
+route comparisons and the full target planner without modifying the scenario.

@@ -291,7 +291,7 @@ function craftStudioStartCarryStage(id,batches){
  try{
   var load=VisionCraft.carry(r,{...craftStudioCarrySettings(),batches},craftStudioContext());batches=load.selected?.batches??load.batches;if(!load.available||batches<1||load.unbounded||!load.selected?.fits)return;
   var cap=(typeof getToolChunkSize==='function'?getToolChunkSize():3000)*256;if(batches>cap){toast('Load too large','Set a smaller tool limit or production target before starting.',false);return;}
-  if(typeof activeTimers!=='undefined'&&activeTimers.some(t=>t.status==='running'&&t.recipeId===r.id)){toast('Timer already running','Finish or cancel the existing timer for this recipe first.',false);return;}
+  if(typeof activeTimers!=='undefined'&&activeTimers.some(t=>t.status==='running'&&t.recipeId===r.id)){visionRevealActiveTimer(r.id);return;}
   startCraft({...r,secPerBatch:craftStudioConfig(r).seconds},batches,{craftPlan:craftStudioSnapshot(r,batches)});
  }catch(e){toast('Weight inputs',e.message,false);}
 }

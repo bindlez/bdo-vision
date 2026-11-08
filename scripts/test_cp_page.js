@@ -3,6 +3,7 @@
 const assert=require('assert'),fs=require('fs'),vm=require('vm');
 const nodes=new Map(),timers=[];
 class Element{
+ setAttribute(key,value){this[key]=value;}
  constructor(){this.dataset={};this.style={};this.listeners={};this.value='';this.classList={add(){},toggle(){}};this.parentNode={setAttribute(){}};}
  set innerHTML(value){this.html=value;for(const match of value.matchAll(/id="([^"]+)"/g))if(!nodes.has(match[1]))nodes.set(match[1],new Element());}
  get innerHTML(){return this.html||'';}
@@ -16,8 +17,8 @@ vm.createContext(context);
 const html=fs.readFileSync('bdo-market-intelligence.html','utf8'),block=html.split('<!-- VISION CP START -->')[1].split('<!-- VISION CP END -->')[0],script=block.match(/<script>([\s\S]*)<\/script>/)[1];
 vm.runInContext(script,context);
 const host=nodes.get('visionCP'),output=nodes.get('cpOutput');assert(output.innerHTML.includes('567 CP'));assert(output.innerHTML.includes('Market prices needed'));
-assert(output.innerHTML.includes('Reach my target CP'));assert(output.innerHTML.includes('Combine byproducts'));assert(output.innerHTML.includes('Additional needed'));assert(output.innerHTML.includes('Owned EXP allocation'));
-const targetInput=host.querySelectorAll('[data-cp]').find(n=>n.dataset.cp==='target');targetInput.value='525';host.listeners.input({target:targetInput});timers.pop()();assert(output.innerHTML.includes('value="525"'));nodes.get('cpExample').onclick();
+const targetOutput=nodes.get('cpTargetOutput');assert(targetOutput.innerHTML.includes('Reach my target CP'));assert(targetOutput.innerHTML.includes('Combine byproducts'));assert(targetOutput.innerHTML.includes('Additional needed'));assert(targetOutput.innerHTML.includes('Owned EXP allocation'));assert.equal(targetOutput.hidden,true);nodes.get('cpTargetTab').onclick();assert.equal(output.hidden,true);assert.equal(targetOutput.hidden,false);nodes.get('cpOverviewTab').onclick();assert.equal(output.hidden,false);assert(!output.innerHTML.includes('Reach my target CP'));
+const targetInput=host.querySelectorAll('[data-cp]').find(n=>n.dataset.cp==='target');targetInput.value='525';host.listeners.input({target:targetInput});timers.pop()();assert(targetOutput.innerHTML.includes('value="525"'));nodes.get('cpExample').onclick();
 const snapshot=JSON.parse(fs.readFileSync('desktop/assets/demo-market-snapshot.json','utf8'));context.VisionCPPage.acceptQuotes(snapshot.items,'NA');assert(output.innerHTML.includes('124.85B'));assert(output.innerHTML.includes('Break-even'));assert(output.innerHTML.includes('data-frontier="50"'));
 const income=host.querySelectorAll('[data-cp]').find(n=>n.dataset.cp==='income');assert(income);income.value='500000';host.listeners.input({target:income});timers.pop()();assert(output.innerHTML.includes('A longer commitment'));assert(output.innerHTML.includes('Time to recover the investment'));
 income.value='-1';host.listeners.input({target:income});timers.pop()();assert(output.innerHTML.includes('Check the highlighted'));assert(nodes.get('cpError').textContent.includes('Previous results are hidden'));

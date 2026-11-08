@@ -58,7 +58,7 @@ class NativeOverlayTests(unittest.TestCase):
               'unpriced':2,'latest':[{'item':'A drop','quantity':2}],'time':'00:02:00 / 00:00:30'}
         with patch.object(live,'payload',return_value=data):live.open()
         self.root.update_idletasks();hud=live.hud
-        self.assertTrue(hud.shown);self.assertEqual(hud.surface.size,(320,246))
+        self.assertTrue(hud.shown);self.assertEqual(hud.surface.size,(320,268))
         self.assertIn('PAUSED',hud.status.cget('text'));self.assertIn('unpriced',hud.goal.cget('text'))
         self.assertEqual(hud.value.cget('text'),'—');self.assertEqual(hud.latest.cget('text'),'+2  A drop')
         with patch.object(hud.value,'configure') as configure:hud.update(dict(data));configure.assert_not_called()

@@ -93,3 +93,16 @@ function visionPatchTimers(body,markup){
   });
   existing.forEach(function(card){card.remove();});
 }
+
+/* Resolve conflicts in the existing timer workspace, preserving recorded history. */
+function visionRevealActiveTimer(recipeId){
+ var timer=activeTimers.find(t=>t.status==='running'&&t.recipeId===recipeId);
+ if(!timer)return;
+ if(typeof showView==='function')showView('craft');
+ if(typeof craftWorkflowSet==='function')craftWorkflowSet('timers');
+ renderActiveTimers();
+ var card=Array.from(document.querySelectorAll('[data-timer-id]')).find(n=>n.dataset.timerId===timer.id);
+ var target=card||document.getElementById('activeTimersBody');
+ if(target){target.scrollIntoView({block:'center'});target.setAttribute('tabindex','-1');target.focus({preventScroll:true});}
+ toast('Your timer is here','Keep this timer, or use Cancel on its card before starting a replacement. Recorded loot history is kept.',false);
+}

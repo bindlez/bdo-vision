@@ -233,9 +233,28 @@ class App:
    self._tool_timer_estimated=True
    self.source.set('ESTIMATE · last verified tool · assumes crafting continues')
 
+ def toggle_craft_pause(self):
+  if self.running:self.pause()
+  elif self.has_reading and self.value>0:
+   self.anchor=time.monotonic();self.running=True;self.alarmed=False
+   self.status.set('Countdown resumed from remaining uses, not original scan.')
+
+ def change_craft_speed(self,seconds):
+  if not .05<=seconds<=3600:raise ValueError('Invalid craft speed')
+  # Settle elapsed time at the OLD pace before changing the future countdown.
+  self.update_value();self.speed.set(str(seconds));self.anchor=time.monotonic()
+  self.alarmed=False;self.save_quietly()
+  self.status.set(f'Countdown uses {seconds:g}s per craft. Covered capture cannot verify game progress.')
+  if self.sync_armed:self.send_to_planner()
+
  def refresh_tool_view(self):
   if not hasattr(self,'tool_status'):return
   view=self.tool_status.snapshot();self._tool_view_at=time.monotonic()
+  guild=getattr(getattr(self,'loot',None),'guild',None)
+  if guild is not None and hasattr(self,'guild_summary'):
+   from guild_summary import guild_summary
+   text,note=guild_summary(guild.model.snapshot(),guild.enabled.get())
+   if self.guild_summary.get()!=text:self.guild_summary.set(text)
   def set_changed(variable,value):
    if variable.get()!=value:variable.set(value)
   set_changed(self.tool_title,view['title']);set_changed(self.tool_health,view['detail'])

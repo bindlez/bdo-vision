@@ -10,7 +10,7 @@ class LiveHUD:
         self.live = live;self.tracker = live.grind.tracker;self.app = self.tracker.app
         self.options = preferences(self.tracker.platform_preferences.get('overlay'))
         wide = self.options['density'] == 'Comfortable';self.width = 380 if wide else 320
-        self.surface = OverlaySurface(self.app.root, 'Vision · Grind overlay', (self.width, 262 if wide else 246), self.options, self.save_position)
+        self.surface = OverlaySurface(self.app.root, 'Vision · Grind overlay', (self.width, 284 if wide else 268), self.options, self.save_position)
         body = self.surface.body
         rail = tk.Frame(body, bg=VIOLET, height=2);rail.pack(fill='x')
         head = tk.Frame(body, bg=INK);head.pack(fill='x', padx=12, pady=(3, 2))
@@ -32,6 +32,7 @@ class LiveHUD:
         self.bar = tk.Canvas(body, height=3, bg=LINE, highlightthickness=0);self.bar.pack(fill='x', padx=12, pady=(4, 7))
         self.fill = self.bar.create_rectangle(0, 0, 0, 3, fill=TEAL, outline='')
         self.latest = label(body, 'Latest drop · Waiting for accepted loot', 9, VIOLET, anchor='w');self.latest.pack(fill='x', padx=12)
+        self.guild = label(body, 'Guild quest / no verified snapshot', 9, GOLD, anchor='w');self.guild.pack(fill='x', padx=12)
         self.time = label(body, 'Observed —  /  excluded —', 8, MUTED, anchor='w');self.time.pack(fill='x', padx=12, pady=(4, 0))
         footer = tk.Frame(body, bg=PANEL);footer.pack(fill='x', side='bottom')
         self.pause = button(footer, 'PAUSE / RESUME', self.live.grind.pause, TEAL);self.pause.pack(side='left', padx=5)
@@ -45,9 +46,14 @@ class LiveHUD:
         if big and getattr(big, 'reveals', None):big.reveals.retile()
 
     def update(self, data):
-        if not data.get('sessionActive') and self.app.running and self.app.has_reading:
+        from guild_summary import guild_summary
+        quest=self.tracker.guild
+        progress,note=guild_summary(quest.model.snapshot(),quest.enabled.get())
+        self.guild.configure(text=('Guild quest / '+progress+' / '+note)[:65])
+        if not data.get('sessionActive') and self.app.has_reading and self.app.value>0:
             remaining=max(0,self.app.value);seconds=remaining*max(.05,float(self.app.speed.get()))
-            self.status.configure(text='CRAFT TIMER / COUNTDOWN ESTIMATE',fg=TEAL)
+            self.status.configure(text='CRAFT TIMER / '+('COUNTDOWN ESTIMATE' if self.app.running else 'PAUSED'),fg=TEAL)
+            self.pause.configure(command=self.app.toggle_craft_pause,text='PAUSE CRAFT' if self.app.running else 'RESUME CRAFT')
             self.value_label.configure(text='TOOL USES LEFT');self.rate_label.configure(text='TIME LEFT')
             self.value.configure(text=f'{remaining:,.0f}');self.rate.configure(text=f'{int(seconds)//3600}:{int(seconds)//60%60:02}:{int(seconds)%60:02}')
             run=self.tracker.auto_craft.engine.run
@@ -55,6 +61,7 @@ class LiveHUD:
             recipe=families()[0].get(run['family'],{}).get('name','Waiting for craft output') if run else 'Waiting for craft output'
             self.latest.configure(text=recipe[:48]);self.goal.configure(text='CRAFT opens search, packing and estimates')
             self.time.configure(text='Assumes crafting continues / no extra OCR');self.bar.coords(self.fill,0,0,0,3);self.key=None;return
+        self.pause.configure(command=self.live.grind.pause)
         self.value_label.configure(text='RECORDED VALUE');self.rate_label.configure(text='SILVER / OBSERVED H')
         key = repr({k:v for k,v in data.items() if k != 'updatedAt'})
         if key == self.key:return

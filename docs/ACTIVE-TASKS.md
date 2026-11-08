@@ -1,3 +1,29 @@
+# rc.29 tonight test checklist — November 3, 2026
+
+- [x] Put last-seen guild progress next to native tool durability, in the live
+  overlay, and in Current Craft automatic. Completion is explicit; no inferred
+  quest progress or completion has been added.
+- [x] Existing-timer conflicts open the Timers workspace and focus the existing
+  card, with its Cancel action. Recorded loot history is not removed.
+- [x] Separate Reach my target CP from the default Routes & break-even section.
+- [x] Fixed live status strip occupying a recipe column: full-width grid span
+  and recipe-panel selectors that survive insertion of the strip. Bound shrinking grid children and form widths; collapse the recipe desk
+  before narrow columns displace the crafting controls.
+- [x] Expose seconds per craft and pause/resume on the compact timer. Settle
+  elapsed time at the old pace before changing future timing. Resume preserves
+  fractional remaining uses and the tool session.
+- [ ] Live acceptance: reproduce the reported early alarm over an extended
+  covered-capture interval, compare configured pace against actual durability
+  consumption, and check the guild completion and new-quest transition in BDO.
+  Tests cannot establish game progress while no capture is possible. No universal
+  early-alarm fix is claimed: a forecast assumes uninterrupted crafting at the
+  configured seconds per use; processing overhead, game pauses and wrong pace
+  remain sources of error. No extra continuous tool scans have been added.
+- [x] Browser sample preview confirms aligned recipe and planner panels and CP
+  section switching.
+- [ ] Live acceptance: confirm readable layout at the tester's Windows scaling
+  and browser zoom. Automated markup tests are not visual acceptance.
+
 # rc.28 companion test scope - November 3, 2026
 
 Implemented: shared-engine native crafting sidecar and explicit timers; event-driven

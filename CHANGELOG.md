@@ -1,3 +1,15 @@
+## 1.13.0-rc.29 — Craft essentials and accessible timers
+
+- Last-seen guild counter / completion beside desktop tool durability, in the
+  overlay, and in the automatic Current Craft card. No extra OCR loops.
+- Open the existing timer directly when a craft start conflicts; Cancel is on
+  that card. Recorded loot history stays intact.
+- CP opens with route comparisons again; Reach my target CP has its own section.
+- Crafting grid and form width containment; earlier single-column layout.
+- Compact craft pace and pause/resume controls. Pace changes preserve old elapsed
+  time; resume preserves remaining uses. Covered-game timing is explicitly an
+  estimate and still needs live comparison against actual tool consumption.
+
 # 1.13.0-rc.28 - Connected crafting companion (test candidate)
 
 - Native CRAFT sidecar: real recipe search, linked/independent quantities, max

@@ -1,3 +1,25 @@
+# 1.13.0-rc.29 — Craft essentials (test candidate)
+
+- Guild progress beside desktop tool durability, on the live overlay and in the
+  automatic Current Craft card with tool time left. Retained readings are labeled
+  last-seen; no guild progress is invented during hidden capture.
+- Craft timer conflicts open the existing timer card and its Cancel action.
+- CP route comparisons return to the top; Reach my target CP has a separate section.
+- Fixed the live status strip taking a recipe grid column; recipe and planning
+  panels align again. Narrow screens collapse to one column.
+- Craft speed and pause/resume are available directly on the compact window.
+  Pace changes settle old elapsed time before changing future estimates. Resume
+  preserves the remaining tool uses.
+- Covered-capture countdowns assume crafting continues at the displayed pace.
+  The reported early alarm is not yet reproduced in live BDO; compare pace and
+  actual durability tonight. Pauses and inaccurate pace can still cause drift.
+- No extra OCR loop or new runtime dependency; all existing features retained.
+
+Close the old Vision window, extract this ZIP to a fresh folder, then run
+OPEN-BDO-VISION.bat. Your history stays in the existing profile. Keep your previous
+release folder for rollback. This is a testing candidate, not a claim of universal
+OCR accuracy or completed live-game acceptance.
+
 # 1.13.0-rc.28 - Connected crafting companion (test candidate)
 
 - Native CRAFT sidecar: real recipe search, linked/independent quantities, max

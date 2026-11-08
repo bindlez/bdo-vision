@@ -112,7 +112,7 @@ function craftRoadStart(vm){
  var stage=vm.timeline.rows.find(s=>s.recipeId===vm.focus),r=RECIPES.find(r=>r.id===vm.focus);if(!stage||!r||vm.timeline.warnings.some(w=>/limit|cycle/i.test(w)))return;
  if((r.type==='processing'&&!r.method)||/^imperial_/.test(r.method||'')){toast('Manual step','This step has no verified production timer.',false);return;}
  if(stage.batches>(typeof getToolChunkSize==='function'?getToolChunkSize():3000)*256){toast('Split this stage','Reduce the target before starting a stage this large.',false);return;}
- if(typeof activeTimers!=='undefined'&&activeTimers.some(t=>t.status==='running'&&t.recipeId===r.id)){toast('Timer already running','Use the existing timer for this recipe.',false);return;}
+ if(typeof activeTimers!=='undefined'&&activeTimers.some(t=>t.status==='running'&&t.recipeId===r.id)){visionRevealActiveTimer(r.id);return;}
  var cfg=vm.ctx.configFor(r),p=VisionCraft.plan(r,stage.batches,cfg,{...vm.ctx,inventory:{},make:{}}),model={type:r.type,recipeKey:r.recipeKey,itemId:r.itemId,yield:cfg.yield,seconds:cfg.seconds,retention:cfg.retention,estimate:false,goal:cfg.goal,unitPrice:p.unitPrice,costPerBatch:p.cost===null?null:p.cost/p.count,cost:p.cost,output:p.output,warnings:p.warnings,materials:p.materials.map(m=>({itemId:m.itemId,name:m.name,qty:m.qty})),region,createdAt:Date.now()};
  startCraft({...r,secPerBatch:cfg.seconds},stage.batches,{craftPlan:model});if(typeof craftWorkflowSet==='function')craftWorkflowSet('timers');
 }

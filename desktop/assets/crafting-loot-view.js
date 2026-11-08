@@ -22,7 +22,7 @@ function renderVisionCraftingLoot(reading){
   visionLootLast=reading;panel.hidden=false;
   var auto=data.auto_craft,t=reading.companion;
   if(auto?.model&&auto.toolSession&&auto.toolSession===t?.session_id&&t.running&&Date.now()/1000-t.updated_at<=6&&Number.isFinite(t.remaining))auto={...auto,remainingValue:auto.model.perBatch*t.remaining};
-  renderVisionAutomaticCraft(panel,auto);
+  renderVisionAutomaticCraft(panel,auto,reading);
   var age=data.updated_at?Math.max(0,Date.now()/1000-Number(data.updated_at)):Infinity;
   var stamp=data.updated_at?new Date(Number(data.updated_at)*1000).toLocaleTimeString():'no reading yet';
   document.getElementById('visionLootState').textContent=data.available===true && age<=15?'Observed '+stamp:'Unavailable now · '+(data.reason||'reading is no longer current')+' · last observation '+stamp;
@@ -48,14 +48,18 @@ function renderVisionCraftingLoot(reading){
   document.getElementById('visionLootSilver').textContent=priced?total.toLocaleString()+' silver of recorded item value':'Waiting for matched market prices';
   document.getElementById('visionLootCoverage').textContent=unpriced?'Partial total: '+unpriced+' unmatched / unpriced item types excluded.':'Quantity × market or verified NPC sell value. No costs or fees deducted.';
 }
-function renderVisionAutomaticCraft(panel,data){
+function renderVisionAutomaticCraft(panel,data,reading){
  var card=document.getElementById('visionAutomaticCraft');
  if(!data||!data.detected){if(card)card.hidden=true;return;}
- if(!card){card=document.createElement('section');card.id='visionAutomaticCraft';card.className='workshop-next';card.innerHTML='<small>CURRENT CRAFT · AUTOMATIC</small><h3 data-auto-title></h3><p data-auto-state role="status"></p><div class="studio-kpis"><div><small>Captured item value / observed hour</small><strong data-auto-rate></strong></div><div><small>Projected main + rare value / hour</small><strong data-auto-model></strong></div><div><small>Projected scanned-tool value</small><strong data-auto-tool></strong></div></div><p data-auto-note></p><button class="btn-secondary" data-auto-map title="Uses the last inferred product family; review recipe variants and substitutions in the map.">Open detected product’s production map</button><details><summary>Craft graphs & forecast details</summary><div data-auto-graphs></div><p data-auto-details></p></details>';panel.prepend(card);}
+ if(!card){card=document.createElement('section');card.id='visionAutomaticCraft';card.className='workshop-next';card.innerHTML='<small>CURRENT CRAFT · AUTOMATIC</small><h3 data-auto-title></h3><p data-auto-state role="status"></p><div class="craft-auto-essential"><div><small>TOOL / TIME LEFT</small><strong data-auto-end></strong></div><div><small>GUILD QUEST / LAST SEEN</small><strong data-auto-guild></strong></div></div><div class="studio-kpis"><div><small>Captured item value / observed hour</small><strong data-auto-rate></strong></div><div><small>Projected main + rare value / hour</small><strong data-auto-model></strong></div><div><small>Projected scanned-tool value</small><strong data-auto-tool></strong></div></div><p data-auto-note></p><button class="btn-secondary" data-auto-map title="Uses the last inferred product family; review recipe variants and substitutions in the map.">Open detected product’s production map</button><details><summary>Craft graphs & forecast details</summary><div data-auto-graphs></div><p data-auto-details></p></details>';panel.prepend(card);}
  card.hidden=!data||!data.detected;if(card.hidden)return;
  var num=n=>typeof n==='number'&&Number.isFinite(n)?Math.round(n).toLocaleString():'Unavailable',m=data.model;
  card.querySelector('[data-auto-title]').textContent=data.recipe+' · '+data.kind;
  card.querySelector('[data-auto-state]').textContent=data.status;
+ var context=visionCraftStatusModel(reading||{});
+ card.querySelector('[data-auto-end]').textContent=context.timer===null?context.tool:Math.floor(context.timer/3600)+':'+String(Math.floor(context.timer/60)%60).padStart(2,'0')+':'+String(context.timer%60).padStart(2,'0')+' / '+context.tool;
+ card.querySelector('[data-auto-guild]').textContent=context.guild;
+
  card.querySelector('[data-auto-rate]').textContent=data.recordedPerHour==null?'Measuring / unpriced':num(data.recordedPerHour);
  card.querySelector('[data-auto-model]').textContent=num(m?.perHour);card.querySelector('[data-auto-tool]').textContent=num(m?.toolValue);
  card.querySelector('[data-auto-note]').textContent=num(data.recordedValue)+' captured silver value · '+num(data.units)+' units · '+num(data.remainingValue)+' remaining estimate · next milestone '+num(data.nextGoal)+(data.unpriced?.length?' · partial value: '+data.unpriced.length+' unpriced outputs':'');
@@ -78,7 +82,7 @@ function visionCraftStatusModel(reading,now=Date.now()/1000){
    craft:auto?.detected?String(auto.recipe):'Waiting for repeated output',craftNote:auto?.detected?String(auto.status):'Item detection uses recorded output and your utensil. Enable loot capture; no manual recipe is required.',
    loot:!loot?'LOOT SHARING OFF':loot.available?'OBSERVING':'CAPTURE PAUSED',
    lootNote:!loot?'Enable optional crafting loot sharing in Vision.':String(loot.reason||'Accepted drops only')+(health.holes?' / '+health.holes+' unreadable rows':'')+(health.uncertain?' / feed overlap lost; some rows skipped':'')+(health.unmatched?' / '+health.unmatched+' unmatched names':'')+(health.reader_seconds?' / OCR '+Number(health.reader_seconds).toFixed(2)+'s':''),
-   guild:g.reminder?.message?String(g.reminder.message):g.complete?(guildFresh?'COMPLETE / ACCEPT NEXT QUEST':'Last seen complete / rescan to check next quest'):guildFresh&&Number.isInteger(g.current)?g.current.toLocaleString()+' / '+Number(g.target).toLocaleString():'Quest not verified',
+   guild:g.reminder?.message?String(g.reminder.message):g.complete?(guildFresh?'COMPLETE / ACCEPT NEXT QUEST':'Last seen complete / rescan to check next quest'):Number.isInteger(g.current)&&Number.isInteger(g.target)&&g.target>0?g.current.toLocaleString()+' / '+g.target.toLocaleString()+(guildFresh?'':' / last seen'):'Quest not verified',
    guildNote:g.reminder?.key==='unverified'?'Hidden or unreadable does not prove no quest is active.':String(g.next_action||'Scan tool + quest to keep a last-seen snapshot.'),
    warning:!valid||!loot?.available||Boolean(g.reminder),fresh:fresh};
 }
@@ -137,6 +141,7 @@ async function visionCraftPanelReply(reading){
   if(!result.fits||result.batches<1)throw Error('Choose a positive load that fits weight and tool limits before starting.');
   if(!activeTimers.some(t=>t.companionRequestId===q.id)){
    const r=craftRecipeIndex.byRecipe.get(q.recipe),seconds=result.seconds/result.batches;
+   if(activeTimers.some(t=>t.status==='running'&&t.recipeId===r.id)){visionRevealActiveTimer(r.id);throw Error('Existing timer opened in the website. Keep or cancel it before starting a replacement.');}
    startCraft({...r,secPerBatch:seconds},result.batches);
    const timer=activeTimers.find(t=>t.recipeId===r.id&&t.status==='running');if(timer){timer.companionRequestId=q.id;saveState();}
   }

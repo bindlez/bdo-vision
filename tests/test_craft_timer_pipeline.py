@@ -11,6 +11,28 @@ from tool_reader import AutomaticToolReader
 
 
 class CraftTimerPipelineTests(unittest.TestCase):
+    def test_pace_change_settles_old_elapsed_and_does_not_double_subtract(self):
+        self.feed();self.app.speed.set('1');self.app.value=500.;self.app.anchor=100.;self.app.running=True
+        self.clock=110.
+        with patch.object(self.app,'save_quietly'):
+            self.app.change_craft_speed(2.)
+        self.assertEqual(self.app.value,490.)
+        self.clock=130.;self.app.update_value();self.app.update_value()
+        self.assertEqual(self.app.value,480.)
+        self.clock=730.;self.app.update_value()
+        self.assertEqual(self.app.value,180.)
+        self.app.toggle_craft_pause();self.clock=1000.;self.app.update_value()
+        self.assertEqual(self.app.value,180.)
+        self.app.toggle_craft_pause();self.clock=1020.;self.app.update_value()
+        self.assertEqual(self.app.value,170.)
+
+    def test_dashboard_quest_summary_retains_last_seen_without_inventing_completion(self):
+        from guild_summary import guild_summary
+        self.assertEqual(guild_summary({'current':49,'target':600,'available':False})[0],'49 / 600')
+        self.assertIn('Last seen',guild_summary({'current':49,'target':600,'available':False})[1])
+        self.assertEqual(guild_summary({'complete':True})[0],'COMPLETE · next quest')
+        self.assertEqual(guild_summary({},False)[0],'Reader off')
+
     def test_missing_quest_reminder_is_quiet_deduplicated_and_suppressed_by_active_quest(self):
         import time
         self.feed();guild=self.app.loot.guild;guild.missing_alert.set(True)
