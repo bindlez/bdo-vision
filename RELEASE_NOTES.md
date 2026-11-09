@@ -1,3 +1,9 @@
+# 1.13.0-rc.36 — Detailed craft tracking and estimated quest alerts
+
+- Timer-only mode can estimate when to check a guild quest using verified progress or an entered units-per-craft assumption. It never marks estimated completion as verified.
+- Detailed mode rechecks visible tools and guild cards, records configured craft loot, and corrects timer drift over 15 seconds after a verified read. Unavailable capture returns the timer to estimates.
+- A second verified Complete reading after at least 20 seconds can remind the user to claim a mission.
+
 # 1.13.0-rc.35 — Dock-first desktop
 
 - Vision opens on the dock. Tracking opens the existing MainWin beside it.

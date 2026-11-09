@@ -189,3 +189,25 @@ Tier 0 and Tier 1 describe this presentation. The tracking engine and
 startup allocations still follow existing settings. Browser tools open
 in the browser. Tier 2 workspace unloading and the single Tier -1 heavy
 process are separate work.
+
+
+## Detailed craft tracking
+
+Enable Detailed Craft Tracking from Tracking or the dock's Apps menu.
+This enables normal tool acquisition, paired quest reads and craft loot
+recording when an item capture region is configured. Turning it off leaves
+the normal loot and guild preferences in place. Lite Use takes precedence.
+
+In detailed mode, a successful tool acquisition schedules another check
+after 20 seconds. A same-tool automatic read corrects the countdown when
+verified remaining time differs by more than 15 seconds, or the tool is
+verified empty. The existing reading gate still corroborates large changes.
+When the game is hidden or the tool cannot be verified, the display falls
+back to an estimate. Existing visibility rules still apply to loot and quests.
+
+Quest estimates start from the last verified counter. Two progressing
+readings over at least 15 seconds can supply an observed pace. For a single
+reading, an optional quest units-per-craft assumption is available in Quests.
+The estimate counts down while the tool timer runs. It never writes inferred
+quest progress or completion. A second verified Complete reading at least
+20 seconds after the first triggers one claim reminder in detailed mode.

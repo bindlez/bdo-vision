@@ -52,6 +52,7 @@ class App:
   self.auto_tools=tk.BooleanVar(value=bool(config.get('auto_tool_discovery',True)))
   self.lite_use=tk.BooleanVar(value=bool(config.get('lite_use',False)));self.lite_scan_complete=False
   if self.lite_use.get():self.auto_tools.set(True);self.auto_enabled.set(True)
+  self.detailed_craft=tk.BooleanVar(value=bool(config.get('detailed_craft_tracking',False)) and not self.lite_use.get())
   self._tool_scan_latched=False;self._tool_timer_estimated=False
   self.windows_ocr=None;self.tool_reader=App.make_tool_reader(self);self.tool_report=None;self.tool_window=None;self.tool_tree=None;self._active_tool_key=None
   self.tool_debug=OCRReaderView(self,'Tool OCR reader',self.rescan_tools)
@@ -315,6 +316,7 @@ class App:
   if guild is not None and hasattr(self,'guild_summary'):
    from guild_summary import guild_summary
    text,note=guild_summary(guild.model.snapshot(),guild.enabled.get())
+   if estimate:=guild.forecast_text():text+=' · '+estimate
    if self.guild_summary.get()!=text:self.guild_summary.set(text)
   def set_changed(variable,value):
    if variable.get()!=value:variable.set(value)
@@ -470,6 +472,9 @@ class App:
    self.set_tool_stage('timer','Lite Use · no more tool scans. Optional paired guild snapshot finishes once; SCAN & TRACK reads the next tool.')
    self.source.set('LITE USE · countdown estimate · tool OCR stopped')
    self.status.set('Tool read. Timer running; no further automatic OCR after the optional paired guild read. Assumes crafting continues.')
+  elif self.running and self.detailed_craft.get():
+   reader.next_due=time.monotonic()+20
+   self.set_tool_stage('idle','Detailed craft tracking · verified tool and paired guild checks')
   elif self.running and (active.get('wear_streak',0)>=2 or report.get('confirmation')=='two-frame comparison'):
    self._tool_scan_latched=True
    self.set_tool_stage('timer','Crafting use confirmed · tool OCR stopped until this countdown finishes. Guild quests stay last seen; loot follows its own setting.')
@@ -708,7 +713,7 @@ class App:
    d,m,s,w=self.parse_inputs();r=[int(v.get()) for v in self.region]
    if r[2]<=0 or r[3]<=0:raise ValueError('Region width and height must be positive.')
    if not (2<=float(self.scan_interval.get())<=600 and 1<=int(self.alarm_repeats.get())<=20):raise ValueError('Auto scan interval must be 2–600 seconds and alarm beeps 1–20.')
-   CFG.write_text(json.dumps({**self.loot.settings(),'lite_use':self.lite_use.get(),'auto_tool_discovery':self.auto_tools.get(),'region_confirmed':self.region_confirmed,'region':r,'seconds_per_craft':s,'warning':w,'durability':d,'maximum':m,'tesseract':self.tess.get(),'auto_scan':self.auto_enabled.get(),'scan_interval':float(self.scan_interval.get()),'alarm_repeats':int(self.alarm_repeats.get()),'wide_tracking':self.wide_tracking.get()},indent=2));self.status.set('Settings saved')
+   CFG.write_text(json.dumps({**self.loot.settings(),'lite_use':self.lite_use.get(),'detailed_craft_tracking':self.detailed_craft.get(),'auto_tool_discovery':self.auto_tools.get(),'region_confirmed':self.region_confirmed,'region':r,'seconds_per_craft':s,'warning':w,'durability':d,'maximum':m,'tesseract':self.tess.get(),'auto_scan':self.auto_enabled.get(),'scan_interval':float(self.scan_interval.get()),'alarm_repeats':int(self.alarm_repeats.get()),'wide_tracking':self.wide_tracking.get()},indent=2));self.status.set('Settings saved')
   except Exception as e:messagebox.showerror('Settings',str(e))
  def refresh_auto_scan_label(self):
   if self.auto_toggle:
@@ -766,6 +771,8 @@ class App:
    self.bar['value']=100*min(1.,max(0.,self.value/m)) if self.has_reading else 0
    self.durability_display.set(f'{max(0,int(self.value + .999)):,} / {m:,}' if self.has_reading else '— / —')
    if self.running and self.lite_use.get() and self.lite_scan_complete:self.timer_state.set('LITE USE · TIMER ONLY')
+   elif self.running and self.detailed_craft.get():
+    self.timer_state.set('TIMER ONLY · ESTIMATE' if self._tool_timer_estimated else 'DETAILED CRAFT TRACKING')
    elif self.running and getattr(self,'_tool_scan_latched',False):self.timer_state.set('CRAFT TIMER · TOOL OCR OFF')
    elif self.running and getattr(self,'_tool_timer_estimated',False):self.timer_state.set('ESTIMATE · TOOL UNCONFIRMED')
    elif self.running and self.last_ocr_at:
@@ -786,7 +793,28 @@ class App:
   try:self.track_ack()
   except Exception as exc:self.connection.set('Planner check retry pending: '+str(exc))
   self.root.after(400,self.tick)
+ def change_detailed_craft(self):
+  if self.detailed_craft.get():
+   if self.lite_use.get():
+    self.lite_use.set(False)
+    self.change_lite_use()
+   self._tool_scan_latched=False
+   self.tool_reader.next_due=0
+   self.auto_tools.set(True);self.auto_enabled.set(True)
+   guild=self.loot.guild
+   if not guild.enabled.get():
+    guild.enabled.set(True);guild.toggle()
+   self.loot.crafting.set(True)
+   self.loot.recording.set(True)
+   if self.loot.region:self.loot.enabled.set(True)
+   self.status.set('Detailed craft tracking on.' if self.loot.region else 'Detailed craft tracking on. Set an item capture area to record loot.')
+  else:
+   self._tool_scan_latched=bool(self.running and self.last_good_ocr)
+   self.status.set('Detailed craft tracking off. The timer and existing loot preferences remain active.')
+  self.save_quietly()
+
  def change_lite_use(self):
+  if self.lite_use.get():self.detailed_craft.set(False)
   self.lite_scan_complete=bool(self.lite_use.get() and self.running and self.has_reading and self.last_good_ocr is not None)
   self.tool_reader=App.make_tool_reader(self)
   self.loot.generation+=1;self.loot.guild.generation+=1;self.loot.guild.waiting=False
@@ -1116,8 +1144,18 @@ class App:
    self._tool_timer_estimated=False
    self.last_ocr_at=measured_at
    self.dur.set(str(a));self.maximum.set(str(b))
-   self.value=align_to_capture(float(a),measured_at,now,seconds)
-   self.anchor=now;self.running=self.value>0
+   detailed_recheck=automatic and self.detailed_craft.get() and self.running and prior_ocr is not None and not new_tool
+   drift=abs(a-expected)*seconds if expected is not None else 0
+   resync=not detailed_recheck or drift>15 or a==0
+   if resync:
+    self.value=align_to_capture(float(a),measured_at,now,seconds)
+    self.anchor=now;self.running=self.value>0
+    if detailed_recheck:
+     try:warning=max(0,float(self.warning.get()))
+     except ValueError:warning=0
+     if self.alarmed and self.value*seconds>warning:
+      self.alarmed=False;self.alarm_state.set('Alarm armed')
+     self.status.set(f'Tool timer resynced from verified durability ({drift:.0f}s difference).')
    if new_tool:self.alarmed=False
    elif prior_ocr is None:self.alarmed=False
    elif a>prior_ocr[0]:self.alarmed=False
@@ -1132,7 +1170,7 @@ class App:
        f'{a:,}/{b:,}', 'new utensil detected' if new_tool else 'tracking started'))
    # Never publish before SEND NOW. After linking, new OCR readings keep the
    # same planner session synchronized, and confirmed replacements get new IDs.
-   if self.sync_armed and self.bridge and self.bridge.server:
+   if resync and self.sync_armed and self.bridge and self.bridge.server:
     if should_publish(self.last_published,(a,b),self.last_publish_mono,now,self.session_id):
      if self.send_to_planner(measurement=(a,b),observed_at=captured_at,source='ocr'):
       self.last_published=(a,b,self.session_id);self.last_publish_mono=now

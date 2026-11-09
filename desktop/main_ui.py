@@ -85,7 +85,9 @@ def build_main_ui(app):
     for index, button in enumerate((app.scan_button, app.send_button, app.tray_button, planner)):
         button.grid(row=index // 2, column=index % 2, sticky='ew', padx=2, pady=3)
     ttk.Checkbutton(main, text='Lite Use · initial scan, then timer only', variable=app.lite_use,
-                    command=app.change_lite_use, style='Vision.TCheckbutton').pack(anchor='w', pady=6)
+                    command=app.change_lite_use, style='Vision.TCheckbutton').pack(anchor='w', pady=(6,2))
+    ttk.Checkbutton(main,text='Detailed Craft Tracking · tool, loot and guild quest',variable=app.detailed_craft,
+                    command=app.change_detailed_craft,style='Vision.TCheckbutton').pack(anchor='w',pady=(0,6))
 
     nav = tk.Frame(main, bg=c['bg'])
     nav.pack(fill='x')

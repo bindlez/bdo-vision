@@ -67,10 +67,12 @@ class LiveHUD:
         from guild_summary import guild_summary
         quest=self.tracker.guild
         progress,note=guild_summary(quest.model.snapshot(),quest.enabled.get())
-        self.guild.configure(text=('Guild quest / '+progress+' / '+note)[:65])
+        self.guild.configure(text=('Guild quest / '+progress+' / '+(quest.forecast_text() or note))[:65])
         if not data.get('sessionActive') and self.app.has_reading and self.app.value>0:
             remaining=max(0,self.app.value);seconds=remaining*max(.05,float(self.app.speed.get()))
-            self.status.configure(text='CRAFT TIMER / '+('COUNTDOWN ESTIMATE' if self.app.running else 'PAUSED'),fg=TEAL)
+            detailed=self.app.running and self.app.detailed_craft.get() and not self.app._tool_timer_estimated
+            mode='DETAILED TRACKING' if detailed else 'COUNTDOWN ESTIMATE' if self.app.running else 'PAUSED'
+            self.status.configure(text='CRAFT TIMER / '+mode,fg=TEAL)
             self.pause.configure(command=self.app.toggle_craft_pause,text='PAUSE CRAFT' if self.app.running else 'RESUME CRAFT')
             self.value_label.configure(text='TOOL USES LEFT');self.rate_label.configure(text='TIME LEFT')
             self.value.configure(text=f'{remaining:,.0f}');self.rate.configure(text=f'{int(seconds)//3600}:{int(seconds)//60%60:02}:{int(seconds)%60:02}')
@@ -81,14 +83,14 @@ class LiveHUD:
             recipe=families()[0].get(run['family'],{}).get('name','Waiting for craft output') if run else 'Waiting for craft output'
             self.latest.configure(text=recipe[:48])
             loot = 'CRAFT opens search, packing and estimates'
-            if self.options['craft_loot']:
+            if detailed or self.options['craft_loot']:
                 counts = run['counts'] if run else {}
                 lead = max(counts, key=counts.get, default=None)
                 loot = f'Craft loot · {lead} × {counts[lead]:,}' if lead else 'Craft loot · waiting for recorded output'
                 if len(counts)>1:
                     loot += f' (+{len(counts)-1} types)'
             self.goal.configure(text=loot, fg=MUTED, wraplength=self.width-24)
-            self.time.configure(text='Assumes crafting continues / no extra OCR');self.bar.coords(self.fill,0,0,0,3);self.key=None;return
+            self.time.configure(text='Tool and quest recheck while visible' if detailed else 'Assumes crafting continues / no extra OCR');self.bar.coords(self.fill,0,0,0,3);self.key=None;return
         self.pause.configure(command=self.live.grind.pause)
         self.value_label.configure(text='RECORDED VALUE');self.rate_label.configure(text='SILVER / OBSERVED H')
         key = repr({k:v for k,v in data.items() if k != 'updatedAt'})

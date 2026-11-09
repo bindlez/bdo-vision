@@ -23,6 +23,58 @@ class CraftTimerPipelineTests(unittest.TestCase):
             self.app.read_ocr(delayed=False)
             capture.assert_not_called()
 
+    def test_detailed_tracking_rechecks_and_resyncs_only_over_fifteen_seconds(self):
+        self.app.detailed_craft.set(True)
+        self.feed(100)
+        self.clock=120
+        self.feed(90,2,'Repeated durability decreases')
+        self.assertFalse(self.app._tool_scan_latched)
+        self.assertEqual(self.app.value,100)
+        self.clock=140
+        self.feed(80,2,'Repeated durability decreases')
+        self.assertEqual(self.app.value,80)
+        self.assertIn('20s difference',self.app.status.get())
+
+    def test_detailed_tracking_falls_back_when_bdo_is_hidden(self):
+        self.app.detailed_craft.set(True);self.feed()
+        with patch.object(self.app,'bdo_foreground',return_value=False),patch.object(self.app,'read_ocr') as read:
+            self.app.poll_auto_ocr()
+            read.assert_not_called()
+        self.assertTrue(self.app._tool_timer_estimated)
+        self.app.tick()
+        self.assertIn('TIMER ONLY',self.app.timer_state.get())
+        with patch.object(self.app,'bdo_foreground',return_value=True),patch.object(self.app,'read_ocr') as read:
+            self.app.poll_auto_ocr()
+            read.assert_called_once_with(delayed=False,automatic=True)
+
+    def test_timer_only_quest_estimate_alert_never_marks_completion(self):
+        self.feed(100)
+        guild=self.app.loot.guild;guild.enabled.set(True)
+        guild.units_per_craft.set('2')
+        guild.finish({'current':90,'target':100},'',guild.generation,1000,0,False)
+        self.app._tool_scan_latched=True
+        self.assertEqual(guild.forecast_text(),'Est. quest 00:00:05')
+        self.clock=105
+        with patch.object(guild,'play_alert_sound') as sound:
+            guild.tick_craft_projection();guild.tick_craft_projection()
+            sound.assert_called_once_with('estimated')
+        self.assertFalse(guild.model.snapshot(1005)['complete'])
+        self.assertIn('may be complete',guild.notice.get())
+        self.assertEqual(guild.model.current,90)
+
+    def test_detailed_unclaimed_alert_needs_two_verified_complete_reads(self):
+        self.feed(100)
+        self.app.detailed_craft.set(True)
+        guild=self.app.loot.guild;guild.enabled.set(True)
+        done={'current':100,'target':100,'label':'Alchemy guild mission'}
+        with patch.object(guild,'play_alert_sound') as sound:
+            guild.finish(done,'',guild.generation,1000,0,False)
+            guild.finish(done,'',guild.generation,1019,0,False)
+            guild.finish(done,'',guild.generation,1020,0,True)
+            guild.finish(done,'',guild.generation,1040,0,True)
+            self.assertEqual([call.args[0] for call in sound.call_args_list].count('unclaimed'),1)
+        self.assertIn('still shows Complete',guild.notice.get())
+
     def test_pace_change_settles_old_elapsed_and_does_not_double_subtract(self):
         self.feed();self.app.speed.set('1');self.app.value=500.;self.app.anchor=100.;self.app.running=True
         self.clock=110.
@@ -76,6 +128,7 @@ class CraftTimerPipelineTests(unittest.TestCase):
         self.app.alarm=Mock()
 
     def tearDown(self):
+        self.app.loot.guild.model.reset()
         self.app.loot.close();self.root.destroy();self.clock_patch.stop()
 
     def feed(self,current=100,wear=0,confirmation='Place Mode position',active=True,unreadable=False):

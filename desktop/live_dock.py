@@ -65,6 +65,7 @@ def build_apps(app, anchor):
                    activebackground=c['violet'], activeforeground=c['text'],
                    font=('Segoe UI', 10))
     menu.add_command(label='Live tracking', command=lambda: app.show_timer(toggle=True))
+    menu.add_checkbutton(label='Detailed Craft Tracking', variable=app.detailed_craft, command=app.change_detailed_craft)
     for label, section in [('Workshop','craft'), ('Grind','grind'),
                            ('Guild quests','quests'), ('CP Intelligence','cp'),
                            ('Imperial delivery','imperial'), ('Silver','silver'),
