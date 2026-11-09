@@ -53,8 +53,13 @@ class AutomaticCrafting:
         self.last_save=time.monotonic()
         if run is self.engine.run:self.saved_key=(self.run_id(run),run['lastId'],run['observed'])
 
-    def observe(self,ident,item,quantity,at=None):
-        before=self.engine.run;changed=self.engine.observe(ident,item,quantity,self.context(),time.time() if at is None else at,now=time.monotonic())
+    def observe(self,ident,item,quantity,at=None,captured_context=None):
+        context=self.context()
+        if captured_context is not None:
+            # Keep the ledger row, but do not credit a replacement tool.
+            if context is None or context['tool']!=captured_context.get('tool'):return
+            context=captured_context
+        before=self.engine.run;changed=self.engine.observe(ident,item,quantity,context,time.time() if at is None else at,now=time.monotonic())
         if changed:
             if before is not None and before is not self.engine.run:self.save(before)
             ids=self.engine.run.get('ids',[ident]) if before is not self.engine.run else [ident]

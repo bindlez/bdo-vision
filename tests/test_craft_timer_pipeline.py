@@ -11,6 +11,18 @@ from tool_reader import AutomaticToolReader
 
 
 class CraftTimerPipelineTests(unittest.TestCase):
+    def test_tool_timeout_discards_late_result_and_releases_busy(self):
+        from ocr_runtime import ReaderAttempt
+        attempt=ReaderAttempt(10)
+        self.app._tool_attempt=attempt;self.app.busy=True
+        self.clock=111
+        self.app.poll_auto_ocr()
+        self.assertTrue(attempt.expired)
+        self.assertFalse(self.app.busy)
+        with patch.object(self.app,'capture_tools') as capture:
+            self.app.read_ocr(delayed=False)
+            capture.assert_not_called()
+
     def test_pace_change_settles_old_elapsed_and_does_not_double_subtract(self):
         self.feed();self.app.speed.set('1');self.app.value=500.;self.app.anchor=100.;self.app.running=True
         self.clock=110.

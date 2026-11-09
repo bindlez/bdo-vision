@@ -12,6 +12,7 @@ from dataclasses import replace
 from loot_tracker import LootLedger, LootSnapshots,TextFeedSnapshots
 from item_events import PopupSnapshots, ItemEvent
 from loot_capture import recognize_feed,capture_budget
+from ocr_runtime import ReaderAttempt
 from windows_bdo import item_regions_visible
 from insights_ui import LootInsights
 from silver_ui import SilverLooted
@@ -246,6 +247,9 @@ class LootTracker:
 
     def poll(self):
         if self.closed:return
+        attempt=getattr(self,'_loot_attempt',None)
+        if attempt and attempt.expire():
+            self.failed('Scan exceeded its deadline; late results will be discarded.',self.generation)
         if getattr(self.app,'lite_use',None) is not None and self.app.lite_use.get():
             message='Lite Use · loot OCR stopped'
             if self.capture_state.get()!=message:self.capture_state.set(message)
@@ -256,42 +260,66 @@ class LootTracker:
             if self.enabled.get():
                 next_poll=250
                 if getattr(getattr(self,'guild',None),'busy',False) or getattr(getattr(self,'guild',None),'waiting',False):self.capture_state.set('Tracking ON · quest reader finishing');next_poll=250
+                elif attempt and attempt.expired and not attempt.worker_done:
+                    self.capture_state.set('Loot reader timed out · waiting for worker cleanup')
+                    next_poll=1000
                 elif self.busy:self.capture_state.set('Tracking ON · reading item notifications')
+                elif self.app.busy or getattr(self.app,'_pending_tool_scan',None):self.capture_state.set('Tracking ON · tool scan has priority')
                 elif self.app.selecting_region:self.capture_state.set('Tracking ON · selecting capture area')
                 else:
                     now=time.monotonic()
                     interval=self.auto_craft.capture_interval(self.safe_interval(),now)
                     delay=max(0,interval-(now-self.last_scan))
                     if delay<=0:
-                        ready,reason=self.can_capture()
-                        if ready:self.scan()
-                        else:
-                            self.capture_state.set('Tracking ON · '+reason)
-                            next_poll=1000
+                        if self.scan() is False:next_poll=1000
                     else:self.capture_state.set('Tracking ON · next scan in %.1fs'%delay)
         except Exception as exc:self.status.set('Item OCR retry pending: '+str(exc))
         finally:
             if not self.closed:self.root.after(next_poll,self.poll)
 
     def scan(self):
-        if self.closed or self.busy or getattr(self.app,'cp_ocr_busy',False) or not self.enabled.get() or not self.region:return
+        if self.closed or self.busy or self.app.busy or getattr(self.app,'cp_ocr_busy',False) or not self.enabled.get() or not self.region:return
         ready,reason=self.can_capture()
-        if not ready:self.capture_state.set(reason);return
+        if not ready:self.capture_state.set(reason);return False
         started=time.monotonic();self.last_capture_gap=started-self.last_scan if self.last_scan else 0
         self.last_scan=started;tess=self.app.tess.get().strip().strip(chr(34))
         if not (shutil.which(tess) or Path(tess).is_file()):self.status.set('Tesseract missing. Set its path in Settings.');return
         try:
-            feeds=self.capture_regions()
-            images={}
-            self.capture_time=time.time()
-            for name,(x,y,w,h) in feeds.items():images[name]=ImageGrab.grab(bbox=(x,y,x+w,y+h),all_screens=True)
-            if self.preview and self.preview.winfo_exists() and self.preview.winfo_ismapped():
-                preview=images[next(iter(images))].copy();preview.thumbnail((820,180));self.photo=ImageTk.PhotoImage(preview);self.preview.configure(image=self.photo,text='')
+            feeds={name:tuple(region) for name,region in self.capture_regions().items()}
+            context=self.auto_craft.context() or {}
+            show_preview=bool(self.preview and self.preview.winfo_exists() and self.preview.winfo_ismapped())
             self.busy=True;self.status.set('Reading '+', '.join(feeds)+' notifications…')
-            threading.Thread(target=self.recognize,args=(images,tess,self.generation,self.crafting.get(),self.diagnostics.get()),daemon=True).start()
-        except Exception as exc:self.busy=False;self.status.set('Item capture failed: '+str(exc))
+            attempt=self._loot_attempt=ReaderAttempt(28)
+            generation=self.generation;crafting=self.crafting.get();diagnostics=self.diagnostics.get()
+            def work():
+                try:
+                    regions=list(feeds.values())
+                    ready,reason=item_regions_visible(regions)
+                    if not ready:raise RuntimeError(reason)
+                    captured_at=time.time()
+                    images={name:ImageGrab.grab(bbox=(x,y,x+w,y+h),all_screens=True)
+                            for name,(x,y,w,h) in feeds.items()}
+                    ready,reason=item_regions_visible(regions)
+                    if not ready:raise RuntimeError(reason)
+                    preview=next(iter(images.values())).copy() if show_preview else None
+                    if preview is not None:preview.thumbnail((820,180))
+                except Exception as exc:
+                    error=str(exc)
+                    if not self.closed:self.root.after(0,lambda:self.finish_attempt(attempt,self.failed,error,generation))
+                    return
+                self.recognize(images,tess,generation,crafting,diagnostics,context,attempt,captured_at,preview)
+            threading.Thread(target=lambda:attempt.run(work),daemon=True).start()
+        except Exception as exc:
+            self._loot_attempt=None
+            self.busy=False;self.status.set('Item capture failed: '+str(exc))
 
-    def recognize(self,images,tess,generation,crafting,diagnostics=False):
+    def finish_attempt(self,attempt,callback,*args):
+        if attempt is not None:
+            if self._loot_attempt is not attempt or not attempt.can_publish():return
+            self._loot_attempt=None
+        callback(*args)
+
+    def recognize(self,images,tess,generation,crafting,diagnostics=False,captured_context=None,attempt=None,captured_at=None,preview=None):
         started=time.monotonic()
         try:
             results={}
@@ -317,10 +345,10 @@ class LootTracker:
                 result['events']=valid;result['unresolved']=unresolved
                 if unresolved:result['debug']+='\nUNMATCHED OCR (excluded automatically): '+repr(unresolved)
             duration=time.monotonic()-started
-            if not self.closed:self.root.after(0,lambda:self.finish(results,generation,duration))
+            if not self.closed:self.root.after(0,lambda:self.finish_attempt(attempt,self.finish,results,generation,duration,captured_context,captured_at,preview))
         except Exception as exc:
             error=str(exc)
-            if not self.closed:self.root.after(0,lambda:self.failed(error,generation))
+            if not self.closed:self.root.after(0,lambda:self.finish_attempt(attempt,self.failed,error,generation))
 
     def failed(self,error,generation):
         self.busy=False
@@ -329,7 +357,7 @@ class LootTracker:
             self.capture_reason='OCR error; automatic retry pending'
             self.status.set('Item OCR failed: '+error)
 
-    def commit(self,event,feed):
+    def commit(self,event,feed,captured_context=None):
         if not self.recording.get():return False
         now=time.monotonic();self.recent=[r for r in self.recent if now-r['at']<=max(5,self.safe_interval()*3)]
         key=(event.item,event.quantity)
@@ -344,15 +372,18 @@ class LootTracker:
         self.insights.observe(ident)
         self.grind.observe_spot(event.item)
         self.last_saved_at=time.time()
-        self.auto_craft.observe(ident,event.item,event.quantity,self.capture_time)
+        self.auto_craft.observe(ident,event.item,event.quantity,self.capture_time,captured_context)
         self.big_drops.observe(ident,event)
         self.insights.prices.notice_item(event.item)
         self.recent.append({'id':ident,'key':key,'feed':feed,'at':now,'paired':False})
         return True
 
-    def finish(self,results,generation,duration=0):
+    def finish(self,results,generation,duration=0,captured_context=None,captured_at=None,preview=None):
         self.busy=False
         if self.closed or not self.enabled.get() or generation!=self.generation:return
+        if captured_at is not None:self.capture_time=captured_at
+        if preview is not None and self.preview and self.preview.winfo_exists() and self.preview.winfo_ismapped():
+            self.photo=ImageTk.PhotoImage(preview);self.preview.configure(image=self.photo,text='')
         # Compatibility with the pre-1.3 text snapshot tests and imported feeds.
         if isinstance(results,list):results={'chat':{'events':[ItemEvent(i,q,'Drop') for i,q in results],'empty':False,'debug':'','recognized':len(results)}}
         self.last_scan_finished=time.time()
@@ -391,7 +422,7 @@ class LootTracker:
             if ambiguous:skipped+=len(rows)
             else:
                 for event in fresh:
-                    if self.commit(event,name):saved+=1;saved_items.append(f'{event.item} ×{event.quantity}')
+                    if self.commit(event,name,captured_context):saved+=1;saved_items.append(f'{event.item} ×{event.quantity}')
         self.last_read.set('Read at '+time.strftime('%H:%M:%S')+': '+('; '.join(f'{e.item} ×{e.quantity}' for e,_ in visible) or 'No item identified — see Live OCR reader.'))
         if saved_items:self.last_saved.set('Saved: '+', '.join(saved_items))
         elif not self.recording.get():self.last_saved.set('Preview only — recording is OFF.')

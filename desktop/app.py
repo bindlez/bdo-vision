@@ -12,7 +12,7 @@ from ocr_parser import choose_reading, reading_is_plausible, extract_pairs
 from scan_engine import select_ocr_passes, should_publish, candidate_is_stable, SpeedEstimator
 from tracking_core import ReadingGate, remaining_at, align_to_capture, estimate_send
 from spatial_ocr import tsv_candidates, choose_spatial_pair
-from ocr_runtime import run_ocr
+from ocr_runtime import ReaderAttempt, run_ocr
 from tool_reader import AutomaticToolReader
 from ocr_debug import OCRReaderView,label_montage,preview_image,source_image
 from tool_status import ToolStatus,estimate_durability
@@ -327,6 +327,7 @@ class App:
  def capture_tools(self,tess,automatic=False):
   self.set_tool_stage('reading','Checking visible tool labels and durability. Loot recording remains independent.')
   reader=self.tool_reader;interval=self.safe_scan_interval()
+  attempt=self._tool_attempt=ReaderAttempt(10)
   guild=self.loot.guild;guild_generation=guild.generation if guild.enabled.get() else None
   debug_token=self.tool_debug.token();debug_frames=[]
   def diagnostic(crops,observations,scene):
@@ -357,12 +358,20 @@ class App:
      detail=json.dumps({k:report.get(k) for k in ('reason','confirmation','pair_result','anchor','tools','unreadable','duration','ocr_calls','cache_hits','camera_reacquired','engine','locator_error')},indent=2)+'\n\nOCR PASSES\n'+report.pop('_debug_raw','Unchanged verified crops reused; no new OCR text.')
      image=debug_frames[0]
      self.root.after(0,lambda:self.tool_debug.show(debug_token,image,detail,report.get('captured_at')))
-    self.root.after(0,lambda:self.finish_tool_attempt(report,reader,automatic,captured_at,captured_mono,quest_sample,guild_generation))
+    self.root.after(0,lambda:self.complete_tool_attempt(attempt,self.finish_tool_attempt,report,reader,automatic,captured_at,captured_mono,quest_sample,guild_generation))
    except Exception as exc:
     message=str(exc);reader.next_due=time.monotonic()+10
-    self.root.after(0,lambda:self.finish_tool_attempt(None,reader,automatic,None,None,quest_sample,guild_generation,message))
+    self.root.after(0,lambda:self.complete_tool_attempt(attempt,self.finish_tool_attempt,None,reader,automatic,None,None,quest_sample,guild_generation,message))
    finally:reader.diagnostic=None
-  threading.Thread(target=work,name='vision-tool-finder',daemon=True).start()
+  try:threading.Thread(target=lambda:attempt.run(work),name='vision-tool-finder',daemon=True).start()
+  except Exception as exc:
+   self._tool_attempt=None;reader.diagnostic=None
+   self.tool_failed(str(exc),reader)
+
+ def complete_tool_attempt(self,attempt,callback,*args):
+  if self._tool_attempt is not attempt or not attempt.can_publish():return
+  self._tool_attempt=None
+  callback(*args)
 
  def finish_tool_attempt(self,report,reader,automatic,captured_at,captured_mono,quest_sample=None,guild_generation=None,error=None):
   if error is not None:self.tool_failed(error,reader)
@@ -747,6 +756,21 @@ class App:
   finder=bool(getattr(self,'auto_tools',None) and self.auto_tools.get())
   delay=500
   try:
+   attempt=getattr(self,'_tool_attempt',None)
+   if attempt and attempt.expire():
+    self.tool_failed('Tool reader timed out. Waiting for the worker to exit before retrying.',self.tool_reader)
+   if attempt and attempt.expired and not attempt.worker_done:
+    self.auto_health.set('Tool reader timed out · waiting for worker cleanup')
+    return
+   queued=getattr(self,'_pending_tool_scan',None)
+   if queued:
+    if time.monotonic()>=queued[1]:
+     self._pending_tool_scan=None
+     self.status.set('Queued tool scan expired. Choose Scan & Track to retry.')
+    elif not self.busy and not self.loot.busy and not getattr(self,'cp_ocr_busy',False) and not self.selecting_region:
+     self._pending_tool_scan=None
+     self.read_ocr(delayed=queued[0])
+     return
    if self.lite_use.get() and self.lite_scan_complete:
     message=('LITE USE · paired guild snapshot finishing · tool OCR stopped' if getattr(getattr(self.loot,'guild',None),'busy',False) else 'LITE USE · timer estimate only · scan manually for a new tool')
     if self.auto_health.get()!=message:self.auto_health.set(message)
@@ -837,6 +861,14 @@ class App:
   canvas.bind('<ButtonPress-1>',down);canvas.bind('<B1-Motion>',move);canvas.bind('<ButtonRelease-1>',up);overlay.bind('<Escape>',lambda e:(overlay.destroy(),self._restore_region_windows()))
  def read_ocr(self,delayed=True,automatic=False):
   if self.busy or getattr(self,'cp_ocr_busy',False):return
+  attempt=getattr(self,'_tool_attempt',None)
+  if attempt and attempt.expired and not attempt.worker_done:
+   self.status.set('Tool reader timed out. Waiting for worker cleanup.');return
+  if self.loot.busy:
+   if not automatic:
+    self._pending_tool_scan=(delayed,time.monotonic()+30)
+    self.status.set('Tool scan queued until the current loot read finishes.')
+   return
   if automatic and (self.lite_use.get() and self.lite_scan_complete or self._tool_scan_latched):return
   if not automatic:self._allow_tool_change=True
   try:
@@ -871,37 +903,51 @@ class App:
    if automatic:self.scan_health.set('Auto OCR error: '+str(e))
    else:messagebox.showerror('OCR',str(e))
  def capture(self,x,y,w,h,automatic=False):
-  if automatic and not self.bdo_foreground():
-   self.busy=False
-   if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
+  if not self.bdo_foreground():
+   self.tool_failed('Bring BDO to the front before reading durability.',self.tool_reader)
    return
   try:
-   wide=None
-   if self.wide_tracking.get():
-    # Capture a larger area at the SAME instant, but OCR it only if needed.
-    # Anchor on the calibrated utensil instead of assuming the screen center.
-    left=x-max(250,w//2);top=y-max(65,h)
-    right=x+w+max(250,w//2);bottom=y+h+max(65,h)
-    wide=ImageGrab.grab(bbox=(left,top,right,bottom),all_screens=True)
-    im=wide.crop((x-left,y-top,x-left+w,y-top+h))
-    wide_info=(wide,left,top,x+w/2,y+h/2)
-   else:
-    im=ImageGrab.grab(bbox=(x,y,x+w,y+h),all_screens=True)
-    wide_info=None
-   captured_at=time.time();captured_mono=time.monotonic();self.last_capture_mono=captured_mono;self.last_image=im.copy();self.show_preview(im)
+   wide_tracking=self.wide_tracking.get()
    tess=self.tess.get().strip().strip(chr(34))
+   try:seconds=max(.05,float(self.speed.get()))
+   except ValueError:seconds=1.0
+   maximum=int(self.maximum.get())
+   value,anchor,running=self.value,self.anchor,self.running
+   attempt=self._tool_attempt=ReaderAttempt(38)
+   def work():
+    try:
+     bounds=foreground_bdo_capture_bounds()
+     if bounds is None:raise RuntimeError('BDO lost focus before the capture')
+     wide_info=None
+     if wide_tracking:
+      left=x-max(250,w//2);top=y-max(65,h)
+      right=x+w+max(250,w//2);bottom=y+h+max(65,h)
+      wide=ImageGrab.grab(bbox=(left,top,right,bottom),all_screens=True)
+      im=wide.crop((x-left,y-top,x-left+w,y-top+h))
+      wide_info=(wide,left,top,x+w/2,y+h/2)
+     else:im=ImageGrab.grab(bbox=(x,y,x+w,y+h),all_screens=True)
+     if foreground_bdo_capture_bounds()!=bounds:raise RuntimeError('BDO moved or lost focus during capture')
+     captured_at=time.time();captured_mono=time.monotonic()
+     def preview():
+      if self._tool_attempt is attempt and attempt.can_publish():
+       self.last_capture_mono=captured_mono;self.last_image=im.copy();self.show_preview(im)
+     self.root.after(0,preview)
+     expected=remaining_at(value,anchor,captured_mono,seconds,running) if running else None
+     self.recognize(im,tess,automatic,captured_at,captured_mono,wide_info,attempt,expected,maximum)
+    except Exception as exc:
+     message=str(exc)
+     self.root.after(0,lambda:self.complete_tool_attempt(attempt,self.tool_failed,message,self.tool_reader))
    if not automatic:self.status.set('Recognizing durability…')
-   threading.Thread(target=self.recognize,args=(im,tess,automatic,captured_at,captured_mono,wide_info),daemon=True).start()
-  except Exception as e:
-   self.busy=False
-   if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
-   self.status.set('Capture failed: '+str(e))
+   threading.Thread(target=lambda:attempt.run(work),daemon=True).start()
+  except Exception as exc:
+   self._tool_attempt=None
+   self.tool_failed(str(exc),self.tool_reader)
  def show_preview(self,im):
   if self.preview is None or not self.preview.winfo_exists():return
   preview=im.copy();preview.thumbnail((535,95));preview=preview.resize((max(1,preview.width),max(1,preview.height)));self.photo=ImageTk.PhotoImage(preview);self.preview.configure(image=self.photo,text='')
  def open_diagnostics(self):
   folder=DATA_ROOT/'ocr-diagnostics';folder.mkdir(exist_ok=True);os.startfile(str(folder))
- def recognize(self,im,tess,automatic=False,captured_at=None,captured_mono=None,wide_info=None):
+ def recognize(self,im,tess,automatic,captured_at,captured_mono,wide_info,attempt,expected,maximum):
   """Quick two-pass OCR first; fallback only if recognition is uncertain.
 
   Tesseract invocation is usually the costliest part of scanning. Previous builds
@@ -925,10 +971,6 @@ class App:
    }
    # Diagnostics are overwritten only when a scan is performed, not on every UI tick.
    if not automatic: im.save(folder/'last_capture.png')
-   try:seconds=max(.05,float(self.speed.get()))
-   except:seconds=1.0
-   expected=remaining_at(self.value,self.anchor,captured_mono or time.monotonic(),seconds,self.running) if self.running else None
-   maximum=int(self.maximum.get())
    for name,psm in select_ocr_passes():
     # Feed the image through stdin; avoid repeated PNG disk I/O.
     import io
@@ -968,11 +1010,11 @@ class App:
      lines.append('Wide fallback error: '+str(exc))
    duration=time.monotonic()-start
    if not automatic or not candidates: (folder/'ocr_log.txt').write_text('\n'.join(lines),encoding='utf-8')
-   self.root.after(0,lambda:self.finish_ocr(candidates,singles,lines,automatic,captured_at,captured_mono,duration,spatial))
+   self.root.after(0,lambda:self.complete_tool_attempt(attempt,self.finish_ocr,candidates,singles,lines,automatic,captured_at,captured_mono,duration,spatial))
   except Exception as exc:
    duration=time.monotonic()-start
    error=str(exc)
-   self.root.after(0,lambda:self.finish_ocr([],[],['OCR error: '+error],automatic,captured_at,captured_mono,duration,None))
+   self.root.after(0,lambda:self.complete_tool_attempt(attempt,self.finish_ocr,[],[],['OCR error: '+error],automatic,captured_at,captured_mono,duration,None))
  def finish_ocr(self,results,singles,lines,automatic=False,captured_at=None,captured_mono=None,duration=0,spatial=None):
   """Apply readings at screenshot time; never turn one dubious scan into a new tool."""
   from collections import Counter

@@ -88,6 +88,7 @@ class ActiveToolTests(unittest.TestCase):
         neighbour={**row(413,maximum=3000),'id':'neighbour','numbers':[590,170,660,190]}
         anchor={'x':1023,'y':159,'evidence':'Place Mode anchor'}
         self.assertEqual(place_selected({'anchor':anchor,'tools':[tool,neighbour]},1040)['id'],'current')
+        self.assertIsNone(place_selected({'anchor':anchor,'tools':[tool,neighbour],'ambiguous_use':True},1040))
 
     def test_place_mode_rejects_empty_unverified_far_above_and_tied_tools(self):
         anchor={'x':500,'y':180,'evidence':'Place Mode anchor'}
@@ -97,6 +98,8 @@ class ActiveToolTests(unittest.TestCase):
             self.assertIsNone(place_selected({'anchor':anchor,'tools':[invalid]},1080))
         tied={**tool,'id':'b','numbers':[514,220,574,240]}
         self.assertIsNone(place_selected({'anchor':anchor,'tools':[tool,tied]},1080))
+        distinct={**tool,'id':'c','numbers':[650,220,710,240]}
+        self.assertIsNone(place_selected({'anchor':anchor,'tools':[tool,distinct]},1080,uncontested=True))
 
     def test_pair_cannot_confirm_the_neighbour_of_place_mode_selection(self):
         reader=AutomaticToolReader();reader.context='game'

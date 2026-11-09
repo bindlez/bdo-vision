@@ -1,4 +1,4 @@
-# BDO Vision · current test candidate 1.13.0-rc.31
+# BDO Vision · current test candidate 1.13.0-rc.32
 
 **Testing rc.28:** Open the game overlay, click **CRAFT**, then **WEBSITE** to
 open the dedicated companion tab. Search a recipe, enter LT or use a verified

@@ -46,3 +46,17 @@ for unsupported configurations. This is a possible window-frame source.
 Production does not use it yet.
 
 [Microsoft window capture API](https://learn.microsoft.com/en-us/windows/win32/api/windows.graphics.capture.interop/nf-windows-graphics-capture-interop-igraphicscaptureiteminterop-createforwindow)
+
+
+## Tool and loot coordination
+
+Use verified counter changes to resolve competing utensil labels. A Place
+Mode reading can start a provisional countdown only with one eligible
+candidate. Competing verified changes and conflicts between position and
+wear leave selection unresolved. Retain the previous countdown as an estimate.
+
+Tool and loot reads take turns. Loot freezes the tool session context at
+capture and uses the accepted ledger event for craft attribution. A tool swap
+before OCR returns can leave the loot row saved without attaching it to the
+replacement tool. Expired attempts release their UI state and cannot publish
+late results. A stalled worker must exit before its reader starts another one.

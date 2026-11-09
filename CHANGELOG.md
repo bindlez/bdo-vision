@@ -1,3 +1,9 @@
+## 1.13.0-rc.32 — Tool and loot reader coordination
+
+- Withhold tool selection when competing counters conflict. Keep the previous timer as an estimate.
+- Serialize tool and loot work, bound attempts, and discard late results.
+- Bind craft loot attribution to the tool session present when the frame was captured.
+
 ## 1.13.0-rc.31 — Early craft estimates and Vision dock
 
 - Craft silver/hour estimates start after 10 readable seconds. The existing reader temporarily shortens its interval for a new verified craft tool.

@@ -24,6 +24,9 @@ class AutoCraftUITests(unittest.TestCase):
                 auto.engine.tick(CONTEXT,True,0)
                 first=app.loot.ledger.add(ITEM,4,kind='Drop');auto.observe(first,ITEM,4,0);auto.engine.tick(CONTEXT,True,1)
                 second=app.loot.ledger.add(ITEM,4,kind='Drop');auto.observe(second,ITEM,4,1)
+                with patch.object(auto,'context',return_value={**CONTEXT,'tool':'new-tool'}):
+                    auto.observe(second+1,ITEM,4,2,captured_context=CONTEXT)
+                self.assertEqual(auto.engine.run['counts'][ITEM],8)
                 self.assertEqual(auto.snapshot(True)['recipe'],ITEM)
                 self.assertEqual(db.execute('SELECT COUNT(*) FROM auto_craft_members').fetchone()[0],2)
                 self.assertTrue(all(r[6]=='Drop' for r in app.loot.ledger.rows()))

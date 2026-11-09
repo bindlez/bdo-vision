@@ -75,6 +75,15 @@ class RecordingTests(unittest.TestCase):
             self.assertTrue(t.can_capture()[0])
             check.assert_called_once_with([[1200,600,300,150]])
 
+    def test_expired_loot_attempt_cannot_publish_late_result(self):
+        from ocr_runtime import ReaderAttempt
+        t=self.tracker
+        attempt=t._loot_attempt=ReaderAttempt(0)
+        self.assertTrue(attempt.expire())
+        with patch.object(t,'finish') as finish:
+            t.finish_attempt(attempt,finish,{},t.generation)
+            finish.assert_not_called()
+
     def test_rare_failure_keeps_normal_loot(self):
         t=self.tracker
         event=ItemEvent('Black Stone',2,'Drop')

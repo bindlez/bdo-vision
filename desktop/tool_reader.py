@@ -584,21 +584,27 @@ def distinct_counters(observations):
     return [g[0] for g in groups if len({(r['current'],r['maximum']) for r in g})==1]
 
 
-def changing_tool(before,after,elapsed):
-    """Return one changed field only when every located field is verified."""
-    if not 1.25<=elapsed<=2.25 or not before or len(before)!=len(after):return None
+def changing_fields(before,after,elapsed):
+    """Return changed fields only when every located field is verified."""
+    if not 1.25<=elapsed<=2.25 or not before or len(before)!=len(after):return []
     candidates=[]
     for a,b in zip(before,after):
-        if not a.get('numbers') or a.get('numbers')!=b.get('numbers') or a['maximum']!=b['maximum']:return None
-        if min(a.get('votes',0),b.get('votes',0))<2:return None
-        if family(a['name']) and family(b['name']) and family(a['name'])!=family(b['name']):return None
+        if not a.get('numbers') or a.get('numbers')!=b.get('numbers') or a['maximum']!=b['maximum']:return []
+        if min(a.get('votes',0),b.get('votes',0))<2:return []
+        if family(a['name']) and family(b['name']) and family(a['name'])!=family(b['name']):return []
         drop=a['current']-b['current']
-        if drop<0 or drop>elapsed*20+4:return None
+        if drop<0 or drop>elapsed*20+4:return []
         if drop and b['current']>0:candidates.append(tuple(b['numbers']))
+    return candidates
+
+
+def changing_tool(before,after,elapsed):
+    candidates=changing_fields(before,after,elapsed)
     return candidates[0] if len(candidates)==1 else None
 
 
-def place_selected(report,height):
+def place_selected(report,height,*,uncontested=False):
+    if report.get('ambiguous_use'):return None
     anchor=report.get('anchor') or {}
     if 'Place Mode' not in anchor.get('evidence',''):return None
     unit=max(.6,min(2.,height/1080));ranked=[]
@@ -609,7 +615,7 @@ def place_selected(report,height):
         score=abs(x-anchor['x']-40*unit)+.6*abs(y-anchor['y']-55*unit)
         if score<=350*unit:ranked.append((score,row))
     ranked.sort(key=lambda r:r[0])
-    if not ranked or len(ranked)>1 and ranked[1][0]-ranked[0][0]<8*unit:return None
+    if not ranked or len(ranked)>1 and (uncontested or ranked[1][0]-ranked[0][0]<8*unit):return None
     return ranked[0][1]
 
 
@@ -670,6 +676,7 @@ class ToolInventory:
             tools.append({k:v for k,v in row.items() if k not in ('pace','x','y')}|{'state':state,'seconds_per_use':pace[len(pace)//2] if len(pace)>=2 else None})
         return {'tools':tools,'active_id':active['id'] if active else None,
                 'active_key':f"{active['id']}:{active['cycle']}" if active else None,
+                'ambiguous_use':len(moving)>1,
                 'reason':'Repeated durability decreases identify one tool' if active else 'Several tools are changing; active tool is uncertain' if moving else 'Watching for repeated durability use' if visible else 'No verified visible tool labels',
                 'observed_at':now}
 
@@ -697,7 +704,8 @@ class AutomaticToolReader:
                 # Repeated verified consumption outranks a camera-dependent
                 # positional prior when the player moves to another utensil.
                 report['confirmation']='Repeated durability use overrides Place Mode position'
-            if selected and not getattr(self,'position_started',False):
+            provisional=place_selected(report,bounds[4]-bounds[2],uncontested=True)
+            if provisional and not getattr(self,'position_started',False):
                 # First verified read is usable immediately; confirm use on
                 # the following scan without holding the initial countdown.
                 self.position_started=True
@@ -705,7 +713,8 @@ class AutomaticToolReader:
                 self.last_pair=time.monotonic()
                 try:report=self.compare_pair(tess,bounds,grab,report,interval)
                 except (RuntimeError,TimeoutError,subprocess.TimeoutExpired):report['pair_result']='Comparison interrupted; no active tool inferred'
-            if not report['active_id'] and selected:
+            if not report['active_id'] and provisional and not report.get('ambiguous_use') and not report.get('position_conflict'):
+                selected=provisional
                 report.update(active_id=selected['id'],active_key=f"{selected['id']}:{selected.get('cycle',0)}",confirmation='Place Mode position')
                 selected['state']='Selected by Place Mode · checking use'
                 report['next_seconds']=1.5;self.next_due=max(time.monotonic(),report.get('captured_mono',time.monotonic())+1.5)
@@ -736,11 +745,17 @@ class AutomaticToolReader:
         b,calls_b=verify_labels(second,[dict(r) for r in regions],tess,self.numeric_cache)
         if self.diagnostic is not None:self.diagnostic(second,b,None)
         report['ocr_calls']+=calls_a+calls_b
-        field=changing_tool(a,b,b_mono-a_mono) if len(a)==len(regions) and len(b)==len(regions) else None
+        candidates=changing_fields(a,b,b_mono-a_mono) if len(a)==len(regions) and len(b)==len(regions) else []
+        field=candidates[0] if len(candidates)==1 else None
+        if len(candidates)>1:
+            report['ambiguous_use']=True
+            report['pair_result']='Several verified counters changed; tool selection withheld'
+            return report
         report['duration']+=time.monotonic()-a_mono
         selected=place_selected(report,bounds[4]-bounds[2])
         if field and selected and tuple(selected.get('numbers',()))!=field:
             field=None
+            report['position_conflict']=True
             report['pair_result']='A nearby tool changed, but it does not match Place Mode; confirmation withheld'
         else:report['pair_result']='One verified changing tool' if field else 'No unique verified durability change'
         if field:
@@ -809,12 +824,13 @@ class AutomaticToolReader:
         suspicious_drop=any(old.get('numbers')==row.get('numbers') and old['maximum']==row['maximum'] and old['current']-row['current']>max(30,(now-old['seen_at'])*20+4)
                             for row in observations for old in self.inventory.tracks.values())
         if suspicious_drop:self.last_discovery=-1e9
-        field=None;previous=self.previous_positioned
+        field=None;candidates=[];previous=self.previous_positioned
         selected=place_selected({'anchor':self.anchor,'tools':observations},height)
         if previous and previous['context']==context and selected and not shifted:
-            candidate=changing_tool(previous['observations'],observations,captured_mono-previous['at'])
-            if candidate and candidate==previous['field']==tuple(selected.get('numbers',())):field=candidate
+            candidates=changing_fields(previous['observations'],observations,captured_mono-previous['at'])
+            if len(candidates)==1 and candidates[0]==previous['field']==tuple(selected.get('numbers',())):field=candidates[0]
         report=self.inventory.update(observations,now,context,confirmed_field=field)
+        if len(candidates)>1 and not report['active_id']:report['ambiguous_use']=True
         if field:report['confirmation']='two-frame comparison';report['pair_result']='Consecutive verified acquisitions reused; no extra capture pair'
         self.previous_positioned={'context':context,'observations':[dict(row) for row in observations],'at':captured_mono,'field':tuple(selected.get('numbers',()))} if selected and all(row.get('votes',0)>=2 for row in observations) else None
         unreadable=unreadable_regions(self.regions,observations)

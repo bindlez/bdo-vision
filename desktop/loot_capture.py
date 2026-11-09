@@ -2,6 +2,7 @@
 import io
 import subprocess
 import csv
+import time
 from collections import defaultdict
 from pathlib import Path
 from PIL import ImageOps,Image,ImageChops
@@ -72,6 +73,13 @@ def notification_ink(image, threshold=80, colors=True, prepared=None):
 
 
 def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics=True,positioned_worker=None):
+    deadline=time.monotonic()+12
+    def recognize(command, **options):
+        remaining=deadline-time.monotonic()
+        if remaining<=0:raise TimeoutError('Loot panel OCR exceeded its time budget')
+        options['timeout']=min(options['timeout'],remaining)
+        return run_ocr(command,**options)
+
     folder=Path(folder)
     if diagnostics:
         folder.mkdir(parents=True,exist_ok=True)
@@ -87,7 +95,7 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics
     readings=[];logs=[];raws=[];slots=[]
     for variant,psm in passes:
         blob=io.BytesIO();variant.save(blob,format='PNG')
-        result=run_ocr([tess,'stdin','stdout','--psm',str(psm),'-l','eng'],input=blob.getvalue(),capture_output=True,timeout=4)
+        result=recognize([tess,'stdin','stdout','--psm',str(psm),'-l','eng'],input=blob.getvalue(),capture_output=True,timeout=4)
         raw=result.stdout.decode('utf-8','replace');raws.append(raw)
         if result.returncode:raise RuntimeError(result.stderr.decode('utf-8','replace')[:160])
         rows=parse_events(raw,crafting=crafting,rare_feed=kind=='rare',bare_items=kind!='chat')
@@ -129,7 +137,7 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics
     verified_events=[]
     if kind!='chat' and max(map(len,readings),default=0)>0:
         blob=io.BytesIO();gray.save(blob,format='PNG')
-        tsv=run_ocr([tess,'stdin','stdout','--psm','11','-l','eng','tsv'],input=blob.getvalue(),capture_output=True,timeout=4)
+        tsv=recognize([tess,'stdin','stdout','--psm','11','-l','eng','tsv'],input=blob.getvalue(),capture_output=True,timeout=4)
         groups=defaultdict(list)
         for word in csv.DictReader(io.StringIO(tsv.stdout.decode('utf-8','replace')),delimiter='\t'):
             if word.get('text','').strip() and word.get('level')=='5':
@@ -144,7 +152,7 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics
             crop=gray.crop((left,top,right,bottom))
             for index,variant in enumerate((crop,ImageOps.invert(crop))):
                 blob=io.BytesIO();variant.save(blob,format='PNG')
-                result=run_ocr([tess,'stdin','stdout','--psm','7','-l','eng'],input=blob.getvalue(),capture_output=True,timeout=3)
+                result=recognize([tess,'stdin','stdout','--psm','7','-l','eng'],input=blob.getvalue(),capture_output=True,timeout=3)
                 raw=result.stdout.decode('utf-8','replace')
                 verified[index].extend(parse_events(raw,crafting=crafting,rare_feed=kind=='rare',bare_items=True))
                 logs.append('Notification line: '+raw)
