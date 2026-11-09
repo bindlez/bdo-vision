@@ -57,9 +57,19 @@ class LiveHUD:
             self.value_label.configure(text='TOOL USES LEFT');self.rate_label.configure(text='TIME LEFT')
             self.value.configure(text=f'{remaining:,.0f}');self.rate.configure(text=f'{int(seconds)//3600}:{int(seconds)//60%60:02}:{int(seconds)%60:02}')
             run=self.tracker.auto_craft.engine.run
+            if run and run['tool'] != self.app.session_id:
+                run = None
             from auto_craft import families
             recipe=families()[0].get(run['family'],{}).get('name','Waiting for craft output') if run else 'Waiting for craft output'
-            self.latest.configure(text=recipe[:48]);self.goal.configure(text='CRAFT opens search, packing and estimates')
+            self.latest.configure(text=recipe[:48])
+            loot = 'CRAFT opens search, packing and estimates'
+            if self.options['craft_loot']:
+                counts = run['counts'] if run else {}
+                lead = max(counts, key=counts.get, default=None)
+                loot = f'Craft loot · {lead} × {counts[lead]:,}' if lead else 'Craft loot · waiting for recorded output'
+                if len(counts)>1:
+                    loot += f' (+{len(counts)-1} types)'
+            self.goal.configure(text=loot, fg=MUTED, wraplength=self.width-24)
             self.time.configure(text='Assumes crafting continues / no extra OCR');self.bar.coords(self.fill,0,0,0,3);self.key=None;return
         self.pause.configure(command=self.live.grind.pause)
         self.value_label.configure(text='RECORDED VALUE');self.rate_label.configure(text='SILVER / OBSERVED H')
@@ -121,7 +131,7 @@ def settings(live):
         label(row, title, 10).pack(side='left')
         variable = tk.StringVar(value=str(p[key]));variables[key] = variable
         ttk.Combobox(row, textvariable=variable, values=values, width=17, state='readonly').pack(side='right')
-    for key, title in [('locked','Lock overlay · clicks pass through to the game'), ('motion','Brief drop entrance animation'), ('sound','Play a quiet Windows notification sound')]:
+    for key, title in [('locked','Lock overlay · clicks pass through to the game'), ('motion','Brief drop entrance animation'), ('sound','Play a quiet Windows notification sound'), ('craft_loot','Show recorded craft loot beside tool durability')]:
         variables[key] = tk.BooleanVar(value=p[key])
         tk.Checkbutton(box, text=title, variable=variables[key], bg=INK, fg='#f5f0ff', selectcolor=PANEL,
                        activebackground=INK, activeforeground='#f5f0ff', font=('Segoe UI',10), anchor='w').pack(fill='x', pady=4)

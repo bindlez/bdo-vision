@@ -176,3 +176,19 @@ The table includes both items per box and Imperial payout per box. Advanced grap
 are built only when their disclosure is opened. They show bounded top-six expected
 buy/craft profits with a zero baseline, plus recommendation breakdowns of ingredient
 quantity, cost, available stock, expected surplus and return on input cost.
+
+
+## Inventory preview and tool capacity
+
+Craft from inventory uses saved quantities for the selected recipe and its
+ingredient substitutions. Paste a tab-separated item name and quantity on
+each line to update multiple counts together. The slider shows modeled time
+and Life EXP through the last batch covered by entered stock. Applying the
+slider updates the plan amount. The planner cannot read complete item stacks
+from the game. Update the entered inventory when stock changes.
+
+A fresh recipe timer uses the selected full-tool capacity from 3,000 to 5,000
+uses. Each timer card covers one chunk. Its queued remainder carries forward
+with the selected capacity for later tools. The user replaces the tool in
+game. A linked or manually entered durability timer follows the actual
+remaining uses, which can be below 3,000.

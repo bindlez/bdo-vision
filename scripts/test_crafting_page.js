@@ -4,7 +4,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),vm=require('vm');
 const nodes=new Map();
 class Element{
  constructor(){this.dataset={};this.style={};this.value='';this.checked=false;this.open=false;this.children=[];this.controls=[];}
- set innerHTML(value){this.html=value;this.controls=[];for(const match of value.matchAll(/<(input|select|button|details|div|section|p|a)\b([^>]*)>/g)){const n=new Element(),attrs=match[2];n.checked=/\bchecked\b/.test(attrs);n.open=/\bopen\b/.test(attrs);for(const a of attrs.matchAll(/([\w-]+)="([^"]*)"/g)){if(a[1].startsWith('data-'))n.dataset[a[1].slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=a[2];else n[a[1]]=a[2];}if(match[1]==='select'){const options=value.slice(match.index+match[0].length,value.indexOf('</select>',match.index));n.html=options;n.value=(options.match(/<option value="([^"]*)" selected/)||options.match(/<option value="([^"]*)"/))?.[1]||'';}if(n.id)nodes.set(n.id,n);if(n.id==='productionRoadmap')n.innerHTML=value.slice(match.index+match[0].length,value.indexOf('</section>',match.index));this.controls.push(n);}}
+ set innerHTML(value){this.html=value;this.controls=[];for(const match of value.matchAll(/<(input|select|textarea|button|details|div|section|p|a)\b([^>]*)>/g)){const n=new Element(),attrs=match[2];n.checked=/\bchecked\b/.test(attrs);n.open=/\bopen\b/.test(attrs);for(const a of attrs.matchAll(/([\w-]+)="([^"]*)"/g)){if(a[1].startsWith('data-'))n.dataset[a[1].slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=a[2];else n[a[1]]=a[2];}if(match[1]==='select'){const options=value.slice(match.index+match[0].length,value.indexOf('</select>',match.index));n.html=options;n.value=(options.match(/<option value="([^"]*)" selected/)||options.match(/<option value="([^"]*)"/))?.[1]||'';}if(n.id)nodes.set(n.id,n);if(n.id==='productionRoadmap')n.innerHTML=value.slice(match.index+match[0].length,value.indexOf('</section>',match.index));this.controls.push(n);}}
  get innerHTML(){return this.html||'';}
  querySelectorAll(selector){if(selector==='details[open]')return this.controls.filter(n=>n.dataset.section&&n.open);if(selector==='details')return this.controls.filter(n=>n.dataset.section);const attr=selector.match(/^\[data-([\w-]+)\]$/);if(attr){const k=attr[1].replace(/-([a-z])/g,(_,c)=>c.toUpperCase());return this.controls.filter(n=>Object.hasOwn(n.dataset,k));}return [];}
  insertBefore(){}querySelector(){return null;}focus(){}setSelectionRange(){}matches(){return false;}
@@ -19,6 +19,20 @@ for(const marker of ['RECIPE_NETWORK_JS','CRAFTING_ENGINE_JS','CRAFTING_STUDIO_J
 nodes.set('imperialQuick',new Element());
 context.craftRoadState.runModes={cooking:'manual',alchemy:'manual'};
 context.craftStudioRender(context.selectedRecipe,100);context.renderRecipeList();
+// Bulk inventory uses every resolved ingredient and previews the selected amount.
+const inventoryInputs=context.craftStudioPlan(context.selectedRecipe,100).materials;
+const batchStock=new Map();
+for(const m of inventoryInputs)batchStock.set(m.name,(batchStock.get(m.name)||0)+m.qty);
+nodes.get('studioInventoryPaste').value=[...batchStock].map(([name,qty])=>name+'\t'+qty*50).join('\n');
+nodes.get('studioInventoryImport').onclick();
+let inventorySlider=nodes.get('studioInventoryBatches');
+assert.equal(Number(inventorySlider.max),50);
+inventorySlider.value='20';inventorySlider.oninput();
+assert(nodes.get('studioInventorySummary').textContent.includes('20 / 50 batches'));
+assert(nodes.get('studioInventorySummary').textContent.includes('Life EXP'));
+nodes.get('studioInventoryApply').onclick();
+assert.equal(context.lastCraftAmount,20);
+context.lastCraftAmount=100;context.craftStudioRender(context.selectedRecipe,100);
 assert(nodes.get('imperialQuick').innerHTML.includes('BEST TO BUY & PACK'));
 assert(nodes.get('imperialQuick').innerHTML.includes('BEST TO CRAFT & PACK'));
 assert(nodes.get('imperialQuick').innerHTML.includes('BEST TO BUY & PACK · IN STOCK'));
@@ -196,3 +210,31 @@ context.visionRevealActiveTimer(serendia.id);assert.equal(context.craftWorkflow,
 console.log('Conflicting timer opens the existing card, focuses its controls and preserves timer/history state.');
 
 const deskCSS=fs.readFileSync('desktop/assets/crafting-studio.css','utf8');assert(deskCSS.includes('#craftPlanningPanel>#visionCraftStatus{grid-column:1 / -1'));assert(deskCSS.includes('>.card:has(#recipeList)'));
+
+// Execute the shipped timer entry point and rollover with real capacity boundaries.
+const timerCode=html.slice(html.indexOf('    function getToolChunkSize()'),html.indexOf('    function ensureTick()'));
+const capacity={value:'3000'}, timerClock={now:10000};
+const timerContext={
+ Date:{now:()=>timerClock.now}, document:{getElementById:()=>capacity}, activeTimers:[], craftHistory:[],
+ currentView:'timers', visionRevealActiveTimer(){}, attachVisionTimer(){}, saveState(){}, renderActiveTimers(){},
+ updateNavBadge(){}, ensureTick(){}, toast(){}, fmtTime:String, requestNotifyPermission(){}, notifyCraftDone(){}, craftStudioReceipt(){}, renderHistory(){},
+};
+vm.createContext(timerContext);vm.runInContext(timerCode,timerContext);
+const timerRecipe={id:'capacity-recipe',name:'Capacity recipe',secPerBatch:2};
+timerContext.startCraft(timerRecipe,4200);
+let active=timerContext.activeTimers[0];
+assert.equal(active.amount,3000);assert.equal(active.totalSec,6000);
+assert.equal(active._queue[0],1200);
+capacity.value='5000';timerClock.now=active.endAt;timerContext.processTimers();
+active=timerContext.activeTimers[0];
+assert.equal(active.amount,1200);assert.equal(active._nextChunk,3000);
+assert.equal(timerContext.craftHistory[0].amount,3000);
+timerClock.now=active.endAt;timerContext.processTimers();
+timerContext.startCraft(timerRecipe,13000);
+active=timerContext.activeTimers[0];
+assert.equal(active.amount,5000);assert.equal(active.totalSec,10000);
+active._nextChunk=3000;timerClock.now=active.endAt;timerContext.processTimers();
+active=timerContext.activeTimers[0];assert.equal(active.amount,3000);assert.equal(active._queue[0],5000);
+timerContext.startCraft({id:'durability_timer',name:'Current tool',secPerBatch:2},1200,{startDurability:1200});
+assert.equal(timerContext.activeTimers[0].amount,1200);
+console.log('Recipe timers enforce the tool limit at start and rollover; worn-tool countdown stays independent.');

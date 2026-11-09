@@ -96,9 +96,14 @@ function craftStudioRender(recipe,amount){
  var check=(id,label,checked)=>'<label class="studio-check"><input id="'+id+'" type="checkbox" '+(checked?'checked':'')+'>'+label+'</label>';
  var kpi=(label,value,hint)=>'<div><small>'+label+'</small><strong>'+value+'</strong><span>'+hint+'</span></div>';
  var roadmap=craftRoadmapPanel(recipe,p);
+ var stockContext=craftStudioContext();
+ var stock=Object.fromEntries(p.materials.map(m=>[m.itemId,stockContext.inventory[VisionCraft.key(m.name)]]));
+ var inventoryLimit=VisionCraft.runLimit(recipe,{mode:'ingredients',stock},stockContext);
+ var inventoryMax=inventoryLimit.batches;
  var nextStep=p.steps[craftStudioWorkshopProgress(recipe,p).completed];
  var progress=Math.min(100,p.ownedBatches/amount*100),rewardChoices=recipe.type==='cooking'?[9213,9065]:[5301,4801,4802,4803,4804,4805,9733];
  var markup=craftStudioDeskNav()+'<div class="studio-eyebrow">VISION / CRAFTING INTELLIGENCE · '+esc(String(region).toUpperCase())+'</div><div class="studio-title"><h3>'+esc(recipe.name)+'</h3><button id="studioFavorite" class="btn-secondary" aria-pressed="'+craftStudioState.favorites.includes(recipe.id)+'">'+(craftStudioState.favorites.includes(recipe.id)?'★ Saved':'☆ Save recipe')+'</button></div><p class="studio-muted">'+esc(recipe.method?recipe.method.replaceAll('_',' '):recipe.type)+' · '+recipe.mats.length+' ingredient slots · recipe '+esc(recipe.recipeKey)+' <a href="https://bdocodex.com/us/item/'+recipe.itemId+'/" target="_blank" rel="noopener noreferrer">Game details ↗</a></p>'+
+ '<section class="workshop-next"><h4>Craft from inventory</h4><p>Uses saved ingredient quantities and selected substitutions for this recipe. Edit Ingredients or paste your inventory counts.</p><details><summary>Paste inventory quantities</summary><label>Item name and quantity, separated by a tab (one item per line)<textarea id="studioInventoryPaste" rows="4"></textarea></label><button id="studioInventoryImport" class="btn-secondary">Update inventory</button></details><p id="studioInventorySummary" role="status"></p><label class="studio-field">Batches from inventory<input id="studioInventoryBatches" type="range" min="0" max="'+inventoryMax+'" value="'+Math.min(amount,inventoryMax)+'" '+(inventoryMax?'':'disabled')+'></label><button id="studioInventoryApply" class="btn-secondary" '+(inventoryMax?'':'disabled')+'>Use this amount in plan</button></section>'+
  '<details data-section="single-recipe" class="single-recipe-workbench"><summary>Your crafting desk</summary><p class="studio-muted">Plan '+esc(recipe.name)+' in one place. These quantities and costs belong to this recipe; the map labels whole-line totals separately. Timers use your saved tool, ingredient or hybrid stopping rule in Map & timeline. Explicit manual timer actions remain labeled.</p>'+
  '<div class="studio-fields studio-main-controls">'+field('craftAmt','Batches to craft',amount,1,1,1e9)+'<label class="studio-field">Or target main items<input id="studioTarget" type="number" min="1" max="1000000000" value="'+Math.ceil(p.output)+'"></label></div>'+
  (variants.length>1?'<label class="studio-field">Recipe variant<select id="studioVariant">'+variants.map((v,i)=>'<option value="'+esc(v.id)+'" '+(v.id===recipe.id?'selected':'')+'>'+esc((v.method||v.type)+' · variant '+(i+1)+' · '+v.mats.map(m=>m.qty+' '+m.name).join(', '))+'</option>').join('')+'</select></label>':'')+
@@ -117,6 +122,35 @@ function craftStudioRender(recipe,amount){
  el.querySelectorAll('details').forEach(n=>{if(opened.includes(n.dataset.section))n.open=true;});
  var analysisHost=document.getElementById('studioAnalysis');if(analysisHost)analysisHost.innerHTML=craftStudioAnalysis(p);
  function redraw(){craftStudioSave();saveState();craftStudioRender(recipe,lastCraftAmount||amount);}
+ var inventorySlider=document.getElementById('studioInventoryBatches');
+ var inventorySummary=document.getElementById('studioInventorySummary');
+ var inventoryApply=document.getElementById('studioInventoryApply');
+ function updateInventoryPreview(){
+  var batches=Number(inventorySlider.value);
+  var xp=recipe.xp>0?(batches*recipe.xp*(1+c.xpBonus/100)).toLocaleString(undefined,{maximumFractionDigits:1})+' Life EXP':'Life EXP unavailable';
+  var output=(batches*c.yield).toLocaleString(undefined,{maximumFractionDigits:2});
+  inventorySummary.textContent=inventoryLimit.available
+   ?batches.toLocaleString()+' / '+inventoryMax.toLocaleString()+' batches · '+output+' expected items · '+fmtTime(batches*c.seconds)+' crafting time · '+xp
+   :inventoryLimit.reason;
+  inventoryApply.disabled=batches===0;
+ }
+ inventorySlider.oninput=updateInventoryPreview;updateInventoryPreview();
+ inventoryApply.onclick=()=>{lastCraftAmount=Number(inventorySlider.value);redraw();};
+ document.getElementById('studioInventoryImport').onclick=()=>{
+  var lines=document.getElementById('studioInventoryPaste').value.trim().split(/\r?\n/),updates=new Map();
+  for(var line of lines){
+   if(!line.trim())continue;
+   var parts=line.split('\t'),name=VisionCraft.key(parts[0]),quantity=Number(parts[1]);
+   if(parts.length!==2||!name||!parts[1].trim()||!Number.isSafeInteger(quantity)||quantity<0||quantity>1e9){
+    toast('Check inventory format','Use one item name and whole quantity per line, separated by a tab.',false);return;
+   }
+   if(updates.has(name)){toast('Duplicate inventory item','Combine quantities for '+parts[0]+' into one row.',false);return;}
+   updates.set(name,quantity);
+  }
+  if(!updates.size)return;
+  craftStudioState.inventory={...craftStudioState.inventory,...Object.fromEntries(updates)};
+  redraw();
+ };
  function configChange(){var cfg={...raw,includeExtras:document.getElementById('studioExtras')?.checked===true,yield:Number(document.getElementById('studioYield').value),rareYield:Number(document.getElementById('studioRareYield').value),retention:Number(document.getElementById('studioRetention').value),extra:Number(document.getElementById('studioExtra').value),goal:Number(document.getElementById('studioGoal').value),byproductRate:Number(document.getElementById('studioByproductRate').value),byproductReward:Number(document.getElementById('studioReward').value)};for(var [id,k] of [['studioEstimate','estimate'],['studioIncludeRare','includeRare'],['studioByproduct','includeByproduct'],['studioKeepMain','keepMain'],['studioKeepRare','keepRare'],['studioUseRareInputs','useRareInputs']])cfg[k]=document.getElementById(id).checked;craftStudioState.config[recipe.id]=cfg;redraw();}
  ['studioYield','studioRareYield','studioRetention','studioExtra','studioGoal','studioByproductRate','studioReward','studioEstimate','studioIncludeRare','studioByproduct','studioKeepMain','studioKeepRare','studioUseRareInputs'].forEach(id=>document.getElementById(id).onchange=configChange);
  ['studioMastery','studioBaseSeconds','studioSuccess','studioXp','studioMass'].forEach(id=>document.getElementById(id).onchange=()=>{craftStudioState.characters[recipe.type]={...craftStudioState.characters[recipe.type],mastery:Number(document.getElementById('studioMastery').value),baseSeconds:Number(document.getElementById('studioBaseSeconds').value),success:Number(document.getElementById('studioSuccess').value),xpBonus:Number(document.getElementById('studioXp').value),mass:document.getElementById('studioMass').checked};if(recipe.type==='processing'){raw.baseSeconds=craftStudioState.characters.processing.baseSeconds;delete craftStudioState.characters.processing.baseSeconds;}delete raw.seconds;delete raw.yield;delete raw.rareYield;craftStudioState.config[recipe.id]=raw;redraw();});

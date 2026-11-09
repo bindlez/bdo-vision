@@ -67,7 +67,8 @@ class CPInfo:
         self.fields['cashPolicy']=tk.StringVar(value=policy_names.get(self.saved.get('cashPolicy','market'),'Material exchanges'))
         ttk.Combobox(self.options,textvariable=self.fields['cashPolicy'],values=tuple(policy_names.values()),state='readonly',style='Vision.TCombobox',width=20).grid(row=3,column=2,sticky='ew',padx=5)
         self.control_row=row=tk.Frame(body,bg=c['bg']);row.pack(fill='x',pady=8)
-        self.app.action(row,'CALCULATE + SAVE',self.recalculate,primary=True).pack(side='left')
+        self.app.action(row,'CALCULATE BY BYPRODUCTS',self.calculate_byproducts,primary=True).pack(side='left')
+        self.app.text_button(row,'CALCULATE + SAVE',self.recalculate).pack(side='left',padx=(8,0))
         self.app.text_button(row,'REFRESH EXISTING MARKET PRICES',self.refresh_prices).pack(side='left',padx=14)
         self.app.text_button(row,'ASSUMPTIONS',self.toggle_options).pack(side='left')
         self.note=tk.StringVar(value='Saved scenario · edit stock and income assumptions, then calculate.' if self.saved else 'First-use example: 750,000 catalysts at 490 CP + 19.26%. Edit to your actual stock. Income defaults to zero.')
@@ -76,7 +77,7 @@ class CPInfo:
         self.target_view=CPTargetView(body,self)
         from cp_workerman_ui import CPWorkermanView
         self.workerman=CPWorkermanView(body,self,self.saved.get('workerman'))
-        self.selected=tk.StringVar(value='Target, then cash');picker=ttk.Combobox(body,textvariable=self.selected,values=('Cash everything','All CP','Target, then cash','Custom split'),state='readonly',style='Vision.TCombobox');picker.pack(fill='x',pady=6);picker.bind('<<ComboboxSelected>>',lambda event:self.recalculate(save=False))
+        self.selected=tk.StringVar(value='All CP');picker=ttk.Combobox(body,textvariable=self.selected,values=('Cash everything','All CP','Target, then cash','Custom split'),state='readonly',style='Vision.TCombobox');picker.pack(fill='x',pady=6);picker.bind('<<ComboboxSelected>>',lambda event:self.recalculate(save=False))
         pages=ttk.Notebook(body,style='Vision.TNotebook');pages.pack(fill='x',pady=8)
         self.text_views={}
         for title in ('Decision','Payback','Milestones','Model','Exchanges','CP curve'):
@@ -98,6 +99,10 @@ class CPInfo:
         tk.Label(body,text='Current market quotes from the existing price book. Market material exchanges are the primary cash route. Unknown exchange prices remain unpriced; leftovers stay in inventory. Future income is modeled, never added to your loot history.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=740,justify='left').pack(fill='x',pady=8)
         self.recalculate(save=False)
         tabs.bind('<<NotebookTabChanged>>',lambda event:self.recalculate(save=False) if tabs.select()==str(self.frame) else None,add='+')
+
+    def calculate_byproducts(self):
+        self.selected.set('All CP')
+        self.recalculate()
 
     def settings(self):return {'cp_plan':{**self.saved,**({'workerman':self.workerman.settings()} if hasattr(self,'workerman') else {})}}
 

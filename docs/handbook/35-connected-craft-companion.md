@@ -44,8 +44,8 @@ older than 15 seconds. Closing the panel cancels its outstanding request. No gam
 input, crafting action or loot write occurs through this protocol.
 
 The main HUD switches to remaining utensil uses/time while a craft countdown is
-active without a grind session. Its estimates assume crafting continues. The
-sidecar moves with its parent on drag and release, reselects the parent's monitor,
+active without a grind session. Its estimates assume crafting continues. Overlay settings can show recorded craft loot for the current tool session
+beside the durability countdown. The sidecar moves with its parent on drag and release, reselects the parent's monitor,
 and stays scrollable on short displays. Drop reveals tile around both rectangles.
 The search sidecar intentionally accepts focus; the HUD and drop reveals remain
 passive. It cannot type into BDO on behalf of the user.

@@ -6,7 +6,7 @@ import time
 GAP = 10
 SNAP = 20
 DEFAULTS = {'corner': 'top-right', 'density': 'Compact', 'locked': False,
-            'motion': True, 'sound': False, 'seconds': 7}
+            'motion': True, 'sound': False, 'craft_loot': False, 'seconds': 7}
 
 
 def preferences(raw):
@@ -15,7 +15,7 @@ def preferences(raw):
     if raw.get('corner') in ('top-right', 'top-left', 'bottom-right', 'bottom-left', 'custom'):
         result['corner'] = raw['corner']
     if raw.get('density') in ('Compact', 'Comfortable'):result['density'] = raw['density']
-    for key in ('locked', 'motion', 'sound'):
+    for key in ('locked', 'motion', 'sound', 'craft_loot'):
         if type(raw.get(key)) is bool:result[key] = raw[key]
     if type(raw.get('seconds')) is int and raw['seconds'] in (7, 10, 14):result['seconds'] = raw['seconds']
     position = raw.get('position')

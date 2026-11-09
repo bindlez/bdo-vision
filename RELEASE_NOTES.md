@@ -1,3 +1,11 @@
+# 1.13.0-rc.30 — Tool-sized timers and inventory preview
+
+- Recipe timers split at the configured full-tool capacity, from 3,000 to 5,000 uses.
+- Crafting previews time and Life EXP from saved or pasted inventory counts.
+- The craft overlay can show recorded craft loot next to durability.
+- Desktop CP Intelligence exposes both calculation methods. Website CP opens on routes and break-even, with a separate target tab.
+- Quest settings explain how to get completion and missing-mission reminders between paired scans.
+
 # 1.13.0-rc.29 — Craft essentials (test candidate)
 
 - Guild progress beside desktop tool durability, on the live overlay and in the

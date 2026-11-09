@@ -69,6 +69,26 @@ class NativeOverlayTests(unittest.TestCase):
         hud.close()
         with patch.object(live,'payload') as work:live.refresh();work.assert_not_called()
 
+    def test_craft_loot_option_shows_only_current_tool_recorded_counts(self):
+        live=self.app.loot.grind.live
+        with patch.object(live,'payload',return_value={}):live.open()
+        hud=live.hud
+        self.app.has_reading=True;self.app.value=100;self.app.running=True
+        self.app.loot.auto_craft.engine.run={
+            'tool':self.app.session_id,'family':'fixture','counts':{'Crafted item':12,'Byproduct':2}}
+        try:
+            hud.update({})
+            self.assertNotIn('Craft loot',hud.goal.cget('text'))
+            hud.options['craft_loot']=True;hud.update({})
+            self.assertIn('Crafted item × 12',hud.goal.cget('text'))
+            self.assertEqual(hud.value_label.cget('text'),'TOOL USES LEFT')
+            self.app.session_id='replacement'
+            hud.update({})
+            self.assertIn('waiting for recorded output',hud.goal.cget('text'))
+        finally:
+            self.app.loot.auto_craft.engine.run=None
+            hud.close()
+
     def test_preview_is_not_loot_tiles_burst_and_cancels_callbacks(self):
         tracker=self.app.loot;big=tracker.big_drops
         before=tracker.ledger.db.execute('SELECT COUNT(*) FROM loot').fetchone()[0]

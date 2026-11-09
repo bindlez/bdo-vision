@@ -565,6 +565,7 @@
             </div>
           </section>
           <nav id="craftWorkflows" class="craft-workflows" aria-label="Crafting workspaces"><button data-craft-workspace="planner" aria-pressed="true">Recipe planner</button><button data-craft-workspace="simulator" aria-pressed="false">Chain simulator</button><button data-craft-workspace="imperial" aria-pressed="false">Imperial turn-ins</button><button data-craft-workspace="timers" aria-pressed="false">Timers &amp; completions<span id="craftTimerCount"></span></button></nav>
+          <div class="tool-size-row"><label>Tool capacity per recipe timer (3,000–5,000 uses) <input id="craftToolCapacity" type="number" min="3000" max="5000" step="1" value="3000"></label></div>
           <section class="card" id="craftTimersPanel" hidden>
             <div class="card-head">
               <h2>⏱ Active Timers</h2>
@@ -725,6 +726,7 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
         if (s.region) region = s.region;
         if (s.activeCat) activeCat = s.activeCat;
         if (s.lastCraftAmount) lastCraftAmount = s.lastCraftAmount;
+        if (s.toolCapacity != null) document.getElementById('craftToolCapacity').value = s.toolCapacity;
         if (s.durCurrent != null) durCurrent = s.durCurrent;
         if (s.durMax != null) durMax = s.durMax;
         if (s.durPerBatch != null) durPerBatch = s.durPerBatch;
@@ -743,6 +745,7 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
           region: region,
           activeCat: activeCat,
           lastCraftAmount: lastCraftAmount,
+          toolCapacity: getToolChunkSize(),
           durCurrent: durCurrent,
           durMax: durMax,
           durPerBatch: durPerBatch,
@@ -1091,9 +1094,8 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
 
     /* ── Timers ── */
     function getToolChunkSize() {
-      var el = document.querySelector("input[name=toolSize]:checked");
-      if (!el) return 3000; // default chunk when unselected
-      return Number(el.value) || 3000;
+      var size = Number(document.getElementById('craftToolCapacity')?.value);
+      return Number.isInteger(size) && size >= 3000 && size <= 5000 ? size : 3000;
     }
 
     function startCraft(recipe, amount, opts) {
@@ -1101,31 +1103,22 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
       if(activeTimers.some(t=>t.status==='running'&&t.recipeId===recipe.id)){
         visionRevealActiveTimer(recipe.id);return;
       }
-      amount = Math.max(1, Math.min(999999999, Number(amount) || 1));
+      amount = Math.max(1, Math.min(999999999, Math.floor(Number(amount)) || 1));
       var isDura = recipe.id === "durability_timer" || opts.startDurability != null;
 
-      // Non-tool-timer: chunk large crafts by selected tool capacity (default 3000)
-      if (!isDura && amount > 5000) {
-        var chunk = getToolChunkSize();
+      var chunk = opts._nextChunk || getToolChunkSize();
+      // Each recipe timer represents one tool. Continuations already have a chunk size.
+      if (!isDura && !opts._automatic && amount > chunk) {
         if(amount>chunk*256){amount=chunk*256;toast("Timer queue capped", "Limited to 256 chunks to keep the app responsive. Save additional batches as production plans.",false);}
-        // If user selected 5000/900/500 tool, that becomes the max continuous run size
-        // Default (3000) when nothing special — always chunk >5000 into piece size
-        var pieces = [];
-        var left = amount;
-        while (left > 0) {
-          var n = Math.min(chunk, left);
-          pieces.push(n);
-          left -= n;
-        }
-        // Start first chunk immediately; queue rest as sequential after each completes
-        opts._queue = pieces.slice(1);
+        var total = amount;
+        amount = chunk;
+        opts._queue = [total - chunk];
         opts._recipe = recipe;
-        amount = pieces[0];
         toast(
           "Split craft",
-          amount.toLocaleString() + " now, then " + (pieces.length - 1) +
+          amount.toLocaleString() + " now, then " + (Math.ceil(total / chunk) - 1) +
             " more chunk(s) of up to " + chunk.toLocaleString() +
-            " (tool size). Total " + (pieces.reduce(function(a,b){return a+b;},0)).toLocaleString(),
+            " (tool size). Total " + total.toLocaleString(),
           true
         );
       }
@@ -1145,6 +1138,7 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
         secPerBatch: recipe.secPerBatch || 1,
         craftPlan: opts.craftPlan ? Object.assign({},opts.craftPlan,{cost:opts.craftPlan.costPerBatch*amount,output:opts.craftPlan.yield*amount}) : (recipe.mats&&recipe.mats.length?craftStudioSnapshot(recipe,amount):null),
         _queue: opts._queue || null,
+        _nextChunk: isDura ? null : chunk,
         _recipe: opts._recipe || recipe
       };
       activeTimers.unshift(timer);
@@ -1175,6 +1169,7 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
     function processTimers() {
       var now = Date.now();
       var changed = false;
+      var continuations = [];
       activeTimers.forEach(function(t) {
         if (t.status === "running" && now >= t.endAt) {
           t.status = "done";
@@ -1191,18 +1186,12 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
             var remaining = t._queue.reduce(function(a,b){ return a+b; }, 0);
             var nextAmt = Math.min(nextSize, remaining);
             var restTotal = remaining - nextAmt;
-            var rest = [];
-            while (restTotal > 0) {
-              var n = Math.min(nextSize, restTotal);
-              rest.push(n);
-              restTotal -= n;
-            }
-            setTimeout(function() {
-              startCraft(t._recipe, nextAmt, { _queue: rest, _recipe: t._recipe, _nextChunk: nextSize, craftPlan: t.craftPlan, _automatic:true });
-            }, 800);
+            var rest = restTotal > 0 ? [restTotal] : [];
+            continuations.push(() => startCraft(t._recipe, nextAmt, { _queue: rest, _recipe: t._recipe, _nextChunk: nextSize, craftPlan: t.craftPlan, _automatic:true }));
           }
         }
       });
+      continuations.forEach(start => start());
       if (changed) {
         saveState();
         renderHistory();
@@ -1292,11 +1281,8 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
         var nextChunkCtrl = "";
         if (t.status === "running" && q.length) {
           nextChunkCtrl = '<div class="tool-size-row" style="margin-top:8px;">' +
-            '<span style="width:100%;">Next chunk size (' + q.length + ' chunks left, ' + totalQueued.toLocaleString() + ' batches)</span>' +
-            '<label><input type="radio" name="nextChunk_' + t.id + '" value="500" ' + (t._nextChunk===500?"checked":"") + ' data-next="' + t.id + '" /> 500</label>' +
-            '<label><input type="radio" name="nextChunk_' + t.id + '" value="900" ' + (t._nextChunk===900?"checked":"") + ' data-next="' + t.id + '" /> 900</label>' +
-            '<label><input type="radio" name="nextChunk_' + t.id + '" value="3000" ' + ((t._nextChunk||3000)===3000?"checked":"") + ' data-next="' + t.id + '" /> 3,000</label>' +
-            '<label><input type="radio" name="nextChunk_' + t.id + '" value="5000" ' + (t._nextChunk===5000?"checked":"") + ' data-next="' + t.id + '" /> 5,000</label>' +
+            '<span style="width:100%;">Next chunk size (' + Math.ceil(totalQueued / (t._nextChunk || q[0])) + ' chunks left, ' + totalQueued.toLocaleString() + ' batches)</span>' +
+            '<label>Tool uses <input aria-label="Tool uses for later chunks" type="number" min="3000" max="5000" step="1" value="' + Number(t._nextChunk || q[0]) + '" data-next="' + t.id + '" /></label>' +
             '</div>';
         }
         var duraHtml = dura != null
@@ -1800,23 +1786,22 @@ async function craftStudioLoadMarket(){if(recipeMarketBusy)return;recipeMarketBu
       if (cancel) cancelTimer(cancel.dataset.cancel);
       if (dismiss) dismissDone(dismiss.dataset.dismiss);
     });
+    document.getElementById('craftToolCapacity').addEventListener('change', function(e) {
+      e.target.value = getToolChunkSize();
+      saveState();
+    });
     document.getElementById("activeTimersBody").addEventListener("change", function(e) {
       var inp = e.target.closest("input[data-next]");
       if (!inp) return;
       var id = inp.getAttribute("data-next");
-      var size = Number(inp.value) || 3000;
+      var size = Number(inp.value);
+      if (!Number.isInteger(size) || size < 3000 || size > 5000) {renderActiveTimers();return;}
       activeTimers.forEach(function(t) {
         if (t.id !== id || !t._queue || !t._queue.length) return;
         t._nextChunk = size;
         // Re-slice remaining queue into new chunk sizes (does not affect current running chunk)
         var remaining = t._queue.reduce(function(a,b){ return a+b; }, 0);
-        var pieces = [];
-        while (remaining > 0) {
-          var n = Math.min(size, remaining);
-          pieces.push(n);
-          remaining -= n;
-        }
-        t._queue = pieces;
+        t._queue = [remaining];
         saveState();
         renderActiveTimers();
       });
@@ -2648,9 +2633,14 @@ function craftStudioRender(recipe,amount){
  var check=(id,label,checked)=>'<label class="studio-check"><input id="'+id+'" type="checkbox" '+(checked?'checked':'')+'>'+label+'</label>';
  var kpi=(label,value,hint)=>'<div><small>'+label+'</small><strong>'+value+'</strong><span>'+hint+'</span></div>';
  var roadmap=craftRoadmapPanel(recipe,p);
+ var stockContext=craftStudioContext();
+ var stock=Object.fromEntries(p.materials.map(m=>[m.itemId,stockContext.inventory[VisionCraft.key(m.name)]]));
+ var inventoryLimit=VisionCraft.runLimit(recipe,{mode:'ingredients',stock},stockContext);
+ var inventoryMax=inventoryLimit.batches;
  var nextStep=p.steps[craftStudioWorkshopProgress(recipe,p).completed];
  var progress=Math.min(100,p.ownedBatches/amount*100),rewardChoices=recipe.type==='cooking'?[9213,9065]:[5301,4801,4802,4803,4804,4805,9733];
  var markup=craftStudioDeskNav()+'<div class="studio-eyebrow">VISION / CRAFTING INTELLIGENCE · '+esc(String(region).toUpperCase())+'</div><div class="studio-title"><h3>'+esc(recipe.name)+'</h3><button id="studioFavorite" class="btn-secondary" aria-pressed="'+craftStudioState.favorites.includes(recipe.id)+'">'+(craftStudioState.favorites.includes(recipe.id)?'★ Saved':'☆ Save recipe')+'</button></div><p class="studio-muted">'+esc(recipe.method?recipe.method.replaceAll('_',' '):recipe.type)+' · '+recipe.mats.length+' ingredient slots · recipe '+esc(recipe.recipeKey)+' <a href="https://bdocodex.com/us/item/'+recipe.itemId+'/" target="_blank" rel="noopener noreferrer">Game details ↗</a></p>'+
+ '<section class="workshop-next"><h4>Craft from inventory</h4><p>Uses saved ingredient quantities and selected substitutions for this recipe. Edit Ingredients or paste your inventory counts.</p><details><summary>Paste inventory quantities</summary><label>Item name and quantity, separated by a tab (one item per line)<textarea id="studioInventoryPaste" rows="4"></textarea></label><button id="studioInventoryImport" class="btn-secondary">Update inventory</button></details><p id="studioInventorySummary" role="status"></p><label class="studio-field">Batches from inventory<input id="studioInventoryBatches" type="range" min="0" max="'+inventoryMax+'" value="'+Math.min(amount,inventoryMax)+'" '+(inventoryMax?'':'disabled')+'></label><button id="studioInventoryApply" class="btn-secondary" '+(inventoryMax?'':'disabled')+'>Use this amount in plan</button></section>'+
  '<details data-section="single-recipe" class="single-recipe-workbench"><summary>Your crafting desk</summary><p class="studio-muted">Plan '+esc(recipe.name)+' in one place. These quantities and costs belong to this recipe; the map labels whole-line totals separately. Timers use your saved tool, ingredient or hybrid stopping rule in Map & timeline. Explicit manual timer actions remain labeled.</p>'+
  '<div class="studio-fields studio-main-controls">'+field('craftAmt','Batches to craft',amount,1,1,1e9)+'<label class="studio-field">Or target main items<input id="studioTarget" type="number" min="1" max="1000000000" value="'+Math.ceil(p.output)+'"></label></div>'+
  (variants.length>1?'<label class="studio-field">Recipe variant<select id="studioVariant">'+variants.map((v,i)=>'<option value="'+esc(v.id)+'" '+(v.id===recipe.id?'selected':'')+'>'+esc((v.method||v.type)+' · variant '+(i+1)+' · '+v.mats.map(m=>m.qty+' '+m.name).join(', '))+'</option>').join('')+'</select></label>':'')+
@@ -2669,6 +2659,35 @@ function craftStudioRender(recipe,amount){
  el.querySelectorAll('details').forEach(n=>{if(opened.includes(n.dataset.section))n.open=true;});
  var analysisHost=document.getElementById('studioAnalysis');if(analysisHost)analysisHost.innerHTML=craftStudioAnalysis(p);
  function redraw(){craftStudioSave();saveState();craftStudioRender(recipe,lastCraftAmount||amount);}
+ var inventorySlider=document.getElementById('studioInventoryBatches');
+ var inventorySummary=document.getElementById('studioInventorySummary');
+ var inventoryApply=document.getElementById('studioInventoryApply');
+ function updateInventoryPreview(){
+  var batches=Number(inventorySlider.value);
+  var xp=recipe.xp>0?(batches*recipe.xp*(1+c.xpBonus/100)).toLocaleString(undefined,{maximumFractionDigits:1})+' Life EXP':'Life EXP unavailable';
+  var output=(batches*c.yield).toLocaleString(undefined,{maximumFractionDigits:2});
+  inventorySummary.textContent=inventoryLimit.available
+   ?batches.toLocaleString()+' / '+inventoryMax.toLocaleString()+' batches · '+output+' expected items · '+fmtTime(batches*c.seconds)+' crafting time · '+xp
+   :inventoryLimit.reason;
+  inventoryApply.disabled=batches===0;
+ }
+ inventorySlider.oninput=updateInventoryPreview;updateInventoryPreview();
+ inventoryApply.onclick=()=>{lastCraftAmount=Number(inventorySlider.value);redraw();};
+ document.getElementById('studioInventoryImport').onclick=()=>{
+  var lines=document.getElementById('studioInventoryPaste').value.trim().split(/\r?\n/),updates=new Map();
+  for(var line of lines){
+   if(!line.trim())continue;
+   var parts=line.split('\t'),name=VisionCraft.key(parts[0]),quantity=Number(parts[1]);
+   if(parts.length!==2||!name||!parts[1].trim()||!Number.isSafeInteger(quantity)||quantity<0||quantity>1e9){
+    toast('Check inventory format','Use one item name and whole quantity per line, separated by a tab.',false);return;
+   }
+   if(updates.has(name)){toast('Duplicate inventory item','Combine quantities for '+parts[0]+' into one row.',false);return;}
+   updates.set(name,quantity);
+  }
+  if(!updates.size)return;
+  craftStudioState.inventory={...craftStudioState.inventory,...Object.fromEntries(updates)};
+  redraw();
+ };
  function configChange(){var cfg={...raw,includeExtras:document.getElementById('studioExtras')?.checked===true,yield:Number(document.getElementById('studioYield').value),rareYield:Number(document.getElementById('studioRareYield').value),retention:Number(document.getElementById('studioRetention').value),extra:Number(document.getElementById('studioExtra').value),goal:Number(document.getElementById('studioGoal').value),byproductRate:Number(document.getElementById('studioByproductRate').value),byproductReward:Number(document.getElementById('studioReward').value)};for(var [id,k] of [['studioEstimate','estimate'],['studioIncludeRare','includeRare'],['studioByproduct','includeByproduct'],['studioKeepMain','keepMain'],['studioKeepRare','keepRare'],['studioUseRareInputs','useRareInputs']])cfg[k]=document.getElementById(id).checked;craftStudioState.config[recipe.id]=cfg;redraw();}
  ['studioYield','studioRareYield','studioRetention','studioExtra','studioGoal','studioByproductRate','studioReward','studioEstimate','studioIncludeRare','studioByproduct','studioKeepMain','studioKeepRare','studioUseRareInputs'].forEach(id=>document.getElementById(id).onchange=configChange);
  ['studioMastery','studioBaseSeconds','studioSuccess','studioXp','studioMass'].forEach(id=>document.getElementById(id).onchange=()=>{craftStudioState.characters[recipe.type]={...craftStudioState.characters[recipe.type],mastery:Number(document.getElementById('studioMastery').value),baseSeconds:Number(document.getElementById('studioBaseSeconds').value),success:Number(document.getElementById('studioSuccess').value),xpBonus:Number(document.getElementById('studioXp').value),mass:document.getElementById('studioMass').checked};if(recipe.type==='processing'){raw.baseSeconds=craftStudioState.characters.processing.baseSeconds;delete craftStudioState.characters.processing.baseSeconds;}delete raw.seconds;delete raw.yield;delete raw.rareYield;craftStudioState.config[recipe.id]=raw;redraw();});
@@ -3731,7 +3750,7 @@ craftSimulation={recipeId:selectedRecipe.id,sourceId:820815,quantity:14000,stock
 
 .cp-target-picker{display:flex;align-items:center;gap:8px;font-weight:600;margin:14px 0}.cp-target-picker input{width:110px;padding:8px;border:1px solid #674b84;border-radius:7px;background:#16101f;color:#f4eafa;font:inherit}.cp-target-legend{display:inline-flex;align-items:center;gap:6px;margin:4px 8px 4px 0;font-size:12px}.cp-target-legend i{display:inline-block;width:9px;height:9px;border-radius:50%}.cp-target details{margin:12px 0}.cp-target .cp-chart-grid{align-items:start}.cp-target .cp-chart-grid svg{width:100%;max-height:260px}
 
-.cp-root [hidden]{display:none!important}.cp-actions button[aria-pressed=true]{border-color:#aa88d8;background:#39264c;color:#fff}
+.cp-root [hidden]{display:none!important}.cp-actions button[aria-selected=true]{border-color:#aa88d8;background:#39264c;color:#fff}
 </style>
 <script>
 (function(){
@@ -3935,7 +3954,14 @@ const spec=VISION_CP_DATA,engine=VisionCP.create(spec),demo=host.dataset.demo===
 const defaults={cp:490,percent:19.26,target:500,counts:{catalyst:750000,witch:0,leaf:0},retention:84.5,days:90,income:0,deploy:100,delay:0,split:50,cashPolicy:'market',example:true,incomeMode:'per_cp',utilization:100,ramp:0,setup:0,reserve:0,grindRate:0};
 let workermanView=null;
 let targetView=false;
-function cpShowSection(target){targetView=target;document.getElementById('cpTargetOutput').hidden=!target;document.getElementById('cpOutput').hidden=target;document.getElementById('cpOverviewTab').setAttribute('aria-pressed',String(!target));document.getElementById('cpTargetTab').setAttribute('aria-pressed',String(target));}
+function cpShowSection(target){
+ targetView=target;
+ for(var [tab,panel,selected] of [['cpOverviewTab','cpOutput',!target],['cpTargetTab','cpTargetOutput',target]]){
+  var button=document.getElementById(tab);
+  button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;
+  document.getElementById(panel).hidden=!selected;
+ }
+}
 let state=structuredClone(defaults),quotes={},quoteRegion='',busy=false,readBusy=false,report=null,selected='target',lastReading=null,elapsed=0;
 if(demo){quoteRegion=VISION_CP_SNAPSHOT.region;quotes=Object.fromEntries(VISION_CP_SNAPSHOT.items.map(q=>[q.name,{...q,unit_price:q.price,region:q.marketRegion}]));}
 const storageKey='vision-cp-plan-v1';try{const saved=JSON.parse(localStorage.getItem(storageKey)||'null');if(saved&&typeof saved==='object'&&saved.counts)state={...state,...saved,counts:{...state.counts,...saved.counts}};}catch(e){}
@@ -3950,10 +3976,16 @@ const base=()=>location.protocol==='http:'&&/^(127\.0\.0\.1|localhost)$/.test(lo
 const marketRegion=()=>typeof region!=='undefined'?String(region).toUpperCase():'NA';
 const input=(key,label,min,max,step='1')=>'<label>'+esc(label)+'<input data-cp="'+key+'" type="number" min="'+min+'" max="'+max+'" step="'+step+'" value="'+esc(state[key])+'"></label>';
 host.classList.add('cp-root');
-host.innerHTML='<header class="cp-head"><div><span class="cp-kicker">VISION / CONTRIBUTION INTELLIGENCE</span><h1>Your byproducts. A better decision.</h1><p>Cash now, a stronger worker network, or a little of both. See the cost of each CP before you commit.</p></div><span class="cp-badge">On demand · zero background OCR</span></header><div class="cp-layout"><aside class="cp-inputs"><div class="cp-card"><h2>Your starting point</h2><div class="cp-fields">'+input('cp','Total CP · not unused CP',0,599)+input('percent','Progress toward next CP (%)',0,99.9999,'.01')+'</div><div class="cp-actions"><button id="cpRead">Read CP once</button><button id="cpLast">Use last reading</button></div><div id="cpReadState" class="cp-status" role="status">Manual values · no screen access used</div><h3>Byproducts on hand</h3>'+spec.products.map(p=>'<label>'+esc(p.name)+'<input data-stock="'+p.key+'" type="number" min="0" max="1000000000" step="1" value="'+esc(state.counts[p.key])+'"></label>').join('')+'<div class="cp-actions"><button id="cpExample">750K catalyst example</button><button id="cpClear">Clear stock</button></div><p class="cp-status" id="cpExampleState"></p><div class="cp-input-note"><h3>Cash route</h3><label>What to compare against<select data-cp="cashPolicy"><option value="market">Best priced material exchange</option><option value="vendor">Direct NPC sale only · no tax</option></select></label>'+input('retention','Market sale retained (%)',0,100,'.1')+'<small>65% base / 84.5% with Value Pack. Use your actual retention; NPC sales are untaxed.</small><div class="cp-actions"><button id="cpPrices">Refresh exchange prices</button></div><div class="cp-status" id="cpPriceState" role="status">'+(demo?'Offline demo · no invented market prices':'Existing Central Market prices · loaded when this page opens')+'</div></div></div><div class="cp-card"><h2>Make the CP useful</h2><div class="cp-fields">'+input('target','Target CP',0,600)+input('days','Simulation days',1,3650)+'</div>'+input('income','Additional net silver / day · see basis below',0,1000000000000)+'<label>Income basis<select data-cp="incomeMode"><option value="per_cp">Per new deployed CP per day</option><option value="project">Whole all-CP project per day</option></select></label><small>Whole-project income scales down for smaller targets in proportion to deployed CP.</small><details><summary>Forecast assumptions & cash reserve</summary>'+input('deploy','Maximum new CP you will actually use',0,600)+input('delay','Days before income starts',0,3650,'.5')+input('utilization','Uptime / utilization (%)',0,100)+input('ramp','Days to reach full income',0,3650,'.5')+input('setup','One-time setup cost (silver)',0,1000000000000000)+input('reserve','Minimum cash to keep (silver)',0,1000000000000000)+input('grindRate','Optional grinding silver / hour',0,1000000000000)+'</details>'+'<label>Custom split · <span id="cpSplitValue"></span>% of batches to CP<input data-cp="split" type="range" min="0" max="100" step="1" value="'+esc(state.split)+'"></label><p class="cp-status">Income is your scenario assumption, after worker costs and any sale tax. Zero is the honest default. CP alone produces no silver.</p><div class="cp-actions"><button data-income="100000">Try 100K / CP / day</button><button data-income="500000">Try 500K</button><button data-income="0">No extra income</button></div></div></aside><main><div id="cpError" role="alert" class="cp-status cp-error"></div><nav class="cp-actions" aria-label="CP sections"><button id="cpOverviewTab" aria-pressed="true">Routes & break-even</button><button id="cpTargetTab" aria-pressed="false">Reach my target CP</button></nav><div id="cpTargetOutput" hidden aria-live="polite"></div><div id="cpOutput" aria-live="polite"></div></main></div>';
+host.innerHTML='<header class="cp-head"><div><span class="cp-kicker">VISION / CONTRIBUTION INTELLIGENCE</span><h1>Your byproducts. A better decision.</h1><p>Cash now, a stronger worker network, or a little of both. See the cost of each CP before you commit.</p></div><span class="cp-badge">On demand · zero background OCR</span></header><div class="cp-layout"><aside class="cp-inputs"><div class="cp-card"><h2>Your starting point</h2><div class="cp-fields">'+input('cp','Total CP · not unused CP',0,599)+input('percent','Progress toward next CP (%)',0,99.9999,'.01')+'</div><div class="cp-actions"><button id="cpRead">Read CP once</button><button id="cpLast">Use last reading</button></div><div id="cpReadState" class="cp-status" role="status">Manual values · no screen access used</div><h3>Byproducts on hand</h3>'+spec.products.map(p=>'<label>'+esc(p.name)+'<input data-stock="'+p.key+'" type="number" min="0" max="1000000000" step="1" value="'+esc(state.counts[p.key])+'"></label>').join('')+'<div class="cp-actions"><button id="cpExample">750K catalyst example</button><button id="cpClear">Clear stock</button></div><p class="cp-status" id="cpExampleState"></p><div class="cp-input-note"><h3>Cash route</h3><label>What to compare against<select data-cp="cashPolicy"><option value="market">Best priced material exchange</option><option value="vendor">Direct NPC sale only · no tax</option></select></label>'+input('retention','Market sale retained (%)',0,100,'.1')+'<small>65% base / 84.5% with Value Pack. Use your actual retention; NPC sales are untaxed.</small><div class="cp-actions"><button id="cpPrices">Refresh exchange prices</button></div><div class="cp-status" id="cpPriceState" role="status">'+(demo?'Offline demo · no invented market prices':'Existing Central Market prices · loaded when this page opens')+'</div></div></div><div class="cp-card"><h2>Make the CP useful</h2><div class="cp-fields">'+input('target','Target CP',0,600)+input('days','Simulation days',1,3650)+'</div>'+input('income','Additional net silver / day · see basis below',0,1000000000000)+'<label>Income basis<select data-cp="incomeMode"><option value="per_cp">Per new deployed CP per day</option><option value="project">Whole all-CP project per day</option></select></label><small>Whole-project income scales down for smaller targets in proportion to deployed CP.</small><details><summary>Forecast assumptions & cash reserve</summary>'+input('deploy','Maximum new CP you will actually use',0,600)+input('delay','Days before income starts',0,3650,'.5')+input('utilization','Uptime / utilization (%)',0,100)+input('ramp','Days to reach full income',0,3650,'.5')+input('setup','One-time setup cost (silver)',0,1000000000000000)+input('reserve','Minimum cash to keep (silver)',0,1000000000000000)+input('grindRate','Optional grinding silver / hour',0,1000000000000)+'</details>'+'<label>Custom split · <span id="cpSplitValue"></span>% of batches to CP<input data-cp="split" type="range" min="0" max="100" step="1" value="'+esc(state.split)+'"></label><p class="cp-status">Income is your scenario assumption, after worker costs and any sale tax. Zero is the honest default. CP alone produces no silver.</p><div class="cp-actions"><button data-income="100000">Try 100K / CP / day</button><button data-income="500000">Try 500K</button><button data-income="0">No extra income</button></div></div></aside><main><div id="cpError" role="alert" class="cp-status cp-error"></div><nav id="cpTabs" class="cp-actions" role="tablist" aria-label="CP sections"><button id="cpOverviewTab" role="tab" aria-controls="cpOutput" aria-selected="true">Routes & break-even</button><button id="cpTargetTab" role="tab" aria-controls="cpTargetOutput" aria-selected="false" tabindex="-1">Reach my target CP</button></nav><div id="cpTargetOutput" role="tabpanel" aria-labelledby="cpTargetTab" hidden aria-live="polite"></div><div id="cpOutput" role="tabpanel" aria-labelledby="cpOverviewTab" aria-live="polite"></div></main></div>';
 host.querySelector('[data-cp=cashPolicy]').value=state.cashPolicy;host.querySelector('[data-cp=incomeMode]').value=state.incomeMode;
 document.getElementById('cpOverviewTab').onclick=()=>cpShowSection(false);
 document.getElementById('cpTargetTab').onclick=()=>cpShowSection(true);
+document.getElementById('cpTabs').onkeydown=e=>{
+ if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+ e.preventDefault();
+ cpShowSection(e.key==='End'||(e.key!=='Home'&&!targetView));
+ document.getElementById(targetView?'cpTargetTab':'cpOverviewTab').focus();
+};
 function status(id,text,error=false){const e=document.getElementById(id);e.textContent=text;e.classList.toggle('cp-error',error);}
 function persist(){try{localStorage.setItem(storageKey,JSON.stringify(state));}catch(e){}}
 function syncInputs(){for(const n of host.querySelectorAll('[data-cp]'))n.value=state[n.dataset.cp];for(const n of host.querySelectorAll('[data-stock]'))n.value=state.counts[n.dataset.stock];}
