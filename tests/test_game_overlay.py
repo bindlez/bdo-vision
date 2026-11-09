@@ -52,6 +52,43 @@ class NativeOverlayTests(unittest.TestCase):
     def tearDown(self):
         self.app.loot.close();self.root.destroy()
 
+    def test_dock_starts_first_and_folds_tracking_without_stopping_run(self):
+        self.app.loot.platform_preferences['overlay']={'locked':False}
+        with patch.object(self.app.loot.grind.live,'payload',return_value={}):
+            self.app.start_dock()
+        live=self.app.loot.grind.live
+        self.assertIsNotNone(live.hud)
+        self.assertEqual(self.root.state(),'withdrawn')
+        self.app.running=True
+        self.app.show_timer(toggle=True)
+        self.root.update_idletasks()
+        self.assertEqual(self.app.dock_panels.active,'timer')
+        self.assertEqual(self.root.state(),'normal')
+        self.app.open_activity('grind',toggle=True)
+        self.root.update_idletasks()
+        self.assertEqual(self.root.state(),'withdrawn')
+        self.assertEqual(self.app.loot.tabs.select(),str(self.app.loot.grind.frame))
+        self.app.open_activity('craft',toggle=True)
+        self.assertEqual(self.app.loot.tabs.select(),str(self.app.loot.craft_tab))
+        self.app.open_activity('craft',toggle=True)
+        self.assertEqual(self.app.loot.window.state(),'withdrawn')
+        self.assertTrue(self.app.running)
+        live.hud.dismiss()
+        self.assertEqual(self.root.state(),'normal')
+        self.assertIsNone(live.hud)
+
+    def test_locked_dock_keeps_the_main_window_reachable_on_start(self):
+        self.app.loot.platform_preferences['overlay']={'locked':True}
+        self.app.start_dock()
+        self.root.update_idletasks()
+        self.assertEqual(self.root.state(),'normal')
+        self.assertTrue(self.app.loot.grind.live.hud.options['locked'])
+        self.app.running=True
+        with patch.object(self.root,'iconify') as minimize:
+            self.app.close_main_window()
+            minimize.assert_called_once()
+        self.assertTrue(self.app.running)
+
     def test_native_dashboard_renders_partial_prices_and_never_updates_unchanged_data(self):
         live=self.app.loot.grind.live
         data={'available':False,'sessionActive':True,'status':'capture covered','value':None,'rate':None,

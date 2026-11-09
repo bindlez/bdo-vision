@@ -78,7 +78,7 @@ class GrindTracker:
         self.tracker.app.text_button(actions,'FINISH RUN',self.finish).pack(side='left',padx=12)
         self.tracker.app.text_button(actions,'BIG DROPS',lambda:self.tracker.big_drops.open()).pack(side='left',padx=8)
         overlay_actions=tk.Frame(frame,bg=c['bg']);overlay_actions.pack(fill='x',pady=(0,5))
-        self.tracker.app.text_button(overlay_actions,'OPEN GAME OVERLAY',self.live.open).pack(side='left')
+        self.tracker.app.text_button(overlay_actions,'OPEN VISION DOCK',self.tracker.app.open_dock).pack(side='left')
         self.tracker.app.text_button(overlay_actions,'OVERLAY SETTINGS',self.live.settings).pack(side='left',padx=12)
         self.tracker.app.text_button(actions,'EXPORT RUN',self.export).pack(side='right')
         extras=tk.Frame(frame,bg=c['bg'])

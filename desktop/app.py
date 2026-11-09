@@ -124,7 +124,9 @@ class App:
   else:self.connection.set('●  LOCAL SERVER OFFLINE  ·  CHECK SETTINGS')
   self.root.after(400,self.tick)
   self.root.after(500,self.poll_auto_ocr)
-  self.root.protocol('WM_DELETE_WINDOW',self.close)
+  from live_dock import DockPanels
+  self.dock_panels=DockPanels(self)
+  self.root.protocol('WM_DELETE_WINDOW',self.close_main_window)
 
  def refresh_action_states(self):
   available=self.has_reading and bool(self.bridge and self.bridge.server)
@@ -153,16 +155,64 @@ class App:
   self.open_activity('quests')
 
  def open_dock(self):
-  self.loot.grind.live.open()
+  live=self.loot.grind.live
+  had_dock=live.hud is not None
+  live.open()
+  if had_dock or live.hud is None or live.hud.options['locked']:return
+  workspace=self.loot.window
+  if workspace is not None and workspace.winfo_exists() and workspace.state()=='normal':
+   self.root.withdraw()
+   self.dock_panels.show('workspace',lambda:workspace)
+  elif self.root.state()=='normal':
+   self.dock_panels.show('timer',lambda:self.root)
 
- def show_timer(self):
-  self.root.deiconify()
-  self.root.lift()
+ def start_dock(self):
+  self.root.withdraw()
+  self.open_dock()
+  hud=self.loot.grind.live.hud
+  if hud is None or hud.options['locked']:
+   self.root.deiconify()
 
- def open_activity(self,section):
-  self.loot.open()
-  targets={'home':self.loot.home.frame,'craft':self.loot.craft_tab,'grind':self.loot.grind.frame,'reader':self.loot.preview.master,'sessions':self.loot.insights.sessions_frame,'quests':self.loot.guild.frame,'cp':self.loot.cp_info.frame,'imperial':self.loot.imperial.frame,'silver':self.loot.silver.frame}
-  self.loot.tabs.select(targets[section])
+ def close_main_window(self):
+  hud=self.loot.grind.live.hud
+  if hud is None:
+   self.close()
+  elif hud.options['locked']:
+   self.root.iconify()
+  elif self.dock_panels.window is self.root:
+   self.dock_panels.fold()
+  else:self.root.withdraw()
+
+ def show_timer(self,*,toggle=False):
+  def open_timer():
+   self.root.deiconify()
+   return self.root
+  hud=self.loot.grind.live.hud
+  if hud is not None and not hud.options['locked']:
+   self.dock_panels.show('timer',open_timer,toggle=toggle)
+  else:open_timer().lift()
+
+ def show_dock_craft(self,*,toggle=True):
+  live=self.loot.grind.live
+  def open_craft():
+   live.craft_panel.open()
+   surface=live.craft_panel.surface
+   return surface.window if surface else None
+  if live.hud is None or live.hud.options['locked']:
+   open_craft()
+   return
+  self.dock_panels.show('craft-overlay',open_craft,toggle=toggle,on_fold=live.craft_panel.close)
+
+ def open_activity(self,section,*,toggle=False):
+  def open_workspace():
+   self.loot.open()
+   targets={'home':self.loot.home.frame,'craft':self.loot.craft_tab,'grind':self.loot.grind.frame,'reader':self.loot.preview.master,'sessions':self.loot.insights.sessions_frame,'quests':self.loot.guild.frame,'cp':self.loot.cp_info.frame,'imperial':self.loot.imperial.frame,'silver':self.loot.silver.frame}
+   self.loot.tabs.select(targets[section])
+   return self.loot.window
+  hud=self.loot.grind.live.hud
+  if hud is not None and not hud.options['locked']:
+   self.dock_panels.show(section,open_workspace,toggle=toggle,reuse=self.loot.window)
+  else:open_workspace()
 
  def open_fairy_desktop(self):
   if not hasattr(self,'fairy_desktop'):
@@ -435,7 +485,7 @@ class App:
    self.status.set('Local planner is unavailable. Check the connection in Settings.');return
   webbrowser.open_new_tab(self.bridge.base_url+'/planner#'+section)
 
- def open_planner(self):
+ def open_planner(self,section="craft"):
   """Serve the paired planner from our own bridge; no cross-origin file permissions."""
   if not self.bridge or not self.bridge.planner_url:
    messagebox.showerror('Planner offline','The local bridge did not start. Use TEST LINK for details.')
@@ -444,8 +494,9 @@ class App:
    messagebox.showerror('Planner not found','Keep bdo-market-intelligence.html beside the desktop folder.')
    return
   try:
-   webbrowser.open_new_tab(self.bridge.planner_url)
-   self.status.set(f'Opened paired planner at {self.bridge.planner_url}. Waiting for the website to connect…')
+   url=self.bridge.planner_url.split('#',1)[0] if section=='market' else self.bridge.planner_url
+   webbrowser.open_new_tab(url)
+   self.status.set(f'Opened paired planner at {url}. Waiting for the website to connect…')
   except Exception as exc:messagebox.showerror('Open planner',str(exc))
 
  def test_connection(self):
@@ -584,6 +635,7 @@ class App:
   self.text_button(row,'BACK UP HISTORY',self.backup_history).pack(side='left',padx=10)
   ttk.Checkbutton(main,text='Share recorded loot with planner (optional)',variable=self.loot.share_loot,command=self.loot.share_changed,style='Vision.TCheckbutton').pack(anchor='w',pady=8)
   self.action(footer,'SAVE SETTINGS',self.save,primary=True).pack(fill='x')
+  self.text_button(footer,'EXIT VISION',self.close).pack(anchor='e')
   def close_settings():
    self.preview=None;self.settings_window=None;win.destroy()
   win.protocol('WM_DELETE_WINDOW',close_settings)
@@ -692,7 +744,8 @@ class App:
   folder=backup_profile(DATA_ROOT,'manual');self.status.set('History backup saved and verified.');os.startfile(str(folder))
 
  def show_saved_history(self):
-  self.root.deiconify();self.root.lift();self.loot.open()
+  if self.loot.grind.live.hud is not None:self.open_activity('sessions')
+  else:self.root.deiconify();self.root.lift();self.loot.open()
 
  def tick(self):
   if time.monotonic()-getattr(self,'_tool_view_at',0)>=1:self.refresh_tool_view()
@@ -827,18 +880,19 @@ class App:
  def select_region(self,target='craft'):
   self.region_target=target
   self.selecting_region=True
-  # Hide BOTH windows; otherwise Settings remains over the game and the user
-  # accidentally selects part of our own UI as the OCR region.
-  self.root.withdraw()
-  if self.loot.window and self.loot.window.winfo_exists():self.loot.window.withdraw()
-  if self.settings_window and self.settings_window.winfo_exists():self.settings_window.withdraw()
+  live=self.loot.grind.live
+  craft=live.craft_panel.surface
+  windows=(self.root,self.loot.window,self.settings_window,live.window,craft.window if craft else None)
+  self._region_hidden=[win for win in windows if win is not None and win.winfo_exists() and win.state()=='normal']
+  for win in self._region_hidden:win.withdraw()
   self.root.after(1600,self._overlay)
+
  def _restore_region_windows(self):
   self.selecting_region=False
-  self.root.deiconify()
-  if self.loot.window and self.loot.window.winfo_exists():self.loot.window.deiconify()
-  if self.settings_window and self.settings_window.winfo_exists():
-   self.settings_window.deiconify();self.settings_window.lift()
+  for win in getattr(self,'_region_hidden',[]):
+   if win.winfo_exists():win.deiconify()
+  self._region_hidden=[]
+
  def _overlay(self):
   overlay=tk.Toplevel(self.root);overlay.attributes('-fullscreen',True);overlay.attributes('-topmost',True);overlay.attributes('-alpha',.28);overlay.configure(bg='#181020');canvas=tk.Canvas(overlay,cursor='crosshair',bg='#181020',highlightthickness=0);canvas.pack(fill='both',expand=True);pos=[0,0];rect=[None]
   def down(e):pos[:]=[e.x_root,e.y_root];rect[0]=canvas.create_rectangle(e.x,e.y,e.x,e.y,outline='yellow',width=3)
@@ -1120,5 +1174,5 @@ if __name__=='__main__':
   raise SystemExit(0)
  try:
   backup_profile(DATA_ROOT,'startup')
-  root=tk.Tk();App(root);root.mainloop()
+  root=tk.Tk();app=App(root);app.start_dock();root.mainloop()
  finally:instance.release()

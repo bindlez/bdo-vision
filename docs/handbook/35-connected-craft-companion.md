@@ -169,3 +169,23 @@ Grind rates still need 60 seconds.
 
 Open Dock from the craft timer or Workspaces. The Vision/Grind overlay's Apps
 menu launches the existing workspaces. Locked mode remains click-through.
+
+
+## Dock-first desktop
+
+The desktop starts on the existing Vision overlay. Tracking opens MainWin
+as a child beside it. Craft opens the packing sidecar. Grind and Apps
+destinations can reuse the existing native workspace. Switching between
+them folds the previous panel without stopping an active run. Click an
+active dock action again to fold it. The panel follows dock movement.
+Closing the dock restores MainWin. Exit Vision remains in Apps.
+
+Locked overlays pass clicks through, so startup keeps MainWin reachable
+when the dock is locked. Closing MainWin then minimizes it to the taskbar.
+Exit Vision is available in Settings. Selecting a capture region hides visible Vision
+panels and restores only those panels after selection.
+
+Tier 0 and Tier 1 describe this presentation. The tracking engine and
+startup allocations still follow existing settings. Browser tools open
+in the browser. Tier 2 workspace unloading and the single Tier -1 heavy
+process are separate work.

@@ -1,3 +1,9 @@
+## 1.13.0-rc.35 — Dock-first desktop
+
+- Vision opens on the dock. Tracking opens the existing MainWin beside it.
+- Native Craft and workspace panels switch in one attached slot. Closing a panel preserves active tracking. Click-through startup keeps MainWin reachable.
+- The Apps menu opens browser tools and provides an explicit Exit Vision command.
+
 ## 1.13.0-rc.34 — Live market and recipe workspace
 
 - The web planner can fetch current NA and EU base-item quotes directly. Market lookup includes stock, last sale, lifetime trade count, and price history.

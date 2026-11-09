@@ -15,14 +15,14 @@ class LiveHUD:
         rail = tk.Frame(body, bg=VIOLET, height=2);rail.pack(fill='x')
         head = tk.Frame(body, bg=INK);head.pack(fill='x', padx=12, pady=(3, 2))
         brand = label(head, '◇  VISION / GRIND', 9, VIOLET);brand.pack(side='left')
-        button(head, '×', self.close).pack(side='right')
-        button(head, 'CRAFT', self.live.craft_panel.toggle, TEAL).pack(side='right')
+        button(head, '×', self.dismiss).pack(side='right')
+        button(head, 'CRAFT', self.app.show_dock_craft, TEAL).pack(side='right')
         button(head, 'SETUP', self.live.settings).pack(side='right')
         dock = button(head, 'APPS', self.open_apps)
         dock.pack(side='right')
         self.apps_button = dock
         self.surface.draggable(head, brand)
-        self.surface.follow=self.live.craft_panel.retile
+        self.surface.follow=self.follow_panels
         self.surface.feedback = lambda text:brand.configure(text=text)
         self.status = label(body, 'READY · Start a grind run', 9, TEAL, anchor='w');self.status.pack(fill='x', padx=12)
         metrics = tk.Frame(body, bg=INK);metrics.pack(fill='x', padx=12, pady=(5, 3))
@@ -39,16 +39,27 @@ class LiveHUD:
         self.time = label(body, 'Observed —  /  excluded —', 8, MUTED, anchor='w');self.time.pack(fill='x', padx=12, pady=(4, 0))
         footer = tk.Frame(body, bg=PANEL);footer.pack(fill='x', side='bottom')
         self.pause = button(footer, 'PAUSE / RESUME', self.live.grind.pause, TEAL);self.pause.pack(side='left', padx=5)
-        label(footer, 'VALUE ≠ PROFIT', 8, MUTED).pack(side='right', padx=10)
+        button(footer, 'TRACKING', lambda:self.app.show_timer(toggle=True)).pack(side='right',padx=5)
+        button(footer, 'GRIND', lambda:self.app.open_activity('grind',toggle=True)).pack(side='right')
         self.key = None;self.surface.place();self.shown = self.surface.show()
 
     def open_apps(self):
         from live_dock import open_apps
         open_apps(self.app,self.apps_button)
 
+    def follow_panels(self):
+        panels=self.app.dock_panels
+        panels.retile()
+        if panels.active!='craft-overlay':self.live.craft_panel.retile()
+
+    def dismiss(self):
+        self.app.dock_panels.fold()
+        self.close()
+        self.app.show_timer()
+
     def save_position(self, options):
         self.tracker.platform_preferences['overlay'] = dict(options);self.app.save_quietly()
-        self.live.craft_panel.retile()
+        self.follow_panels()
         big = getattr(self.tracker, 'big_drops', None)
         if big and getattr(big, 'reveals', None):big.reveals.retile()
 
@@ -150,7 +161,9 @@ def settings(live):
         opened = live.window and live.window.winfo_exists()
         panel_open=live.craft_panel.surface is not None
         if opened:live.hud.close();live.open()
-        if panel_open:live.craft_panel.open()
+        if panel_open:app.show_dock_craft(toggle=False)
+        if updated['locked']:app.show_timer()
+        elif live.hud:live.hud.follow_panels()
         big = tracker.big_drops
         big.reveals.retile()
         win.destroy()
