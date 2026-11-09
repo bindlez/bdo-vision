@@ -14,7 +14,7 @@ def build():
     target = ROOT / 'bdo-market-intelligence.html'
     html = target.read_text(encoding='utf-8')
     for name in ('recipe-network.js', 'crafting-engine.js', 'crafting-studio.js', 'crafting-simulator.js', 'production-roadmap.js', 'vision-timers.js',
-                 'crafting-loot-view.js', 'crafting-studio.css', 'recipe-browser.js'):
+                 'crafting-loot-view.js', 'crafting-studio.css', 'recipe-browser.js', 'craft-market-desk.js', 'craft-market-desk.css'):
         marker = name.upper().replace('.', '_').replace('-', '_')
         start, end = f'/* OWNED {marker} START */', f'/* OWNED {marker} END */'
         if name == 'recipe-network.js' and start not in html:

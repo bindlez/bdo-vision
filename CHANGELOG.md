@@ -1,3 +1,10 @@
+## 1.13.0-rc.33 — Crafting and Central Market workbench
+
+- Inspect a craft item's regional quote, stock, makers and consumers by exact ID.
+- Open the recipe's shopping basket to see quantities, stock shortfalls and required cash after owned stock.
+- Compare modeled unit cost with the buy quote. Keep unknown prices and volume explicit.
+- Separate Processing methods from Imperial crates. Show recipe economics on search cards and expose the full stage weight board from the recipe header.
+
 ## 1.13.0-rc.32 — Tool and loot reader coordination
 
 - Withhold tool selection when competing counters conflict. Keep the previous timer as an estimate.

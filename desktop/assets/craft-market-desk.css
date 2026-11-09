@@ -1,0 +1,27 @@
+#craftMarketDesk{margin-bottom:22px;color:var(--text);scroll-margin-top:80px}
+.market-desk-header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 24px;margin-bottom:14px;background:linear-gradient(120deg,#19343a,#201a31);border:1px solid #45606b;border-radius:12px}
+.market-desk-header small,.market-basket-heading small{color:#9ee3d6;letter-spacing:.12em;font-size:10px}
+.market-desk-header h1{margin:5px 0;font-size:clamp(23px,4vw,38px)}
+.market-desk-header p{margin:0;color:#d0d8e2}
+.market-desk-grid{display:grid;grid-template-columns:minmax(240px,2fr) minmax(0,3fr);gap:14px;align-items:start}
+.market-desk-panel{min-width:0;background:#151921;border:1px solid #374754;border-radius:10px;padding:16px}
+.market-desk-panel h2{margin:10px 0;font-size:20px}
+.market-desk-panel form label{display:block;color:#c6d8df;font-size:12px;margin-bottom:7px}
+.market-desk-panel form div,.market-basket-heading{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.market-desk-panel input{background:#0c1217;color:#eef6fa;border:1px solid #57717c;border-radius:6px;padding:9px;flex:1;min-width:0}
+.market-desk-panel button{cursor:pointer}
+.market-desk-panel details{margin-top:10px}
+.market-desk-panel summary,.market-browse summary{cursor:pointer;color:#b9d8da;padding:8px}
+.market-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(102px,1fr));gap:8px;margin:10px 0}
+.market-facts div{background:#222c35;border-radius:6px;padding:8px;overflow-wrap:anywhere}
+.market-facts dt,.market-recipe-links small,#marketItemResults small{font-size:11px;color:#bccbd8}
+.market-facts dd{margin:4px 0 0;font-weight:700}
+#marketItemResults,.market-recipe-links{max-height:220px;overflow:auto;margin:4px 0;padding:0;list-style:none}
+#marketItemResults button,.market-recipe-links button,.market-inline{background:none;border:0;color:#9ee3d6;text-align:left;padding:5px;text-decoration:underline;font:inherit;cursor:pointer}
+#marketItemResults button{display:block;width:100%}
+.market-recipe-links li{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.market-desk-panel th,.market-desk-panel td{padding:8px;text-align:left;white-space:nowrap}
+.market-browse-stats{display:flex;gap:16px;flex-wrap:wrap;padding:8px;font-size:12px;color:#c6d8df}
+@media(max-width:960px){.market-desk-grid{grid-template-columns:1fr}}
+.recipe-score{font-size:11px;color:#9ee3d6;margin-top:5px;line-height:1.4}
+.studio-main-controls button{align-self:end}

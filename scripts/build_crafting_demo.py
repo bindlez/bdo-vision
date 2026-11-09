@@ -24,13 +24,16 @@ boot=r'''
 /* Demo adapter. Everything below is generated sample data, separate from live OCR. */
 var demoCraft={running:false,blocked:false,events:[],observed:0,paused:0,last:Date.now(),count:0};
 var demoQuotes=DEMO_MARKET_SNAPSHOT;
+region='na';
+document.querySelectorAll('.region-btn').forEach(button=>{button.disabled=button.dataset.region!=='na';button.classList.toggle('active',!button.disabled);});
 demoQuotes.sort((a,b)=>({678:0,679:1,9733:2}[a.id]??3)-({678:0,679:1,9733:2}[b.id]??3));
 shareMarketPricesWithDesktop=async function(){desktopMarketBatch=[];};
 ensureOcrWorker=async function(){throw Error('Live game OCR requires the Windows app. This demo uses simulated drops.');};
 visionGrindCommand=async function(){toast('Crafting preview','Use the separate loot and grind demo to try a sample grind.',false);};
+craftStudioRequestQuotes=async function(){return {ok:false,message:'Demo uses a dated NA market snapshot. Open the Windows planner for current quotes.'};};
 craftStudioLoadMarket=async function(){var e=document.getElementById('recipeMarketStatus');if(e)e.textContent='Offline snapshot already loaded. The Windows planner can fetch current recipe prices and volumes.';};
 craftStudioLoadPrices=async function(){var e=document.getElementById('studioMarketState');if(e)e.textContent='DEMO · fixed example prices. The Windows app fetches actual market quotes.';};
-loadData=async function(){rememberPrices(demoQuotes.map(function(q){return {...q,marketRegion:region};}));currentItems=demoQuotes.map(function(q){return {...q,stock:100,trades:1000};});renderListings();setStatus('ok','Demo example prices');};
+loadData=async function(){rememberPrices(demoQuotes);currentItems=demoQuotes;hotItems=demoQuotes;renderListings();if(currentView==='market')craftMarketRender();setStatus('ok','Demo example prices');};
 loadCategory=async function(){return demoQuotes;};loadHot=async function(){return demoQuotes;};
 function demoItemRows(events){var groups=new Map();events.forEach(function(e){var row=groups.get(e.item)||{item:e.item,quantity:0,unit_price:e.price,group:e.item.includes('Elixir')?'Elixirs':'Extras / other loot',market_region:region,rare:0};row.quantity+=e.quantity;if(e.rare)row.rare+=e.quantity;groups.set(e.item,row);});return [...groups.values()];}
 refreshVisionTimerEarnings=async function(base,reading){
@@ -53,10 +56,12 @@ pollBridge=async function(){
 document.getElementById('demoPlay').onclick=function(){demoCraft.running=!demoCraft.running;pollBridge();};
 document.getElementById('demoBlock').onclick=function(){demoCraft.blocked=!demoCraft.blocked;this.textContent=demoCraft.blocked?'Restore sample capture':'Block sample capture';pollBridge();};
 rememberPrices(demoQuotes);selectedRecipe=RECIPES.find(function(r){return r.id===DEMO_RECIPE;});lastCraftAmount=100;
-recipeTab=selectedRecipe.type;
+recipeTab=craftRecipeActivity(selectedRecipe);
 if(selectedRecipe.type==='alchemy'&&!craftStudioState.config[selectedRecipe.id])craftStudioState.config[selectedRecipe.id]={yield:2.5,seconds:5,retention:84.5,extra:0,goal:1000000,estimate:true};
 craftRoadState.runModes={cooking:'manual',alchemy:'manual'};craftWorkflow='planner';showView('craft');if(selectedRecipe.type==='cooking'){craftStudioChainRoute(selectedRecipe,true);craftStudioRender(selectedRecipe,lastCraftAmount);}
 '''.replace('DEMO_RECIPE',json.dumps(recipe)).replace('DEMO_MARKET_SNAPSHOT',json.dumps(snapshot['items'],separators=(',',':')))
+if args.overview:
+    boot+="\nif(new URLSearchParams(location.search).get('view')==='market')craftMarketOpen(selectedRecipe.itemId,selectedRecipe.id);\n"
 if args.weight:
     # Separate preview settings; never seed a real character's weight profile.
     html=html.replace('vision_demo_craft_state_v1','vision_demo_weight_state_v1').replace('vision_demo_craft_intel_v1','vision_demo_weight_intel_v1').replace('vision.demo.craft.','vision.demo.weight.')

@@ -10,7 +10,7 @@ function rates(recipe,options={},spec={}){
  const cfg=settings(options),b=bracket(spec,recipe.type,cfg.mastery),low=recipe.minProc??1,high=recipe.maxProc??1,average=(low+high)/2,crafted=['cooking','alchemy'].includes(recipe.type);
  const normal=average+(crafted?(high-average)*(b.maxProcChance||0):0);let rare=0;
  if(recipe.rare){const r=recipe.rare,avg=(r.minProc+r.maxProc)/2;rare=crafted?(avg+(recipe.type==='cooking'?(r.maxProc-avg)*(b.maxProcChance||0):0))*(recipe.type==='cooking'?.2+(b.rareAdditionalChance||0):.2):avg*(r.procChance??0);}
- const massEligible=recipe.type==='processing'&&!['simple_alchemy','simple_cooking','manufacture','imperial_cooking','imperial_alchemy'].includes(recipe.method);
+ const massEligible=recipe.type==='processing'&&['heating','grinding','chopping','shaking','drying','filtering'].includes(recipe.method);
  const mass=recipe.type==='cooking'&&cfg.mass?1+9*(b.massProduceChance||0):massEligible&&cfg.mass?Math.max(1,(b.batchProcessing||10)/10):1;
  const seconds=bounded(options.baseSeconds,.1,3600,recipe.secPerBatch||10)/mass/(massEligible?cfg.success/100:1);
  return {normal,rare,mass,seconds,byproduct:spec.byproducts?.[recipe.type]?.rate||0,bracket:b};

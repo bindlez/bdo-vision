@@ -15,12 +15,22 @@ const recipes=JSON.parse(fs.readFileSync('desktop/assets/recipes.json','utf8')),
 let started=null,download=null;const context={console,Map,Set,URL,AbortSignal,structuredClone,RECIPES:recipes,VISION_CRAFT_DATA:spec,region:'na',recipeTab:'alchemy',lastCraftAmount:100,selectedRecipe:recipes.find(r=>r.itemId===678),location:{protocol:'file:',hostname:''},bridgeSelectedOrigin:null,visionMarketById:{},visionMarketByName:{},visionMarketQuoteDetails:{},visionEscape:v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),visionName:n=>n.toLowerCase(),localStorage:{getItem:()=>null,setItem(){}},saveState(){},toast(){},fmtTime:n=>n.toFixed(1)+'s',setTimeout,clearTimeout,document:{getElementById:id=>nodes.get(id)||null,createElement:()=>new Element(),activeElement:new Element(),querySelectorAll:()=>[]},startCraft:(r,n,opts)=>{started={r,n,opts};},intelDownload:(...args)=>{download=args;},openModal(){},closeModal(){}};
 context.window=context;for(const q of snapshot.items){context.visionMarketById['na:'+q.id]=q.price;context.visionMarketQuoteDetails['na:'+q.id]=q;}
 vm.createContext(context);const html=fs.readFileSync('bdo-market-intelligence.html','utf8');
-for(const marker of ['RECIPE_NETWORK_JS','CRAFTING_ENGINE_JS','CRAFTING_STUDIO_JS','CRAFTING_SIMULATOR_JS','PRODUCTION_ROADMAP_JS','VISION_TIMERS_JS','RECIPE_BROWSER_JS']){const script=html.split('/* OWNED '+marker+' START */')[1]?.split('/* OWNED '+marker+' END */')[0];assert(script,marker);vm.runInContext(script,context);}
+for(const marker of ['RECIPE_NETWORK_JS','CRAFTING_ENGINE_JS','CRAFTING_STUDIO_JS','CRAFTING_SIMULATOR_JS','PRODUCTION_ROADMAP_JS','VISION_TIMERS_JS','RECIPE_BROWSER_JS','CRAFT_MARKET_DESK_JS']){const script=html.split('/* OWNED '+marker+' START */')[1]?.split('/* OWNED '+marker+' END */')[0];assert(script,marker);vm.runInContext(script,context);}
 nodes.set('imperialQuick',new Element());
 context.craftRoadState.runModes={cooking:'manual',alchemy:'manual'};
 context.craftStudioRender(context.selectedRecipe,100);context.renderRecipeList();
 // Bulk inventory uses every resolved ingredient and previews the selected amount.
 const inventoryInputs=context.craftStudioPlan(context.selectedRecipe,100).materials;
+const marketContextRecipe=recipes.find(r=>r.itemId===9601);
+context.hotItems=[];context.currentItems=[];
+const marketCatalog=context.craftMarketCatalog();
+assert.equal(context.craftMarketMatches(marketCatalog,'9601')[0].id,9601);
+assert(context.craftMarketMatches(marketCatalog,'wheat flour').some(item=>item.name==='Wheat Flour'));
+const basket=context.craftMarketBasket(marketContextRecipe,context.craftStudioPlan(marketContextRecipe,100));
+assert(basket.includes('Balenos Meal')&&basket.includes('Stock short')&&basket.includes('data-market-item'));
+const itemPanel=context.craftMarketInspect(marketCatalog.get(9601));
+assert(itemPanel.includes('How to make it')&&itemPanel.includes('Compare making vs buying'));
+assert(!context.craftMarketInspect({id:1,name:'<img src=x>'}).includes('<img'));
 const batchStock=new Map();
 for(const m of inventoryInputs)batchStock.set(m.name,(batchStock.get(m.name)||0)+m.qty);
 nodes.get('studioInventoryPaste').value=[...batchStock].map(([name,qty])=>name+'\t'+qty*50).join('\n');
@@ -65,7 +75,7 @@ nodes.get('studioExport').onclick();assert(download[0].endsWith('.txt'));assert(
 nodes.get('btnStartCraft').onclick();assert.equal(started.n,400);assert.equal(started.opts.craftPlan.itemId,678);assert(started.opts.craftPlan.materials.every(m=>m.itemId>0));
 nodes.get('studioRing').checked=true;nodes.get('studioFame').value='1.5';nodes.get('studioTax').onclick();assert(Math.abs(Number(nodes.get('studioRetention').value)-88.725)<1e-8);
 nodes.get('studioFavorite').onclick();assert(context.craftStudioState.favorites.includes(context.selectedRecipe.id));
-context.recipeTab='processing';context.renderRecipeList();assert(nodes.get('recipeList').innerHTML.includes('746 matching'));
+context.recipeTab='processing';context.renderRecipeList();assert(nodes.get('recipeList').innerHTML.includes('424 matching'));
 context.recipeSearch='flax';context.renderRecipeList();assert(nodes.get('recipeList').innerHTML.includes('Flax Fabric'));
 context.craftStudioRender({...context.selectedRecipe,name:'<img src=x onerror=alert(1)>'},1);assert(nodes.get('craftDetail').innerHTML.includes('&lt;img'));assert(!nodes.get('craftDetail').innerHTML.includes('<img src=x'));
 
@@ -237,4 +247,7 @@ active._nextChunk=3000;timerClock.now=active.endAt;timerContext.processTimers();
 active=timerContext.activeTimers[0];assert.equal(active.amount,3000);assert.equal(active._queue[0],5000);
 timerContext.startCraft({id:'durability_timer',name:'Current tool',secPerBatch:2},1200,{startDurability:1200});
 assert.equal(timerContext.activeTimers[0].amount,1200);
+timerContext.startCraft({id:'processing-recipe',type:'processing',name:'Heat material',secPerBatch:2},6500);
+assert.equal(timerContext.activeTimers[0].amount,6500);
+assert.equal(timerContext.activeTimers[0]._queue,null);
 console.log('Recipe timers enforce the tool limit at start and rollover; worn-tool countdown stays independent.');

@@ -192,3 +192,37 @@ uses. Each timer card covers one chunk. Its queued remainder carries forward
 with the selected capacity for later tools. The user replaces the tool in
 game. A linked or manually entered durability timer follows the actual
 remaining uses, which can be below 3,000.
+
+
+## Crafting and Market workbench
+
+Goal: a player can discover, source, price and execute a production plan from
+Vision. Compare the actual workflows in the Bdolytics crafting calculator,
+including its Balenos Meal weight board, with original Vision implementations.
+Preserve saved recipe identities and separate Processing from utensil crafting.
+
+1. Compare dated catalog counts and audit individual recipe variants and fields.
+2. Support discovery by name, item, ingredient, recipe ID, activity and method.
+3. Connect each resolved item with regional quotes, production and downstream
+   consumers. Use the same plan for the shopping basket and recipe economics.
+4. Verify the graph, analytics, weight, stage timers and plan workflow on a
+   multilevel cooking example, an alchemy example and a processing example.
+5. Publish verified milestones to GitHub and link dated previews from Pages.
+
+The dated catalog matches the reference list totals of 152 Cooking, 92 Alchemy,
+424 Processing and 322 Imperial variants. Matching counts cannot verify
+individual variant parity. Twelve Alchemy and 223 Processing records have
+zero or unavailable XP in this snapshot. Eight Processing records lack a
+verified method. Show unavailable values and avoid assigning a mass multiplier
+to those records. Only Cooking and Alchemy recipe timers use utensil chunks.
+
+The market desk shares exact-ID quote requests and the recipe engine's
+purchase rows. A buy quantity excludes owned stock and includes purchases for
+selected intermediate stages. A missing stock quote remains unknown. A
+market-wide sales comparison shows scale and cannot forecast individual fills.
+The dated Pages preview has no live bridge.
+
+Still to verify against the reference workflow: every recipe key and variant,
+minimum skill and method requirements, private saved-plan or storage behavior
+visible only after sign-in, and per-item historical market coverage. These
+are separate acceptance checks from count parity.
