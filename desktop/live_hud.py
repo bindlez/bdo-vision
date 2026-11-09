@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 from game_overlay import OverlaySurface, label, button, INK, PANEL, LINE, MUTED, VIOLET, TEAL, GOLD
 from overlay_layout import preferences, compact_silver
+from tracking_core import CraftPhase
 
 
 class LiveHUD:
@@ -69,11 +70,11 @@ class LiveHUD:
         quest=self.tracker.guild
         progress,note=guild_summary(quest.model.snapshot(),quest.enabled.get())
         self.guild.configure(text=('Guild quest / '+progress+' / '+(quest.forecast_text() or note))[:65])
-        detailed_enabled=self.app.detailed_craft.get()
-        if detailed_enabled or self.app.has_reading and self.app.value>0 and (self.app.running or not data.get('sessionActive')):
-            if not self.app.has_reading:
+        craft=self.app.craft_state()
+        if craft.show_on_dock(data.get('sessionActive')):
+            if craft.remaining is None:
                 stage=self.app.tool_status.snapshot()
-                self.status.configure(text='CRAFT TIMER / FINDING TOOL',fg=GOLD)
+                self.status.configure(text='CRAFT TIMER / '+craft.phase.value.upper(),fg=GOLD)
                 self.value_label.configure(text='TOOL USES LEFT');self.rate_label.configure(text='TIME LEFT')
                 self.value.configure(text='—');self.rate.configure(text='—')
                 self.goal.configure(text=stage['title'],fg=MUTED)
@@ -81,18 +82,17 @@ class LiveHUD:
                 self.time.configure(text='Checking durability use')
                 self.pause.configure(command=self.app.read_ocr,text='SCAN TOOL')
                 self.bar.coords(self.fill,0,0,0,3);self.key=None;return
-            remaining=max(0,self.app.value)
+            remaining=craft.remaining
             try:seconds=remaining*max(.05,float(self.app.speed.get()))
             except ValueError:seconds=remaining
-            verified=self.app.verified_tool_row() if detailed_enabled else None
-            detailed=self.app.running and verified is not None
-            mode='TOOL EMPTY / TIMER ENDED' if remaining<=0 else 'DETAILED TRACKING' if detailed else 'COUNTDOWN ESTIMATE' if self.app.running else 'PAUSED'
-            self.status.configure(text='CRAFT TIMER / '+mode,fg=TEAL)
-            self.pause.configure(command=self.app.toggle_craft_pause,text='PAUSE CRAFT' if self.app.running else 'RESUME CRAFT')
+            verified=craft.tool if craft.detailed else None
+            self.status.configure(text='CRAFT TIMER / '+craft.phase.value.upper(),fg=TEAL)
+            self.pause.configure(command=self.app.toggle_craft_pause,text='PAUSE CRAFT' if craft.running else 'RESUME CRAFT')
+            if craft.phase is CraftPhase.FINISHED:self.pause.configure(command=self.app.read_ocr,text='SCAN TOOL')
             self.value_label.configure(text='TOOL USES LEFT');self.rate_label.configure(text='TIME LEFT')
             self.value.configure(text=f'{remaining:,.0f}');self.rate.configure(text=f'{int(seconds)//3600}:{int(seconds)//60%60:02}:{int(seconds)%60:02}')
             run=self.tracker.auto_craft.engine.run
-            if run and run['tool'] != self.app.session_id:
+            if run and run['tool'] != craft.session:
                 run = None
             from auto_craft import families
             recipe=families()[0].get(run['family'],{}).get('name','Waiting for craft output') if run else 'Waiting for craft output'
@@ -106,7 +106,8 @@ class LiveHUD:
                 if len(counts)>1:
                     loot += f' (+{len(counts)-1} types)'
             self.goal.configure(text=loot, fg=MUTED, wraplength=self.width-24)
-            self.time.configure(text='Tool and quest recheck while visible' if detailed else 'Assumes crafting continues / no extra OCR');self.bar.coords(self.fill,0,0,0,3);self.key=None;return
+            notes={CraftPhase.TRACKING:'Tool and quest recheck while visible',CraftPhase.VERIFYING:'Checking tool · countdown is estimated',CraftPhase.ESTIMATING:'Assumes crafting continues',CraftPhase.PAUSED:'Countdown paused',CraftPhase.FINISHED:'Scan the next tool to continue'}
+            self.time.configure(text=notes[craft.phase]);self.bar.coords(self.fill,0,0,0,3);self.key=None;return
         self.pause.configure(command=self.live.grind.pause)
         self.value_label.configure(text='RECORDED VALUE');self.rate_label.configure(text='SILVER / OBSERVED H')
         key = repr({k:v for k,v in data.items() if k != 'updatedAt'})

@@ -17,7 +17,7 @@ from PIL import ImageGrab, Image, ImageOps, ImageEnhance, ImageFilter, ImageTk
 from windows_bdo import is_bdo_foreground, send_ctrl_v_if_bdo_foreground, restore_bdo, super_restore_bdo, inspect_bdo_visibility
 from ocr_parser import choose_reading, reading_is_plausible, extract_pairs
 from scan_engine import select_ocr_passes, should_publish, candidate_is_stable, SpeedEstimator
-from tracking_core import ReadingGate, remaining_at, align_to_capture, estimate_send
+from tracking_core import CraftPhase, ReadingGate, align_to_capture, craft_run_state, estimate_send, remaining_at
 from spatial_ocr import tsv_candidates, choose_spatial_pair
 from ocr_runtime import ReaderAttempt, run_ocr
 from tool_reader import AutomaticToolReader
@@ -61,6 +61,7 @@ class App:
   if self.lite_use.get():self.auto_tools.set(True);self.auto_enabled.set(True)
   self.detailed_craft=tk.BooleanVar(value=bool(config.get('detailed_craft_tracking',False)) and not self.lite_use.get())
   self._tool_scan_latched=False;self._tool_timer_estimated=False
+  self._craft_epoch=0;self._craft_paused=False
   self.windows_ocr=None;self.tool_reader=App.make_tool_reader(self);self.tool_report=None;self.tool_window=None;self.tool_tree=None;self._active_tool_key=None
   self.tool_debug=OCRReaderView(self,'Tool OCR reader',self.rescan_tools)
   self.tool_status=ToolStatus();self._tool_view_at=0.;self._tool_bridge_revision=-1
@@ -305,6 +306,8 @@ class App:
  def toggle_craft_pause(self):
   if self.running:self.pause()
   elif self.has_reading and self.value>0:
+   self._craft_epoch+=1;self._craft_paused=False
+   if self.detailed_craft.get():self.tool_reader.next_due=0
    self.anchor=time.monotonic();self.running=True;self.alarmed=False
    self.status.set('Countdown resumed from remaining uses, not original scan.')
 
@@ -375,20 +378,23 @@ class App:
     self.tool_empty.place(relx=.5,rely=.55,anchor='center')
 
  def wait_for_tool_capture(self,tess,deadline):
+  if self._craft_paused:self.busy=False;return
   if self.bdo_foreground():self.capture_tools(tess,False);return
   if time.monotonic()>=deadline:
    self.busy=False
    if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
    self.set_tool_stage('paused','No game capture taken: BDO did not come to the front. Press READ NOW and switch to BDO.');return
   self.set_tool_stage('waiting','Waiting for BDO in front; no OCR runs until the game is visible.')
-  self.root.after(250,lambda:self.wait_for_tool_capture(tess,deadline))
+  epoch=self._craft_epoch
+  self.root.after(250,lambda:self.begin_tool_capture(epoch,lambda:self.wait_for_tool_capture(tess,deadline)))
 
  def capture_tools(self,tess,automatic=False):
+  if self._craft_paused:self.busy=False;return
   self.set_tool_stage('reading','Checking visible tool labels and durability. Loot recording remains independent.')
   reader=self.tool_reader;interval=self.safe_scan_interval()
   require_use=self.detailed_craft.get()
   confirm_pair=not self.lite_use.get()
-  attempt=self._tool_attempt=ReaderAttempt(10)
+  attempt=self._tool_attempt=ReaderAttempt(10,self._craft_epoch)
   guild=self.loot.guild;guild_generation=guild.generation if guild.enabled.get() else None
   debug_token=self.tool_debug.token();debug_frames=[]
   def diagnostic(crops,observations,scene):
@@ -432,7 +438,18 @@ class App:
  def complete_tool_attempt(self,attempt,callback,*args):
   if self._tool_attempt is not attempt or not attempt.can_publish():return
   self._tool_attempt=None
+  if attempt.craft_epoch is not None and attempt.craft_epoch!=self._craft_epoch:
+   self.release_tool_scan()
+   return
   callback(*args)
+
+ def release_tool_scan(self):
+  self.busy=False
+  if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
+
+ def begin_tool_capture(self,epoch,callback):
+  if epoch!=self._craft_epoch:self.release_tool_scan();return
+  callback()
 
  def finish_tool_attempt(self,report,reader,automatic,captured_at,captured_mono,quest_sample=None,guild_generation=None,error=None):
   if error is not None:self.tool_failed(error,reader)
@@ -503,6 +520,13 @@ class App:
   if report.get('active_key')!=self._active_tool_key:return None
   if self.detailed_craft.get() and report.get('confirmation')=='Place Mode position':return None
   return next((row for row in report.get('tools',()) if row['id']==report.get('active_id')),None)
+
+ def craft_state(self):
+  return craft_run_state(session=self.session_id,remaining=max(0,self.value) if self.has_reading else None,
+   running=self.running,detailed=self.detailed_craft.get(),lite=self.lite_use.get(),
+   estimate=self._tool_timer_estimated or self._tool_scan_latched,
+   verifying=self.reading_gate.pending is not None or self.tool_status.stage in ('confirming','found','ambiguous','reading'),
+   tool=self.verified_tool_row())
 
  def open_planning_page(self,section):
   if section not in ('cp','imperial'):return
@@ -755,9 +779,12 @@ class App:
 
  def start(self):
   try:
-   d,m,s,w=self.parse_inputs();self.value=float(d);self.anchor=time.monotonic();self.running=True;self.alarmed=False;self.session_id=uuid.uuid4().hex;self.speed_estimator.reset();self.has_reading=True;self.reading_gate=ReadingGate();self.sync_armed=False;self.status.set('Manual estimate running. Click SEND NOW to link this session.');self.alarm_state.set('Alarm armed');self.source.set('ESTIMATED • timer running')
+   d,m,s,w=self.parse_inputs();self._craft_epoch+=1;self._craft_paused=False;self.last_good_ocr=None;self._active_tool_key=None
+   self.value=float(d);self.anchor=time.monotonic();self.running=True;self.alarmed=False;self.session_id=uuid.uuid4().hex;self.speed_estimator.reset();self.has_reading=True;self.reading_gate=ReadingGate();self.sync_armed=False;self.status.set('Manual estimate running. Click SEND NOW to link this session.');self.alarm_state.set('Alarm armed');self.source.set('ESTIMATED • timer running')
   except Exception as e:messagebox.showerror('Timer',str(e))
  def pause(self):
+  self._craft_epoch+=1;self._craft_paused=True;self._pending_tool_scan=None
+  if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
   self.update_value();self.running=False;self.dur.set(str(max(0,int(self.value))));self.status.set('Timer paused');self.source.set('PAUSED • last estimate')
  def update_value(self):
   if self.running and self.anchor is not None:
@@ -791,8 +818,9 @@ class App:
    self.bar['value']=100*min(1.,max(0.,self.value/m)) if self.has_reading else 0
    self.durability_display.set(f'{max(0,int(self.value + .999)):,} / {m:,}' if self.has_reading else '— / —')
    if self.running and self.lite_use.get() and self.lite_scan_complete:self.timer_state.set('LITE USE · TIMER ONLY')
-   elif self.running and self.detailed_craft.get():
-    self.timer_state.set('TIMER ONLY · ESTIMATE' if self._tool_timer_estimated else 'DETAILED CRAFT TRACKING')
+   elif self.detailed_craft.get():
+    phase=self.craft_state().phase
+    self.timer_state.set('TIMER ONLY · ESTIMATE' if phase is CraftPhase.ESTIMATING else phase.value.upper())
    elif self.running and getattr(self,'_tool_scan_latched',False):self.timer_state.set('CRAFT TIMER · TOOL OCR OFF')
    elif self.running and getattr(self,'_tool_timer_estimated',False):self.timer_state.set('ESTIMATE · TOOL UNCONFIRMED')
    elif self.running and self.last_ocr_at:
@@ -856,7 +884,7 @@ class App:
   if self.lite_use.get():self.loot.grind.live.close_craft_metrics()
 
  def detailed_tool_due(self,now):
-  if not self.detailed_craft.get() or self.lite_use.get() or self.selecting_region or self._tool_scan_latched:
+  if not self.detailed_craft.get() or self.lite_use.get() or self.selecting_region or self._tool_scan_latched or self._craft_paused:
    return False
   if not self.auto_enabled.get() or not self.auto_tools.get() or getattr(self,'cp_ocr_busy',False):
    return False
@@ -884,7 +912,8 @@ class App:
      self._pending_tool_scan=None
      self.read_ocr(delayed=queued[0])
      return
-   if self.lite_use.get() and self.lite_scan_complete:
+   if self._craft_paused:self.auto_health.set('Craft paused · resume or scan tool');delay=1000
+   elif self.lite_use.get() and self.lite_scan_complete:
     message=('LITE USE · paired guild snapshot finishing · tool OCR stopped' if getattr(getattr(self.loot,'guild',None),'busy',False) else 'LITE USE · timer estimate only · scan manually for a new tool')
     if self.auto_health.get()!=message:self.auto_health.set(message)
     delay=2000
@@ -984,7 +1013,7 @@ class App:
     self._pending_tool_scan=(delayed,time.monotonic()+30)
     self.status.set('Tool scan queued until the current loot read finishes.')
    return
-  if automatic and (self.lite_use.get() and self.lite_scan_complete or self._tool_scan_latched):return
+  if automatic and (self._craft_paused or self.lite_use.get() and self.lite_scan_complete or self._tool_scan_latched):return
   if not automatic:self._allow_tool_change=True
   try:
    tess=self.tess.get().strip().strip('\"')
@@ -992,6 +1021,8 @@ class App:
     if not automatic:self.status.set('Tesseract OCR not found. Install it or set its location in Settings.')
     else:self.scan_health.set('OCR unavailable · check Tesseract path in Settings')
     return
+   if not automatic:self._craft_paused=False
+   epoch=self._craft_epoch
    if self.auto_tools.get():
     if not automatic:
      self.lite_scan_complete=False;self._tool_scan_latched=False
@@ -1001,8 +1032,8 @@ class App:
      self.status.set('Switch to BDO now — finding visible tools in 3 seconds…')
      self.set_tool_stage('waiting','Switch to BDO. Reading starts in 3 seconds.')
     if self.scan_button:self.scan_button.configure(state='disabled',text='FINDING TOOLS…')
-    if delayed and not automatic:self.root.after(3000,lambda:self.wait_for_tool_capture(tess,time.monotonic()+12))
-    else:self.root.after(1,lambda:self.capture_tools(tess,automatic))
+    if delayed and not automatic:self.root.after(3000,lambda:self.begin_tool_capture(epoch,lambda:self.wait_for_tool_capture(tess,time.monotonic()+12)))
+    else:self.root.after(1,lambda:self.begin_tool_capture(epoch,lambda:self.capture_tools(tess,automatic)))
     return
    x,y,w,h=[int(v.get()) for v in self.region]
    if w<3 or h<3:raise ValueError('Select a valid capture region.')
@@ -1011,13 +1042,14 @@ class App:
    if delayed:self.status.set('Switch to BDO now — capturing in 3 seconds…')
    elif not automatic:self.status.set('Scanning BDO…')
    if self.scan_button:self.scan_button.configure(state='disabled',text='SCANNING…')
-   self.root.after(3000 if delayed else 1,lambda:self.capture(x,y,w,h,automatic))
+   self.root.after(3000 if delayed else 1,lambda:self.begin_tool_capture(epoch,lambda:self.capture(x,y,w,h,automatic)))
   except Exception as e:
    self.busy=False
    if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
    if automatic:self.scan_health.set('Auto OCR error: '+str(e))
    else:messagebox.showerror('OCR',str(e))
  def capture(self,x,y,w,h,automatic=False):
+  if self._craft_paused:self.busy=False;return
   if not self.bdo_foreground():
    self.tool_failed('Bring BDO to the front before reading durability.',self.tool_reader)
    return
@@ -1028,7 +1060,7 @@ class App:
    except ValueError:seconds=1.0
    maximum=int(self.maximum.get())
    value,anchor,running=self.value,self.anchor,self.running
-   attempt=self._tool_attempt=ReaderAttempt(38)
+   attempt=self._tool_attempt=ReaderAttempt(38,self._craft_epoch)
    def work():
     try:
      bounds=foreground_bdo_capture_bounds()

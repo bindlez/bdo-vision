@@ -304,8 +304,7 @@ class GuildQuestTracker:
                             'clock':time.monotonic(),'running':True,'basis':basis}
 
     def timer_estimate_mode(self):
-        app=self.app
-        return bool(app.lite_use.get() or app._tool_scan_latched or app._tool_timer_estimated)
+        return self.app.craft_state().estimate_quest
 
     def forecast_text(self):
         estimate=self._forecast

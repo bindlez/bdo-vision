@@ -11,6 +11,22 @@ from tool_reader import AutomaticToolReader
 
 
 class CraftTimerPipelineTests(unittest.TestCase):
+    def test_pause_rejects_in_flight_tool_result_and_blocks_automatic_restart(self):
+        from ocr_runtime import ReaderAttempt
+        app=self.app
+        self.feed();app.detailed_craft.set(True)
+        attempt=app._tool_attempt=ReaderAttempt(10,app._craft_epoch)
+        app.busy=True
+        app.pause()
+        finish=Mock()
+        app.complete_tool_attempt(attempt,finish)
+        finish.assert_not_called()
+        self.assertFalse(app.running);self.assertFalse(app.busy)
+        self.assertFalse(app.detailed_tool_due(self.clock))
+        with patch.object(app,'read_ocr') as automatic:
+            app.poll_auto_ocr();automatic.assert_not_called()
+        app.toggle_craft_pause();self.assertTrue(app.running)
+
     def test_tool_timeout_discards_late_result_and_releases_busy(self):
         from ocr_runtime import ReaderAttempt
         attempt=ReaderAttempt(10)

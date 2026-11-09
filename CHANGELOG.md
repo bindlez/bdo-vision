@@ -1,3 +1,8 @@
+## 1.13.0-rc.39 — Shared craft state
+
+- Dock and Tracking use the same craft phases. Loot uses the accepted tool from that state. Guild quest estimates use its capture fallback signal.
+- Pausing blocks automatic tool scans until resume or an explicit scan. Delayed and in-flight scan results from before a pause, resume, or manual start cannot change the timer.
+
 ## 1.13.0-rc.38 — Dock timer and active tool verification
 
 - Dock 0 shows durability and time in Detailed Craft Tracking, even with a grind session still open. The separate craft loot panel keeps its silver and graphs.

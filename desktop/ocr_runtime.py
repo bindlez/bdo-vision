@@ -16,10 +16,11 @@ def run_ocr(command, **options):
 class ReaderAttempt:
     """A deadline for UI ownership. An expired worker cannot publish a result."""
 
-    def __init__(self, seconds):
+    def __init__(self, seconds, craft_epoch=None):
         self.deadline = time.monotonic() + seconds
         self.expired = False
         self.worker_done = False
+        self.craft_epoch = craft_epoch
 
     def run(self, work):
         try:

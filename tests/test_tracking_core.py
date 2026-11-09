@@ -1,9 +1,21 @@
 import sys, unittest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'desktop'))
-from tracking_core import ReadingGate, align_to_capture, remaining_at, estimate_send,replacement_needs_use
+from tracking_core import CraftPhase, ReadingGate, align_to_capture, craft_run_state, remaining_at, estimate_send,replacement_needs_use
 
 class CoreTests(unittest.TestCase):
+ def test_craft_state_keeps_timer_during_verification_and_estimate(self):
+  inputs=dict(session='run',remaining=None,running=False,detailed=True,lite=False,estimate=False,verifying=False,tool=None)
+  def state(**updates):return craft_run_state(**(inputs|updates))
+  self.assertIs(state().phase,CraftPhase.WAITING)
+  self.assertIs(state(verifying=True).phase,CraftPhase.VERIFYING)
+  tracking=state(remaining=30,running=True,tool={'id':'tool'})
+  self.assertIs(tracking.phase,CraftPhase.TRACKING);self.assertTrue(tracking.show_on_dock(True))
+  gap=state(remaining=28,running=True,estimate=True)
+  self.assertIs(gap.phase,CraftPhase.ESTIMATING);self.assertTrue(gap.estimate_quest)
+  self.assertEqual(gap.session,tracking.session)
+  self.assertIs(state(remaining=28).phase,CraftPhase.PAUSED)
+  self.assertIs(state(remaining=0,running=True).phase,CraftPhase.FINISHED)
  def test_exhausting_tool_cannot_reset_to_full_neighbor_by_position(self):
   self.assertTrue(replacement_needs_use('old:0','misread:0',382,83,3000,0))
   for remaining in (5,4,3,0):

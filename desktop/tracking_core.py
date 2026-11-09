@@ -4,6 +4,51 @@ An OCR digit is not a new tool until confirmed, and a delayed capture is not a
 reading from the time the OCR subprocess finishes. No guessing while uncertain.
 """
 from dataclasses import dataclass
+from enum import Enum
+
+
+class CraftPhase(Enum):
+    WAITING = 'Waiting for tool'
+    VERIFYING = 'Verifying tool'
+    TRACKING = 'Detailed tracking'
+    ESTIMATING = 'Countdown estimate'
+    PAUSED = 'Paused'
+    FINISHED = 'Tool empty / timer ended'
+
+
+@dataclass(frozen=True)
+class CraftRunState:
+    phase: CraftPhase
+    session: str
+    remaining: float | None
+    tool: dict | None
+    detailed: bool
+    lite: bool
+    estimate_quest: bool
+
+    @property
+    def running(self):
+        return self.remaining is not None and self.remaining > 0 and self.phase in (
+            CraftPhase.VERIFYING, CraftPhase.TRACKING, CraftPhase.ESTIMATING)
+
+    def show_on_dock(self, grind_open):
+        return self.detailed or bool(self.remaining and (self.running or not grind_open))
+
+
+def craft_run_state(*,session,remaining,running,detailed,lite,estimate,verifying,tool):
+    if remaining is not None and remaining<=0:
+        phase=CraftPhase.FINISHED
+    elif remaining is not None and not running:
+        phase=CraftPhase.PAUSED
+    elif verifying and not tool:
+        phase=CraftPhase.VERIFYING
+    elif remaining is None:
+        phase=CraftPhase.WAITING
+    elif detailed and not lite and tool and not estimate:
+        phase=CraftPhase.TRACKING
+    else:
+        phase=CraftPhase.ESTIMATING
+    return CraftRunState(phase,session,remaining,tool,detailed,lite,bool(estimate or lite or detailed and running and not tool))
 
 
 @dataclass(frozen=True)

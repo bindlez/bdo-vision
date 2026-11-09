@@ -23,15 +23,14 @@ class AutomaticCrafting:
 
     def context(self,allow_lite=False):
         a=self.app
-        lite=getattr(a,'lite_use',None)
-        if not self.enabled.get() or (lite is not None and lite.get() and not allow_lite) or not getattr(a,'running',False) or not getattr(a,'has_reading',False) or getattr(a,'last_good_ocr',None) is None or getattr(a,'_active_tool_key',None) is None:return None
-        row=a.verified_tool_row()
-        if not row:return None
+        state=a.craft_state()
+        row=state.tool
+        if not self.enabled.get() or state.lite and not allow_lite or not state.running or not row:return None
         name=row['name'].casefold();kind='alchemy' if 'alchemy' in name else 'cooking' if 'cooking' in name else None
-        try:speed=float(a.speed.get());remaining=float(a.value)
+        try:speed=float(a.speed.get());remaining=state.remaining
         except (ValueError,TypeError):return None
         if not kind or not math.isfinite(speed) or not .05<=speed<=3600 or not math.isfinite(remaining) or remaining<=0:return None
-        return {'active':True,'tool':a.session_id,'kind':kind,'verified':row['current'],'remaining':remaining,'speed':speed}
+        return {'active':True,'tool':state.session,'kind':kind,'verified':row['current'],'remaining':remaining,'speed':speed}
 
     def capture_interval(self, interval, now):
         context=self.context() if self.tracker.crafting.get() and self.tracker.recording.get() else None

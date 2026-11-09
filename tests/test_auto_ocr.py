@@ -9,7 +9,7 @@ from app import App, DEFAULT
 
 class AutoOCRTests(unittest.TestCase):
     def test_manual_tool_read_waits_for_game_without_taking_a_capture(self):
-        app=types.SimpleNamespace(bdo_foreground=lambda:False,capture_tools=MagicMock(),set_tool_stage=MagicMock(),root=MagicMock(),wait_for_tool_capture=MagicMock(),busy=True,scan_button=None)
+        app=types.SimpleNamespace(bdo_foreground=lambda:False,capture_tools=MagicMock(),set_tool_stage=MagicMock(),root=MagicMock(),wait_for_tool_capture=MagicMock(),busy=True,scan_button=None,_craft_paused=False,_craft_epoch=0)
         App.wait_for_tool_capture(app,'engine',float('inf'))
         app.capture_tools.assert_not_called();app.root.after.assert_called_once()
         app.bdo_foreground=lambda:True;App.wait_for_tool_capture(app,'engine',float('inf'))
@@ -18,7 +18,7 @@ class AutoOCRTests(unittest.TestCase):
         self.assertFalse(app.busy);app.capture_tools.assert_not_called()
     def app(self):
         return types.SimpleNamespace(lite_use=types.SimpleNamespace(get=lambda:False),lite_scan_complete=False,auto_enabled=types.SimpleNamespace(get=lambda:True),region_confirmed=True,selecting_region=False,
-            bdo_foreground=lambda:True,busy=False,loot=types.SimpleNamespace(busy=False),
+            bdo_foreground=lambda:True,busy=False,loot=types.SimpleNamespace(busy=False),_craft_paused=False,
             safe_scan_interval=lambda:10,last_scan_started=0,auto_health=MagicMock(),root=MagicMock(),read_ocr=MagicMock(),poll_auto_ocr=MagicMock())
 
     def test_due_scan_and_heartbeat(self):
