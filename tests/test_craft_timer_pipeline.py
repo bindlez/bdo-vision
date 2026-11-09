@@ -35,6 +35,16 @@ class CraftTimerPipelineTests(unittest.TestCase):
         self.assertEqual(self.app.value,80)
         self.assertIn('20s difference',self.app.status.get())
 
+    def test_corroborated_detailed_drift_preserves_verified_tool_session(self):
+        self.app.detailed_craft.set(True);self.feed(500)
+        session=self.app.session_id
+        self.clock=300;self.feed(480,2)
+        self.assertIsNotNone(self.app.reading_gate.pending)
+        self.clock=303;self.feed(478,2)
+        self.assertIsNone(self.app.reading_gate.pending)
+        self.assertEqual(self.app.value,478)
+        self.assertEqual(self.app.session_id,session)
+
     def test_detailed_tracking_falls_back_when_bdo_is_hidden(self):
         self.app.detailed_craft.set(True);self.feed()
         with patch.object(self.app,'bdo_foreground',return_value=False),patch.object(self.app,'read_ocr') as read:

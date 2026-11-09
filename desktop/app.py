@@ -464,7 +464,7 @@ class App:
    self.session_id=uuid.uuid4().hex;self.speed_estimator.reset();self.last_good_ocr=None
   a,b=active['current'],active['maximum']
   self._allow_tool_change=False
-  self.finish_ocr([(a,b),(a,b)],[],[],automatic,captured_at,captured_mono,report['duration'])
+  self.finish_ocr([(a,b),(a,b)],[],[],automatic,captured_at,captured_mono,report['duration'],tool_identity_verified=True)
   if self.reading_gate.pending is not None:
    reader.next_due=min(reader.next_due,time.monotonic()+3)
    self.status.set('Confirming the first reading · '+active['name'])
@@ -1097,7 +1097,7 @@ class App:
    duration=time.monotonic()-start
    error=str(exc)
    self.root.after(0,lambda:self.complete_tool_attempt(attempt,self.finish_ocr,[],[],['OCR error: '+error],automatic,captured_at,captured_mono,duration,None))
- def finish_ocr(self,results,singles,lines,automatic=False,captured_at=None,captured_mono=None,duration=0,spatial=None):
+ def finish_ocr(self,results,singles,lines,automatic=False,captured_at=None,captured_mono=None,duration=0,spatial=None,*,tool_identity_verified=False):
   """Apply readings at screenshot time; never turn one dubious scan into a new tool."""
   from collections import Counter
   self.busy=False
@@ -1133,7 +1133,8 @@ class App:
     self.scan_health.set('○ OCR needs confirmation · %.1fs'%duration)
     if not automatic:self.status.set(decision.message + ' Use SCAN again if needed.')
     return
-   new_tool=decision.kind=='new_tool'
+   same_detailed_tool=tool_identity_verified and automatic and self.detailed_craft.get() and self.has_reading and b==old_max
+   new_tool=decision.kind=='new_tool' and not same_detailed_tool
    if new_tool:
     self.session_id=uuid.uuid4().hex
     self.speed_estimator.reset()
