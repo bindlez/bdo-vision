@@ -18,6 +18,9 @@ class LiveHUD:
         button(head, '×', self.close).pack(side='right')
         button(head, 'CRAFT', self.live.craft_panel.toggle, TEAL).pack(side='right')
         button(head, 'SETUP', self.live.settings).pack(side='right')
+        dock = button(head, 'APPS', self.open_apps)
+        dock.pack(side='right')
+        self.apps_button = dock
         self.surface.draggable(head, brand)
         self.surface.follow=self.live.craft_panel.retile
         self.surface.feedback = lambda text:brand.configure(text=text)
@@ -38,6 +41,10 @@ class LiveHUD:
         self.pause = button(footer, 'PAUSE / RESUME', self.live.grind.pause, TEAL);self.pause.pack(side='left', padx=5)
         label(footer, 'VALUE ≠ PROFIT', 8, MUTED).pack(side='right', padx=10)
         self.key = None;self.surface.place();self.shown = self.surface.show()
+
+    def open_apps(self):
+        from live_dock import open_apps
+        open_apps(self.app,self.apps_button)
 
     def save_position(self, options):
         self.tracker.platform_preferences['overlay'] = dict(options);self.app.save_quietly()

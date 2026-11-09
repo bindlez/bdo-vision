@@ -59,7 +59,8 @@ function visionTimerEarningsHTML(timer){
   var stale=Date.now()-(v.updatedAt||0)>15000;
   var active=v.tracking&&v.captureAvailable&&!stale&&timer.status==='running';
   var total=BigInt(v.total||'0');
-  var rate=v.observed<60?'Measuring…':v.priced||v.events===0?Math.round(Number(total)*3600/v.observed).toLocaleString():'Unpriced';
+  var rateMin=timer.craftPlan?10:60;
+  var rate=v.observed<rateMin?'Measuring…':v.priced||v.events===0?Math.round(Number(total)*3600/v.observed).toLocaleString():'Unpriced';
   var status=stale&&v.tracking?'Measurement paused · Vision disconnected':v.status;
   var coverage=v.observed+v.paused>0?Math.round(v.observed*100/(v.observed+v.paused)):0;
   return '<section class="vision-earnings" aria-label="Recorded earnings for this timer">'+
@@ -68,7 +69,7 @@ function visionTimerEarningsHTML(timer){
     '<div><span>SILVER / OBSERVED HOUR</span><strong>'+rate+'</strong><small>'+visionDuration(v.observed)+' observed · '+visionDuration(v.paused)+' excluded</small></div></div>'+
     '<div class="vision-coverage"><span style="width:'+coverage+'%"></span></div>'+
     '<p class="vision-earnings-note">'+(v.unpriced?'<b>Partial value:</b> '+v.unpriced+' unpriced item types excluded. ':'')+'Captured since this timer attached. '+coverage+'% observed coverage. Costs and fees are not deducted.</p>'+
-    '<details class="vision-formula"><summary>How this is calculated</summary><p>Recorded value = Σ (new captured quantity × matching market or verified NPC unit value).</p><p>Silver/hour = recorded value ÷ observed seconds × 3,600. Rates appear after 60 observed seconds.</p><p>Blocked, minimized, stale and unreadable capture time is excluded. Readable periods with no drops still count. The recorded ledger never includes estimated drops. Optional crafting projections are displayed separately and are cleared when capture returns. The craft countdown remains an estimate of game progress.</p><p>Tracking attached '+new Date(v.attachedAt).toLocaleTimeString()+'. Earlier loot is excluded.</p></details>'+craftStudioTimerHTML(timer)+'</section>';
+    '<details class="vision-formula"><summary>How this is calculated</summary><p>Recorded value = Σ (new captured quantity × matching market or verified NPC unit value).</p><p>Silver/hour = recorded value ÷ observed seconds × 3,600. Rates appear after '+rateMin+' observed seconds.</p><p>Blocked, minimized, stale and unreadable capture time is excluded. Readable periods with no drops still count. The recorded ledger never includes estimated drops. Optional crafting projections are displayed separately and are cleared when capture returns. The craft countdown remains an estimate of game progress.</p><p>Tracking attached '+new Date(v.attachedAt).toLocaleTimeString()+'. Earlier loot is excluded.</p></details>'+craftStudioTimerHTML(timer)+'</section>';
 }
 
 /* Keep focused controls, expanded formulas and scroll positions across live updates. */

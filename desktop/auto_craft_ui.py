@@ -3,7 +3,7 @@ import json,math,sqlite3,threading,time
 from contextlib import closing
 import tkinter as tk
 from tkinter import ttk
-from auto_craft import CraftInference,families
+from auto_craft import CRAFT_RATE_MIN_SECONDS,CraftInference,families
 
 
 class AutomaticCrafting:
@@ -18,6 +18,7 @@ class AutomaticCrafting:
             if state and not all(k in state for k in ('tool','family','counts','observed','samples','actions','at')):state=None
             self.engine=CraftInference(state)
         except (ValueError,TypeError):self.engine=CraftInference()
+        self.startup_tool=None;self.startup_deadline=0
         self.view=None;self.last_save=0;self.saved_key=None;self.fetching=False;self.requests={};self.quote_notice='Cached market prices; unknown values remain unpriced.'
 
     def context(self,allow_lite=False):
@@ -31,6 +32,16 @@ class AutomaticCrafting:
         except (ValueError,TypeError):return None
         if not kind or not math.isfinite(speed) or not .05<=speed<=3600 or not math.isfinite(remaining) or remaining<=0:return None
         return {'active':True,'tool':a.session_id,'kind':kind,'verified':row['current'],'remaining':remaining,'speed':speed}
+
+    def capture_interval(self, interval, now):
+        context=self.context() if self.tracker.crafting.get() and self.tracker.recording.get() else None
+        if context is None:return interval
+        if context['tool']!=self.startup_tool:
+            self.startup_tool=context['tool']
+            self.startup_deadline=now+CRAFT_RATE_MIN_SECONDS+5
+        if now<self.startup_deadline and self.engine.sample_observed<CRAFT_RATE_MIN_SECONDS:
+            return min(interval,1)
+        return interval
 
     @staticmethod
     def run_id(run):return run['tool']+':'+run['family']+':'+str(run['at'])
@@ -147,7 +158,7 @@ class CurrentCraftView:
         if not d.get('detected'):
             self.title.set(d['status']);self.numbers.set('No recipe entry needed. Scan the active tool and enable recorded loot capture.');self.note.set('Two separate matching output captures identify the recipe family. Ambiguous or hidden output stays unknown.');self.progress['value']=0;self.line.delete('all');self.pies.draw(None);return
         m=d.get('model');self.title.set(d['recipe']+' · '+d['kind']+'\n'+d['status'])
-        self.numbers.set('RECORDED: '+number(d['recordedValue'])+' silver · '+number(d['recordedPerHour'])+' / observed hour\n'+('PROJECTED: '+number(m['perHour'])+' / hour · '+number(m['toolValue'])+' for scanned tool\nREMAINING: '+number(d['remainingValue'])+' estimated silver' if m else 'Forecast paused until this craft has an active verified tool.'))
+        self.numbers.set('RECORDED: '+number(d['recordedValue'])+' silver · '+number(d['recordedPerHour'])+' / h estimated from '+f"{d['observedSeconds']:.0f}s"+' observed\n'+('PROJECTED: '+number(m['perHour'])+' / hour · '+number(m['toolValue'])+' for scanned tool\nREMAINING: '+number(d['remainingValue'])+' estimated silver' if m else 'Forecast paused until this craft has an active verified tool.'))
         self.progress['value']=100*(d['progress'] or 0)
         self.note.set(f"{d['units']:,} captured output units · next milestone {d['nextGoal']:,} ({max(0,d['nextGoal']-d['units']):,} to go). "+(f"Partial recorded value: {len(d['unpriced'])} unpriced outputs excluded. " if d['unpriced'] else '')+'Rates appear after 60 readable seconds. Byproducts are kept and not assigned sale value. '+d['priceStatus'])
         if not self.graphs.winfo_manager():return

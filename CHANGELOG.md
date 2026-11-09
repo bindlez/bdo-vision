@@ -1,3 +1,8 @@
+## 1.13.0-rc.31 — Early craft estimates and Vision dock
+
+- Craft silver/hour estimates start after 10 readable seconds. The existing reader temporarily shortens its interval for a new verified craft tool.
+- Desktop workspaces use a shared slate and teal theme. Open native workspaces and the planner from the Vision/Grind overlay's Apps menu.
+
 ## 1.13.0-rc.30 — Tool-sized timers and inventory preview
 
 - Recipe timers split at the configured full-tool capacity, from 3,000 to 5,000 uses.

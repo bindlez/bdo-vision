@@ -35,3 +35,14 @@ The Tool viewer displays the discovery scene or current label crops, verified fi
 A recognized string is a candidate. Two matching valid numeric reads produce a verified durability field. Place Mode proximity produces an initial tool selection. Repeated plausible decreases or a valid timed comparison produce use confirmation. The UI must preserve those distinctions. Quest values are last seen, not estimated. Gear imports require review. Missing and stale values stay explicit.
 
 No complete real-world accuracy claim is made by the regression suite. Saved bright-background guild text remains a known difficult case. [Testing](11-testing.md) explains the distinction between generated fixtures, private replay evidence and a live game check.
+
+## Future capture option
+
+Test Windows Graphics Capture against a verified BDO window in borderless
+mode. Compare fresh frames with the game visible, covered, minimized and in
+native tray mode. Validate client-area coordinates and DPI before cropping.
+Reject missing, stale or black frames. Keep the current screen capture path
+for unsupported configurations. This is a possible window-frame source.
+Production does not use it yet.
+
+[Microsoft window capture API](https://learn.microsoft.com/en-us/windows/win32/api/windows.graphics.capture.interop/nf-windows-graphics-capture-interop-igraphicscaptureiteminterop-createforwindow)

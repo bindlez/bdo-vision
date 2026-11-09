@@ -13,7 +13,7 @@ def build_main_ui(app):
     canvas.configure(yscrollcommand=scroll.set)
     scroll.pack(side='right', fill='y')
     canvas.pack(side='left', fill='both', expand=True)
-    main = tk.Frame(canvas, bg=c['bg'], padx=12, pady=10)
+    main = tk.Frame(canvas, bg=c['bg'], padx=16, pady=14)
     content = canvas.create_window(0, 0, window=main, anchor='nw')
     main.bind('<Configure>', lambda event: canvas.configure(scrollregion=canvas.bbox('all')))
     canvas.bind('<Configure>', lambda event: canvas.itemconfigure(content, width=event.width))
@@ -21,9 +21,11 @@ def build_main_ui(app):
 
     header = tk.Frame(main, bg=c['bg'])
     header.pack(fill='x')
-    tk.Label(header, text='✦ BDO VISION', bg=c['bg'], fg=c['text'],
-             font=('Segoe UI Semibold', 13)).pack(side='left')
-    app.text_button(header, 'SETTINGS', app.open_settings).pack(side='right')
+    title = tk.Frame(header,bg=c['bg']);title.pack(side='left')
+    tk.Label(title,text='BDO VISION',bg=c['bg'],fg=c['bright'],font=('Segoe UI Semibold',9)).pack(anchor='w')
+    tk.Label(title,text='Craft timer',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',18)).pack(anchor='w')
+    app.text_button(header,'Settings',app.open_settings).pack(side='right')
+    app.text_button(header,'Open dock',app.open_dock).pack(side='right',padx=5)
 
     hero = tk.Frame(main, bg=c['panel'], padx=12, pady=10,
                     highlightbackground=c['line'], highlightthickness=1)

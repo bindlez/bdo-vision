@@ -15,6 +15,12 @@ class AutoCraftUITests(unittest.TestCase):
         try:
             auto=app.loot.auto_craft;db=app.loot.ledger.db
             with patch.object(auto,'context',return_value=CONTEXT),patch.object(auto,'refresh_prices'),patch.object(app.loot.insights.prices,'all',return_value=QUOTES),patch.object(app.loot,'capture_availability',return_value=(True,'')):
+                app.loot.crafting.set(True);app.loot.recording.set(True)
+                self.assertEqual(auto.capture_interval(5,0),1)
+                self.assertEqual(auto.capture_interval(.5,0),.5)
+                self.assertEqual(auto.capture_interval(5,15),5)
+                app.loot.recording.set(False)
+                self.assertEqual(auto.capture_interval(5,1),5)
                 auto.engine.tick(CONTEXT,True,0)
                 first=app.loot.ledger.add(ITEM,4,kind='Drop');auto.observe(first,ITEM,4,0);auto.engine.tick(CONTEXT,True,1)
                 second=app.loot.ledger.add(ITEM,4,kind='Drop');auto.observe(second,ITEM,4,1)

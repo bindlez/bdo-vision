@@ -89,24 +89,24 @@ class LootInsights:
                 if self.last_lite_mode is not True:
                     self.tracker.capture_clock.tick(False,'Lite Use · timer only')
                     self.session.clock.gate=False;self.session.tick(False)
-                    self.tracker.refresh_shared_loot()
+                    self.tracker.refresh_shared_loot((False,'Lite Use · timer only'))
                 self.last_lite_mode=True
                 self.tracker.auto_craft.tick(False)
                 self.tracker.grind.live.refresh()
                 home=getattr(self.tracker,'home',None)
                 if home and home.frame.winfo_exists() and home.frame.winfo_ismapped():home.refresh()
                 return
-            ready,reason=self.tracker.capture_availability()
+            availability=self.tracker.capture_availability()
+            ready,reason=availability
             self.tracker.auto_craft.tick(ready)
             self.tracker.capture_clock.tick(ready,reason)
             if not ready:self.session.clock.gate=False
             self.session.tick(ready)
-            lite=self.tracker.app.lite_use.get()
-            if not lite:self.prices.refresh_async()
+            self.prices.refresh_async()
             big=getattr(self.tracker,'big_drops',None)
             if big:big.refresh_pending()
-            if not lite or lite!=self.last_lite_mode:self.tracker.refresh_shared_loot()
-            self.last_lite_mode=lite
+            self.tracker.refresh_shared_loot(availability)
+            self.last_lite_mode=False
             home=getattr(self.tracker,'home',None)
             if home and home.frame.winfo_exists() and home.frame.winfo_ismapped():home.refresh()
             workshop=getattr(self.tracker,'craft_dashboard',None)

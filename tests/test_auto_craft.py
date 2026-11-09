@@ -39,6 +39,21 @@ class AutoCraftTests(unittest.TestCase):
         self.assertEqual(e.snapshot(CONTEXT,QUOTES,False)['model']['toolValue'],d['model']['toolValue'])
         self.assertFalse(e.snapshot({**CONTEXT,'tool':'nextTool'},QUOTES,True)['current'])
 
+    def test_rate_uses_ten_visible_seconds_including_startup_before_first_drop(self):
+        e=CraftInference()
+        for second in range(8):e.tick(CONTEXT,True,second)
+        e.observe(1,ITEM,4,CONTEXT,7)
+        e.tick(CONTEXT,True,8)
+        e.observe(2,ITEM,4,CONTEXT,8)
+        e.tick(CONTEXT,True,9)
+        self.assertIsNone(e.snapshot(CONTEXT,QUOTES,True)['recordedPerHour'])
+        e.tick(CONTEXT,True,10)
+        e.tick(CONTEXT,False,11)
+        e.tick(CONTEXT,False,35)
+        data=e.snapshot(CONTEXT,QUOTES,False)
+        self.assertEqual(data['observedSeconds'],10)
+        self.assertEqual(data['recordedPerHour'],288000)
+
     def test_rare_output_maps_to_parent_unknown_prices_stay_unknown_and_byproducts_kept(self):
         family=identify(ITEM,'alchemy');spec=craft_spec();rare=spec['items'][str(family['recipes'][0]['rare']['itemId'])]['name']
         self.assertEqual(identify(rare,'alchemy')['key'],family['key'])

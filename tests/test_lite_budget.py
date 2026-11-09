@@ -16,7 +16,7 @@ class LiteBudgetTests(unittest.TestCase):
         view.tick=lambda:LootInsights.tick(view)
         for _ in range(100):view.tick()
         tracker.capture_clock.tick.assert_called_once_with(False,'Lite Use · timer only')
-        tracker.refresh_shared_loot.assert_called_once_with()
+        tracker.refresh_shared_loot.assert_called_once_with((False,'Lite Use · timer only'))
         view.session.tick.assert_called_once_with(False)
         tracker.capture_availability.assert_not_called()
         view.prices.refresh_async.assert_not_called()

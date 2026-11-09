@@ -80,10 +80,11 @@ class LootTracker:
             return
         self._history_display_cache={};self._totals_cache=None;self._crafts_cache=None;self._last_refresh_key=None
         c=self.app.colors
-        win=self.window=tk.Toplevel(self.root);win.title('BDO Vision • Silver, Grind & saved history');win.geometry('860x650+24+60');win.minsize(780,520);win.configure(bg=c['bg'])
+        win=self.window=tk.Toplevel(self.root);win.title('BDO Vision · Workspaces');win.geometry('1000x680+24+60');win.minsize(820,520);win.configure(bg=c['bg'])
         main=tk.Frame(win,bg=c['bg'],padx=12,pady=10);main.pack(fill='both',expand=True)
         header=tk.Frame(main,bg=c['bg']);header.pack(fill='x')
-        tk.Label(header,text='VISION WORKSPACE',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',16)).pack(side='left')
+        tk.Label(header,text='Workspaces',bg=c['bg'],fg=c['text'],font=('Segoe UI Semibold',20)).pack(side='left')
+        self.app.text_button(header,'OPEN VISION DOCK',self.app.open_dock).pack(side='left',padx=14)
         self.tracker_setup_button=self.app.text_button(header,'CAPTURE SETUP',self.toggle_setup);self.tracker_setup_button.pack(side='right')
         tk.Label(main,textvariable=self.summary,bg=c['bg'],fg=c['bright'],font=('Segoe UI',10)).pack(anchor='w',pady=(4,14))
         setup_holder=tk.Frame(main,bg=c['bg']);setup_holder.pack(fill='x')
@@ -258,7 +259,9 @@ class LootTracker:
                 elif self.busy:self.capture_state.set('Tracking ON · reading item notifications')
                 elif self.app.selecting_region:self.capture_state.set('Tracking ON · selecting capture area')
                 else:
-                    delay=max(0,self.safe_interval()-(time.monotonic()-self.last_scan))
+                    now=time.monotonic()
+                    interval=self.auto_craft.capture_interval(self.safe_interval(),now)
+                    delay=max(0,interval-(now-self.last_scan))
                     if delay<=0:
                         ready,reason=self.can_capture()
                         if ready:self.scan()
@@ -422,7 +425,7 @@ class LootTracker:
         self.big_drops.close_toast()
         self.closed=True;self.generation+=1;self.guild.close();self.capture_clock.tick(False,'Application closing');self.capture_clock.save();self.silver.close();self.insights.close();self.ledger.close()
 
-    def planner_loot_snapshot(self):
+    def planner_loot_snapshot(self, availability=None):
         prices=self.insights.prices
         quotes=prices.all()
         key=(self.ledger.revision,prices.revision,id(quotes))
@@ -433,17 +436,17 @@ class LootTracker:
                 'crafted_units':sum(r[3] for r in rows if r[6] in ('Crafted','Rare craft'))}
             self._shared_summary_key=key
             self._shared_summary['summary_revision']=str(time.monotonic_ns())
-        fresh,reason=self.capture_availability()
+        fresh,reason=self.capture_availability() if availability is None else availability
         return {'scope':'All recorded loot','available':fresh,'status':'current' if fresh else 'paused','reason':reason,
                 'updated_at':time.time(),'last_capture_at':self.last_scan_finished or None,
                 'history_id':self.capture_clock.history_id,'crafting_mode':self.crafting.get(),
                 'health':{**self.last_result_health,'last_saved_at':self.last_saved_at,'capture_at':self.capture_time,'finished_at':self.last_scan_finished,'reader_seconds':self.last_ocr_duration,'capture_gap':self.last_capture_gap,'busy':self.busy,'feed':self.feed.get()},
                 'capture_clock':self.capture_clock.snapshot(),'grind':self.grind.snapshot(),'big_drops':self.big_drops.snapshot(),'auto_craft':self.auto_craft.snapshot(fresh),**self._shared_summary}
 
-    def refresh_shared_loot(self):
+    def refresh_shared_loot(self, availability=None):
         bridge=getattr(self.app,'bridge',None)
         if self.share_loot.get() and bridge:
-            bridge.update_crafting_loot(self.planner_loot_snapshot())
+            bridge.update_crafting_loot(self.planner_loot_snapshot(availability))
 
     def share_changed(self):
         self.app.save_quietly()

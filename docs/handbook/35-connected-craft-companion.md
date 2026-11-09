@@ -156,3 +156,16 @@ a conflicting start rather than falsely reporting a new timer.
 
 CP target inputs and calculations are unchanged. `cpShowSection` switches between
 route comparisons and the full target planner without modifying the scenario.
+
+
+## Craft startup sample and workspace dock
+
+With loot recording and Crafting mode enabled, the existing reader can scan
+once per second during the first 15 seconds of a new verified tool session.
+It returns to the configured interval as soon as 10 readable seconds accrue.
+A silver-per-hour estimate needs 10 observed seconds and priced output.
+Coverage gaps freeze the sample. Lite Use keeps OCR off after acquisition.
+Grind rates still need 60 seconds.
+
+Open Dock from the craft timer or Workspaces. The Vision/Grind overlay's Apps
+menu launches the existing workspaces. Locked mode remains click-through.

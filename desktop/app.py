@@ -30,7 +30,7 @@ if config.get('scan_interval')==5:config['scan_interval']=10
 class App:
  def __init__(self,root):
   self.root=root
-  root.title(f'BDO Vision {APP_VERSION}  •  Saved history')
+  root.title(f'BDO Vision {APP_VERSION} · Craft timer')
   root.geometry('380x560+12+60')
   root.minsize(340,420)
   root.configure(bg='#08070d')
@@ -86,13 +86,18 @@ class App:
   self.timer_state=tk.StringVar(value='WAITING FOR OCR')
   self.preview=None
   self.colors={
-   'bg':'#0b0a10','panel':'#15131e','panel2':'#211c30','line':'#393047',
-   'muted':'#b1a8c2','secondary':'#d1c9df','text':'#faf7ff',
-   'violet':'#7744d4','violet2':'#6636bb','bright':'#d5baff',
-   'good':'#89e4bc','warning':'#ffc47b','teal':'#63d9cf','teal_panel':'#153036'
+   'bg':'#10171d','panel':'#17232b','panel2':'#22323c','line':'#38505d',
+   'muted':'#9eb3bf','secondary':'#c3d2d9','text':'#f3f8fa',
+   'violet':'#286b70','violet2':'#21585d','bright':'#a3e0dc',
+   'good':'#98e0b8','warning':'#ffc483','teal':'#79d7cf','teal_panel':'#193438'
   }
   c=self.colors
   style=ttk.Style();style.theme_use('clam')
+  style.configure('.',background=c['panel'],foreground=c['text'],font=('Segoe UI',10))
+  style.configure('TScrollbar',background=c['panel2'],troughcolor=c['bg'],arrowcolor=c['secondary'],bordercolor=c['line'])
+  style.configure('TScale',background=c['panel2'],troughcolor=c['bg'])
+  style.configure('TButton',padding=(10,6),bordercolor=c['line'])
+  style.map('TButton',background=[('active',c['violet2'])],foreground=[('disabled',c['muted'])])
   style.configure('Vision.Horizontal.TProgressbar',troughcolor=c['panel2'],background=c['violet'],bordercolor=c['panel2'],lightcolor=c['violet'],darkcolor=c['violet'],thickness=8)
   style.configure('Vision.TCombobox',fieldbackground=c['panel2'],background=c['panel2'],foreground=c['text'],arrowcolor=c['bright'],bordercolor=c['line'],padding=3)
   style.map('Vision.TCombobox',fieldbackground=[('readonly',c['panel2'])],foreground=[('readonly',c['text'])],selectbackground=[('readonly',c['panel2'])],selectforeground=[('readonly',c['text'])])
@@ -145,8 +150,14 @@ class App:
   else:self.status.set('Local planner is unavailable. Check the connection in Settings.')
 
  def open_guild_quest(self):
-  self.loot.open()
-  self.loot.tabs.select(self.loot.guild.frame)
+  self.open_activity('quests')
+
+ def open_dock(self):
+  self.loot.grind.live.open()
+
+ def show_timer(self):
+  self.root.deiconify()
+  self.root.lift()
 
  def open_activity(self,section):
   self.loot.open()

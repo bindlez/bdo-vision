@@ -74,17 +74,25 @@ def forecast(family,quotes,speed,actions,mastery=0,retention=84.5):
             'pricedVariants':len(variants),'variants':len(family['recipes'])}
 
 
+CRAFT_RATE_MIN_SECONDS = 10
+
+
 class CraftInference:
     def __init__(self,state=None):
         self.run=state;self.pending=None;self.last_id=max(0,int((state or {}).get('lastId',0)))
-        self.last_tick=None;self.last_ready=False;self.revision=0;self.state='Waiting for repeated craft output and a tracked tool.'
+        self.last_tick=None;self.last_ready=False;self.sample_tool=None;self.sample_observed=0;self.revision=0;self.state='Waiting for repeated craft output and a tracked tool.'
 
     def tick(self,context,ready,now):
         active=bool(context and context.get('active'))
+        tool=context['tool'] if active else None
+        if tool != self.sample_tool:
+            self.sample_tool=tool;self.sample_observed=0;self.last_ready=False
+        elapsed=max(0,min(3,now-self.last_tick)) if self.last_tick is not None and active and ready and self.last_ready else 0
+        self.sample_observed+=elapsed
         for record in [self.run,self.pending]:
             if record and record is self.run and self.pending and self.pending['family']!=record['family']:continue
-            if record and active and ready and self.last_ready and record['tool']==context['tool'] and self.last_tick is not None:
-                record['observed']+=max(0,min(3,now-max(self.last_tick,record.get('tickStart',record['at']))))
+            if record and active and ready and self.last_ready and record['tool']==context['tool'] and elapsed:
+                record['observed']+=min(elapsed,max(0,now-record.get('tickStart',record['at'])))
         self.last_tick=now;self.last_ready=bool(active and ready)
         if self.pending and (not active or self.pending['tool']!=context['tool'] or now-self.pending.get('tickStart',self.pending['at'])>90):self.pending=None
 
@@ -103,7 +111,8 @@ class CraftInference:
         if not family:return False
         p=self.pending
         if not p or p['family']!=family['key'] or p['tool']!=context['tool'] or not 0<=at-p['at']<=90:
-            p=self.pending={'family':family['key'],'tool':context['tool'],'at':at,'tickStart':at if now is None else now,'counts':{},'observed':0,'samples':[],'lastId':ident,
+            startup=self.sample_observed if not same and pending is None and self.sample_tool==context['tool'] else 0
+            p=self.pending={'family':family['key'],'tool':context['tool'],'at':at,'tickStart':at if now is None else now,'counts':{},'observed':startup,'samples':[],'lastId':ident,
                 'actions':context['remaining'] if same else context['verified'],'changedRecipe':bool(same),'witnesses':[at],'ids':[]}
         self.add(p,item,quantity);p['lastId']=ident;p['ids'].append(ident)
         if all(abs(at-v)>=.5 for v in p['witnesses']):p['witnesses'].append(at)
@@ -136,7 +145,7 @@ class CraftInference:
         units=sum(r['counts'].values());next_goal=next((n for n in (100,500,1000,2500,5000,10000,25000,50000) if n>units),((units//50000)+1)*50000)
         status='Observing detected craft' if current and ready else 'Capture paused · rates frozen; forecast remains an estimate' if current else 'Retained craft · waiting for a new verified tool/output'
         return {'detected':True,'toolSession':context['tool'] if current else None,'current':current,'available':bool(current and ready),'recipe':family['name'],'kind':family['kind'],
-                'status':status,'observedSeconds':r['observed'],'recordedValue':value,'recordedPerHour':value*3600/r['observed'] if value is not None and r['observed']>=60 else None,
+                'status':status,'observedSeconds':r['observed'],'recordedValue':value,'recordedPerHour':value*3600/r['observed'] if value is not None and r['observed']>=CRAFT_RATE_MIN_SECONDS else None,
                 'model':model if current else None,'remainingValue':model['perBatch']*context['remaining'] if current and model['perBatch'] is not None else None,
                 'scannedActions':r['actions'],'progress':progress,'items':items,'unpriced':unknown,'units':units,'nextGoal':next_goal,
                 'changedRecipe':r.get('changedRecipe',False),'points':[[second,valuation(counts)[0]] for second,counts in r['samples']]}

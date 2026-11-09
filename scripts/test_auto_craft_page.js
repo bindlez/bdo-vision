@@ -11,7 +11,7 @@ context.renderVisionAutomaticCraft(panel,null);assert.equal(nodes.size,0);
 const payload={detected:true,recipe:'<img src=x>',kind:'alchemy',status:'Capture paused',recordedValue:123,recordedPerHour:456,units:4,nextGoal:100,unpriced:[],scannedActions:3000,model:{perHour:500,toolValue:999,mastery:0,retention:84.5},items:[{item:'Elixir',value:123}],points:[[0,0],[60,123]]};
 context.renderVisionAutomaticCraft(panel,payload,{guild_status:{complete:true,available:false}});const card=nodes.get('visionAutomaticCraft');assert.equal(card.querySelector('[data-auto-title]').textContent,'<img src=x> · alchemy');assert.equal(card.querySelector('[data-auto-rate]').textContent,'456');assert.equal(card.querySelector('[data-auto-tool]').textContent,'999');assert(!card.querySelector('[data-auto-graphs]').innerHTML);
 assert(card.querySelector('[data-auto-guild]').textContent.includes('complete'));assert(card.querySelector('[data-auto-end]').textContent);
-card.querySelector('details').open=true;card.querySelector('details').ontoggle();assert(card.querySelector('[data-auto-graphs]').innerHTML.includes('actual series'));assert(card.querySelector('[data-auto-details]').textContent.includes('60 observed seconds'));
+card.querySelector('details').open=true;card.querySelector('details').ontoggle();assert(card.querySelector('[data-auto-graphs]').innerHTML.includes('actual series'));assert(card.querySelector('[data-auto-details]').textContent.includes('10 observed seconds'));
 context.renderVisionAutomaticCraft(panel,null);assert(card.hidden);
 console.log('Automatic craft: no manual recipe, displayed rates/tool projection, paused status, text-safe names and lazy charts passed');
 
