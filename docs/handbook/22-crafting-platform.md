@@ -209,9 +209,12 @@ Preserve saved recipe identities and separate Processing from utensil crafting.
    multilevel cooking example, an alchemy example and a processing example.
 5. Publish verified milestones to GitHub and link dated previews from Pages.
 
-The dated catalog matches the reference list totals of 152 Cooking, 92 Alchemy,
-424 Processing and 322 Imperial variants. Matching counts cannot verify
-individual variant parity. Twelve Alchemy and 223 Processing records have
+The November 9, 2026 audit compared all 990 recipe keys against a fresh
+public Bdolytics recipe response. There were no missing or extra keys and
+no differences in output IDs, activities, methods, times, XP, proc ranges,
+rare outputs, or ingredient slot identities and requirements. The catalog
+contains 152 Cooking, 92 Alchemy, 424 Processing, and 322 Imperial variants.
+Twelve Alchemy and 223 Processing records have
 zero or unavailable XP in this snapshot. Eight Processing records lack a
 verified method. Show unavailable values and avoid assigning a mass multiplier
 to those records. Only Cooking and Alchemy recipe timers use utensil chunks.
@@ -222,7 +225,7 @@ selected intermediate stages. A missing stock quote remains unknown. A
 market-wide sales comparison shows scale and cannot forecast individual fills.
 The dated Pages preview has no live bridge.
 
-Still to verify against the reference workflow: every recipe key and variant,
-minimum skill and method requirements, private saved-plan or storage behavior
-visible only after sign-in, and per-item historical market coverage. These
-are separate acceptance checks from count parity.
+Still to verify against the reference workflow: minimum skill and method
+requirements, private saved-plan or storage behavior visible only after
+sign-in, and per-item historical market coverage. These are separate
+acceptance checks from recipe catalog parity.
