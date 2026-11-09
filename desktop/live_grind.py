@@ -83,17 +83,17 @@ class LiveGrind:
             self.craft_metrics=None
 
     def refresh(self,availability=None,craft_snapshot=None):
-        self.craft_panel.refresh()
-        self.refresh_craft_metrics(availability,craft_snapshot)
         visible=self.window and self.window.winfo_exists() and self.window.winfo_ismapped()
         enabled=bool(self.grind.tracker.platform_preferences.get('obs_enabled',False));bridge=getattr(self.grind.tracker.app,'bridge',None)
         if bridge:
             with bridge._lock:bridge.stream_enabled=enabled
-        if not visible and not enabled:return
-        data=self.payload()
-        if bridge:
-            with bridge._lock:bridge.stream_snapshot=data if enabled else {}
-        if visible:self.hud.update(data)
+        if visible or enabled:
+            data=self.payload()
+            if bridge:
+                with bridge._lock:bridge.stream_snapshot=data if enabled else {}
+            if visible:self.hud.update(data)
+        self.craft_panel.refresh()
+        self.refresh_craft_metrics(availability,craft_snapshot)
 
     def obs_changed(self):
         self.grind.tracker.platform_preferences['obs_enabled']=self.grind.obs_enabled.get();self.grind.tracker.app.save_quietly();self.refresh()

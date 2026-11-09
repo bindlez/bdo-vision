@@ -25,7 +25,7 @@ class CraftTimerPipelineTests(unittest.TestCase):
 
     def test_detailed_tracking_rechecks_and_resyncs_only_over_fifteen_seconds(self):
         self.app.detailed_craft.set(True)
-        self.feed(100)
+        self.feed(100,2,'two-frame comparison')
         self.clock=120
         self.feed(90,2,'Repeated durability decreases')
         self.assertFalse(self.app._tool_scan_latched)
@@ -36,11 +36,11 @@ class CraftTimerPipelineTests(unittest.TestCase):
         self.assertIn('20s difference',self.app.status.get())
 
     def test_corroborated_detailed_drift_preserves_verified_tool_session(self):
-        self.app.detailed_craft.set(True);self.feed(500)
+        self.app.detailed_craft.set(True);self.feed(500,2,'two-frame comparison')
         session=self.app.session_id
-        self.clock=300;self.feed(480,2)
+        self.clock=300;self.feed(480,2,'Repeated durability decreases')
         self.assertIsNotNone(self.app.reading_gate.pending)
-        self.clock=303;self.feed(478,2)
+        self.clock=303;self.feed(478,2,'Repeated durability decreases')
         self.assertIsNone(self.app.reading_gate.pending)
         self.assertEqual(self.app.value,478)
         self.assertEqual(self.app.session_id,session)
@@ -58,7 +58,7 @@ class CraftTimerPipelineTests(unittest.TestCase):
             tool_scan.assert_called_once_with(delayed=False,automatic=True)
 
     def test_detailed_tracking_falls_back_when_bdo_is_hidden(self):
-        self.app.detailed_craft.set(True);self.feed()
+        self.app.detailed_craft.set(True);self.feed(100,2,'two-frame comparison')
         with patch.object(self.app,'bdo_foreground',return_value=False),patch.object(self.app,'read_ocr') as read:
             self.app.poll_auto_ocr()
             read.assert_not_called()
@@ -83,6 +83,16 @@ class CraftTimerPipelineTests(unittest.TestCase):
         self.assertFalse(guild.model.snapshot(1005)['complete'])
         self.assertIn('may be complete',guild.notice.get())
         self.assertEqual(guild.model.current,90)
+
+    def test_detailed_craft_does_not_use_a_position_only_tool(self):
+        self.app.detailed_craft.set(True)
+        self.app.tool_reader.next_due=self.clock+20
+        self.feed()
+        self.assertIsNone(self.app.verified_tool_row())
+        self.assertFalse(self.app.running)
+        self.assertEqual(self.app.tool_reader.next_due,self.clock+3)
+        self.feed(99,2,'two-frame comparison')
+        self.assertEqual(self.app.verified_tool_row()['current'],99)
 
     def test_detailed_unclaimed_alert_needs_two_verified_complete_reads(self):
         self.feed(100)

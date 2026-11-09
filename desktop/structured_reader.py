@@ -57,14 +57,17 @@ def quest_objective_identity(reading):
 class StructuredLocator:
     def __init__(self,worker):self.worker=worker;self.last_error=''
 
-    def __call__(self,image,tess,focused=True):
+    def locate_all(self,image,tess):
+        return self(image,tess,all_candidates=True)
+
+    def __call__(self,image,tess,focused=True,*,all_candidates=False):
         from tool_reader import discover_scene,place_selected
         from PIL import ImageOps
         self.last_error=''
         try:
             # Upper world/residence strip only. One engine request and no full
             # screen upscale. Crop scale adapts without exceeding the pipe cap.
-            box=(int(image.width*.25),int(image.height*.08),int(image.width*.82),int(image.height*.32))
+            box=(int(image.width*.25),0 if all_candidates else int(image.height*.08),int(image.width*.82),int(image.height*.32))
             crop=ImageOps.autocontrast(image.crop(box).convert('L'))
             scale=min(2.,math.sqrt(1400000/(crop.width*crop.height)))
             prepared=crop.resize((int(crop.width*scale),int(crop.height*scale)))
@@ -79,7 +82,7 @@ class StructuredLocator:
                 # Use positional evidence to choose a crop, not to accept its
                 # value. The full literal counter is verified independently.
                 provisional=[dict(r,current=r['os_pair'][0],maximum=r['os_pair'][1],votes=2) for r in clipped]
-                chosen=place_selected({'anchor':anchor,'tools':provisional},image.height)
+                chosen=None if all_candidates else place_selected({'anchor':anchor,'tools':provisional},image.height)
                 if chosen:clipped=[r for r in clipped if r['numbers']==chosen['numbers']]
                 if clipped:return clipped,anchor,1
             self.last_error='No complete anchored counter from Windows OCR'

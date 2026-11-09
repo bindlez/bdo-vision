@@ -28,6 +28,14 @@ class StructuredReaderTests(unittest.TestCase):
         self.assertFalse(counter_context_error(2491,3000,regions[0]))
         self.assertTrue(counter_context_error(2492,3000,regions[0]))
 
+    def test_detailed_locator_keeps_tools_beyond_the_nearest_one(self):
+        class Worker:
+            def recognize(self,*a,**kw):
+                return {'words':[positioned('Place Mode',1,100),positioned('Alchemy Tool(3000/3000)',2,100),positioned('Alchemy Tool(2900/3000)',2,460)]}
+        locator=StructuredLocator(Worker())
+        regions,_,_=locator.locate_all(Image.new('RGB',(1280,720)),'engine')
+        self.assertEqual([r['os_pair'] for r in regions],[(3000,3000),(2900,3000)])
+
     def test_damaged_title_still_does_not_repair_digits(self):
         self.assertEqual(anchored_title_family('2iMorningLightTraditionalAlchemvlocl24olys000)'), 'Alchemy Tool')
         regions,_=tool_regions({'words':[positioned('Alchemy Tool(29O0/3000)')]})

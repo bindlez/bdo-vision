@@ -25,7 +25,7 @@ class AutomaticCrafting:
         a=self.app
         lite=getattr(a,'lite_use',None)
         if not self.enabled.get() or (lite is not None and lite.get() and not allow_lite) or not getattr(a,'running',False) or not getattr(a,'has_reading',False) or getattr(a,'last_good_ocr',None) is None or getattr(a,'_active_tool_key',None) is None:return None
-        status=a.tool_status.snapshot();row=next((r for r in status['tools'] if r['id']==status['active_id']),None)
+        row=a.verified_tool_row()
         if not row:return None
         name=row['name'].casefold();kind='alchemy' if 'alchemy' in name else 'cooking' if 'cooking' in name else None
         try:speed=float(a.speed.get());remaining=float(a.value)

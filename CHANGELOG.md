@@ -1,3 +1,9 @@
+## 1.13.0-rc.38 — Dock timer and active tool verification
+
+- Dock 0 shows durability and time in Detailed Craft Tracking, even with a grind session still open. The separate craft loot panel keeps its silver and graphs.
+- Detailed tracking looks for durability use across verified visible tools. Position alone cannot attach craft loot to a tool. The reader retries quickly when it can read a counter but needs more evidence.
+- Scan tool now and Tool reader status are available from the dock Apps menu.
+
 ## 1.13.0-rc.37 — Craft metrics and Screenshot Lab
 
 - Detailed Craft Tracking adds a compact docked panel with captured value, estimated silver per hour, and the top captured items. It shares the existing tracker and yields to configured capture regions.

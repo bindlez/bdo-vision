@@ -47,7 +47,7 @@ class ToolStatus:
         elif not self.tools and self.unreadable:stage='unreadable';detail='Tool labels were located, but no durability passed verification. Keep the full text visible; retrying automatically.'
         elif not self.tools:stage='absent';detail='No tool labels were located in this scan. Show your utensil labels if you are crafting; unreadable or hidden tools may also be missed.'
         elif all(r['current']==0 for r in self.tools):stage='empty';detail='The readable tools have no durability remaining.'
-        elif sum(r.get('wear_streak',0)>=2 for r in self.tools)>1:stage='ambiguous';detail='Waiting for enough evidence to identify your tool safely.'
+        elif report.get('ambiguous_use') or sum(r.get('wear_streak',0)>=2 for r in self.tools)>1:stage='ambiguous';detail='Waiting for enough evidence to identify your tool safely.'
         elif any(r.get('wear_streak',0)>0 for r in self.tools):stage='confirming';detail='Durability use detected. Waiting for one more change.'
         else:stage='found';detail=f"{len(self.tools)} readable tool(s). Start crafting to confirm which one is active."
         if self.unreadable and self.tools:detail+=f' {self.unreadable} other label(s) unreadable.'

@@ -69,10 +69,24 @@ class LiveHUD:
         quest=self.tracker.guild
         progress,note=guild_summary(quest.model.snapshot(),quest.enabled.get())
         self.guild.configure(text=('Guild quest / '+progress+' / '+(quest.forecast_text() or note))[:65])
-        if not data.get('sessionActive') and self.app.has_reading and self.app.value>0:
-            remaining=max(0,self.app.value);seconds=remaining*max(.05,float(self.app.speed.get()))
-            detailed=self.app.running and self.app.detailed_craft.get() and not self.app._tool_timer_estimated
-            mode='DETAILED TRACKING' if detailed else 'COUNTDOWN ESTIMATE' if self.app.running else 'PAUSED'
+        detailed_enabled=self.app.detailed_craft.get()
+        if detailed_enabled or self.app.has_reading and self.app.value>0 and (self.app.running or not data.get('sessionActive')):
+            if not self.app.has_reading:
+                stage=self.app.tool_status.snapshot()
+                self.status.configure(text='CRAFT TIMER / FINDING TOOL',fg=GOLD)
+                self.value_label.configure(text='TOOL USES LEFT');self.rate_label.configure(text='TIME LEFT')
+                self.value.configure(text='—');self.rate.configure(text='—')
+                self.goal.configure(text=stage['title'],fg=MUTED)
+                self.latest.configure(text='Show tool label and start crafting')
+                self.time.configure(text='Checking durability use')
+                self.pause.configure(command=self.app.read_ocr,text='SCAN TOOL')
+                self.bar.coords(self.fill,0,0,0,3);self.key=None;return
+            remaining=max(0,self.app.value)
+            try:seconds=remaining*max(.05,float(self.app.speed.get()))
+            except ValueError:seconds=remaining
+            verified=self.app.verified_tool_row() if detailed_enabled else None
+            detailed=self.app.running and verified is not None
+            mode='TOOL EMPTY / TIMER ENDED' if remaining<=0 else 'DETAILED TRACKING' if detailed else 'COUNTDOWN ESTIMATE' if self.app.running else 'PAUSED'
             self.status.configure(text='CRAFT TIMER / '+mode,fg=TEAL)
             self.pause.configure(command=self.app.toggle_craft_pause,text='PAUSE CRAFT' if self.app.running else 'RESUME CRAFT')
             self.value_label.configure(text='TOOL USES LEFT');self.rate_label.configure(text='TIME LEFT')
@@ -82,9 +96,10 @@ class LiveHUD:
                 run = None
             from auto_craft import families
             recipe=families()[0].get(run['family'],{}).get('name','Waiting for craft output') if run else 'Waiting for craft output'
-            self.latest.configure(text=recipe[:48])
+            tool=f"{verified['name']} · {verified['current']:,}/{verified['maximum']:,} read" if verified else recipe
+            self.latest.configure(text=tool[:49])
             loot = 'CRAFT opens search, packing and estimates'
-            if detailed or self.options['craft_loot']:
+            if self.options['craft_loot']:
                 counts = run['counts'] if run else {}
                 lead = max(counts, key=counts.get, default=None)
                 loot = f'Craft loot · {lead} × {counts[lead]:,}' if lead else 'Craft loot · waiting for recorded output'

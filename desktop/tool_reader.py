@@ -24,6 +24,10 @@ COUNTER=re.compile(r'(?<![\d,?A-Za-z])(\d[\d,]{0,8})\s*[/|]\s*(\d[\d,]{0,8})(?!\
 _budget=local()
 
 
+class ToolBudgetExpired(RuntimeError):
+    pass
+
+
 def family(name):
     return 'alchemy' if 'alchemy' in name.casefold() else 'cooking' if 'cooking' in name.casefold() else None
 
@@ -180,7 +184,7 @@ def ocr(image,tess,psm,numeric=False,characters=False):
     command=[tess,'stdin','stdout','--psm',str(psm),'-l','eng']
     if numeric:command+=['-c','tessedit_char_whitelist=0123456789/()']
     remaining=getattr(_budget,'deadline',time.monotonic()+5)-time.monotonic()
-    if remaining<.15:raise RuntimeError('Tool search reached its time budget; retrying automatically')
+    if remaining<.15:raise ToolBudgetExpired('Tool search reached its time budget; retrying automatically')
     output=['-c','hocr_char_boxes=1','hocr'] if characters else ['tsv']
     result=run_ocr(command+output,
                    input=blob.getvalue(),capture_output=True,timeout=min(5,remaining))
@@ -394,9 +398,21 @@ def current_bar_fill(crop,region):
 
 
 def verify_labels(crops,regions,tess,cache=None):
+    result=[];calls=0
+    for crop,region in zip(crops,regions):
+        try:
+            rows,used=_verify_labels([crop],[region],tess,cache)
+        except (ToolBudgetExpired,subprocess.TimeoutExpired):
+            region['rejection']='Read budget exhausted; retrying'
+            break
+        result.extend(rows);calls+=used
+    return result,calls
+
+
+def _verify_labels(crops,regions,tess,cache):
     import hashlib
     result=[];calls=0
-    for index,(crop,region) in enumerate(zip(crops,regions)):
+    for crop,region in zip(crops,regions):
         fill=current_bar_fill(crop,region)
         if fill is not None:region['bar_fill']=fill
         region['rejection']='No numeric field located'
@@ -584,9 +600,9 @@ def distinct_counters(observations):
     return [g[0] for g in groups if len({(r['current'],r['maximum']) for r in g})==1]
 
 
-def changing_fields(before,after,elapsed):
+def changing_fields(before,after,elapsed,*,max_elapsed=2.25):
     """Return changed fields only when every located field is verified."""
-    if not 1.25<=elapsed<=2.25 or not before or len(before)!=len(after):return []
+    if not 1.25<=elapsed<=max_elapsed or not before or len(before)!=len(after):return []
     candidates=[]
     for a,b in zip(before,after):
         if not a.get('numbers') or a.get('numbers')!=b.get('numbers') or a['maximum']!=b['maximum']:return []
@@ -645,6 +661,9 @@ class ToolInventory:
                 possible.append((score,ident,old,distance))
             possible.sort(key=lambda p:p[0])
             match=possible[0] if possible and possible[0][1] not in used and (len(possible)==1 or possible[1][0]-possible[0][0]>=3) else None
+            if confirmed_field and tuple(row.get('numbers',()))==confirmed_field:
+                same_field=[p for p in possible if p[1] not in used and tuple(p[2].get('numbers',()))==confirmed_field]
+                if len(same_field)==1:match=same_field[0]
             if match is None:
                 stationary=[p for p in possible if p[1] not in used and p[2]['current']==row['current'] and p[2]['wear_streak']==0]
                 stationary.sort(key=lambda p:p[3])
@@ -660,6 +679,7 @@ class ToolInventory:
                 if valid_wear and confirmed_field and tuple(row.get('numbers',()))==confirmed_field:streak=max(2,streak)
             else:
                 self.sequence+=1;ident='tool-'+str(self.sequence);elapsed=0;drop=0;streak=0;idle=0;cycle=0;pace=[];changed=now
+                if confirmed_field and tuple(row.get('numbers',()))==confirmed_field:streak=2
             used.add(ident)
             track={**row,'id':ident,'x':x,'y':y,'seen_at':now,'wear_streak':streak,'idle_reads':idle,
                    'last_drop':drop,'cycle':cycle,'pace':pace,'changed_at':changed,'missing':0,'percent':round(100*row['current']/row['maximum'],1)}
@@ -693,25 +713,25 @@ class AutomaticToolReader:
         self.previous_positioned=None
         self.diagnostic=None
 
-    def read(self,tess,bounds,grab,now=None,interval=10,confirm_pair=False):
+    def read(self,tess,bounds,grab,now=None,interval=10,confirm_pair=False,require_use=False):
         started=time.monotonic();_budget.deadline=started+6
         self.last_failure_trace=''
         if self.diagnostic is not None:_budget.trace=[]
         try:
-            report=self._read(tess,bounds,grab,now,interval)
+            report=self._read(tess,bounds,grab,now,interval,require_use=require_use)
             selected=place_selected(report,bounds[4]-bounds[2])
             if selected and report['active_id'] and selected['id']!=report['active_id']:
                 # Repeated verified consumption outranks a camera-dependent
                 # positional prior when the player moves to another utensil.
                 report['confirmation']='Repeated durability use overrides Place Mode position'
-            provisional=place_selected(report,bounds[4]-bounds[2],uncontested=True)
+            provisional=None if require_use else place_selected(report,bounds[4]-bounds[2],uncontested=True)
             if provisional and not getattr(self,'position_started',False):
                 # First verified read is usable immediately; confirm use on
                 # the following scan without holding the initial countdown.
                 self.position_started=True
             elif confirm_pair and not report['active_id'] and report['tools'] and time.monotonic()-self.last_pair>=15 and _budget.deadline-time.monotonic()>=2.5:
                 self.last_pair=time.monotonic()
-                try:report=self.compare_pair(tess,bounds,grab,report,interval)
+                try:report=self.compare_pair(tess,bounds,grab,report,interval,require_use=require_use)
                 except (RuntimeError,TimeoutError,subprocess.TimeoutExpired):report['pair_result']='Comparison interrupted; no active tool inferred'
             if not report['active_id'] and provisional and not report.get('ambiguous_use') and not report.get('position_conflict'):
                 selected=provisional
@@ -728,10 +748,11 @@ class AutomaticToolReader:
             del _budget.deadline
             if hasattr(_budget,'trace'):del _budget.trace
 
-    def compare_pair(self,tess,bounds,grab,report,interval):
+    def compare_pair(self,tess,bounds,grab,report,interval,*,require_use=False):
         """Two small label batches 1.5 seconds apart; never retain full frames."""
         _,left,top,_,_=bounds
-        regions=[dict(r) for r in self.regions]
+        verified_boxes={tuple(row['box']) for row in report['tools']}
+        regions=[dict(r) for r in self.regions if tuple(r['box']) in verified_boxes]
         if not regions:return report
         def capture():return [grab((left+r['box'][0],top+r['box'][1],left+r['box'][2],top+r['box'][3])) for r in regions]
         a_mono=time.monotonic();first=capture()
@@ -752,7 +773,7 @@ class AutomaticToolReader:
             report['pair_result']='Several verified counters changed; tool selection withheld'
             return report
         report['duration']+=time.monotonic()-a_mono
-        selected=place_selected(report,bounds[4]-bounds[2])
+        selected=None if require_use else place_selected(report,bounds[4]-bounds[2])
         if field and selected and tuple(selected.get('numbers',()))!=field:
             field=None
             report['position_conflict']=True
@@ -766,12 +787,14 @@ class AutomaticToolReader:
             self.next_due=time.monotonic()+max(3,min(120,interval));report['next_seconds']=max(3,min(120,interval))
         return report
 
-    def _read(self,tess,bounds,grab,now=None,interval=10):
+    def _read(self,tess,bounds,grab,now=None,interval=10,*,require_use=False):
         """bounds=(window_id,left,top,right,bottom); grab is screen-capture adapter."""
         started=time.monotonic();now=started if now is None else now;scene=None
         hwnd,left,top,right,bottom=bounds;width=right-left;height=bottom-top
         if width<100 or height<100 or width*height>16_000_000:raise ValueError('Unsupported visible game window size')
         context=(hwnd,left,top,width,height)
+        locator=self.scene_locator or discover_scene
+        if require_use:locator=getattr(self.scene_locator,'locate_all',None) or locator
         if context!=self.context:self.regions=[];self.context=context;self.signatures={};self.numeric_cache={};self.position_started=False
         discover=not self.regions or now-self.last_discovery>=30
         calls=0
@@ -779,39 +802,46 @@ class AutomaticToolReader:
             image=grab((left,top,right,bottom)).convert('RGB')
             scene=image
             captured_mono=time.monotonic();captured_at=time.time()
-            self.regions,self.anchor,used_calls=(self.scene_locator or discover_scene)(image,tess);calls+=used_calls
+            self.regions,self.anchor,used_calls=locator(image,tess);calls+=used_calls
             self.last_discovery=now
             crops=[image.crop(r['box']) for r in self.regions]
             del image
         else:
             captured_mono=time.monotonic();captured_at=time.time()
             crops=[grab((left+r['box'][0],top+r['box'][1],left+r['box'][2],top+r['box'][3])) for r in self.regions]
-        shifted=not discover and any(not signature_matches(self.signatures.get(tuple(r['box'])),label_signature(crop,r)) for r,crop in zip(self.regions,crops))
-        observations,used_calls=verify_labels(crops,self.regions,tess,self.numeric_cache) if crops and not shifted else ([],0)
+        stable=[(crop,r) for crop,r in zip(crops,self.regions) if discover or
+                signature_matches(self.signatures.get(tuple(r['box'])),label_signature(crop,r))]
+        shifted=len(stable)!=len(crops)
+        observations=[];used_calls=0
+        if stable and (require_use or not shifted):
+            stable_crops,stable_regions=zip(*stable)
+            observations,used_calls=verify_labels(stable_crops,stable_regions,tess,self.numeric_cache)
         calls+=used_calls
         # Reading a nearby empty utensil is not success at finding the current
         # tool. A valid but irrelevant neighbor must not suppress reacquisition.
-        needs_current=not place_selected({'anchor':self.anchor,'tools':observations},height)
+        needs_current=not observations if require_use else not place_selected({'anchor':self.anchor,'tools':observations},height)
         focused_locator=any(s in (self.anchor or {}).get('evidence','') for s in ('focused durability bar','positioned Windows OCR'))
         if discover and scene is not None and needs_current and focused_locator and _budget.deadline-time.monotonic()>1:
             self.regions,self.anchor,used_calls=discover_scene(scene,tess,focused=False);calls+=used_calls
             crops=[scene.crop(r['box']) for r in self.regions]
             observations,used_calls=verify_labels(crops,self.regions,tess,self.numeric_cache) if crops else ([],0);calls+=used_calls
-        if not discover and len(observations)<len(self.regions):
+        if not discover and (not observations or not require_use and len(observations)<len(self.regions)):
             # Camera motion invalidates remembered label rectangles. Reacquire
             # this scan rather than waiting for the broad-discovery heartbeat.
             image=grab((left,top,right,bottom)).convert('RGB')
             scene=image
             captured_mono=time.monotonic();captured_at=time.time()
-            self.regions,self.anchor,used_calls=(self.scene_locator or discover_scene)(image,tess);calls+=used_calls
+            self.regions,self.anchor,used_calls=locator(image,tess);calls+=used_calls
             crops=[image.crop(r['box']) for r in self.regions]
             del image
             observations,used_calls=verify_labels(crops,self.regions,tess,self.numeric_cache) if crops else ([],0)
             calls+=used_calls
             self.last_discovery=now;discover=True
-        if scene is not None and any(r.get('locator')!='durability bar' and not any(o['box']==r['box'] for o in observations) for r in self.regions):
+        if scene is not None and _budget.deadline-time.monotonic()>1 and any(r.get('locator')!='durability bar' and not any(o['box']==r['box'] for o in observations) for r in self.regions):
             known=[r for r in self.regions if r.get('locator')=='durability bar' or any(o['box']==r['box'] for o in observations)]
-            extra,used_calls=discover_bar_labels(scene,tess,known);calls+=used_calls
+            try:extra,used_calls=discover_bar_labels(scene,tess,known)
+            except (ToolBudgetExpired,subprocess.TimeoutExpired):extra,used_calls=[],0
+            calls+=used_calls
             verified=[r for r in self.regions if any(o['box']==r['box'] for o in observations)]
             extra=extra[:max(0,MAX_TOOLS-len(verified))]
             extra_crops=[scene.crop(r['box']) for r in extra]
@@ -826,14 +856,27 @@ class AutomaticToolReader:
         if suspicious_drop:self.last_discovery=-1e9
         field=None;candidates=[];previous=self.previous_positioned
         selected=place_selected({'anchor':self.anchor,'tools':observations},height)
-        if previous and previous['context']==context and selected and not shifted:
-            candidates=changing_fields(previous['observations'],observations,captured_mono-previous['at'])
-            if len(candidates)==1 and candidates[0]==previous['field']==tuple(selected.get('numbers',())):field=candidates[0]
+        if previous and previous['context']==context and not shifted:
+            elapsed=captured_mono-previous['at']
+            if require_use and not discover:
+                candidates=changing_fields(previous['observations'],observations,elapsed,max_elapsed=8)
+                if len(candidates)==1:field=candidates[0]
+            elif selected:
+                candidates=changing_fields(previous['observations'],observations,elapsed)
+                if len(candidates)==1 and candidates[0]==previous['field']==tuple(selected.get('numbers',())):field=candidates[0]
         report=self.inventory.update(observations,now,context,confirmed_field=field)
-        if len(candidates)>1 and not report['active_id']:report['ambiguous_use']=True
-        if field:report['confirmation']='two-frame comparison';report['pair_result']='Consecutive verified acquisitions reused; no extra capture pair'
-        self.previous_positioned={'context':context,'observations':[dict(row) for row in observations],'at':captured_mono,'field':tuple(selected.get('numbers',()))} if selected and all(row.get('votes',0)>=2 for row in observations) else None
+        if len(candidates)>1 and (require_use or not report['active_id']):
+            report.update(active_id=None,active_key=None,ambiguous_use=True,reason='Several verified counters changed; active tool is uncertain')
+        if field and report['active_id']:
+            report['confirmation']='consecutive verified reads'
+            report['pair_result']='One verified counter decreased between scans'
+        self.previous_positioned={'context':context,'observations':[dict(row) for row in observations],
+                                  'at':captured_mono,'field':tuple(selected.get('numbers',())) if selected else None}
+        if not (observations and (require_use or selected) and all(row.get('votes',0)>=2 for row in observations)):
+            self.previous_positioned=None
         unreadable=unreadable_regions(self.regions,observations)
+        if require_use and unreadable and observations:
+            self.last_discovery=min(self.last_discovery,now-20)
         self.misses=self.misses+1 if not observations else 0
         if discover:self.signatures={tuple(r['box']):label_signature(crop,r) for r,crop in zip(self.regions,crops) if any(r['box']==o['box'] for o in observations)}
         self.regions=[r for r in self.regions if any(r['box']==o['box'] for o in observations)]

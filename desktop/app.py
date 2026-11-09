@@ -386,6 +386,8 @@ class App:
  def capture_tools(self,tess,automatic=False):
   self.set_tool_stage('reading','Checking visible tool labels and durability. Loot recording remains independent.')
   reader=self.tool_reader;interval=self.safe_scan_interval()
+  require_use=self.detailed_craft.get()
+  confirm_pair=not self.lite_use.get()
   attempt=self._tool_attempt=ReaderAttempt(10)
   guild=self.loot.guild;guild_generation=guild.generation if guild.enabled.get() else None
   debug_token=self.tool_debug.token();debug_frames=[]
@@ -412,7 +414,7 @@ class App:
       self.root.after(0,lambda:self.tool_debug.show(debug_token,preview,'Capture received. Recognition in progress; this image remains available if OCR times out.',observed))
      return image
     captured_at=time.time();captured_mono=time.monotonic()
-    report=reader.read(tess,bounds,grab,interval=interval,confirm_pair=not self.lite_use.get())
+    report=reader.read(tess,bounds,grab,interval=interval,confirm_pair=confirm_pair,require_use=require_use)
     if debug_frames:
      detail=json.dumps({k:report.get(k) for k in ('reason','confirmation','pair_result','anchor','tools','unreadable','duration','ocr_calls','cache_hits','camera_reacquired','engine','locator_error')},indent=2)+'\n\nOCR PASSES\n'+report.pop('_debug_raw','Unchanged verified crops reused; no new OCR text.')
      image=debug_frames[0]
@@ -451,12 +453,14 @@ class App:
   self.busy=False
   if self.scan_button:self.scan_button.configure(state='normal',text='◎  SCAN & TRACK')
   if reader is not self.tool_reader or not self.auto_tools.get():return
+  if self.detailed_craft.get() and report.get('confirmation')=='Place Mode position':
+   report={**report,'active_id':None,'active_key':None,'confirmation':None}
   captured_at=report.get('captured_at',captured_at);captured_mono=report.get('captured_mono',captured_mono)
   self.tool_report=report;rows=report['tools'];self.tool_status.accept(report);self.refresh_tool_view()
   active=next((r for r in rows if r['id']==report['active_id']),None)
   if not active:
    if self.detailed_craft.get():
-    reader.next_due=min(reader.next_due,time.monotonic()+10)
+    reader.next_due=min(reader.next_due,time.monotonic()+(3 if rows else 10))
    if self._active_tool_key is not None:
     self.update_value();self.mark_tool_estimate()
    self.scan_health.set(f"Tool finder · {report['duration']:.1f}s · {report['ocr_calls']} OCR passes")
@@ -492,6 +496,13 @@ class App:
   elif report.get('confirmation')=='Place Mode position':
    self.source.set('PLACE MODE SELECTED · verified durability');self.status.set('Countdown started for '+active['name']+'. Checking durability use next.')
   else:self.status.set('Tracking '+active['name']+'. All readings are in VIEW TOOLS.')
+
+ def verified_tool_row(self):
+  if self._tool_timer_estimated or not self.last_good_ocr or not self._active_tool_key or self.reading_gate.pending is not None:return None
+  report=self.tool_report or {}
+  if report.get('active_key')!=self._active_tool_key:return None
+  if self.detailed_craft.get() and report.get('confirmation')=='Place Mode position':return None
+  return next((row for row in report.get('tools',()) if row['id']==report.get('active_id')),None)
 
  def open_planning_page(self,section):
   if section not in ('cp','imperial'):return

@@ -112,6 +112,19 @@ class ActiveToolTests(unittest.TestCase):
             result=reader.compare_pair('engine',(1,0,0,1920,1080),lambda box:Image.new('RGB',(200,35)),report,10)
         self.assertIsNone(result['active_id']);self.assertIn('does not match Place Mode',result['pair_result'])
 
+    def test_detailed_pair_follows_verified_use_despite_idle_place_mode_neighbor(self):
+        reader=AutomaticToolReader();reader.context='game'
+        idle={**row(800),'id':'idle','numbers':[510,220,570,240],'box':[400,210,600,245]}
+        used={**row(900),'id':'used','numbers':[810,220,870,240],'box':[700,210,900,245]}
+        reader.regions=[idle,used,{'box':[1,1,10,10]}];clock=[10.]
+        report={'active_id':None,'tools':[idle,used],'anchor':{'x':500,'y':180,'evidence':'Place Mode anchor'},'duration':0,'ocr_calls':0}
+        changed={**used,'current':898}
+        with patch('tool_reader.time.monotonic',side_effect=lambda:clock[0]),patch('tool_reader.time.sleep',side_effect=lambda n:clock.__setitem__(0,clock[0]+n)),patch('tool_reader.label_signature',return_value=Image.new('L',(12,12),'white')),patch('tool_reader.verify_labels',side_effect=[([idle,used],4),([idle,changed],4)]):
+            result=reader.compare_pair('engine',(1,0,0,1920,1080),lambda box:Image.new('RGB',(200,35)),report,10,require_use=True)
+        active=next(row for row in result['tools'] if row['id']==result['active_id'])
+        self.assertEqual(active['current'],898)
+        self.assertEqual(result['confirmation'],'two-frame comparison')
+
     def test_refill_empty_missing_and_late_pair_do_not_confirm(self):
         a={**row(800),'numbers':[100,10,160,25]}
         for b,elapsed in (({**a,'current':900},1.5),({**a,'current':0},1.5),({**a,'current':798},3),({**a,'current':798,'numbers':None},1.5)):
