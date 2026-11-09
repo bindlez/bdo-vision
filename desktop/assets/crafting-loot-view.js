@@ -6,7 +6,14 @@ function visionRememberMarketQuotes(list){
   list.forEach(function(item){
     var key=String(item.marketRegion||region).toLowerCase()+':';
     if(Number.isSafeInteger(Number(item.price)) && Number(item.price)>0){
-      if(item.id){visionMarketById[key+String(item.id)]=Number(item.price);visionMarketQuoteDetails[key+String(item.id)]={...item,updatedAt:item.updated_at||item.updatedAt||new Date().toISOString()};}
+      if(item.id){
+       var itemKey=key+String(item.id),prior=visionMarketQuoteDetails[itemKey],details={...item,updatedAt:item.updated_at||item.updatedAt||new Date().toISOString()};
+       // Trade volume comes from a separate snapshot; a base quote does not refresh it.
+       if(details.daily_volume==null&&prior?.daily_volume!=null){
+        details.daily_volume=prior.daily_volume;details.volume_source_updated_at=prior.volume_source_updated_at||prior.source_updated_at||prior.updatedAt;
+       }
+       visionMarketById[itemKey]=Number(item.price);visionMarketQuoteDetails[itemKey]=details;
+      }
       visionMarketByName[key+visionName(item.name)]=Number(item.price);
     }
   });

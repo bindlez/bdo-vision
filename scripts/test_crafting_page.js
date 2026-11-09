@@ -31,6 +31,11 @@ assert(basket.includes('Balenos Meal')&&basket.includes('Stock short')&&basket.i
 const itemPanel=context.craftMarketInspect(marketCatalog.get(9601));
 assert(itemPanel.includes('How to make it')&&itemPanel.includes('Compare making vs buying'));
 assert(!context.craftMarketInspect({id:1,name:'<img src=x>'}).includes('<img'));
+const marketQuotes=context.craftMarketBaseQuotes([[{id:9601,sid:0,name:'Balenos Meal',basePrice:36000,currentStock:0,lastSoldPrice:36100}],{id:9601,sid:1,name:'Wrong tier',basePrice:9},{id:42,sid:0,name:'Unrequested',basePrice:8}],[9601],'EU');
+assert.equal(marketQuotes.length,1);assert.equal(marketQuotes[0].stock,0);assert.equal(marketQuotes[0].marketRegion,'EU');
+assert.equal(context.craftMarketHistoryPoints({id:9601,sid:0,history:{2:10,1:9,3:-4}},9601).length,2);
+assert.equal(context.craftMarketHistoryPoints({id:9601,sid:1,history:{1:9}},9601).length,0);
+
 const batchStock=new Map();
 for(const m of inventoryInputs)batchStock.set(m.name,(batchStock.get(m.name)||0)+m.qty);
 nodes.get('studioInventoryPaste').value=[...batchStock].map(([name,qty])=>name+'\t'+qty*50).join('\n');
@@ -165,17 +170,22 @@ nodes.get('lineOverview').onclick();assert(!context.craftStudioState.productionO
 // Map-first planner: real downstream goals, clickable nodes and a matching timeline.
 const wine=recipes.find(r=>r.name==='Fruit Wine'),serendia=recipes.find(r=>r.name==='Serendia Meal');context.selectedRecipe=wine;context.lastCraftAmount=100;context.craftStudioRender(wine,100);
 assert(nodes.get('craftDetail').innerHTML.includes('From ingredient to finished product'));
-// Essential information stays visible; navigation never needs a disclosure menu.
+// Existing tools remain mounted under distinct workflow tabs.
 let deskHTML=nodes.get('craftDetail').innerHTML;
 for(const id of ['craftWorkbench','craftIngredients','craftWeight','craftCharacter','craftEconomy','craftOutputs','craftAnalysis','craftProduction'])assert(deskHTML.includes('id="'+id+'"'),id);
 for(const key of ['single-recipe','materials','character','economy','outputs','analysis','shopping','workshop'])assert(!new RegExp('<details[^>]*data-section="'+key+'"').test(deskHTML),key);
 assert(deskHTML.indexOf('EXPECTED NET PROFIT')<deskHTML.indexOf('id="craftIngredients"'));
 assert(deskHTML.indexOf('id="craftIngredients"')<deskHTML.indexOf('id="craftWeight"'));
-assert(deskHTML.indexOf('id="craftWeight"')<deskHTML.indexOf('id="productionRoadmap"'));
+assert(deskHTML.indexOf('id="studioPanelProduction"')<deskHTML.indexOf('id="productionRoadmap"'));
+assert(deskHTML.indexOf('id="productionRoadmap"')<deskHTML.indexOf('id="studioPanelResults"'));
 assert.equal(context.craftRoadState.wide,false,'recipe book remains visible by default');
-const jump=nodes.get('craftDetail').controls.find(n=>n.dataset.craftJump==='craftIngredients');
-let navigated=false;nodes.get('craftIngredients').scrollIntoView=()=>navigated=true;
-const savedBeforeJump=JSON.stringify(context.craftStudioState);jump.onclick();assert(navigated);assert.equal(jump['aria-current'],'true');assert.equal(JSON.stringify(context.craftStudioState),savedBeforeJump);
+const ingredientsTab=nodes.get('studioTabIngredients');
+const savedBeforeTab=JSON.stringify(context.craftStudioState);ingredientsTab.onclick();
+assert.equal(ingredientsTab['aria-selected'],'true');assert.equal(nodes.get('studioPanelOverview').hidden,true);
+assert.equal(nodes.get('studioPanelIngredients').hidden,false);
+assert.equal(JSON.stringify(context.craftStudioState),savedBeforeTab);
+ingredientsTab.onkeydown({key:'ArrowRight',preventDefault(){}});
+assert.equal(nodes.get('studioTabProduction')['aria-selected'],'true');
 const nested=context.craftStudioDeskMarkup('<details data-section="materials"><summary>Ingredients</summary><details><summary>Optional</summary>x</details></details>');
 assert.equal(nested,'<section data-section="materials" id="craftIngredients" tabindex="-1"><h4 class="craft-desk-heading">Ingredients</h4><details><summary>Optional</summary>x</details></section>');
 

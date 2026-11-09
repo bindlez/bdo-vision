@@ -1,3 +1,9 @@
+# 1.13.0-rc.34 — Live market and recipe workspace
+
+- The web planner can fetch current NA and EU base-item quotes directly. Market lookup includes stock, last sale, lifetime trade count, and price history.
+- Market shares its exact-ID quotes with recipe costs, shopping, production, and saved plans.
+- Recipe Planner groups the existing tools into Overview, Ingredients, Production, Results, and Queue. Refresh prices and launch timers from the recipe header.
+
 # 1.13.0-rc.33 — Crafting and Central Market workbench
 
 - Inspect a craft item's regional quote, stock, makers and consumers by exact ID.

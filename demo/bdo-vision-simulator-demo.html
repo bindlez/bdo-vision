@@ -383,12 +383,12 @@
 .production-line{border:1px solid #3c625f;border-top:3px solid #63d9cf;border-radius:10px;background:#131c21;padding:14px;margin:16px 0;scroll-margin-top:100px}.line-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.line-heading h4{margin:3px 0;color:#edf8f6;font-size:15px}.line-heading small{font-size:10px;color:#9edbd4}.line-heading button{width:auto;margin:0}.line-steps{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.line-step{display:grid;gap:5px;flex:1;min-width:145px;padding:10px;background:#1c202c;border:1px solid #50515e;border-radius:7px;text-align:left;color:#eae0f7;font:inherit;font-size:12px;cursor:pointer}.line-step small,.line-step span{font-size:10px;color:#b8c9cb}.line-step[aria-pressed=true]{border-color:#72d8cb;background:#203739}.line-weight-settings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.line-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}.load-card{padding:12px;background:#171824;border:1px solid #454452;border-radius:8px;min-width:0}.load-card table{width:100%;font-size:11px;border-collapse:collapse}.load-card th,.load-card td{padding:7px 5px;border-bottom:1px solid #373541;text-align:left}.load-card th{font-size:10px;color:#bdb2cb}.load-card input[data-ratio-item]{width:95px;max-width:100%;padding:7px;background:#0d111a;border:1px solid #6d6090;border-radius:5px;color:#fff;font:inherit;font-variant-numeric:tabular-nums}.load-card [aria-invalid=true]{outline:2px solid #f5b18a}.load-card .studio-actions{margin-top:8px;gap:7px}.load-card .studio-actions button{min-width:95px;font-size:11px;padding:8px}.load-capacity{font-size:12px;color:#a9e4db}.load-status{font-size:11px;margin:8px 0;line-height:1.6}.load-meter{width:100%;height:6px;accent-color:#63d9cf}.production-line .studio-muted{font-size:11px;line-height:1.55}.production-line [data-carry-bag]{max-width:100px}.production-line details{margin-top:12px;font-size:11px}.production-line [data-carry-bag]{background:#11101b;border:1px solid #665279;border-radius:5px;color:#fff;padding:6px}@media(max-width:520px){.line-weight-settings{grid-template-columns:1fr}.production-line{padding:10px}.line-step{min-width:120px}}
 
 .craft-layout:has(.production-line.is-wide){grid-template-columns:1fr}.craft-layout:has(.production-line.is-wide)>.card:has(#recipeList){display:none}.line-actions{display:flex;gap:8px;flex-wrap:wrap}.line-actions button{font-size:11px;padding:8px}
-.craft-layout:has(.production-line.is-overview){grid-template-columns:1fr}.craft-layout:has(.production-line.is-overview)>.card:has(#recipeList){display:none}.is-overview #lineWiden{display:none}.is-overview .line-overview-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,300px);gap:16px;align-items:start}.line-overview-tree{padding:12px;background:#100e18;border:1px solid #45364f;border-radius:8px;max-height:75vh;overflow:auto;position:sticky;top:100px;min-width:0;font-size:11px}.line-overview-tree h4{margin:0;color:#a7e8dd}.line-overview-tree .studio-dependency-tree ul{padding-left:8px}.line-overview-tree .studio-dependency-tree li{padding-left:7px;overflow-wrap:anywhere}.line-overview-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px;margin-top:14px;border:1px solid #4e3f5e;background:#191522;border-radius:8px}.line-overview-summary small,.line-overview-summary span{display:block;font-size:10px;color:#b6a9c6}.line-overview-summary b{display:block;font-size:16px;color:#8fe4cf;margin:7px 0;font-variant-numeric:tabular-nums}@media(max-width:1000px){.is-overview .line-overview-layout{grid-template-columns:1fr}.line-overview-tree{position:static;max-height:450px}.line-overview-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.craft-layout:has(#studioPanelProduction:not([hidden]) .production-line.is-overview){grid-template-columns:1fr}.craft-layout:has(#studioPanelProduction:not([hidden]) .production-line.is-overview)>.card:has(#recipeList){display:none}.is-overview #lineWiden{display:none}.is-overview .line-overview-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,300px);gap:16px;align-items:start}.line-overview-tree{padding:12px;background:#100e18;border:1px solid #45364f;border-radius:8px;max-height:75vh;overflow:auto;position:sticky;top:100px;min-width:0;font-size:11px}.line-overview-tree h4{margin:0;color:#a7e8dd}.line-overview-tree .studio-dependency-tree ul{padding-left:8px}.line-overview-tree .studio-dependency-tree li{padding-left:7px;overflow-wrap:anywhere}.line-overview-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px;margin-top:14px;border:1px solid #4e3f5e;background:#191522;border-radius:8px}.line-overview-summary small,.line-overview-summary span{display:block;font-size:10px;color:#b6a9c6}.line-overview-summary b{display:block;font-size:16px;color:#8fe4cf;margin:7px 0;font-variant-numeric:tabular-nums}@media(max-width:1000px){.is-overview .line-overview-layout{grid-template-columns:1fr}.line-overview-tree{position:static;max-height:450px}.line-overview-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .craft-workflows{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;padding:8px;border:1px solid #42334e;border-radius:9px;background:#15101d}.craft-workflows button{flex:1;min-width:130px;border:1px solid transparent;border-radius:6px;background:transparent;color:#c9bad8;padding:10px;font:600 12px system-ui;cursor:pointer}.craft-workflows button[aria-pressed=true]{background:#3d2955;color:#fff;border-color:#ad8bd8}.craft-workflows button:focus-visible{outline:2px solid #73ded1;outline-offset:2px}#viewCraft>[hidden]{display:none!important}.simulation-stock{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:14px 0}#chainSimulator{max-width:1200px;margin:auto}#chainSimulator input,#chainSimulator select{max-width:100%}.simulation-stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;padding-left:20px}.simulation-stages li{padding:12px;border:1px solid #415b5b;background:#142226;border-radius:7px;font-size:12px}.simulation-stages span{display:block;color:#9ed6ce;margin:6px 0}#simulationResults table{border-collapse:collapse;width:100%;font-size:12px}#simulationResults th,#simulationResults td{padding:8px;border-bottom:1px solid #45374f;text-align:left}#chainSimulator details{margin:14px 0;font-size:12px}#chainSimulator summary{cursor:pointer;color:#d8c2ef}#chainSimulator .studio-warning{max-width:900px}
 
 /* Map-first production workspace. Previous packing/calculation tools remain below. */
-.production-roadmap{border:1px solid #4c5666;border-radius:12px;background:#10161e;padding:18px;margin:16px 0;scroll-margin-top:95px}.road-heading,.road-map-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.road-heading small,.road-stage>small{font-size:10px;letter-spacing:.12em;color:#8bdfd2}.road-heading h3{font-size:21px;margin:5px 0 12px}.road-heading button,.road-map-toolbar button{width:auto;margin:0;font-size:11px;padding:8px}.road-controls{display:grid;grid-template-columns:1fr 1fr 1.2fr .7fr;gap:12px;margin:12px 0}.road-controls label{display:grid;gap:7px;font-size:11px;color:#c8b9d8}.road-controls input,.road-controls select{width:100%;min-width:0;padding:9px;border:1px solid #5d4b70;border-radius:6px;background:#171421;color:#f0e7f9;font:inherit}.road-used{display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-size:11px;padding:10px 0}.road-chip{padding:6px 9px;background:#1c3436;color:#a8e8de;border:1px solid #456f6b;border-radius:20px;font:inherit;cursor:pointer}.road-note{font-size:11px;line-height:1.6;color:#b6bcc9;margin:10px 0}.road-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}.road-summary>div{padding:12px;background:#1c202b;border-top:2px solid #9277b5;border-radius:6px}.road-summary small{display:block;font-size:10px;color:#b7afc6}.road-summary strong{display:block;font-size:19px;color:#b8eee5;margin-top:8px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.road-map-toolbar h4{font-size:15px;margin:10px 0}.road-map-toolbar label{font-size:11px;color:#c2c2d4}.road-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:10px;color:#aabaca}.road-legend span:first-child{color:#cfa8f3}.road-legend span:nth-child(2){color:#8cdecf}.road-main{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;align-items:start}.road-map-canvas{overflow:auto;border:1px solid #364753;border-radius:8px;background:radial-gradient(ellipse at 50% 30%,#172a30,#11131e);padding:8px;max-height:640px;min-width:0}.road-map-canvas svg{display:block;min-height:160px}.road-map-canvas svg a{cursor:pointer}.road-map-canvas svg a:focus rect{stroke:#fff;stroke-width:3px}.road-stage{border:1px solid #565068;background:#1a1925;border-radius:8px;padding:13px;font-size:12px;min-width:0}.road-stage h4{font-size:16px;margin:10px 0;color:#e6d8f5}.road-stage table{width:100%;border-collapse:collapse;font-size:10px}.road-stage td,.road-stage th{padding:7px 3px;border-bottom:1px solid #393341;text-align:left}.road-stage-actions{display:grid;gap:8px;margin-top:14px}.road-stage-actions button{font-size:11px;padding:9px;margin:0}.road-timeline{padding:0;list-style:none;display:grid;gap:6px;max-height:380px;overflow:auto}.road-timeline button{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;padding:10px;text-align:left;background:#1c202c;border:1px solid #373a4e;border-radius:7px;color:#e5e2ef;font:12px system-ui;cursor:pointer}.road-timeline button.selected{border-color:#ac8ad5;background:#2a2536}.road-order{color:#9ae4d7;font-variant-numeric:tabular-nums}.road-timeline small{display:block;color:#b3bccb;font-size:10px;margin-top:5px}.road-timeline i{display:block;height:3px;background:#6bcbbb;margin-top:7px;border-radius:3px}.road-time{font-size:11px;color:#b9dcd7;white-space:nowrap}.single-recipe-workbench{padding:12px;border:1px solid #44344f;border-radius:8px}.single-recipe-workbench>summary{font-size:13px}#craftPlanningPanel:has(.production-roadmap.is-wide){grid-template-columns:1fr}#craftPlanningPanel:has(.production-roadmap.is-wide)>.card:has(#recipeList){display:none}#craftPlanningPanel:has(.production-roadmap:not(.is-wide)){grid-template-columns:240px minmax(0,1fr)}#craftPlanningPanel:has(.production-roadmap:not(.is-wide))>.card:has(#recipeList){display:block}@media(max-width:1100px){.road-main{grid-template-columns:1fr}.road-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.road-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.road-controls{grid-template-columns:1fr}.production-roadmap{padding:10px}.road-time{font-size:10px}#craftPlanningPanel:has(.production-roadmap:not(.is-wide)){grid-template-columns:1fr}}
+.production-roadmap{border:1px solid #4c5666;border-radius:12px;background:#10161e;padding:18px;margin:16px 0;scroll-margin-top:95px}.road-heading,.road-map-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.road-heading small,.road-stage>small{font-size:10px;letter-spacing:.12em;color:#8bdfd2}.road-heading h3{font-size:21px;margin:5px 0 12px}.road-heading button,.road-map-toolbar button{width:auto;margin:0;font-size:11px;padding:8px}.road-controls{display:grid;grid-template-columns:1fr 1fr 1.2fr .7fr;gap:12px;margin:12px 0}.road-controls label{display:grid;gap:7px;font-size:11px;color:#c8b9d8}.road-controls input,.road-controls select{width:100%;min-width:0;padding:9px;border:1px solid #5d4b70;border-radius:6px;background:#171421;color:#f0e7f9;font:inherit}.road-used{display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-size:11px;padding:10px 0}.road-chip{padding:6px 9px;background:#1c3436;color:#a8e8de;border:1px solid #456f6b;border-radius:20px;font:inherit;cursor:pointer}.road-note{font-size:11px;line-height:1.6;color:#b6bcc9;margin:10px 0}.road-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}.road-summary>div{padding:12px;background:#1c202b;border-top:2px solid #9277b5;border-radius:6px}.road-summary small{display:block;font-size:10px;color:#b7afc6}.road-summary strong{display:block;font-size:19px;color:#b8eee5;margin-top:8px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.road-map-toolbar h4{font-size:15px;margin:10px 0}.road-map-toolbar label{font-size:11px;color:#c2c2d4}.road-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:10px;color:#aabaca}.road-legend span:first-child{color:#cfa8f3}.road-legend span:nth-child(2){color:#8cdecf}.road-main{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;align-items:start}.road-map-canvas{overflow:auto;border:1px solid #364753;border-radius:8px;background:radial-gradient(ellipse at 50% 30%,#172a30,#11131e);padding:8px;max-height:640px;min-width:0}.road-map-canvas svg{display:block;min-height:160px}.road-map-canvas svg a{cursor:pointer}.road-map-canvas svg a:focus rect{stroke:#fff;stroke-width:3px}.road-stage{border:1px solid #565068;background:#1a1925;border-radius:8px;padding:13px;font-size:12px;min-width:0}.road-stage h4{font-size:16px;margin:10px 0;color:#e6d8f5}.road-stage table{width:100%;border-collapse:collapse;font-size:10px}.road-stage td,.road-stage th{padding:7px 3px;border-bottom:1px solid #393341;text-align:left}.road-stage-actions{display:grid;gap:8px;margin-top:14px}.road-stage-actions button{font-size:11px;padding:9px;margin:0}.road-timeline{padding:0;list-style:none;display:grid;gap:6px;max-height:380px;overflow:auto}.road-timeline button{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;padding:10px;text-align:left;background:#1c202c;border:1px solid #373a4e;border-radius:7px;color:#e5e2ef;font:12px system-ui;cursor:pointer}.road-timeline button.selected{border-color:#ac8ad5;background:#2a2536}.road-order{color:#9ae4d7;font-variant-numeric:tabular-nums}.road-timeline small{display:block;color:#b3bccb;font-size:10px;margin-top:5px}.road-timeline i{display:block;height:3px;background:#6bcbbb;margin-top:7px;border-radius:3px}.road-time{font-size:11px;color:#b9dcd7;white-space:nowrap}.single-recipe-workbench{padding:12px;border:1px solid #44344f;border-radius:8px}.single-recipe-workbench>summary{font-size:13px}#craftPlanningPanel:has(#studioPanelProduction:not([hidden]) .production-roadmap.is-wide){grid-template-columns:1fr}#craftPlanningPanel:has(#studioPanelProduction:not([hidden]) .production-roadmap.is-wide)>.card:has(#recipeList){display:none}#craftPlanningPanel:has(#studioPanelProduction:not([hidden]) .production-roadmap:not(.is-wide)){grid-template-columns:240px minmax(0,1fr)}#craftPlanningPanel:has(#studioPanelProduction:not([hidden]) .production-roadmap:not(.is-wide))>.card:has(#recipeList){display:block}@media(max-width:1100px){.road-main{grid-template-columns:1fr}.road-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.road-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.road-controls{grid-template-columns:1fr}.production-roadmap{padding:10px}.road-time{font-size:10px}#craftPlanningPanel:has(#studioPanelProduction:not([hidden]) .production-roadmap:not(.is-wide)){grid-template-columns:1fr}}
 
 .road-run-limit{padding:12px;margin:12px 0;border:1px solid #4e665c;border-radius:8px;background:#142321;font-size:12px}.road-run-limit .road-controls{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));align-items:end}.road-run-limit button{font-size:11px;padding:9px}.road-run-limit #roadApplyLimit{width:auto;margin:0}.road-run-limit [role=status]{color:#a4e8d7}
 .craft-desk-nav{position:sticky;top:61px;z-index:9;display:flex;flex-wrap:wrap;gap:5px;padding:8px;margin:0 -2px 14px;background:#100e19;border:1px solid #493858;border-radius:9px;box-shadow:0 8px 18px #06050a99}
@@ -418,9 +418,18 @@
 .craft-auto-essential small,.craft-auto-essential strong{display:block;overflow-wrap:anywhere}
 .craft-auto-essential small{color:#b8c9c5;font-size:10px;margin-bottom:6px}
 .craft-auto-essential strong{color:#9ee6d4;font-size:14px}
-@media(max-width:900px){#craftPlanningPanel:has(.production-roadmap:not(.is-wide)){grid-template-columns:1fr}.craft-layout>.card:has(#recipeList){position:static;max-height:none}}
+@media(max-width:900px){#craftPlanningPanel:has(#studioPanelProduction:not([hidden]) .production-roadmap:not(.is-wide)){grid-template-columns:1fr}.craft-layout>.card:has(#recipeList){position:static;max-height:none}}
 
 #craftPlanningPanel>#visionCraftStatus{grid-column:1 / -1;min-width:0}
+
+
+.studio-tab-panel[hidden]{display:none!important}
+.studio-tab-panel{min-width:0;padding:12px 0 4px}
+.studio-tab-panel>section[data-section],.studio-tab-panel>.production-line{margin:0 0 16px;padding:14px;background:#171522;border:1px solid #3c344b;border-radius:9px}
+.studio-tab-panel>.studio-assumptions{padding:12px 14px;border:1px solid #443952;border-radius:8px;margin:10px 0}
+.studio-assumptions summary{cursor:pointer;color:#c6b8e3}
+.studio-assumptions>section{margin:14px 0}
+.craft-desk-nav button[aria-selected=true]{color:#96ebdc;border-color:#70c9bc;background:#17312f}
 /* OWNED CRAFTING_STUDIO_CSS END */
 /* OWNED CRAFT_MARKET_DESK_CSS START */
 #craftMarketDesk{margin-bottom:22px;color:var(--text);scroll-margin-top:80px}
@@ -883,7 +892,7 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
     function notifyDone(timer) { notifyCraftDone(timer); }
 
     async function fetchJSON(url) {
-      const res = await fetch(url);
+      const res = await fetch(url,{signal:AbortSignal.timeout(12000)});
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
       if (data && data.status === 500) throw new Error(data.message || "API error");
@@ -893,7 +902,7 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
     function mapItem(item) {
       return {
         name: item.name || ("Item #" + item.id), id: item.id,
-        price: item.basePrice || 0, stock: item.currentStock || 0,
+        price: item.basePrice || 0, stock: Number.isSafeInteger(item.currentStock)?item.currentStock:null,
         trades: item.totalTrades || 0,
         changeDir: item.priceChangeDirection != null ? item.priceChangeDirection : null,
         changeVal: item.priceChangeValue || 0
@@ -903,6 +912,7 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
     var desktopMarketBatch=[];
     var desktopMarketTimer=null;
     async function shareMarketPricesWithDesktop() {
+      if(window.VISION_PUBLIC_MARKET)return;
       desktopMarketBatch=desktopMarketBatch.filter(function(item){return item.region===region;});
       if(!desktopMarketBatch.length)return;
       var pending=desktopMarketBatch.splice(0,1500);
@@ -957,7 +967,7 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
       return '<span class="change-pill ' + (isUp ? "up" : "down") + '">' + (isUp ? "+" : "−") + fmt(item.changeVal) + '</span>';
     }
     function stockClass(s) {
-      if (s === 0) return "stock-none";
+      if (s == null || s === 0) return "stock-none";
       if (s < 20) return "stock-low";
       return "stock-ok";
     }
@@ -1007,7 +1017,7 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
         return;
       }
       body.innerHTML = list.map(function(i) {
-        return '<tr><td><div class="item-row"><div class="ico">📦</div><span title="' + visionEscape(i.name) + '">' + visionEscape(i.name) + '</span></div></td><td class="price-cell">' + fmt(i.price) + '</td><td class="' + stockClass(i.stock) + '">' + fmt(i.stock) + '</td><td style="color:var(--text-muted)">' + fmt(i.trades) + '</td><td>' + changeHtml(i) + '</td></tr>';
+        return '<tr><td><div class="item-row"><div class="ico">📦</div><span title="' + visionEscape(i.name) + '">' + visionEscape(i.name) + '</span>' + (Number.isSafeInteger(i.id)&&i.id>0 ? ' <button class="market-inline" data-market-list-item="'+i.id+'">Inspect</button>' : '') + '</div></td><td class="price-cell">' + fmt(i.price) + '</td><td class="' + stockClass(i.stock) + '">' + fmt(i.stock) + '</td><td style="color:var(--text-muted)">' + fmt(i.trades) + '</td><td>' + changeHtml(i) + '</td></tr>';
       }).join("");
       var card = document.getElementById("listingsCard");
       card.classList.remove("flash"); void card.offsetWidth; card.classList.add("flash");
@@ -1033,39 +1043,38 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
       document.getElementById("listingsMeta").textContent = "...";
     }
 
+    let marketLoadGeneration=0;
     async function loadData() {
+      const generation=++marketLoadGeneration,category=activeCat;
       setStatus("loading", "Loading...");
       showLoadingTable();
-      try {
-        hotItems = await loadHot();
+      const hotRequest=loadHot(),listingRequest=category==="hot"?hotRequest:loadCategory(category);
+      const [hotResult,listingResult]=await Promise.allSettled([hotRequest,listingRequest]);
+      if(generation!==marketLoadGeneration)return;
+      if(hotResult.status==="fulfilled"){
+        hotItems=hotResult.value;
         rememberPrices(hotItems);
         renderHotSidebar(hotItems);
         renderPopular(hotItems);
-        if (activeCat === "hot") currentItems = hotItems;
-        else {
-          currentItems = await loadCategory(activeCat);
-          rememberPrices(currentItems);
-        }
-        if (activeCat === "30") {
-          enhancePrices = {};
-          currentItems.forEach(function(i) { enhancePrices[i.name] = i.price; });
-        } else if (!Object.keys(enhancePrices).length) {
-          try {
-            var enh = await loadCategory(30);
-            rememberPrices(enh);
-            enh.forEach(function(i) { enhancePrices[i.name] = i.price; });
-          } catch (e) {}
+      }else{
+        hotItems=[];renderHotSidebar([]);renderPopular([]);
+      }
+      if(listingResult.status==="rejected"){
+        currentItems=[];
+        setStatus("error", "Listings unavailable");
+        document.getElementById("listingsBody").innerHTML='<tr><td colspan="5"><div class="error-msg">'+visionEscape(listingResult.reason?.message||"Market unavailable")+' · try Refresh listings</div></td></tr>';
+      }else{
+        currentItems=listingResult.value;
+        if(category!=="hot")rememberPrices(currentItems);
+        if(category==="30"){
+          enhancePrices={};
+          currentItems.forEach(i=>{enhancePrices[i.name]=i.price;});
         }
         renderListings();
-        if(currentView==="market")craftMarketRender();
-        try { intelCaptureMarketObservations(false); intelCheckAlertsSilent(); } catch (e) {}
+        try{intelCaptureMarketObservations(false);intelCheckAlertsSilent();}catch(e){}
         setStatus("ok", "Updated " + new Date().toLocaleTimeString());
-      } catch (err) {
-        console.error(err);
-        setStatus("error", "Failed");
-        document.getElementById("listingsBody").innerHTML =
-          '<tr><td colspan="5"><div class="error-msg">Error: ' + visionEscape(err.message) + '<br>Try again or switch region</div></td></tr>';
       }
+      if(currentView==="market")craftMarketRender();
     }
 
     function selectCategory(cat) {
@@ -1337,7 +1346,7 @@ const VISION_CRAFT_DATA = {"schema":1,"date":"2026-11-02","source":"BDolytics pu
 /* Search uses a prebuilt text index; lists render at most 50 recipe cards. */
 var recipeSearch='',recipeMethod='',recipeFavoriteOnly=false,recipePage=0;
 var recipeSort='name',recipeMinProfit='',recipeVolume='',recipeMarketBusy=false;
-var recipeSearchIndex=null;
+var recipeSearchIndex=null,recipeVisibleRows=[];
 function craftRecipeActivity(recipe){
  return /^imperial_/.test(recipe.method||'')?'imperial':recipe.type;
 }
@@ -1353,20 +1362,115 @@ function renderRecipeList(){
  function carryScore(r){var c=carryScores.get(r.id);return c?.available?(recipeSort==='carryTime'?c.seconds:recipeSort==='carryBatches'?c.batches:-c.perBatch):-Infinity;}
  all.sort((a,b)=>recipeSort.startsWith('carry')?(carryScore(b)-carryScore(a)||a.name.localeCompare(b.name)):recipeSort==='profit'?(scores.get(b.id).perHour??-Infinity)-(scores.get(a.id).perHour??-Infinity):recipeSort==='xp'?(scores.get(b.id).xp/scores.get(b.id).seconds)-(scores.get(a.id).xp/scores.get(a.id).seconds):a.name.localeCompare(b.name)||a.id.localeCompare(b.id));
  recipePage=Math.min(recipePage,Math.max(0,Math.ceil(all.length/50)-1));var list=all.slice(recipePage*50,(recipePage+1)*50),methods=[...new Set(RECIPES.filter(r=>craftRecipeActivity(r)===recipeTab).map(r=>r.method).filter(Boolean))];
+ recipeVisibleRows=list.slice(0,12);
  host.innerHTML='<button class="recipe-card dur-recipe'+(selectedRecipe?.id==='durability_timer'?' selected':'')+'" data-id="durability_timer"><div><span class="badge-dur">Tool timer</span><div class="rname">Time from durability</div><div class="rmats">Keep using your verified Windows timer</div></div></button><div class="cat-row" id="recipeTabs">'+['cooking','alchemy','processing','imperial'].map(t=>'<button type="button" class="cat-btn'+(recipeTab===t?' active':'')+'" aria-pressed="'+(recipeTab===t)+'" data-rtab="'+t+'">'+(t==='imperial'?'Imperial crates':t[0].toUpperCase()+t.slice(1))+'</button>').join('')+'</div><label class="recipe-search-label">Search recipe or ingredient<input id="recipeSearch" type="search" placeholder="Beer, reagent, copper…" value="'+esc(recipeSearch)+'"></label><div class="recipe-filters">'+(methods.length?'<label>Method<select id="recipeMethod"><option value="">All methods</option>'+methods.map(m=>'<option value="'+esc(m)+'" '+(m===recipeMethod?'selected':'')+'>'+esc(m.replaceAll('_',' '))+'</option>').join('')+'</select></label>':'')+'<label><input id="recipeFavoriteOnly" type="checkbox" '+(recipeFavoriteOnly?'checked':'')+'> Saved only</label></div><p class="studio-muted">'+(recipeSort.startsWith('carry')?({carryTime:'Longest time per load',carryBatches:'Most crafts per load',carryWeight:'Lightest ingredient load'}[recipeSort])+' · ':'')+all.length+' matching recipe variants · '+(all.length?recipePage*50+1:0)+'–'+Math.min(all.length,(recipePage+1)*50)+'</p>'+list.map(r=>{var plan=scores.get(r.id)||craftStudioPlan(r,100),quote=craftStudioQuote(r.name,r.itemId);return '<button class="recipe-card'+(selectedRecipe?.id===r.id?' selected':'')+'" data-id="'+esc(r.id)+'"><div><div class="rname">'+(craftStudioState.favorites.includes(r.id)?'★ ':'')+esc(r.name)+'</div><div class="rmats">'+esc(r.method?r.method.replaceAll('_',' '):r.type)+' · '+r.mats.length+' inputs · '+r.minProc+'–'+r.maxProc+' main / craft</div><div class="recipe-score">'+craftStudioMoney(plan.perHour)+' net / h · '+(Number.isFinite(r.xp)&&r.xp>0?r.xp.toLocaleString()+' XP / batch':'XP unknown')+(Number.isFinite(quote?.daily_volume)?' · '+Math.round(quote.daily_volume).toLocaleString()+' sold / day':'')+'</div>'+ (recipeSort.startsWith('carry')?'<div class="rweight">'+(carryScores.get(r.id)?.available?carryScores.get(r.id).batches.toLocaleString()+' crafts / load · '+fmtTime(carryScores.get(r.id).seconds)+'<br>'+carryScores.get(r.id).perBatch.toFixed(3)+' LT inputs / craft':'Enter LT values or verify missing weights')+'</div>':'')+'</div></button>';}).join('')+(!all.length?'<p class="studio-muted">No matching recipes. Try a shorter search or another method.</p>':'')+'<div class="recipe-page-controls"><button id="recipePrevious" class="btn-secondary" '+(!recipePage?'disabled':'')+'>Previous</button><span>Page '+(recipePage+1)+' / '+Math.max(1,Math.ceil(all.length/50))+'</span><button id="recipeNext" class="btn-secondary" '+((recipePage+1)*50>=all.length?'disabled':'')+'>Next</button></div>';
  document.getElementById('recipeTabs').onclick=e=>{var b=e.target.closest('[data-rtab]');if(!b)return;recipeTab=b.dataset.rtab;recipeMethod='';recipePage=0;renderRecipeList();};
  document.getElementById('recipeSearch').oninput=e=>{var caret=e.target.selectionStart;recipeSearch=e.target.value;recipePage=0;renderRecipeList();var input=document.getElementById('recipeSearch');input.focus();try{input.setSelectionRange(caret,caret);}catch(e){}};
  if(document.getElementById('recipeMethod'))document.getElementById('recipeMethod').onchange=e=>{recipeMethod=e.target.value;recipePage=0;renderRecipeList();};
  document.getElementById('recipeFavoriteOnly').onchange=e=>{recipeFavoriteOnly=e.target.checked;recipePage=0;renderRecipeList();};
- var advanced=document.createElement('details');advanced.className='recipe-opportunities';advanced.innerHTML='<summary>Opportunity filters & market snapshot</summary><label>Sort<select id="recipeSort"><option value="name">Name</option><option value="profit">Expected net / hour</option><option value="xp">Expected life EXP / hour</option><option value="carryTime">Longest cooking time per load</option><option value="carryBatches">Most crafts per load</option><option value="carryWeight">Lightest ingredients per craft</option></select></label><label>Minimum net silver / hour<input id="recipeMinProfit" type="number" placeholder="No minimum" value="'+esc(recipeMinProfit)+'"></label><label>Minimum daily volume · 14-day average<input id="recipeVolume" type="number" min="0" placeholder="Unknown volumes excluded" value="'+esc(recipeVolume)+'"></label><button class="btn-secondary" id="recipeMarketRefresh" '+(recipeMarketBusy?'disabled':'')+'>Load recipe prices + market volumes</button><p class="studio-muted" role="status" id="recipeMarketStatus">Weight rankings use the selected recipe’s entered maximum/current/reserved LT, output model and tool limit. Update those when your bag changes. Optional snapshot, cached 15 minutes. No automatic refresh. Average volume is market-wide, not a promise your stack will sell.</p>';host.insertBefore(advanced,document.getElementById('recipeTabs').nextSibling);document.getElementById('recipeSort').value=recipeSort;
+ var advanced=document.createElement('details');advanced.className='recipe-opportunities';advanced.innerHTML='<summary>Opportunity filters & market snapshot</summary><label>Sort<select id="recipeSort"><option value="name">Name</option><option value="profit">Expected net / hour</option><option value="xp">Expected life EXP / hour</option><option value="carryTime">Longest cooking time per load</option><option value="carryBatches">Most crafts per load</option><option value="carryWeight">Lightest ingredients per craft</option></select></label><label>Minimum net silver / hour<input id="recipeMinProfit" type="number" placeholder="No minimum" value="'+esc(recipeMinProfit)+'"></label><label>Minimum daily volume · 14-day average<input id="recipeVolume" type="number" min="0" placeholder="Unknown volumes excluded" value="'+esc(recipeVolume)+'"></label><button class="btn-secondary" id="recipeMarketRefresh" '+(recipeMarketBusy?'disabled':'')+'>Refresh recipe prices</button><p class="studio-muted" role="status" id="recipeMarketStatus">Weight rankings use the selected recipe’s entered maximum/current/reserved LT, output model and tool limit. Update those when your bag changes. Optional snapshot, cached 15 minutes. No automatic refresh. Average volume is market-wide, not a promise your stack will sell.</p>';host.insertBefore(advanced,document.getElementById('recipeTabs').nextSibling);document.getElementById('recipeSort').value=recipeSort;
  document.getElementById('recipeSort').onchange=e=>{recipeSort=e.target.value;recipePage=0;renderRecipeList();};document.getElementById('recipeMinProfit').onchange=e=>{recipeMinProfit=e.target.value;recipePage=0;renderRecipeList();};document.getElementById('recipeVolume').onchange=e=>{recipeVolume=e.target.value;recipePage=0;renderRecipeList();};document.getElementById('recipeMarketRefresh').onclick=craftStudioLoadMarket;
  document.getElementById('recipePrevious').onclick=()=>{recipePage--;renderRecipeList();};document.getElementById('recipeNext').onclick=()=>{recipePage++;renderRecipeList();};
 }
-async function craftStudioLoadMarket(){if(recipeMarketBusy)return;recipeMarketBusy=true;var label=document.getElementById('recipeMarketStatus');if(label)label.textContent='Loading a public recipe market snapshot on demand…';try{var base=location.protocol==='http:'&&/^(127\.0\.0\.1|localhost)$/.test(location.hostname)?location.origin:bridgeSelectedOrigin;if(!base)throw Error('Open the Windows planner for current quotes');var requestRegion=String(region).toUpperCase(),response=await fetch(base+'/craft-market',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({region:requestRegion}),signal:AbortSignal.timeout(30000)});if(!response.ok)throw Error('Market snapshot unavailable');var payload=await response.json();visionRememberMarketQuotes(payload.items.map(i=>({...i,marketRegion:requestRegion})));recipeMarketBusy=false;renderRecipeList();if(selectedRecipe&&selectedRecipe.id!=='durability_timer')craftStudioRender(selectedRecipe,lastCraftAmount||1);label=document.getElementById('recipeMarketStatus');if(label)label.textContent=payload.items.length+' exact recipe item quotes loaded · '+requestRegion+'. See provider timestamps in the plan.';}catch(e){label=document.getElementById('recipeMarketStatus');if(label)label.textContent=e.message+'. Cached values are preserved.';}finally{recipeMarketBusy=false;}}
+async function craftStudioLoadMarket(){if(recipeMarketBusy)return;recipeMarketBusy=true;var label=document.getElementById('recipeMarketStatus');if(label)label.textContent='Loading a public recipe market snapshot on demand…';try{var base=location.protocol==='http:'&&/^(127\.0\.0\.1|localhost)$/.test(location.hostname)?location.origin:bridgeSelectedOrigin;if(!base){
+ var ids=[...new Set(recipeVisibleRows.flatMap(r=>craftStudioIds(r)))].slice(0,64);
+ var direct=await craftStudioRequestQuotes(ids,true);
+ if(!direct.ok)throw Error(direct.message);
+ recipeMarketBusy=false;renderRecipeList();
+ if(selectedRecipe&&selectedRecipe.id!=='durability_timer')craftStudioRender(selectedRecipe,lastCraftAmount||1);
+ label=document.getElementById('recipeMarketStatus');if(label)label.textContent=direct.count+' current quotes loaded for the first recipes on this results page. The Windows planner can also load the 14-day volume snapshot.';
+ return;
+}var requestRegion=String(region).toUpperCase(),response=await fetch(base+'/craft-market',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({region:requestRegion}),signal:AbortSignal.timeout(30000)});if(!response.ok)throw Error('Market snapshot unavailable');var payload=await response.json();visionRememberMarketQuotes(payload.items.map(i=>({...i,marketRegion:requestRegion})));recipeMarketBusy=false;renderRecipeList();if(selectedRecipe&&selectedRecipe.id!=='durability_timer')craftStudioRender(selectedRecipe,lastCraftAmount||1);label=document.getElementById('recipeMarketStatus');if(label)label.textContent=payload.items.length+' exact recipe item quotes loaded · '+requestRegion+'. See provider timestamps in the plan.';}catch(e){label=document.getElementById('recipeMarketStatus');if(label)label.textContent=e.message+'. Cached values are preserved.';}finally{recipeMarketBusy=false;}}
 /* OWNED RECIPE_BROWSER_JS END */
 /* OWNED CRAFT_MARKET_DESK_JS START */
 /* Market and Crafting use the same item IDs, recipe graph and regional quotes. */
 var craftMarketItemId=null,craftMarketRecipeId=null,craftMarketQuery='';
+
+var craftMarketHistory=new Map(),craftMarketFullCatalog=null,craftMarketCatalogRequest=null;
+var craftMarketSearchIndex=new WeakMap();
+
+function craftMarketLoadCatalog(){
+ if(craftMarketFullCatalog)return Promise.resolve(craftMarketFullCatalog.size);
+ if(craftMarketCatalogRequest)return craftMarketCatalogRequest;
+ craftMarketCatalogRequest=(async()=>{
+  var response=await fetch('https://api.arsha.io/util/db?lang=en',{signal:AbortSignal.timeout(12000)});
+  if(!response.ok)throw Error('Full item index unavailable (HTTP '+response.status+')');
+  var items=await response.json();
+  if(!Array.isArray(items)||items.length>150000)throw Error('Invalid market item index');
+  var catalog=new Map();
+  for(var item of items){
+   if(Number.isSafeInteger(item?.id)&&item.id>0&&typeof item.name==='string'&&item.name.trim()&&item.name.length<=200){
+    catalog.set(item.id,{id:item.id,name:item.name});
+   }
+  }
+  if(!catalog.size)throw Error('Market item index returned no valid names');
+  craftMarketFullCatalog=catalog;
+  return catalog.size;
+ })().finally(()=>{craftMarketCatalogRequest=null;});
+ return craftMarketCatalogRequest;
+}
+
+function craftMarketBaseQuotes(payload,ids,requestRegion){
+ var rows=Array.isArray(payload)?payload.flat(2):[payload],allowed=new Set(ids),quotes=new Map();
+ for(var row of rows){
+  if(!row||!allowed.has(row.id)||row.sid!==0||typeof row.name!=='string'||!row.name.trim()||!Number.isSafeInteger(row.basePrice)||row.basePrice<=0)continue;
+  var quote={id:row.id,name:row.name,price:row.basePrice,marketRegion:requestRegion,source:'Arsha Central Market',price_basis:'market_base'};
+  for(var [field,key] of [['currentStock','stock'],['totalTrades','trades'],['lastSoldPrice','last_sold_price'],['lastSoldTime','last_sold_at'],['priceMin','min_price'],['priceMax','max_price']]){
+   if(Number.isSafeInteger(row[field])&&row[field]>=0)quote[key]=row[field];
+  }
+  quotes.set(quote.id,quote);
+ }
+ return [...quotes.values()];
+}
+
+async function craftMarketFetchQuotes(ids,requestRegion){
+ var market=String(requestRegion).toLowerCase();
+ if(!['na','eu'].includes(market))throw Error('Choose NA or EU for market quotes');
+ var end=Date.now()+18000,budget=32,received=0;
+ async function lookup(batch){
+  var remaining=end-Date.now();
+  if(!budget||remaining<=0)return;
+  budget--;
+  var response=await fetch('https://api.arsha.io/v2/'+market+'/GetWorldMarketSubList?id='+batch.join(',')+'&lang=en',{signal:AbortSignal.timeout(Math.min(6000,remaining))});
+  if([400,404,500].includes(response.status)){
+   if(batch.length>1){var mid=Math.ceil(batch.length/2);await lookup(batch.slice(0,mid));await lookup(batch.slice(mid));}
+   return;
+  }
+  if(!response.ok)throw Error('Arsha market returned HTTP '+response.status);
+  var rows=craftMarketBaseQuotes(await response.json(),batch,requestRegion);
+  received+=rows.length;visionRememberMarketQuotes(rows);
+ }
+ for(var i=0;i<ids.length&&budget&&Date.now()<end;i+=16)await lookup(ids.slice(i,i+16));
+ return received;
+}
+
+function craftMarketHistoryPoints(payload,id){
+ if(payload?.id!==id||payload.sid!==0||!payload.history||Array.isArray(payload.history))return [];
+ return Object.entries(payload.history).map(([stamp,price])=>[Number(stamp),price])
+  .filter(([stamp,price])=>Number.isSafeInteger(stamp)&&stamp>0&&Number.isSafeInteger(price)&&price>0)
+  .sort((a,b)=>a[0]-b[0]).slice(-100);
+}
+
+async function craftMarketFetchHistory(id,requestRegion){
+ var market=String(requestRegion).toLowerCase();
+ if(!['na','eu'].includes(market)||!Number.isSafeInteger(id)||id<=0)throw Error('Select a valid market item');
+ var response=await fetch('https://api.arsha.io/v2/'+market+'/GetMarketPriceInfo?id='+id+'&sid=0&lang=en',{signal:AbortSignal.timeout(10000)});
+ if(!response.ok)throw Error('Price history unavailable (HTTP '+response.status+')');
+ var points=craftMarketHistoryPoints(await response.json(),id);
+ if(!points.length)throw Error('No base-item history returned');
+ var key=market+':'+id;craftMarketHistory.set(key,points);
+ if(craftMarketHistory.size>30)craftMarketHistory.delete(craftMarketHistory.keys().next().value);
+}
+
+function craftMarketHistoryHTML(item){
+ var points=craftMarketHistory.get(String(region).toLowerCase()+':'+item.id);
+ if(!points)return '';
+ var start=points[0],latest=points.at(-1),prices=points.map(point=>point[1]),date=stamp=>new Date(stamp).toLocaleDateString();
+ return '<section class="market-history"><h3>Base price history</h3>'+
+  '<p>'+date(start[0])+' – '+date(latest[0])+' · Latest '+craftStudioMoney(latest[1])+' · Low '+craftStudioMoney(Math.min(...prices))+' · High '+craftStudioMoney(Math.max(...prices))+'</p>'+
+  craftStudioGraph(points,'Arsha base-item price history')+
+  '<details><summary>Recent price observations</summary><ul>'+points.slice(-7).reverse().map(([stamp,price])=>'<li>'+date(stamp)+' · '+craftStudioMoney(price)+'</li>').join('')+'</ul></details></section>';
+}
 
 function craftMarketOpen(itemId,recipeId=null){
  craftMarketItemId=itemId;craftMarketRecipeId=recipeId;craftMarketQuery='';
@@ -1375,7 +1479,10 @@ function craftMarketOpen(itemId,recipeId=null){
 }
 
 function craftMarketCatalog(){
- var catalog=new Map(Object.values(VISION_CRAFT_DATA.items).map(item=>[item.id,item]));
+ var catalog=new Map(craftMarketFullCatalog||[]);
+ for(var item of Object.values(VISION_CRAFT_DATA.items))catalog.set(item.id,item);
+ var selected=craftMarketItemId,quote=selected?craftStudioQuote('',selected):null;
+ if(selected&&!catalog.has(selected))catalog.set(selected,{id:selected,name:quote?.name||'Item #'+selected});
  for(var item of [...hotItems,...currentItems]){
   if(Number.isInteger(item.id)&&!catalog.has(item.id))catalog.set(item.id,item);
  }
@@ -1387,8 +1494,11 @@ function craftMarketMatches(catalog,query){
  if(!normalized)return [];
  var exactId=/^\d+$/.test(query.trim())?Number(query):null;
  if(exactId!==null)return catalog.has(exactId)?[catalog.get(exactId)]:[];
- return [...catalog.values()].filter(item=>VisionCraft.key(item.name).includes(normalized))
-  .sort((a,b)=>Number(VisionCraft.key(b.name).startsWith(normalized))-Number(VisionCraft.key(a.name).startsWith(normalized))||a.name.localeCompare(b.name)||a.id-b.id).slice(0,20);
+ if(normalized.length<2)return [];
+ if(!craftMarketSearchIndex.has(catalog))craftMarketSearchIndex.set(catalog,[...catalog.values()].map(item=>[VisionCraft.key(item.name),item]));
+ return craftMarketSearchIndex.get(catalog).filter(([key])=>key.includes(normalized))
+  .sort(([a,x],[b,y])=>Number(b.startsWith(normalized))-Number(a.startsWith(normalized))||x.name.localeCompare(y.name)||x.id-y.id)
+  .slice(0,20).map(([,item])=>item);
 }
 
 function craftMarketInspect(item){
@@ -1411,7 +1521,10 @@ function craftMarketInspect(item){
   '<dl class="market-facts"><div><dt>'+(quote?.price_basis==='market_reference'?'Reference quote':'Base quote')+'</dt><dd>'+number(quote?.price)+'</dd></div><div><dt>Listed stock</dt><dd>'+number(quote?.stock)+'</dd></div><div><dt>14-day daily volume</dt><dd>'+number(quote?.daily_volume)+'</dd></div>'+
   (item.npcBuy>0?'<div><dt>NPC buy price</dt><dd>'+number(item.npcBuy)+'</dd></div>':'')+'</dl>'+
   '<p class="studio-muted">'+esc(quote?.source||'No regional quote')+(observed?' · '+esc(observed):'')+'</p>'+
-  '<button type="button" class="btn-secondary" data-market-refresh="'+item.id+'">Refresh item quote</button>'+
+  '<dl class="market-facts"><div><dt>Last sale</dt><dd>'+number(quote?.last_sold_price)+'</dd></div><div><dt>Lifetime trades</dt><dd>'+number(quote?.trades)+'</dd></div>'+
+  '<div><dt>Listed price range</dt><dd>'+number(quote?.min_price)+' – '+number(quote?.max_price)+'</dd></div></dl>'+
+  '<div class="studio-actions"><button type="button" class="btn-secondary" data-market-refresh="'+item.id+'">Refresh quote</button>'+
+  '<button type="button" class="btn-secondary" data-market-history="'+item.id+'">Load price history</button></div>'+craftMarketHistoryHTML(item)+
   (comparisons.length?'<details open><summary>Compare making vs buying</summary><p class="studio-muted">Modeled unit cost uses 100 batches, saved inputs and expected output. Comparison excludes sale tax and rare proceeds.</p><ul class="market-recipe-links">'+comparisons.join('')+'</ul></details>':'')+
   recipes(links.producedBy,'How to make it')+recipes(links.usedBy,'Recipes that use it');
 }
@@ -1437,8 +1550,9 @@ function craftMarketRender(){
  var host=document.getElementById('craftMarketDesk');if(!host)return;
  var esc=visionEscape,catalog=craftMarketCatalog(),item=catalog.get(craftMarketItemId);
  var recipe=RECIPES.find(r=>r.id===craftMarketRecipeId),plan=recipe?craftStudioPlan(recipe,lastCraftAmount||1):null;
- host.innerHTML='<header class="market-desk-header"><div><small>VISION / MARKET INTELLIGENCE</small><h1>Market workbench</h1><p>Look up an ingredient, find what makes it, and price your production line.</p></div><b>'+esc(String(region).toUpperCase())+'</b></header>'+
+ host.innerHTML='<header class="market-desk-header"><div><small>VISION / MARKET INTELLIGENCE</small><h1>Market workbench</h1><p>Check live listings, trace recipes, and price your production line.</p></div><b>'+esc(String(region).toUpperCase())+'</b></header>'+
   '<div class="market-desk-grid"><section class="market-desk-panel"><form id="marketItemSearch"><label for="marketItemQuery">Item name or exact ID</label><div><input id="marketItemQuery" type="search" value="'+esc(craftMarketQuery)+'" placeholder="Wheat Flour, Balenos Meal, 9601"><button class="btn-secondary" type="submit">Find</button></div></form>'+
+  (craftMarketFullCatalog?'<p class="studio-muted">Full name index loaded. Live lookup determines whether an item has a listing.</p>':'<button class="market-inline" type="button" data-market-index>Load full item name index</button>')+
   '<div id="marketItemResults"></div><p id="marketDeskStatus" role="status"></p>'+craftMarketInspect(item)+'</section>'+
   '<section class="market-desk-panel">'+craftMarketBasket(recipe,plan)+'</section></div>';
  var results=host.querySelector('#marketItemResults'),input=host.querySelector('#marketItemQuery');
@@ -1446,13 +1560,15 @@ function craftMarketRender(){
   craftMarketQuery=input.value;
   var matches=craftMarketMatches(catalog,craftMarketQuery);
   results.innerHTML=matches.map(row=>'<button type="button" data-market-item="'+row.id+'">'+esc(row.name)+' <small>#'+row.id+'</small></button>').join('')||
-   (craftMarketQuery.trim()?'<p class="studio-muted">No matching item in the crafting catalog or loaded market categories.</p>':'');
+   (craftMarketQuery.trim()?'<p class="studio-muted">No matching name. Load the full index or enter an exact item ID.</p>':'');
  }
  input.oninput=search;
  host.querySelector('#marketItemSearch').onsubmit=event=>{
   event.preventDefault();search();
   var hits=craftMarketMatches(catalog,craftMarketQuery);
-  if(hits.length===1){craftMarketItemId=hits[0].id;craftMarketRender();}
+  var exact=/^\d{1,9}$/.test(craftMarketQuery.trim())?Number(craftMarketQuery):null;
+  if(hits.length===1||exact>0){craftMarketItemId=hits[0]?.id||exact;craftMarketRender();}
+
  };
  search();
  host.onclick=async event=>{
@@ -1460,6 +1576,26 @@ function craftMarketRender(){
   if(button.hasAttribute('data-market-open-craft')){showView('craft');craftWorkflowSet('planner');return;}
   if(button.dataset.marketRecipe){showView('craft');craftWorkflowSet('planner');selectRecipe(button.dataset.marketRecipe);return;}
   if(button.dataset.marketItem){craftMarketItemId=Number(button.dataset.marketItem);craftMarketRender();return;}
+  if(button.hasAttribute('data-market-index')){
+   var indexLabel=host.querySelector('#marketDeskStatus');
+   indexLabel.textContent='Loading item names…';button.disabled=true;
+   try{
+    var count=await craftMarketLoadCatalog();
+    if(currentView==='market'&&host.querySelector('#marketDeskStatus')===indexLabel){
+     craftMarketRender();host.querySelector('#marketDeskStatus').textContent=count.toLocaleString()+' item names loaded.';
+    }
+   }catch(error){if(host.querySelector('#marketDeskStatus')===indexLabel){indexLabel.textContent=error.message;button.disabled=false;}}
+   return;
+  }
+  if(button.dataset.marketHistory){
+   var historyLabel=host.querySelector('#marketDeskStatus'),requestRegion=region;
+   historyLabel.textContent='Loading base-item price history…';button.disabled=true;
+   try{
+    await craftMarketFetchHistory(Number(button.dataset.marketHistory),requestRegion);
+    if(currentView==='market'&&host.querySelector('#marketDeskStatus')===historyLabel)craftMarketRender();
+   }catch(error){if(host.querySelector('#marketDeskStatus')===historyLabel){historyLabel.textContent=error.message;button.disabled=false;}}
+   return;
+  }
   var ids=button.dataset.marketRefresh?[Number(button.dataset.marketRefresh)]:
    button.hasAttribute('data-market-refresh-basket')&&recipe?craftStudioIds(recipe):null;
   if(!ids)return;
@@ -1468,7 +1604,7 @@ function craftMarketRender(){
   var result=await craftStudioRequestQuotes(ids,true);
   if(currentView!=='market'||host.querySelector('#marketDeskStatus')!==label)return;
   craftMarketRender();
-  host.querySelector('#marketDeskStatus').textContent=result.ok?'Quote lookup complete. Missing prices stay unknown.':result.message;
+  host.querySelector('#marketDeskStatus').textContent=result.ok?(result.count+' quotes returned. Missing prices stay unknown.') :result.message;
  };
 }
 /* OWNED CRAFT_MARKET_DESK_JS END */
@@ -1821,7 +1957,10 @@ function craftMarketRender(){
       return lookupPrice(name, 0);
     }
 
-    document.getElementById("qaEnhance").onclick = function() {
+    document.getElementById("qaEnhance").onclick = async function() {
+      if(!Object.keys(enhancePrices).length){
+        try{rememberPrices(await loadCategory(30));}catch(e){}
+      }
       var mats = [
         { key: "Black Stone", label: "Black Stone" },
         { key: "Concentrated Magical Black Stone", label: "Conc. Magical Black Stone" },
@@ -1942,8 +2081,13 @@ function craftMarketRender(){
         if (currentView === "craft") { renderRecipeList(); renderCraftDetail(); }
       });
     });
+    document.getElementById("listingsBody").addEventListener("click", function(e) {
+      const selected=e.target.closest("[data-market-list-item]");
+      if(selected)craftMarketOpen(Number(selected.dataset.marketListItem),craftMarketRecipeId);
+    });
     document.getElementById("search").addEventListener("input", function(e) {
       searchQ = e.target.value;
+      const browse=document.querySelector('.market-browse');if(browse)browse.open=true;
       renderListings();
     });
     document.getElementById("refreshBtn").addEventListener("click", function() {
@@ -2211,7 +2355,14 @@ function visionRememberMarketQuotes(list){
   list.forEach(function(item){
     var key=String(item.marketRegion||region).toLowerCase()+':';
     if(Number.isSafeInteger(Number(item.price)) && Number(item.price)>0){
-      if(item.id){visionMarketById[key+String(item.id)]=Number(item.price);visionMarketQuoteDetails[key+String(item.id)]={...item,updatedAt:item.updated_at||item.updatedAt||new Date().toISOString()};}
+      if(item.id){
+       var itemKey=key+String(item.id),prior=visionMarketQuoteDetails[itemKey],details={...item,updatedAt:item.updated_at||item.updatedAt||new Date().toISOString()};
+       // Trade volume comes from a separate snapshot; a base quote does not refresh it.
+       if(details.daily_volume==null&&prior?.daily_volume!=null){
+        details.daily_volume=prior.daily_volume;details.volume_source_updated_at=prior.volume_source_updated_at||prior.source_updated_at||prior.updatedAt;
+       }
+       visionMarketById[itemKey]=Number(item.price);visionMarketQuoteDetails[itemKey]=details;
+      }
       visionMarketByName[key+visionName(item.name)]=Number(item.price);
     }
   });
@@ -2717,19 +2868,22 @@ async function craftStudioRequestQuotes(itemIds,force){
  var requestRegion=String(region).toUpperCase(),ids=[...new Set(itemIds)].filter(id=>Number.isInteger(id)&&id>0).sort((a,b)=>a-b).slice(0,256),key=requestRegion+':'+ids.join(',');
  if(!ids.length)return {ok:true,count:0};
  if(craftStudioPricePending.has(key))return craftStudioPricePending.get(key);
- if(!force&&Date.now()-(craftStudioPriceRequests.get(key)||0)<300000)return {ok:true,cached:true,count:ids.length};
+ var cached=craftStudioPriceRequests.get(key);
+ if(!force&&cached&&Date.now()-cached.at<300000)return {ok:true,cached:true,count:cached.count};
  var job=(async function(){try{
   var base=location.protocol==='http:'&&/^(127\.0\.0\.1|localhost)$/.test(location.hostname)?location.origin:bridgeSelectedOrigin;
-  if(!base)throw Error('Open the Windows planner to refresh live quotes');
-  for(var offset=0;offset<ids.length;offset+=64){
+  var count=0;
+  if(!base)count=await craftMarketFetchQuotes(ids,requestRegion);
+  else for(var offset=0;offset<ids.length;offset+=64){
    var response=await fetch(base+'/craft-quotes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:ids.slice(offset,offset+64),region:requestRegion}),signal:AbortSignal.timeout(60000)});
    if(!response.ok)throw Error('Recipe prices unavailable; update Vision if needed');
    var payload=await response.json();
-   visionRememberMarketQuotes((payload.items||[]).map(i=>({...i,marketRegion:requestRegion})));
+   var rows=(payload.items||[]).map(i=>({...i,marketRegion:requestRegion}));
+   count+=rows.length;visionRememberMarketQuotes(rows);
   }
-  craftStudioPriceRequests.set(key,Date.now());
+  craftStudioPriceRequests.set(key,{at:Date.now(),count});
   if(craftStudioPriceRequests.size>64)craftStudioPriceRequests.delete(craftStudioPriceRequests.keys().next().value);
-  return {ok:true,count:ids.length};
+  return {ok:true,count};
  }catch(e){return {ok:false,message:e.message};}})();
  craftStudioPricePending.set(key,job);
  job.finally(()=>{if(craftStudioPricePending.get(key)===job)craftStudioPricePending.delete(key);});
@@ -2741,7 +2895,7 @@ async function craftStudioLoadPrices(recipe,force,context){
  var result=await craftStudioRequestQuotes(craftStudioIds(recipe,context),force);
  if(result.ok&&!result.cached&&!context&&String(region).toUpperCase()===requestRegion&&selectedRecipe?.id===recipe.id&&!document.activeElement?.matches('#craftDetail input,#craftDetail select'))craftStudioRender(recipe,lastCraftAmount||1);
  label=document.getElementById('studioMarketState');
- if(label)label.textContent=result.ok?requestRegion+' base quotes loaded · fetched timestamps, last sale and stock in details. Shared five-minute cache; no live tick feed.':result.message+'. Unknown values stay unpriced.';
+ if(label)label.textContent=result.ok?requestRegion+' · '+result.count+' item quotes returned'+(result.cached?' from cache':'')+'. Missing quotes stay unpriced.':result.message+'. Unknown values stay unpriced.';
  return result;
 }
 var visionModelTimer=null,visionModelLast='';
@@ -2759,13 +2913,34 @@ function craftStudioDeskMarkup(html){
   return stack.at(-1)?(tag.startsWith('</')?'</h4>':'<h4 class="craft-desk-heading">'):tag;
  });
 }
-function craftStudioDeskNav(){return '<nav class="craft-desk-nav" aria-label="Crafting quick access">'+[['craftWorkbench','Overview'],['productionRoadmap','Graph & timeline'],['craftAnalysis','Analytics'],['craftWeight','Weight board'],['craftIngredients','Ingredients'],['craftProduction','Production steps'],['craftOutputs','Output'],['craftEconomy','Costs & tax'],['craftCharacter','Character'],['studioQueuePanel','Queue']].map(([id,title])=>'<button class="btn-secondary" data-craft-jump="'+id+'">'+title+'</button>').join('')+'</nav>';}
+var craftStudioPage='Overview';
+var craftStudioPages=['Overview','Ingredients','Production','Results','Queue'];
+function craftStudioShowPage(page){
+ if(!craftStudioPages.includes(page))return;
+ craftStudioPage=page;
+ for(var name of craftStudioPages){
+  var panel=document.getElementById('studioPanel'+name),tab=document.getElementById('studioTab'+name);
+  if(panel)panel.hidden=name!==page;
+  if(tab){tab.setAttribute('aria-selected',String(name===page));tab.tabIndex=name===page?0:-1;}
+ }
+}
+function craftStudioDeskNav(){
+ return '<nav class="craft-desk-nav" role="tablist" aria-label="Recipe planner">'+craftStudioPages.map(name=>
+  '<button class="btn-secondary" type="button" role="tab" id="studioTab'+name+'" aria-controls="studioPanel'+name+'" data-studio-page="'+name+'" aria-selected="'+(name===craftStudioPage)+'" tabindex="'+(name===craftStudioPage?0:-1)+'">'+name+'</button>').join('')+'</nav>';
+}
 function craftStudioDeskBind(host){
- host.querySelectorAll('[data-craft-jump]').forEach(button=>button.onclick=()=>{
-  var target=document.getElementById(button.dataset.craftJump);if(!target)return;
-  // Preserve simple keyboard access; opening advanced nested choices is optional.
-  host.querySelectorAll('[data-craft-jump]').forEach(b=>b.setAttribute('aria-current',String(b===button)));
-  target.setAttribute('tabindex','-1');target.scrollIntoView?.({behavior:'instant',block:'start'});target.focus?.({preventScroll:true});
+ host.querySelectorAll('[data-studio-page]').forEach(tab=>{
+  tab.onclick=()=>{craftStudioShowPage(tab.dataset.studioPage);document.getElementById('studioPanel'+tab.dataset.studioPage)?.scrollIntoView?.({block:'nearest'});};
+  tab.onkeydown=event=>{
+   var i=craftStudioPages.indexOf(tab.dataset.studioPage),next;
+   if(event.key==='ArrowRight')next=(i+1)%craftStudioPages.length;
+   else if(event.key==='ArrowLeft')next=(i+craftStudioPages.length-1)%craftStudioPages.length;
+   else if(event.key==='Home')next=0;
+   else if(event.key==='End')next=craftStudioPages.length-1;
+   else return;
+   event.preventDefault();
+   var page=craftStudioPages[next];craftStudioShowPage(page);document.getElementById('studioTab'+page)?.focus();
+  };
  });
 }
 
@@ -2782,22 +2957,37 @@ function craftStudioRender(recipe,amount){
  var inventoryMax=inventoryLimit.batches;
  var nextStep=p.steps[craftStudioWorkshopProgress(recipe,p).completed];
  var progress=Math.min(100,p.ownedBatches/amount*100),rewardChoices=recipe.type==='cooking'?[9213,9065]:[5301,4801,4802,4803,4804,4805,9733];
- var markup=craftStudioDeskNav()+'<div class="studio-eyebrow">VISION / CRAFTING INTELLIGENCE · '+esc(String(region).toUpperCase())+'</div><div class="studio-title"><h3>'+esc(recipe.name)+'</h3><button id="studioFavorite" class="btn-secondary" aria-pressed="'+craftStudioState.favorites.includes(recipe.id)+'">'+(craftStudioState.favorites.includes(recipe.id)?'★ Saved':'☆ Save recipe')+'</button></div><p class="studio-muted">'+esc(recipe.method?recipe.method.replaceAll('_',' '):recipe.type)+' · '+recipe.mats.length+' ingredient slots · recipe '+esc(recipe.recipeKey)+' <a href="https://bdocodex.com/us/item/'+recipe.itemId+'/" target="_blank" rel="noopener noreferrer">Game details ↗</a></p>'+
- '<div class="studio-fields studio-main-controls">'+field('craftAmt','Batches to craft',amount,1,1,1e9)+'<label class="studio-field">Or target main items<input id="studioTarget" type="number" min="1" max="1000000000" value="'+Math.ceil(p.output)+'"></label><button class="btn-secondary" id="studioOpenMarket">Open market basket</button><button class="btn-secondary" id="studioWeightBoard">Show all weight cards</button></div>'+
- '<section class="workshop-next"><h4>Craft from inventory</h4><p>Uses saved ingredient quantities and selected substitutions for this recipe. Edit Ingredients or paste your inventory counts.</p><details><summary>Paste inventory quantities</summary><label>Item name and quantity, separated by a tab (one item per line)<textarea id="studioInventoryPaste" rows="4"></textarea></label><button id="studioInventoryImport" class="btn-secondary">Update inventory</button></details><p id="studioInventorySummary" role="status"></p><label class="studio-field">Batches from inventory<input id="studioInventoryBatches" type="range" min="0" max="'+inventoryMax+'" value="'+Math.min(amount,inventoryMax)+'" '+(inventoryMax?'':'disabled')+'></label><button id="studioInventoryApply" class="btn-secondary" '+(inventoryMax?'':'disabled')+'>Use this amount in plan</button></section>'+
- '<details data-section="single-recipe" class="single-recipe-workbench"><summary>Your crafting desk</summary><p class="studio-muted">Plan '+esc(recipe.name)+' in one place. These quantities and costs belong to this recipe; the map labels whole-line totals separately. Timers use your saved tool, ingredient or hybrid stopping rule in Map & timeline. Explicit manual timer actions remain labeled.</p>'+
+ var panel=name=>'<section class="studio-tab-panel" role="tabpanel" id="studioPanel'+name+'" aria-labelledby="studioTab'+name+'" '+(name===craftStudioPage?'':'hidden')+'>';
+ var markup='<div class="studio-eyebrow">VISION / CRAFTING INTELLIGENCE · '+esc(String(region).toUpperCase())+'</div><div class="studio-title"><h3>'+esc(recipe.name)+'</h3><button id="studioFavorite" class="btn-secondary" aria-pressed="'+craftStudioState.favorites.includes(recipe.id)+'">'+(craftStudioState.favorites.includes(recipe.id)?'★ Saved':'☆ Save recipe')+'</button></div><p class="studio-muted">'+esc(recipe.method?recipe.method.replaceAll('_',' '):recipe.type)+' · '+recipe.mats.length+' ingredient slots · recipe '+esc(recipe.recipeKey)+' <a href="https://bdocodex.com/us/item/'+recipe.itemId+'/" target="_blank" rel="noopener noreferrer">Game details ↗</a></p>'+
+ '<div class="studio-fields studio-main-controls">'+field('craftAmt','Batches to craft',amount,1,1,1e9)+'<label class="studio-field">Or target main items<input id="studioTarget" type="number" min="1" max="1000000000" value="'+Math.ceil(p.output)+'"></label><button class="btn-secondary" id="studioOpenMarket">Open market basket</button><button class="btn-secondary" id="studioRefreshPrices">Refresh plan prices</button></div>'+
+ '<p id="studioMarketState" class="studio-muted" role="status">Regional market quotes and labeled NPC prices feed this plan.</p>'+
+ '<div class="studio-actions"><button class="btn-primary" id="btnStartCraft" '+(p.steps.length>1&&!nextStep?'disabled':'')+'>'+ (p.steps.length>1?(nextStep?'Start manual next stage':'Checklist complete'):'Start manual recipe timer')+' '+fmtTime(p.steps.length>1?(nextStep?.seconds||0):amount*c.seconds)+'</button><button class="btn-secondary" id="studioQueue">Add to queue</button></div><p class="studio-muted">Start crafting in game yourself. Timer uses the saved plan.</p>'+craftStudioDeskNav()+
+ panel('Overview')+
+ '<details data-section="single-recipe" class="single-recipe-workbench"><summary>Recipe overview</summary>'+
  (variants.length>1?'<label class="studio-field">Recipe variant<select id="studioVariant">'+variants.map((v,i)=>'<option value="'+esc(v.id)+'" '+(v.id===recipe.id?'selected':'')+'>'+esc((v.method||v.type)+' · variant '+(i+1)+' · '+v.mats.map(m=>m.qty+' '+m.name).join(', '))+'</option>').join('')+'</select></label>':'')+
  '<div class="studio-kpis">'+kpi('EXPECTED NET PROFIT',craftStudioMoney(p.profit),p.missing?p.unknown.length+' missing prices · no invented total':'After input value, sale deductions & expenses')+kpi('EXPECTED PROFIT / HOUR',craftStudioMoney(p.perHour),fmtTime(p.seconds)+' modeled production time')+kpi('CASH TO PREPARE',craftStudioMoney(p.cash),'Owned inputs still have economic value')+kpi('EXPECTED MAIN OUTPUT',p.output.toLocaleString(undefined,{maximumFractionDigits:2}),c.yield.toFixed(3)+' / batch · probabilistic planning model')+'</div>'+
  '<div class="studio-milestone"><b>'+(progress>=100?'Ready to craft':progress>=50?'Preparation gaining momentum':'Your next production run')+'</b><span>'+p.ownedBatches.toLocaleString()+' / '+amount.toLocaleString()+' batches covered by direct inventory</span><progress max="100" value="'+progress+'" aria-label="Material readiness">'+progress.toFixed(0)+'%</progress></div>'+
  (p.missing?'<p class="studio-warning" role="status">Prices needed: '+p.unknown.map(esc).join(', ')+'. Expected quantities remain available. Refresh this plan to value it.</p>':'<p class="studio-good" role="status">✓ All valued items have a market quote or labeled NPC purchase price. Large stacks still need buyers.</p>')+
+ '</details></section>'+
+ panel('Ingredients')+
+ '<section class="workshop-next"><h4>Craft from inventory</h4><p>Uses saved ingredient quantities and selected substitutions for this recipe. Edit Ingredients or paste your inventory counts.</p><details><summary>Paste inventory quantities</summary><label>Item name and quantity, separated by a tab (one item per line)<textarea id="studioInventoryPaste" rows="4"></textarea></label><button id="studioInventoryImport" class="btn-secondary">Update inventory</button></details><p id="studioInventorySummary" role="status"></p><label class="studio-field">Batches from inventory<input id="studioInventoryBatches" type="range" min="0" max="'+inventoryMax+'" value="'+Math.min(amount,inventoryMax)+'" '+(inventoryMax?'':'disabled')+'></label><button id="studioInventoryApply" class="btn-secondary" '+(inventoryMax?'':'disabled')+'>Use this amount in plan</button></section>'+
  '<details class="studio-materials" data-section="materials"><summary>Ingredients · choose substitutions · inventory</summary><div class="studio-table-wrap"><table><thead><tr><th>Ingredient / substitution</th><th>Need</th><th>Owned</th><th>Source</th></tr></thead><tbody>'+p.materials.map((m,i)=>{var k=VisionCraft.key(m.name),sub=craftRecipeIndex.byItem.get(m.itemId)||[];return '<tr><td>'+(m.options.length?'<select aria-label="Ingredient '+(i+1)+' substitution" data-choice="'+i+'">'+m.options.map(o=>'<option value="'+o.itemId+'" '+(o.itemId===m.itemId?'selected':'')+'>'+esc(VISION_CRAFT_DATA.items[o.itemId].name)+' · '+Math.ceil(m.required/o.value)+' / batch</option>').join('')+'</select>':esc(m.name))+'<small>'+m.qty+' / batch · item '+m.itemId+'</small><button type="button" class="market-inline" data-craft-market-item="'+m.itemId+'">Inspect market</button></td><td>'+craftStudioMoney(m.qty*amount)+'</td><td><input data-stock="'+i+'" aria-label="Owned '+esc(m.name)+'" type="number" min="0" max="1000000000" value="'+(craftStudioState.inventory[k]||0)+'"></td><td>'+(sub.length?'<label>'+ '<input type="checkbox" data-make="'+i+'" '+(craftStudioState.make[k]?'checked':'')+'> Make</label>'+(sub.length>1?'<select data-subvariant="'+m.itemId+'" aria-label="Intermediate recipe">'+sub.map((v,j)=>'<option value="'+esc(v.id)+'" '+((craftStudioState.variants[m.itemId]||sub[0].id)===v.id?'selected':'')+'>'+esc(v.method||v.type)+' #'+(j+1)+'</option>').join('')+'</select>':''):'Buy / owned')+'</td></tr>';}).join('')+'</tbody></table></div><button id="studioCheapest" class="btn-secondary">Choose cheapest quoted substitutions</button><p class="studio-muted">Whole units per craft: ceil(required group units ÷ substitution value). Inventory is never silently consumed in game. Make steps charge full batches and carry their excess into later queue steps.</p></details>'+
- craftStudioLogistics(recipe,p)+roadmap+
+ '<details data-section="shopping"><summary>Ingredient costs & sourcing · '+p.steps.length+' steps</summary>'+craftStudioTree(p)+'<p class="studio-muted">Buy main output: '+craftStudioMoney(p.unitPrice)+' / item. Modeled input cost to make it: '+craftStudioMoney(p.cost===null?null:p.cost/p.output)+' / main item, before crediting side outputs.</p>'+p.warnings.map(w=>'<p class="studio-warning">'+esc(w)+'</p>').join('')+p.surplus.map(s=>'<p>Retained intermediate excess: '+esc(s.name)+' × '+s.quantity.toFixed(3)+'</p>').join('')+'</details>'+
+ '<button class="btn-secondary" id="studioExport">Export shopping list</button></section>'+
+ panel('Production')+
+ '<div class="studio-actions"><button class="btn-secondary" id="studioWeightBoard">Show all weight cards</button></div>'+roadmap+craftStudioLogistics(recipe,p)+
+ craftStudioWorkshop(recipe,p)+
+ '</section>'+
+ panel('Results')+
+ '<details data-section="outputs"><summary>Outputs, EXP, weight & market details</summary><div class="studio-table-wrap"><table><thead><tr><th>Output</th><th>Expected units</th><th>Valuation</th><th>Retained silver</th></tr></thead><tbody>'+p.outputs.map(o=>'<tr><td>'+esc(o.name)+'<small>'+esc(o.kind)+'</small><button class="market-inline" data-craft-market-item="'+o.itemId+'">Inspect market</button></td><td>'+o.quantity.toLocaleString(undefined,{maximumFractionDigits:3})+'</td><td>'+esc(o.kept?'Kept · excluded from revenue':o.basis)+'<small>'+craftStudioMoney(o.unit)+' / unit</small></td><td>'+craftStudioMoney(o.kept?null:o.net)+'</td></tr>').join('')+'</tbody></table></div><p class="studio-muted">'+craftStudioMoney(p.xp)+' expected life EXP · '+p.weight.toFixed(2)+' LT expected output weight · break-even main sale price '+craftStudioMoney(p.breakEven)+'. Bonus life EXP, rounding and recipe eligibility may change actual results.</p>'+craftStudioQuoteDetails(p,recipe)+'<p class="studio-muted">Alchemy extra-item chance / craft: regular '+((rates.bracket.extraItemChanceRegular||0)*100).toFixed(4)+'%, special '+((rates.bracket.extraItemChanceSpecial||0)*100).toFixed(4)+'%, rare '+((rates.bracket.extraItemChanceRare||0)*100).toFixed(4)+'%. These are model probabilities, not a promise of a valuable drop.</p></details>'+
+ '<details data-section="analysis"><summary>Profit lab · graphs & sensitivity</summary><div id="studioAnalysis"></div><p class="studio-muted">Graphs are expected outcomes, with fixed input prices. No liquidity, future price movement, random streak, skill failure or verified production is implied.</p></details>'+
+ '<details class="studio-assumptions"><summary>Change calculation assumptions</summary>'+
  '<details data-section="character"><summary>Character & production assumptions</summary><div class="studio-fields">'+field('studioMastery','Mastery · saved for '+recipe.type,c.mastery,1,0,3000)+field('studioBaseSeconds','Base seconds / action',raw.baseSeconds??craftStudioState.characters[recipe.type]?.baseSeconds??recipe.secPerBatch,.1,.1,3600)+field('studioSuccess','Processing success %',c.success,.1,1,100)+field('studioXp','Life EXP bonus %',c.xpBonus,.1,0,10000)+'</div>'+check('studioMass','Model mass cooking / eligible mass processing',c.mass)+'<p class="studio-muted">Bracket '+(rates.bracket.masteryLevel??0)+' mastery · main '+rates.normal.toFixed(4)+' / craft · rare '+rates.rare.toFixed(4)+' / craft · '+rates.mass.toFixed(3)+' effective speed factor. Expected speed varies in game; your measured tool timer remains independent. Minimum recipe skill requirements are not supplied by this dataset: check the game details before starting.</p></details>'+
  '<details data-section="economy"><summary>Sale deductions, outputs & advanced model</summary><div class="studio-fields">'+field('studioRetention','Sale proceeds retained %',c.retention,.1,0,100)+field('studioExtra','Extra cost / batch',c.extra)+field('studioYield','Main output / batch override',c.yield,.001,.01,10000)+field('studioRareYield','Rare output / batch override',c.rareYield,.001,0,1000)+field('studioGoal','Recorded gross silver goal',c.goal)+field('studioByproductRate','Byproducts / batch model',c.byproductRate,.00001,0,100)+'</div><div class="studio-fields">'+check('studioValuePack','Value Pack',true)+check('studioRing','Merchant Ring',false)+field('studioFame','Family fame collection bonus %',0,.1,0,1.5)+'</div><button id="studioTax" class="btn-secondary">Apply tax benefits</button>'+check('studioIncludeRare','Include modeled rare outputs',c.includeRare)+(recipe.type==='alchemy'?check('studioExtras','Value mastery extra-item distribution (requires all quotes)',c.includeExtras):'')+check('studioKeepMain','Keep main output instead of selling',c.keepMain)+check('studioKeepRare','Keep rare output instead of selling',c.keepRare)+check('studioUseRareInputs','When made as an intermediate, use rare procs as 3 normal units',c.useRareInputs)+check('studioByproduct','Value byproducts by material exchange',c.includeByproduct)+'<label class="studio-field">Byproduct exchange reward<select id="studioReward">'+rewardChoices.map(id=>'<option value="'+id+'" '+(Number(c.byproductReward||rewardChoices[0])===id?'selected':'')+'>'+esc(VISION_CRAFT_DATA.items[id]?.name||id)+'</option>').join('')+'</select></label>'+check('studioEstimate','Project main output while crafting capture is blocked',c.estimate)+'<p class="studio-muted">Projection is optional, cooking/alchemy only, and never enters recorded totals. Byproducts default to kept; material-exchange valuation is mutually exclusive with CP, not extra CP income. Rare-only processing outputs with an unknown chance are excluded rather than guessed. Intermediate rare outputs are excluded unless their own model enables substitution at 3 normal units; verify that replacement is valid for your ingredient. Equivalent-unit surplus is modeled, not a verified inventory count. Intermediate extras are not credited to profit. Alchemy mastery extras are excluded unless the distribution valuation is enabled; incomplete extra-item prices block profit totals.</p><button id="studioResetModel" class="btn-secondary">Use mastery model again</button></details>'+
- '<details data-section="outputs"><summary>Outputs, EXP, weight & market details</summary><div class="studio-table-wrap"><table><thead><tr><th>Output</th><th>Expected units</th><th>Valuation</th><th>Retained silver</th></tr></thead><tbody>'+p.outputs.map(o=>'<tr><td>'+esc(o.name)+'<small>'+o.kind+'</small></td><td>'+o.quantity.toLocaleString(undefined,{maximumFractionDigits:3})+'</td><td>'+esc(o.kept?'Kept · excluded from revenue':o.basis)+'<small>'+craftStudioMoney(o.unit)+' / unit</small></td><td>'+craftStudioMoney(o.kept?null:o.net)+'</td></tr>').join('')+'</tbody></table></div><p class="studio-muted">'+craftStudioMoney(p.xp)+' expected life EXP · '+p.weight.toFixed(2)+' LT expected output weight · break-even main sale price '+craftStudioMoney(p.breakEven)+'. Bonus life EXP, rounding and recipe eligibility may change actual results.</p>'+craftStudioQuoteDetails(p,recipe)+'<p class="studio-muted">Alchemy extra-item chance / craft: regular '+((rates.bracket.extraItemChanceRegular||0)*100).toFixed(4)+'%, special '+((rates.bracket.extraItemChanceSpecial||0)*100).toFixed(4)+'%, rare '+((rates.bracket.extraItemChanceRare||0)*100).toFixed(4)+'%. These are model probabilities, not a promise of a valuable drop.</p></details>'+
- craftStudioWorkshop(recipe,p)+'<details data-section="analysis"><summary>Profit lab · graphs & sensitivity</summary><div id="studioAnalysis"></div><p class="studio-muted">Graphs are expected outcomes, with fixed input prices. No liquidity, future price movement, random streak, skill failure or verified production is implied.</p></details>'+
- '<details data-section="shopping"><summary>Shopping list & production tree · '+p.steps.length+' steps</summary>'+craftStudioTree(p)+'<p class="studio-muted">Buy main output: '+craftStudioMoney(p.unitPrice)+' / item. Modeled input cost to make it: '+craftStudioMoney(p.cost===null?null:p.cost/p.output)+' / main item, before crediting side outputs.</p>'+p.purchases.map(m=>'<p>'+esc(m.name)+' × '+craftStudioMoney(m.quantity)+' · '+craftStudioMoney(m.unit===null?null:m.quantity*m.unit)+' · '+esc(m.basis)+'</p>').join('')+'<ol>'+p.steps.map(s=>'<li>'+esc(s.name)+' · '+s.batches.toLocaleString()+' batches · '+fmtTime(s.seconds)+'</li>').join('')+'</ol>'+p.warnings.map(w=>'<p class="studio-warning">'+esc(w)+'</p>').join('')+p.surplus.map(s=>'<p>Retained intermediate excess: '+esc(s.name)+' × '+s.quantity.toFixed(3)+'</p>').join('')+'</details>'+
- '<div class="studio-actions"><button class="btn-primary" id="btnStartCraft" '+(p.steps.length>1&&!nextStep?'disabled':'')+'>'+ (p.steps.length>1?(nextStep?'Start manual next stage':'Checklist complete'):'Start manual recipe timer')+' '+fmtTime(p.steps.length>1?(nextStep?.seconds||0):amount*c.seconds)+'</button><button class="btn-secondary" id="studioQueue">Add to queue</button><button class="btn-secondary" id="studioExport">Export shopping list</button></div><p class="studio-muted">Starts a planning timer. Begin production in game yourself. Costs and substitutions are locked into the timer model; accepted loot is measured separately.</p><div class="studio-actions"><button class="btn-secondary" id="studioCompare">Compare opportunities</button><button class="btn-secondary" id="studioRefreshPrices">Refresh this plan’s prices</button><button class="btn-secondary" id="studioBackup">Export plans</button></div><p id="studioMarketState" class="studio-muted" role="status">Market base-price cache · refresh on demand, cached five minutes. No ongoing crafting network/OCR loop.</p><section id="studioQueuePanel"></section><p class="studio-muted">990 public recipe variants · 105 substitution groups · data checked '+VISION_CRAFT_DATA.date+' · <a href="https://bdolytics.com/en/crafting" target="_blank" rel="noopener noreferrer">Data attribution / reference</a></p></details>';
+ '</details><button class="btn-secondary" id="studioCompare">Compare recipe opportunities</button></section>'+
+ panel('Queue')+
+ '<h4>Saved production queue</h4><section id="studioQueuePanel"></section><button class="btn-secondary" id="studioBackup">Export plans</button></section>'+
+ '<p class="studio-muted">990 recipe variants · data checked '+VISION_CRAFT_DATA.date+' · <a href="https://bdolytics.com/en/crafting" target="_blank" rel="noopener noreferrer">Data attribution</a></p>';
  el.innerHTML=craftStudioDeskMarkup(markup);craftStudioDeskBind(el);
  el.querySelectorAll('details').forEach(n=>{if(opened.includes(n.dataset.section))n.open=true;});
  var analysisHost=document.getElementById('studioAnalysis');if(analysisHost)analysisHost.innerHTML=craftStudioAnalysis(p);
@@ -2851,7 +3041,7 @@ function craftStudioRender(recipe,amount){
  document.getElementById('studioQueue').onclick=()=>{if(craftStudioState.queue.length>=100){toast('Queue full','Remove a completed plan first.',false);return;}craftStudioState.queue.push({id:'plan_'+Date.now(),recipeId:recipe.id,amount,config:c,region:String(region).toUpperCase(),choices:{...craftStudioState.choices},make:{...craftStudioState.make},variants:{...craftStudioState.variants}});craftStudioSave();craftStudioRenderQueue();};
  document.getElementById('studioOpenMarket').onclick=()=>craftMarketOpen(recipe.itemId,recipe.id);
  document.getElementById('studioWeightBoard').onclick=()=>{
-  craftStudioState.productionOverview=true;redraw();
+  craftStudioState.productionOverview=true;craftStudioPage='Production';redraw();
   var board=document.getElementById('craftWeight');
   board?.scrollIntoView?.({block:'start'});board?.focus?.({preventScroll:true});
  };
@@ -2960,7 +3150,7 @@ function craftStudioLoadCard(recipe,rootBatches,settings,capacity){
  try{load=VisionCraft.carry(recipe,{...settings,batches},ctx);}catch(e){error=e.message;}
  var combined=new Map();for(var m of VisionCraft.resolved(recipe,ctx)){var old=combined.get(m.itemId);combined.set(m.itemId,old?{...old,qty:old.qty+m.qty}:m);}rows=load?.selected?.rows||[...combined.values()].map(m=>({...m,required:batches*m.qty,grab:null}));
  var picked=load?.selected,lt=n=>Number(n).toLocaleString(undefined,{maximumFractionDigits:3}),note=craftStudioState.loadNotes?.[recipe.id];
- return '<article class="load-card"><div class="line-heading"><h4>'+esc(recipe.name)+'</h4><small>'+batches.toLocaleString()+' crafts / '+fmtTime(batches*craftStudioConfig(recipe).seconds)+'</small></div><p class="load-capacity">'+(capacity?.available?'<b>'+capacity.batches.toLocaleString()+' crafts max</b> / '+fmtTime(capacity.seconds)+' per load':'Enter LT above to calculate capacity')+'</p><div class="studio-table-wrap"><table><thead><tr><th>Ingredient</th><th>Ratio</th><th>Pack total</th><th>Grab extra</th></tr></thead><tbody>'+rows.map(m=>'<tr><td>'+esc(m.name)+'</td><td>'+m.qty+'x</td><td><input data-ratio-item="'+m.itemId+'" data-ratio-recipe="'+esc(recipe.id)+'" aria-label="Pack '+esc(m.name)+' for '+esc(recipe.name)+'" type="number" min="1" max="1000000000000" step="1" value="'+m.required+'"></td><td>'+(m.grab==null?'?':m.grab.toLocaleString())+'</td></tr>').join('')+'</tbody></table></div><p class="load-status '+(picked?.fits?'studio-good':'studio-warning')+'" role="status">'+(picked?(picked.fits?'Fits the selected model':'Does not fit')+' / '+lt(picked.peakWeight)+' of '+lt(Math.max(0,load.maximum-load.reserve))+' usable LT'+(picked.overBy>0?' / '+lt(picked.overBy)+' LT over':'')+(picked.exceedsTool?' / exceeds tool uses':''):esc(error||'Weight data unavailable'))+'</p>'+(picked?'<progress class="load-meter" max="'+Math.max(1,load.maximum-load.reserve)+'" value="'+Math.min(Math.max(1,load.maximum-load.reserve),picked.peakWeight)+'" aria-label="Modeled '+esc(recipe.name)+' carried weight"></progress>':'')+'<p class="studio-muted">Edit any Pack total; the other ingredients snap to full-craft ratios.'+(note?' '+esc(note):'')+'</p><div class="studio-actions"><button data-fill-load="'+esc(recipe.id)+'" class="btn-secondary" '+(!capacity?.available||capacity.batches<1||capacity.unbounded?'disabled':'')+'>Fill to max</button><button data-start-load="'+esc(recipe.id)+'" class="btn-primary" '+(!picked?.fits||!batches?'disabled':'')+'>Start manual load timer</button></div><details><summary>Already in your bag</summary>'+rows.map(m=>'<label class="studio-field">'+esc(m.name)+'<input data-carry-bag="'+m.itemId+'" aria-label="Already carried '+esc(m.name)+'" type="number" min="0" step="1" value="'+(settings.bag[m.itemId]||0)+'"></label>').join('')+'</details></article>';
+ return '<article class="load-card"><div class="line-heading"><h4>'+esc(recipe.name)+'</h4><small>'+batches.toLocaleString()+' crafts / '+fmtTime(batches*craftStudioConfig(recipe).seconds)+'</small></div><p class="load-capacity">'+(capacity?.available?'<b>'+capacity.batches.toLocaleString()+' crafts max</b> / '+fmtTime(capacity.seconds)+' per load':'Enter LT above to calculate capacity')+'</p><div class="studio-table-wrap"><table><thead><tr><th>Ingredient</th><th>Ratio</th><th>Pack total</th><th>Grab extra</th></tr></thead><tbody>'+rows.map(m=>'<tr><td>'+esc(m.name)+'<button class="market-inline" data-craft-market-item="'+m.itemId+'">Market</button></td><td>'+m.qty+'x</td><td><input data-ratio-item="'+m.itemId+'" data-ratio-recipe="'+esc(recipe.id)+'" aria-label="Pack '+esc(m.name)+' for '+esc(recipe.name)+'" type="number" min="1" max="1000000000000" step="1" value="'+m.required+'"></td><td>'+(m.grab==null?'?':m.grab.toLocaleString())+'</td></tr>').join('')+'</tbody></table></div><p class="load-status '+(picked?.fits?'studio-good':'studio-warning')+'" role="status">'+(picked?(picked.fits?'Fits the selected model':'Does not fit')+' / '+lt(picked.peakWeight)+' of '+lt(Math.max(0,load.maximum-load.reserve))+' usable LT'+(picked.overBy>0?' / '+lt(picked.overBy)+' LT over':'')+(picked.exceedsTool?' / exceeds tool uses':''):esc(error||'Weight data unavailable'))+'</p>'+(picked?'<progress class="load-meter" max="'+Math.max(1,load.maximum-load.reserve)+'" value="'+Math.min(Math.max(1,load.maximum-load.reserve),picked.peakWeight)+'" aria-label="Modeled '+esc(recipe.name)+' carried weight"></progress>':'')+'<p class="studio-muted">Edit any Pack total; the other ingredients snap to full-craft ratios.'+(note?' '+esc(note):'')+'</p><div class="studio-actions"><button data-fill-load="'+esc(recipe.id)+'" class="btn-secondary" '+(!capacity?.available||capacity.batches<1||capacity.unbounded?'disabled':'')+'>Fill to max</button><button data-start-load="'+esc(recipe.id)+'" class="btn-primary" '+(!picked?.fits||!batches?'disabled':'')+'>Start manual load timer</button></div><details><summary>Already in your bag</summary>'+rows.map(m=>'<label class="studio-field">'+esc(m.name)+'<input data-carry-bag="'+m.itemId+'" aria-label="Already carried '+esc(m.name)+'" type="number" min="0" step="1" value="'+(settings.bag[m.itemId]||0)+'"></label>').join('')+'</details></article>';
 }
 function craftStudioLogistics(recipe,p){
  var esc=visionEscape,c=craftStudioCarrySettings(),carry=null,error='';try{carry=VisionCraft.carry(recipe,c,craftStudioContext());}catch(e){error=e.message;}
@@ -3240,7 +3430,7 @@ function craftRoadmapBind(source,sourcePlan){
 }
 function craftRoadOpenStage(vm,packing){
  var stage=vm.timeline.rows.find(s=>s.recipeId===vm.focus);craftRoadState.goals[vm.focus]={targetId:vm.goal.id,batches:vm.count,focusId:vm.focus};craftStudioState.choices={...craftStudioState.choices,...vm.ctx.choices};craftStudioState.variants={...craftStudioState.variants,...vm.ctx.variants};craftStudioSave();craftRoadSave();lastCraftAmount=Math.max(1,stage?.batches||100);selectRecipe(vm.focus);
- if(packing){var panel=document.querySelector('#craftDetail [data-section="single-recipe"]');if(panel){panel.open=true;panel.scrollIntoView?.({block:'start'});}}
+ if(packing){craftStudioShowPage('Production');document.getElementById('craftWeight')?.scrollIntoView?.({block:'start'});}
 }
 function craftRoadStart(vm){
  var stage=vm.timeline.rows.find(s=>s.recipeId===vm.focus),r=RECIPES.find(r=>r.id===vm.focus);if(!stage||!r||vm.timeline.warnings.some(w=>/limit|cycle/i.test(w)))return;
@@ -3604,7 +3794,7 @@ function visionGrindSaveRecap(){
     }
     var bridgePolling=false;
     async function pollBridge() {
-      if (bridgePolling) return;
+      if (window.VISION_PUBLIC_MARKET || bridgePolling) return;
       bridgePolling=true;
       try {
         var result=await findActiveBridge();
@@ -3632,7 +3822,7 @@ function visionGrindSaveRecap(){
       } finally {bridgePolling=false;}
     }
     var bridgePollHandle=null;
-    function scheduleBridgePoll(delay){clearTimeout(bridgePollHandle);bridgePollHandle=setTimeout(async function(){if(!document.hidden)await pollBridge();scheduleBridgePoll(document.hidden?15000:!bridgeWasConnected?15000:['craft','grind'].includes(currentView)?2000:8000);},delay);}
+    function scheduleBridgePoll(delay){if(window.VISION_PUBLIC_MARKET)return;clearTimeout(bridgePollHandle);bridgePollHandle=setTimeout(async function(){if(!document.hidden)await pollBridge();scheduleBridgePoll(document.hidden?15000:!bridgeWasConnected?15000:['craft','grind'].includes(currentView)?2000:8000);},delay);}
     document.addEventListener('visibilitychange',function(){if(!document.hidden){pollBridge();processTimers();}scheduleBridgePoll(document.hidden?15000:2000);});
 
 /* Demo adapter. Everything below is generated sample data, separate from live OCR. */
@@ -3644,6 +3834,8 @@ demoQuotes.sort((a,b)=>({678:0,679:1,9733:2}[a.id]??3)-({678:0,679:1,9733:2}[b.i
 shareMarketPricesWithDesktop=async function(){desktopMarketBatch=[];};
 ensureOcrWorker=async function(){throw Error('Live game OCR requires the Windows app. This demo uses simulated drops.');};
 visionGrindCommand=async function(){toast('Crafting preview','Use the separate loot and grind demo to try a sample grind.',false);};
+craftMarketLoadCatalog=async function(){throw Error('Offline preview uses its bundled item index.');};
+craftMarketFetchHistory=async function(){throw Error('Offline preview has no live price history. Use the live market planner.');};
 craftStudioRequestQuotes=async function(){return {ok:false,message:'Demo uses a dated NA market snapshot. Open the Windows planner for current quotes.'};};
 craftStudioLoadMarket=async function(){var e=document.getElementById('recipeMarketStatus');if(e)e.textContent='Offline snapshot already loaded. The Windows planner can fetch current recipe prices and volumes.';};
 craftStudioLoadPrices=async function(){var e=document.getElementById('studioMarketState');if(e)e.textContent='DEMO · fixed example prices. The Windows app fetches actual market quotes.';};
@@ -3683,7 +3875,11 @@ craftSimulation={recipeId:selectedRecipe.id,sourceId:820815,quantity:14000,stock
     window.addEventListener("hashchange",function(){var view=location.hash.slice(1);if(["craft","grind","intel"].includes(view))showView(view);});
     pollBridge();
 
-    if(currentView==="market")craftMarketRender();
+    if(currentView==="market"){
+      var linkedMarketItem=new URLSearchParams(location.search).get('item');
+      if(/^[1-9]\d{0,8}$/.test(linkedMarketItem||''))craftMarketItemId=Number(linkedMarketItem);
+      craftMarketRender();
+    }
     loadData();
   </script>
 <!-- VISION GEAR STUDIO START -->

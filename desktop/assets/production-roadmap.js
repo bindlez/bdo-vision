@@ -106,7 +106,7 @@ function craftRoadmapBind(source,sourcePlan){
 }
 function craftRoadOpenStage(vm,packing){
  var stage=vm.timeline.rows.find(s=>s.recipeId===vm.focus);craftRoadState.goals[vm.focus]={targetId:vm.goal.id,batches:vm.count,focusId:vm.focus};craftStudioState.choices={...craftStudioState.choices,...vm.ctx.choices};craftStudioState.variants={...craftStudioState.variants,...vm.ctx.variants};craftStudioSave();craftRoadSave();lastCraftAmount=Math.max(1,stage?.batches||100);selectRecipe(vm.focus);
- if(packing){var panel=document.querySelector('#craftDetail [data-section="single-recipe"]');if(panel){panel.open=true;panel.scrollIntoView?.({block:'start'});}}
+ if(packing){craftStudioShowPage('Production');document.getElementById('craftWeight')?.scrollIntoView?.({block:'start'});}
 }
 function craftRoadStart(vm){
  var stage=vm.timeline.rows.find(s=>s.recipeId===vm.focus),r=RECIPES.find(r=>r.id===vm.focus);if(!stage||!r||vm.timeline.warnings.some(w=>/limit|cycle/i.test(w)))return;

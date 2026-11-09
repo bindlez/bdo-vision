@@ -3,11 +3,21 @@ from pathlib import Path
 import re,json,argparse
 parser=argparse.ArgumentParser()
 mode=parser.add_mutually_exclusive_group()
-for name in ('cooking','weight','simulation','overview','roadmap'):
+for name in ('cooking','weight','simulation','overview','roadmap','live-market'):
     mode.add_argument('--'+name,action='store_true')
 args=parser.parse_args()
 root=Path(__file__).resolve().parents[1]
 html=(root/'bdo-market-intelligence.html').read_text(encoding='utf-8')
+if args.live_market:
+    html=html.replace('<head>',"""<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src https://api.arsha.io; font-src 'none'; worker-src 'none'">
+<script>window.VISION_PUBLIC_MARKET=true;</script>""",1)
+    html=html.replace('<title>Black Desert Online · Central Market</title>','<title>BDO Vision · Live Market &amp; Crafting</title>')
+    target=root/'demo'/'bdo-vision-live-market.html'
+    target.write_text(html,encoding='utf-8')
+    print(target.name,target.stat().st_size,'bytes')
+    raise SystemExit(0)
+
 html=html.replace('<head>',"<head><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; font-src 'none'; worker-src 'none'\">",1)
 html=html.replace('<title>Black Desert Online · Central Market</title>','<title>BDO Vision · Crafting Studio demo</title>')
 html=html.replace('"bdo_cm_v1"','"vision_demo_craft_state_v1"').replace('"bdo_cm_intel_v1"','"vision_demo_craft_intel_v1"').replace('vision.craft.studio.v1','vision.demo.craft.studio.v1')
@@ -30,6 +40,8 @@ demoQuotes.sort((a,b)=>({678:0,679:1,9733:2}[a.id]??3)-({678:0,679:1,9733:2}[b.i
 shareMarketPricesWithDesktop=async function(){desktopMarketBatch=[];};
 ensureOcrWorker=async function(){throw Error('Live game OCR requires the Windows app. This demo uses simulated drops.');};
 visionGrindCommand=async function(){toast('Crafting preview','Use the separate loot and grind demo to try a sample grind.',false);};
+craftMarketLoadCatalog=async function(){throw Error('Offline preview uses its bundled item index.');};
+craftMarketFetchHistory=async function(){throw Error('Offline preview has no live price history. Use the live market planner.');};
 craftStudioRequestQuotes=async function(){return {ok:false,message:'Demo uses a dated NA market snapshot. Open the Windows planner for current quotes.'};};
 craftStudioLoadMarket=async function(){var e=document.getElementById('recipeMarketStatus');if(e)e.textContent='Offline snapshot already loaded. The Windows planner can fetch current recipe prices and volumes.';};
 craftStudioLoadPrices=async function(){var e=document.getElementById('studioMarketState');if(e)e.textContent='DEMO · fixed example prices. The Windows app fetches actual market quotes.';};
@@ -80,7 +92,7 @@ if args.overview:
 if args.roadmap:
     html=html.replace('vision_demo_craft_state_v1','vision_demo_roadmap_state_v1').replace('vision_demo_craft_intel_v1','vision_demo_roadmap_intel_v1').replace('vision.demo.craft.','vision.demo.roadmap.')
     html=html.replace('CRAFTING STUDIO DEMO','PRODUCTION MAP & TIMELINE DEMO').replace('Dated NA market snapshot & simulated drops · no game OCR','Example: 1,000 tool uses / stock for 600 crafts / 1,500 mastery & 1s base / no game OCR')
-    boot+="\ncraftStudioState.characters.cooking={mastery:1500,baseSeconds:1};craftRoadState={wide:true,fit:true,goals:{},runModes:{cooking:'tool',alchemy:'tool'},runStock:{},toolFallback:{cooking:1000}};var sampleStock={};for(var input of VisionCraft.resolved(selectedRecipe,craftStudioContext()))sampleStock[input.itemId]=(sampleStock[input.itemId]||0)+input.qty*600;craftRoadState.runStock[selectedRecipe.id]=sampleStock;craftRoadState.goals[selectedRecipe.id]={targetId:RECIPES.find(r=>r.name==='Serendia Meal').id,batches:500};craftStudioRender(selectedRecipe,lastCraftAmount);document.getElementById('productionRoadmap').scrollIntoView({block:'start'});\n"
+    boot+="\ncraftStudioState.characters.cooking={mastery:1500,baseSeconds:1};craftRoadState={wide:true,fit:true,goals:{},runModes:{cooking:'tool',alchemy:'tool'},runStock:{},toolFallback:{cooking:1000}};var sampleStock={};for(var input of VisionCraft.resolved(selectedRecipe,craftStudioContext()))sampleStock[input.itemId]=(sampleStock[input.itemId]||0)+input.qty*600;craftRoadState.runStock[selectedRecipe.id]=sampleStock;craftRoadState.goals[selectedRecipe.id]={targetId:RECIPES.find(r=>r.name==='Serendia Meal').id,batches:500};craftStudioRender(selectedRecipe,lastCraftAmount);craftStudioShowPage('Production');document.getElementById('productionRoadmap').scrollIntoView({block:'start'});\n"
 marker='    processTimers();ensureTick();updateNavBadge();'
 assert marker in html;html=html.replace(marker,boot+'\n'+marker,1)
 target=root/'demo'/('bdo-vision-roadmap-demo.html' if args.roadmap else 'bdo-vision-overview-demo.html' if args.overview else 'bdo-vision-simulator-demo.html' if args.simulation else 'bdo-vision-weight-demo.html' if args.weight else 'bdo-vision-cooking-demo.html' if args.cooking else 'bdo-vision-crafting-demo.html');target.write_text(html,encoding='utf-8');print(target.name,target.stat().st_size,'bytes')

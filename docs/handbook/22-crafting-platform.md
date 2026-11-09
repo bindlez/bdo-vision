@@ -229,3 +229,21 @@ Still to verify against the reference workflow: minimum skill and method
 requirements, private saved-plan or storage behavior visible only after
 sign-in, and per-item historical market coverage. These are separate
 acceptance checks from recipe catalog parity.
+
+
+## Live browser market and planner tabs
+
+Market and crafting refreshes share a region and exact-ID quote cache.
+The Windows planner uses the local quote bridge. The standalone page uses
+bounded Arsha requests and isolates IDs that fail in a batch. The base quote
+does not imply a guaranteed fill or supply current sales volume. History
+uses the provider's base-item series. Lifetime trades are a distinct field.
+Load the full item name index explicitly when the bundled recipe index is
+insufficient. Some indexed names have no tradable listing.
+
+The public build uses `python scripts/build_crafting_demo.py --live-market`.
+It connects to Arsha and disables the local OCR bridge. Keep the separate
+offline previews labeled and isolated. Recipe Planner keeps one recipe and
+batch amount across Overview, Ingredients, Production, Results, and Queue.
+Shopping quantities have one owner in the market basket. The ingredient cost
+tree remains available for evaluating routes.
