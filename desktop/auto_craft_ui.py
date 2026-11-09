@@ -165,7 +165,7 @@ class CurrentCraftView:
         m=d.get('model');self.title.set(d['recipe']+' · '+d['kind']+'\n'+d['status'])
         self.numbers.set('RECORDED: '+number(d['recordedValue'])+' silver · '+number(d['recordedPerHour'])+' / h estimated from '+f"{d['observedSeconds']:.0f}s"+' observed\n'+('PROJECTED: '+number(m['perHour'])+' / hour · '+number(m['toolValue'])+' for scanned tool\nREMAINING: '+number(d['remainingValue'])+' estimated silver' if m else 'Forecast paused until this craft has an active verified tool.'))
         self.progress['value']=100*(d['progress'] or 0)
-        self.note.set(f"{d['units']:,} captured output units · next milestone {d['nextGoal']:,} ({max(0,d['nextGoal']-d['units']):,} to go). "+(f"Partial recorded value: {len(d['unpriced'])} unpriced outputs excluded. " if d['unpriced'] else '')+'Rates appear after 60 readable seconds. Byproducts are kept and not assigned sale value. '+d['priceStatus'])
+        self.note.set(f"{d['units']:,} captured output units · next milestone {d['nextGoal']:,} ({max(0,d['nextGoal']-d['units']):,} to go). "+(f"Partial recorded value: {len(d['unpriced'])} unpriced outputs excluded. " if d['unpriced'] else '')+f'Rates appear after {CRAFT_RATE_MIN_SECONDS} readable seconds. Byproducts are kept and not assigned sale value. '+d['priceStatus'])
         if not self.graphs.winfo_manager():return
         run=self.controller.engine.run;elapsed=max(d['observedSeconds'],time.time()-run['at'])
         self.pies.draw({'items':d['items'],'observed_seconds':d['observedSeconds'],'excluded_seconds':max(0,elapsed-d['observedSeconds']),'coverage':d['observedSeconds']/elapsed if elapsed else 0,'unpriced':len(d['unpriced'])})

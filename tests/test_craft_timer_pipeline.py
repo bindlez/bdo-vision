@@ -45,6 +45,18 @@ class CraftTimerPipelineTests(unittest.TestCase):
         self.assertEqual(self.app.value,478)
         self.assertEqual(self.app.session_id,session)
 
+    def test_due_detailed_recovery_gets_next_slot_before_loot(self):
+        app=self.app;loot=app.loot
+        app.detailed_craft.set(True);loot.enabled.set(True)
+        app.tool_reader.next_due=self.clock+120
+        self.feed(active=False)
+        self.assertEqual(app.tool_reader.next_due,self.clock+10)
+        self.clock+=10
+        with patch.object(app,'bdo_foreground',return_value=True),patch.object(loot,'scan') as loot_scan,patch.object(app,'read_ocr') as tool_scan:
+            loot.poll();loot_scan.assert_not_called()
+            app.poll_auto_ocr()
+            tool_scan.assert_called_once_with(delayed=False,automatic=True)
+
     def test_detailed_tracking_falls_back_when_bdo_is_hidden(self):
         self.app.detailed_craft.set(True);self.feed()
         with patch.object(self.app,'bdo_foreground',return_value=False),patch.object(self.app,'read_ocr') as read:

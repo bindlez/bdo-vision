@@ -14,7 +14,7 @@ def stream_page():
 class LiveGrind:
     def __init__(self,grind):
         from craft_panel import CraftPanel
-        self.grind=grind;self.window=None;self.hud=None;self.last=None;self.craft_panel=CraftPanel(self)
+        self.grind=grind;self.window=None;self.hud=None;self.last=None;self.craft_panel=CraftPanel(self);self.craft_metrics=None
 
     def open(self):
         if self.window and self.window.winfo_exists():return
@@ -65,8 +65,26 @@ class LiveGrind:
                 'goal':target,'count':count,'required':goal,'progress':min(1,count/goal) if target else None,
                 'sessionActive':True,'unpriced':data['unpriced'],'latest':self.latest,'updatedAt':time.time(),'silverGoal':meta['silver_goal']}
 
-    def refresh(self):
+    def refresh_craft_metrics(self,availability=None,snapshot=None):
+        tracker=self.grind.tracker;app=tracker.app
+        if not self.hud or not app.detailed_craft.get() or app.lite_use.get():
+            self.close_craft_metrics()
+            return
+        if app.selecting_region:return
+        if self.craft_metrics is None:
+            from craft_metrics_hud import CraftMetricsHUD
+            self.craft_metrics=CraftMetricsHUD(self)
+        ready,reason=tracker.capture_availability() if availability is None else availability
+        self.craft_metrics.update(tracker.auto_craft.snapshot(ready) if snapshot is None else snapshot,reason)
+
+    def close_craft_metrics(self):
+        if self.craft_metrics is not None:
+            self.craft_metrics.close()
+            self.craft_metrics=None
+
+    def refresh(self,availability=None,craft_snapshot=None):
         self.craft_panel.refresh()
+        self.refresh_craft_metrics(availability,craft_snapshot)
         visible=self.window and self.window.winfo_exists() and self.window.winfo_ismapped()
         enabled=bool(self.grind.tracker.platform_preferences.get('obs_enabled',False));bridge=getattr(self.grind.tracker.app,'bridge',None)
         if bridge:

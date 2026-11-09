@@ -268,11 +268,14 @@ class LootTracker:
                 elif self.app.selecting_region:self.capture_state.set('Tracking ON · selecting capture area')
                 else:
                     now=time.monotonic()
-                    interval=self.auto_craft.capture_interval(self.safe_interval(),now)
-                    delay=max(0,interval-(now-self.last_scan))
-                    if delay<=0:
-                        if self.scan() is False:next_poll=1000
-                    else:self.capture_state.set('Tracking ON · next scan in %.1fs'%delay)
+                    if self.app.detailed_tool_due(now):
+                        self.capture_state.set('Tracking ON · next slot reserved for tool and quest')
+                    else:
+                        interval=self.auto_craft.capture_interval(self.safe_interval(),now)
+                        delay=max(0,interval-(now-self.last_scan))
+                        if delay<=0:
+                            if self.scan() is False:next_poll=1000
+                        else:self.capture_state.set('Tracking ON · next scan in %.1fs'%delay)
         except Exception as exc:self.status.set('Item OCR retry pending: '+str(exc))
         finally:
             if not self.closed:self.root.after(next_poll,self.poll)
@@ -451,6 +454,7 @@ class LootTracker:
     def close(self):
         inventory=getattr(self.app,'inventory',None)
         if inventory:inventory.close()
+        self.grind.live.close_craft_metrics()
         self.grind.live.craft_panel.close()
         self.auto_craft.save()
         self.big_drops.close_toast()
@@ -477,7 +481,9 @@ class LootTracker:
     def refresh_shared_loot(self, availability=None):
         bridge=getattr(self.app,'bridge',None)
         if self.share_loot.get() and bridge:
-            bridge.update_crafting_loot(self.planner_loot_snapshot(availability))
+            snapshot=self.planner_loot_snapshot(availability)
+            bridge.update_crafting_loot(snapshot)
+            return snapshot['auto_craft']
 
     def share_changed(self):
         self.app.save_quietly()

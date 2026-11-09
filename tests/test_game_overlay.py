@@ -89,6 +89,27 @@ class NativeOverlayTests(unittest.TestCase):
             minimize.assert_called_once()
         self.assertTrue(self.app.running)
 
+    def test_detailed_craft_metrics_are_passive_and_avoid_capture_regions(self):
+        tracker=self.app.loot;live=tracker.grind.live
+        self.app.detailed_craft.set(True)
+        tracker.region=(1300,300,550,300)
+        data={'detected':True,'current':True,'available':True,'recipe':'Elixir',
+              'recordedValue':1000000,'recordedPerHour':360000000,'observedSeconds':10,
+              'units':8,'items':[{'item':'Elixir','quantity':8}],'points':[(0,0),(10,1000000)]}
+        area=(0,0,1920,1080)
+        with patch('game_overlay.work_area',return_value=area),patch('craft_metrics_hud.work_area',return_value=area),patch.object(live,'payload',return_value={}):
+            live.open();live.refresh_craft_metrics((True,''),data)
+            metrics=live.craft_metrics
+            self.assertTrue(metrics.shown)
+            self.assertEqual(overlap(metrics.surface.rect,live.hud.surface.rect),0)
+            self.assertEqual(overlap(metrics.surface.rect,tracker.region),0)
+            self.assertEqual(metrics.numbers[1].cget('text'),'360.0M')
+            self.assertTrue(metrics.value_graph.find_all())
+            self.assertTrue(metrics.loot_graph.find_all())
+            self.app.detailed_craft.set(False);live.refresh_craft_metrics()
+            self.assertIsNone(live.craft_metrics)
+            live.hud.close()
+
     def test_native_dashboard_renders_partial_prices_and_never_updates_unchanged_data(self):
         live=self.app.loot.grind.live
         data={'available':False,'sessionActive':True,'status':'capture covered','value':None,'rate':None,

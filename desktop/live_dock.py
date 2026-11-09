@@ -74,6 +74,7 @@ def build_apps(app, anchor):
     menu.add_separator()
     menu.add_command(label='Craft Planner', command=app.open_planner)
     menu.add_command(label='Market', command=lambda: app.open_planner('market'))
+    menu.add_command(label='Screenshot Lab · Tier −1', command=app.open_heavy_tools)
     menu.add_command(label='Vision settings', command=app.open_settings)
     menu.add_separator()
     menu.add_command(label='Exit Vision', command=app.close)

@@ -1,6 +1,13 @@
+import sys
+
+if __name__ == '__main__' and '--heavy-tools' in sys.argv:
+ from heavy_tools import run
+ run()
+ raise SystemExit(0)
+
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-import time, threading, subprocess, os, re, json, ctypes, winsound, webbrowser, urllib.request, uuid, sys, shutil
+import time, threading, subprocess, os, re, json, ctypes, winsound, webbrowser, urllib.request, uuid, shutil
 from planner_bridge import PlannerBridge,PORTS
 from loot_ui import LootTracker
 from storage import prepare_storage,backup_profile,InstanceLock,focus_existing
@@ -448,6 +455,8 @@ class App:
   self.tool_report=report;rows=report['tools'];self.tool_status.accept(report);self.refresh_tool_view()
   active=next((r for r in rows if r['id']==report['active_id']),None)
   if not active:
+   if self.detailed_craft.get():
+    reader.next_due=min(reader.next_due,time.monotonic()+10)
    if self._active_tool_key is not None:
     self.update_value();self.mark_tool_estimate()
    self.scan_health.set(f"Tool finder · {report['duration']:.1f}s · {report['ocr_calls']} OCR passes")
@@ -812,6 +821,8 @@ class App:
    self._tool_scan_latched=bool(self.running and self.last_good_ocr)
    self.status.set('Detailed craft tracking off. The timer and existing loot preferences remain active.')
   self.save_quietly()
+  if self.detailed_craft.get() and self.loot.grind.live.hud is None:self.open_dock()
+  self.loot.grind.live.refresh_craft_metrics()
 
  def change_lite_use(self):
   if self.lite_use.get():self.detailed_craft.set(False)
@@ -831,6 +842,16 @@ class App:
    self.source.set('LITE USE · countdown estimate · all OCR stopped')
   self.save_quietly()
   self.status.set('Lite Use: initial tool durability only. Loot, quest and gear OCR are paused; after acceptance only the timer runs.' if self.lite_use.get() else 'Normal tracking restored with your existing options.')
+  if self.lite_use.get():self.loot.grind.live.close_craft_metrics()
+
+ def detailed_tool_due(self,now):
+  if not self.detailed_craft.get() or self.lite_use.get() or self.selecting_region or self._tool_scan_latched:
+   return False
+  if not self.auto_enabled.get() or not self.auto_tools.get() or getattr(self,'cp_ocr_busy',False):
+   return False
+  attempt=getattr(self,'_tool_attempt',None)
+  if attempt and attempt.expired and not attempt.worker_done:return False
+  return (now>=self.tool_reader.next_due or self.tool_status.stage=='paused') and self.bdo_foreground()
 
  def poll_auto_ocr(self):
   # Keep scanning alive independently of timer / planner update failures.
@@ -910,7 +931,8 @@ class App:
   self.selecting_region=True
   live=self.loot.grind.live
   craft=live.craft_panel.surface
-  windows=(self.root,self.loot.window,self.settings_window,live.window,craft.window if craft else None)
+  metrics=live.craft_metrics
+  windows=(self.root,self.loot.window,self.settings_window,live.window,craft.window if craft else None,metrics.surface.window if metrics else None)
   self._region_hidden=[win for win in windows if win is not None and win.winfo_exists() and win.state()=='normal']
   for win in self._region_hidden:win.withdraw()
   self.root.after(1600,self._overlay)
@@ -1188,7 +1210,18 @@ class App:
   self.scan_health.set(f'○ OCR uncertain · {duration:.1f}s · {self.scan_stats["failed"]} misses')
   self.ocr_text.set('No reliable current/max durability pair')
   if not automatic:self.status.set('No reading found. Move the camera or adjust the region in Settings.')
+ def open_heavy_tools(self):
+  from heavy_tools_launcher import open_lab
+  try:
+   self.heavy_tools_process=open_lab(getattr(self,'heavy_tools_process',None))
+  except OSError as exc:
+   messagebox.showerror('Screenshot Lab',str(exc),parent=self.root)
+
  def close(self):
+  lab=getattr(self,'heavy_tools_process',None)
+  if lab is not None and lab.poll() is None:
+   try:lab.terminate()
+   except OSError:pass
   self.tool_debug.close()
   try:self.save()
   except:pass

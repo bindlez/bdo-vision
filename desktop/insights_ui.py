@@ -105,7 +105,7 @@ class LootInsights:
             self.prices.refresh_async()
             big=getattr(self.tracker,'big_drops',None)
             if big:big.refresh_pending()
-            self.tracker.refresh_shared_loot(availability)
+            craft_snapshot=self.tracker.refresh_shared_loot(availability)
             self.last_lite_mode=False
             home=getattr(self.tracker,'home',None)
             if home and home.frame.winfo_exists() and home.frame.winfo_ismapped():home.refresh()
@@ -114,7 +114,7 @@ class LootInsights:
             if self.frame and self.frame.winfo_exists() and self.frame.winfo_ismapped():self.refresh()
             if self.sessions_frame and self.sessions_frame.winfo_exists() and self.sessions_frame.winfo_ismapped():self.refresh_sessions()
             if self.tracker.grind.frame and self.tracker.grind.frame.winfo_exists() and self.tracker.grind.frame.winfo_ismapped():self.tracker.grind.refresh()
-            self.tracker.grind.live.refresh()
+            self.tracker.grind.live.refresh(availability,craft_snapshot)
             big=getattr(self.tracker,'big_drops',None)
             if big and big.frame and big.frame.winfo_ismapped():big.refresh()
             guild=getattr(self.tracker,'guild',None)

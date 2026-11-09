@@ -1,3 +1,9 @@
+## 1.13.0-rc.37 — Craft metrics and Screenshot Lab
+
+- Detailed Craft Tracking adds a compact docked panel with captured value, estimated silver per hour, and the top captured items. It shares the existing tracker and yields to configured capture regions.
+- When no tool is verified, detailed tracking retries sooner and lets the tool scan take the next available reader slot when due.
+- Screenshot Lab opens one separate Tier −1 process. Review local gear slots and inventory grids with exact reference icon matching. Unknown or ambiguous icons need review. Closing the window clears the workspace.
+
 ## 1.13.0-rc.36 — Detailed craft tracking and estimated quest alerts
 
 - Timer-only mode can estimate when to check a guild quest using verified progress or an entered units-per-craft assumption. It never marks estimated completion as verified.

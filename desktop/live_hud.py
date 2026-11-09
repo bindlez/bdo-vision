@@ -51,6 +51,7 @@ class LiveHUD:
         panels=self.app.dock_panels
         panels.retile()
         if panels.active!='craft-overlay':self.live.craft_panel.retile()
+        if self.live.craft_metrics:self.live.craft_metrics.retile()
 
     def dismiss(self):
         self.app.dock_panels.fold()
@@ -118,6 +119,7 @@ class LiveHUD:
         self.pause.configure(text='PAUSE' if data.get('available') else 'PAUSE / RESUME')
 
     def close(self):
+        self.live.close_craft_metrics()
         self.live.craft_panel.close()
         self.surface.close();self.live.window = None;self.live.hud = None
 
