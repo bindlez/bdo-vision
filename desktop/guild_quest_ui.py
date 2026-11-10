@@ -304,7 +304,7 @@ class GuildQuestTracker:
                             'clock':time.monotonic(),'running':True,'basis':basis}
 
     def timer_estimate_mode(self):
-        return self.app.craft_state().estimate_quest
+        return not self.app.grind_owns_tracking() and self.app.craft_state().estimate_quest
 
     def forecast_text(self):
         estimate=self._forecast
@@ -332,7 +332,7 @@ class GuildQuestTracker:
         self.tick_craft_projection()
         if self.busy or self.waiting:return
         report=getattr(self.app,'tool_report',None) or {}
-        active=next((r for r in report.get('tools',[]) if r['id']==report.get('active_id')),None)
+        active=None if self.app.grind_owns_tracking() else next((r for r in report.get('tools',[]) if r['id']==report.get('active_id')),None)
         if not active:
             if self.reminder_payload is not None:self.reminder_payload=None;self._reminder_stamp=None;self.refresh()
             return

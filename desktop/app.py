@@ -528,6 +528,18 @@ class App:
    verifying=self.reading_gate.pending is not None or self.tool_status.stage in ('confirming','found','ambiguous','reading'),
    tool=self.verified_tool_row())
 
+ def grind_owns_tracking(self):
+  loot=self.loot
+  if not loot.crafting.get() and loot.insights.session.grinding:return True
+  if self.running and self.value>0 and self.verified_tool_row() is not None:return False
+  return bool(loot.window and loot.window.winfo_ismapped() and loot.grind.frame and
+              loot.tabs.select()==str(loot.grind.frame))
+
+ def enter_grind_tracking(self):
+  self._craft_epoch+=1;self._pending_tool_scan=None
+  self.mark_tool_estimate()
+  self.loot.grind.live.refresh()
+
  def open_planning_page(self,section):
   if section not in ('cp','imperial'):return
   if not self.bridge or not self.bridge.server:
@@ -852,6 +864,8 @@ class App:
    guild=self.loot.guild
    if not guild.enabled.get():
     guild.enabled.set(True);guild.toggle()
+   session=self.loot.insights.session
+   if session.grinding and session.clock.running:session.pause_resume(self.loot.insights.gate())
    self.loot.crafting.set(True)
    self.loot.recording.set(True)
    if self.loot.region:self.loot.enabled.set(True)
@@ -888,6 +902,7 @@ class App:
    return False
   if not self.auto_enabled.get() or not self.auto_tools.get() or getattr(self,'cp_ocr_busy',False):
    return False
+  if self.grind_owns_tracking():return False
   attempt=getattr(self,'_tool_attempt',None)
   if attempt and attempt.expired and not attempt.worker_done:return False
   return (now>=self.tool_reader.next_due or self.tool_status.stage=='paused') and self.bdo_foreground()
@@ -912,7 +927,8 @@ class App:
      self._pending_tool_scan=None
      self.read_ocr(delayed=queued[0])
      return
-   if self._craft_paused:self.auto_health.set('Craft paused · resume or scan tool');delay=1000
+   if self.grind_owns_tracking():self.auto_health.set('Grind tracking · no craft tool needed');delay=1000
+   elif self._craft_paused:self.auto_health.set('Craft paused · resume or scan tool');delay=1000
    elif self.lite_use.get() and self.lite_scan_complete:
     message=('LITE USE · paired guild snapshot finishing · tool OCR stopped' if getattr(getattr(self.loot,'guild',None),'busy',False) else 'LITE USE · timer estimate only · scan manually for a new tool')
     if self.auto_health.get()!=message:self.auto_health.set(message)
@@ -1013,7 +1029,7 @@ class App:
     self._pending_tool_scan=(delayed,time.monotonic()+30)
     self.status.set('Tool scan queued until the current loot read finishes.')
    return
-  if automatic and (self._craft_paused or self.lite_use.get() and self.lite_scan_complete or self._tool_scan_latched):return
+  if automatic and (self._craft_paused or self.lite_use.get() and self.lite_scan_complete or self._tool_scan_latched or self.grind_owns_tracking()):return
   if not automatic:self._allow_tool_change=True
   try:
    tess=self.tess.get().strip().strip('\"')

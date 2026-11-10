@@ -66,6 +66,7 @@ class LootInsights:
         self.session.start(self.gate(),label=self.session_name.get(),activity=self.activity.get(),recipe='' if self.recipe.get()=='No recipe' else selected,targets=targets)
         if self.activity.get() in ('Crafting','Grinding','Treasure hunt'):
             self.tracker.crafting.set(self.activity.get()=='Crafting');self.tracker.app.save_quietly()
+        if self.session.grinding:self.tracker.app.enter_grind_tracking()
         self.scope.set('Timed session');self.tracker.generation+=1
         self.refresh();self.refresh_sessions()
 

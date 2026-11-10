@@ -19,7 +19,7 @@ class RecordingTests(unittest.TestCase):
         self.assertEqual(len(self.tracker.ledger.rows()),1)
     def setUp(self):
         self.root=tk.Tk();self.root.withdraw();self.temp=tempfile.TemporaryDirectory()
-        self.app=types.SimpleNamespace(root=self.root,save_quietly=MagicMock())
+        self.app=types.SimpleNamespace(root=self.root,save_quietly=MagicMock(),craft_state=lambda:types.SimpleNamespace(tool=None,running=False,lite=False))
         self.tracker=LootTracker(self.app,Path(self.temp.name),{'item_drop_region':[1200,600,300,150],'loot_enabled':True})
 
     def tearDown(self):

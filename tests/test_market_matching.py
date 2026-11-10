@@ -82,7 +82,7 @@ class MarketMatchingTests(unittest.TestCase):
     def test_shared_loot_does_not_require_crafting_mode(self):
         root=tk.Tk();root.withdraw()
         with tempfile.TemporaryDirectory() as folder:
-            app=types.SimpleNamespace(root=root,save_quietly=MagicMock(),bridge=MagicMock())
+            app=types.SimpleNamespace(root=root,save_quietly=MagicMock(),bridge=MagicMock(),craft_state=lambda:types.SimpleNamespace(tool=None,running=False,lite=False))
             loot=LootTracker(app,Path(folder),{'loot_region':[1,1,200,100],'loot_enabled':True,'craft_tracking':False,'share_crafting_loot':True})
             try:
                 loot.ledger.add('Elixir of Demihuman Hunt',4,kind='Drop')

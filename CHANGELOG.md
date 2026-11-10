@@ -2,6 +2,7 @@
 
 - Dock and Tracking use the same craft phases. Loot uses the accepted tool from that state. Guild quest estimates use its capture fallback signal.
 - Pausing blocks automatic tool scans until resume or an explicit scan. Delayed and in-flight scan results from before a pause, resume, or manual start cannot change the timer.
+- Starting or resuming Grind gives it the dock and loot reader without requiring a craft tool. Detailed Craft stays available when switching back.
 
 ## 1.13.0-rc.38 — Dock timer and active tool verification
 

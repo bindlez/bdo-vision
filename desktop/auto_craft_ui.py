@@ -25,7 +25,7 @@ class AutomaticCrafting:
         a=self.app
         state=a.craft_state()
         row=state.tool
-        if not self.enabled.get() or state.lite and not allow_lite or not state.running or not row:return None
+        if not self.enabled.get() or state.lite and not allow_lite or not state.running or not row or a.grind_owns_tracking():return None
         name=row['name'].casefold();kind='alchemy' if 'alchemy' in name else 'cooking' if 'cooking' in name else None
         try:speed=float(a.speed.get());remaining=state.remaining
         except (ValueError,TypeError):return None

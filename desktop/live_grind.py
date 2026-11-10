@@ -67,7 +67,7 @@ class LiveGrind:
 
     def refresh_craft_metrics(self,availability=None,snapshot=None):
         tracker=self.grind.tracker;app=tracker.app
-        if not self.hud or not app.detailed_craft.get() or app.lite_use.get():
+        if not self.hud or not app.detailed_craft.get() or app.lite_use.get() or app.grind_owns_tracking():
             self.close_craft_metrics()
             return
         if app.selecting_region:return

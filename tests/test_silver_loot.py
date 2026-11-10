@@ -41,7 +41,7 @@ class SilverLootTests(unittest.TestCase):
     def test_sharing_off_by_default_and_tray_reading_is_unavailable(self):
         root=tk.Tk();root.withdraw()
         with tempfile.TemporaryDirectory() as folder:
-            app=types.SimpleNamespace(root=root,save_quietly=MagicMock(),bridge=MagicMock())
+            app=types.SimpleNamespace(root=root,save_quietly=MagicMock(),bridge=MagicMock(),craft_state=lambda:types.SimpleNamespace(tool=None,running=False,lite=False))
             tracker=LootTracker(app,Path(folder),{'loot_region':[1,1,200,100],'loot_enabled':True})
             try:
                 self.assertFalse(tracker.share_loot.get())

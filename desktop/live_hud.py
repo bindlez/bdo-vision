@@ -71,7 +71,7 @@ class LiveHUD:
         progress,note=guild_summary(quest.model.snapshot(),quest.enabled.get())
         self.guild.configure(text=('Guild quest / '+progress+' / '+(quest.forecast_text() or note))[:65])
         craft=self.app.craft_state()
-        if craft.show_on_dock(data.get('sessionActive')):
+        if not self.app.grind_owns_tracking() and craft.show_on_dock(data.get('sessionActive')):
             if craft.remaining is None:
                 stage=self.app.tool_status.snapshot()
                 self.status.configure(text='CRAFT TIMER / '+craft.phase.value.upper(),fg=GOLD)

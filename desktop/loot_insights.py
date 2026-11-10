@@ -47,13 +47,19 @@ class InsightsSession:
         for name,kind in [('label',"TEXT NOT NULL DEFAULT ''"),('activity',"TEXT NOT NULL DEFAULT 'Other'"),('recipe',"TEXT NOT NULL DEFAULT ''"),('targets',"TEXT NOT NULL DEFAULT '[]'"),('ended_at','REAL'),('price_snapshot',"TEXT NOT NULL DEFAULT '{}'")]:
             if name not in fields:db.execute('ALTER TABLE insight_sessions ADD COLUMN '+name+' '+kind)
         db.commit()
-        latest=db.execute('SELECT id,active_seconds,ended_at FROM insight_sessions ORDER BY created_at DESC LIMIT 1').fetchone()
+        latest=db.execute('SELECT id,active_seconds,ended_at,activity FROM insight_sessions ORDER BY created_at DESC LIMIT 1').fetchone()
         self.id=latest[0] if latest else None;self.clock=SessionClock(latest[1] if latest else 0);self.ended=bool(latest and latest[2] is not None);self.last_persist=0
+        self.activity=latest[3] if latest else 'Other'
+
+    @property
+    def grinding(self):
+        return bool(self.id and not self.ended and self.activity in ('Grinding','Treasure hunt'))
 
     def start(self,gate=True,now=None,label='',activity='Other',recipe='',targets=None):
         self.save();self.id=uuid.uuid4().hex;self.clock=SessionClock(now=now);self.clock.running=True;self.clock.gate=bool(gate)
         self.ended=False
         with self.db:self.db.execute('INSERT INTO insight_sessions(id,created_at,active_seconds,label,activity,recipe,targets) VALUES (?, ?, 0, ?, ?, ?, ?)',(self.id,time.time(),label.strip()[:100] or time.strftime('Session %m/%d %H:%M'),activity,recipe,json.dumps(targets or [])))
+        self.activity=activity
 
     def pause_resume(self,gate=True,now=None):
         if not self.id:self.start(gate,now);return

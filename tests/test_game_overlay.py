@@ -52,6 +52,29 @@ class NativeOverlayTests(unittest.TestCase):
     def tearDown(self):
         self.app.loot.close();self.root.destroy()
 
+    def test_grind_takes_dock_and_reader_without_changing_detailed_preference(self):
+        app=self.app;tracker=app.loot;live=tracker.grind.live
+        app.detailed_craft.set(True);tracker.crafting.set(True)
+        live.open()
+        self.assertIsNotNone(live.craft_metrics)
+        tracker.grind.start()
+        self.assertTrue(app.grind_owns_tracking());self.assertTrue(app.detailed_craft.get())
+        self.assertIsNone(live.craft_metrics)
+        self.assertEqual(live.hud.value_label.cget('text'),'RECORDED VALUE')
+        self.assertFalse(app.detailed_tool_due(float('inf')))
+        with patch.object(app,'read_ocr') as read:
+            app.poll_auto_ocr();read.assert_not_called()
+        app.change_detailed_craft()
+        self.assertFalse(tracker.insights.session.clock.running)
+        self.assertFalse(app.grind_owns_tracking())
+        tracker.grind.pause()
+        self.assertTrue(tracker.insights.session.clock.running)
+        self.assertTrue(app.grind_owns_tracking())
+        tracker.grind.finish()
+        self.assertFalse(app.grind_owns_tracking())
+        live.refresh()
+        self.assertEqual(live.hud.value_label.cget('text'),'TOOL USES LEFT')
+
     def test_dock_starts_first_and_folds_tracking_without_stopping_run(self):
         self.app.loot.platform_preferences['overlay']={'locked':False}
         with patch.object(self.app.loot.grind.live,'payload',return_value={}):

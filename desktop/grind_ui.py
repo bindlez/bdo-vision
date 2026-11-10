@@ -139,6 +139,7 @@ class GrindTracker:
             session.db.execute('INSERT OR REPLACE INTO grind_identity VALUES (?,?,?)',(session.id,int(self.auto_spot),'[]'))
             session.db.execute('INSERT INTO grind_money_goals VALUES (?,?)',(session.id,silver))
         self.tracker.crafting.set(False);self.tracker.app.save_quietly()
+        self.tracker.app.enter_grind_tracking()
         if self.history_tree:self.history_tree.selection_remove(self.history_tree.selection())
         self.refresh()
 
@@ -185,7 +186,11 @@ class GrindTracker:
     def pause(self):
         session=self.insights.session
         if not session.id or session.ended:self.state.set('Start a grind session first.');return
-        session.pause_resume(self.insights.gate());self.refresh()
+        session.pause_resume(self.insights.gate())
+        if session.grinding and session.clock.running:
+            self.tracker.crafting.set(False);self.tracker.app.save_quietly()
+            self.tracker.app.enter_grind_tracking()
+        self.refresh()
 
     def finish(self):
         self.insights.session.finish(self.insights.prices.all(),self.insights.gate());self.refresh()

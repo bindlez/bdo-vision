@@ -14,7 +14,7 @@ class LootToggleTests(unittest.TestCase):
     def setUp(self):
         self.root=tk.Tk();self.root.withdraw()
         self.temp=tempfile.TemporaryDirectory()
-        self.app=types.SimpleNamespace(root=self.root,save_quietly=MagicMock())
+        self.app=types.SimpleNamespace(root=self.root,save_quietly=MagicMock(),craft_state=lambda:types.SimpleNamespace(tool=None,running=False,lite=False))
         self.loot=LootTracker(self.app,Path(self.temp.name),{'loot_region':[1,1,200,100]})
 
     def tearDown(self):
