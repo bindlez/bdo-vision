@@ -5,9 +5,11 @@ import statistics
 import time
 import tkinter as tk
 from datetime import datetime
+from collections import Counter
 from tkinter import ttk,filedialog
 from loot_insights import summarize
 from item_names import canonical_item
+from grind_identity import early_trash_rate
 
 
 def duration(seconds):
@@ -19,6 +21,7 @@ def grind_summary(meta,rows,prices,now=None,available=False,reason=''):
     measured=max(0,meta.get('active_seconds',0))
     result=summarize(rows,prices,measured)
     elapsed=max(measured,(meta.get('ended_at') or now)-meta['created_at'])
+    early_rate=early_trash_rate(result['items'],Counter(canonical_item(row[2]).casefold() for row in rows),measured,elapsed) if available else None
     goals=json.loads(meta.get('targets') or '[]');target=goals[0] if goals else ''
     goal=max(1,int(meta.get('goal',1)))
     count=sum(r[3] for r in rows if target and canonical_item(r[2]).casefold()==canonical_item(target).casefold())
@@ -35,6 +38,7 @@ def grind_summary(meta,rows,prices,now=None,available=False,reason=''):
             'excluded_seconds':max(0,elapsed-measured),'coverage':measured/elapsed if elapsed else 0,
             'available':bool(available),'reason':reason,'value':0 if not rows else result['value'],
             'silver_hour':0 if not rows and measured>=60 else result['silver_hour'],
+            'early_silver_hour':early_rate,
             'units':result['quantity'],'events':result['events'],'rare':result['rare'],'unpriced':result['unpriced'],
             'priced':result['priced_types'],'items':result['items'],'latest':latest,
             'target':target,'target_quantity':count,'goal':goal,'target_progress':min(1,count/goal) if target else None,
@@ -133,7 +137,6 @@ class GrindTracker:
         self.auto_spot=spot in ('','Auto detect');spot='Awaiting trash loot' if self.auto_spot else spot
         self.spot_evidence=set()
         session.start(self.insights.gate(),label=session_label(),activity='Grinding',targets=[self.target.get().strip()[:100]] if self.target.get().strip() else [])
-        self.tracker.generation+=1;self.tracker.last_scan=0
         with session.db:
             session.db.execute('INSERT INTO grind_details VALUES (?,?,?)',(session.id,spot,goal))
             session.db.execute('INSERT OR REPLACE INTO grind_identity VALUES (?,?,?)',(session.id,int(self.auto_spot),'[]'))
@@ -251,7 +254,8 @@ class GrindTracker:
             self.state.set('Start a grind to measure your actual recorded results. Your existing loot history is preserved.')
             self.pursuit.set('Optional pursuit: track a treasure piece or rare item by name.');self.benchmark.set('Personal benchmarks unlock after three completed runs at the same spot.');return
         self.metrics[0].set('Unpriced' if row['value'] is None else f"{row['value']:,}")
-        self.metrics[1].set('Measuring…' if row['silver_hour'] is None else f"{row['silver_hour']:,.0f}")
+        early=row['early_silver_hour']
+        self.metrics[1].set(f"{row['silver_hour']:,.0f}" if row['silver_hour'] is not None else f'~{early:,.0f} trash only' if early is not None else 'Measuring…')
         self.metrics[2].set(duration(row['observed_seconds'])+' / '+duration(row['excluded_seconds']))
         self.metrics[3].set(str(row['rare']))
         goal=row.get('silver_goal',0);value=row['value']

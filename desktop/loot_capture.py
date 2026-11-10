@@ -1,5 +1,6 @@
 """Notification OCR, independent of Tk and of durability's restricted digits OCR."""
 import io
+import re
 import subprocess
 import csv
 import time
@@ -133,6 +134,10 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics
     # Busy game scenery can confuse a whole-panel pass. Find actual notification
     # text lines, then verify each tightly cropped line independently.
     wide_events=agreed_events(readings)
+    if kind=='normal' and sum(len(re.findall(r'\byou\s*have\s*obtained\b',raw,re.I))>=2 for raw in raws)>=2:
+        reason='Item Drop Log box is on the text feed. Select the popup area in Capture Setup.'
+        return {'events':[],'slots':None,'empty':False,'raw':raws[0],
+                'recognized':0,'debug':'\n'.join(logs)+'\n'+reason,'mismatch':reason}
     agreed_slots=None
     if kind=='chat':
         # Compare the same physical message row, preserving repeats and order.

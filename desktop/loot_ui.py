@@ -32,9 +32,13 @@ class LootTracker:
         self.ledger.db.execute('CREATE TABLE IF NOT EXISTS uncertain_observations (item TEXT NOT NULL, quantity INTEGER NOT NULL, feed TEXT NOT NULL, first_seen REAL NOT NULL, last_seen REAL NOT NULL, sightings INTEGER NOT NULL, PRIMARY KEY(item,quantity,feed))');self.ledger.db.commit()
         self.restore_baselines=True;self.last_scan_ok=None;self.capture_reason='Waiting for a readable capture'
         self.session=str(time.time_ns())
-        self.region=settings.get('item_drop_region',settings.get('loot_region'))
-        self.rare_region=settings.get('rare_drop_region')
         self.feed=tk.StringVar(value=settings.get('loot_feed','Item Drop logs'))
+        legacy=settings.get('item_drop_region',settings.get('loot_region'))
+        self.regions={'chat':settings.get('text_feed_region'), 'normal':settings.get('item_drop_region')}
+        if 'text_feed_region' not in settings:
+            # Older profiles stored one box for whichever reader was selected.
+            self.regions={'chat':None,'normal':None};self.region=legacy
+        self.rare_region=settings.get('rare_drop_region')
         self.crafting=tk.BooleanVar(value=bool(settings.get('craft_tracking',False)))
         self.craft_economy=settings.get('craft_economy',{})
         self.platform_preferences=settings.get('platform_preferences',{})
@@ -69,7 +73,18 @@ class LootTracker:
         self.root.after(250,self.poll)
 
     def settings(self):
-        return {'platform_preferences':self.platform_preferences,'craft_economy':self.craft_economy,'loot_region':self.region,'item_drop_region':self.region,'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings(),**self.cp_info.settings(),**self.imperial.settings()}
+        return {'platform_preferences':self.platform_preferences,'craft_economy':self.craft_economy,'loot_region':self.region,'item_drop_region':self.regions['normal'],'text_feed_region':self.regions['chat'],'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings(),**self.cp_info.settings(),**self.imperial.settings()}
+
+    @property
+    def region(self):
+        return self.regions['chat' if self.feed.get()=='Text feed' else 'normal']
+
+    @region.setter
+    def region(self,value):
+        self.regions['chat' if self.feed.get()=='Text feed' else 'normal']=value
+
+    def region_label(self):
+        return 'personal loot text panel' if self.feed.get()=='Text feed' else 'Item Drop Log popup area'
 
     def safe_interval(self):
         try:return max(.5,min(30,float(self.interval.get())))
@@ -91,7 +106,7 @@ class LootTracker:
         setup_holder=tk.Frame(main,bg=c['bg']);setup_holder.pack(fill='x')
         self.setup_frame=tk.Frame(setup_holder,bg=c['bg']);self.setup_frame.pack(fill='x')
         controls=tk.Frame(self.setup_frame,bg=c['bg']);controls.pack(fill='x')
-        self.app.action(controls,'SELECT ITEM DROP LOG',self.select_region).pack(side='left')
+        self.app.action(controls,'SELECT AREA FOR ACTIVE FEED',self.select_region).pack(side='left')
         self.app.action(controls,'SELECT RARE DROP LOG',lambda:self.select_region(True)).pack(side='left',padx=8)
         ttk.Checkbutton(controls,text='Record loot',variable=self.recording,command=self.toggle_recording,style='Vision.TCheckbutton').pack(side='left',padx=8)
         options=tk.Frame(self.setup_frame,bg=c['bg']);options.pack(fill='x',pady=(12,0))
@@ -101,7 +116,7 @@ class LootTracker:
         options.winfo_children()[-1].bind('<<ComboboxSelected>>',lambda e:self.toggle())
         tk.Label(options,text='Scan seconds',bg=c['bg'],fg=c['secondary']).pack(side='left',padx=(12,5))
         picker=ttk.Combobox(options,style='Vision.TCombobox',textvariable=self.interval,values=('0.5','1','2','3','5','10'),state='readonly',width=4);picker.pack(side='left');picker.bind('<<ComboboxSelected>>',lambda e:self.toggle())
-        tk.Label(self.setup_frame,text='For grinding, Text feed + the personal “You have obtained…” panel retains drops longer. Select one feed only. Keep at least 6–8 complete rows visible. Crafting mode labels captured items as craft output.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(10,5))
+        tk.Label(self.setup_frame,text='Choose Item Drop logs for the large popups or Text feed for the personal “You have obtained…” panel. Each feed saves its own area. Keep complete rows visible.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(10,5))
         ttk.Checkbutton(self.setup_frame,text='Save OCR diagnostic images locally (for troubleshooting)',variable=self.diagnostics,command=self.app.save_quietly,style='Vision.TCheckbutton').pack(anchor='w',pady=(0,8))
         self.setup_frame.pack_forget()
         state_row=tk.Frame(main,bg=c['bg']);state_row.pack(fill='x',pady=(0,10))
@@ -205,7 +220,7 @@ class LootTracker:
     def toggle(self):
         self.restore_baselines=False
         self.generation+=1;self.snapshots=LootSnapshots();self.channels={};self.empty_counts={};self.recent=[];self.last_scan=0
-        if self.enabled.get() and not self.region:self.enabled.set(False);self.status.set('Select Item Drop Log before enabling tracking.')
+        if not self.region:self.enabled.set(False);self.status.set('Select the '+self.region_label()+' before enabling tracking.')
         else:self.status.set('Tracking enabled. Visible popup items are recorded once, then only new notifications.' if self.enabled.get() else 'Tracking OFF. Saved history is retained.')
         self.capture_state.set('Item tracking: ON' if self.enabled.get() else 'Item tracking: OFF');self.app.save_quietly()
 
@@ -214,7 +229,8 @@ class LootTracker:
         self.last_saved.set('Recording ON — identified popup items will save locally.' if self.recording.get() else 'Preview only — recording OFF; saved history is retained.')
 
     def capture_regions(self):
-        feeds={'chat' if self.feed.get()=='Text feed' else 'normal':self.region} if self.region else {}
+        if not self.region:return {}
+        feeds={'chat' if self.feed.get()=='Text feed' else 'normal':self.region}
         if self.feed.get()!='Text feed' and self.track_rare.get() and self.rare_region:feeds['rare']=self.rare_region
         return feeds
 
@@ -243,7 +259,7 @@ class LootTracker:
     def set_region(self,region,rare=False):
         if rare:self.rare_region=region
         else:self.region=region
-        self.enabled.set(False);self.toggle();self.status.set(('Rare' if rare else 'Item')+' Drop Log area saved. Turn tracking ON and return to BDO.')
+        self.enabled.set(False);self.toggle();self.status.set(('Rare Drop Log' if rare else self.region_label())+' area saved. Turn tracking ON and return to BDO.')
 
     def poll(self):
         if self.closed:return
@@ -318,7 +334,7 @@ class LootTracker:
 
     def finish_attempt(self,attempt,callback,*args):
         if attempt is not None:
-            if self._loot_attempt is not attempt or not attempt.can_publish():return
+            if self._loot_attempt is not attempt or not attempt.claim():return
             self._loot_attempt=None
         callback(*args)
 
@@ -393,7 +409,7 @@ class LootTracker:
         self.last_ocr_duration=duration;self.scan_count+=1
         primary=results.get('normal',results.get('chat',next(iter(results.values()),{})))
         self.last_scan_ok=bool(primary.get('events') or primary.get('empty'))
-        self.capture_reason='OCR uncertain; waiting for a readable notification' if not primary.get('error') else 'OCR error; automatic retry pending'
+        self.capture_reason=primary.get('mismatch') or ('OCR uncertain; waiting for a readable notification' if not primary.get('error') else 'OCR error; automatic retry pending')
         saved=0;skipped=0;baselines=0;messages=[];visible=[];saved_items=[]
         for name,result in results.items():
             rows=result['events'];visible.extend((event,name) for event in rows)

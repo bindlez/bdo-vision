@@ -436,7 +436,7 @@ class App:
    self.tool_failed(str(exc),reader)
 
  def complete_tool_attempt(self,attempt,callback,*args):
-  if self._tool_attempt is not attempt or not attempt.can_publish():return
+  if self._tool_attempt is not attempt or not attempt.claim():return
   self._tool_attempt=None
   if attempt.craft_epoch is not None and attempt.craft_epoch!=self._craft_epoch:
    self.release_tool_scan()
@@ -537,6 +537,7 @@ class App:
 
  def enter_grind_tracking(self):
   self._craft_epoch+=1;self._pending_tool_scan=None
+  self.loot.generation+=1;self.loot.last_scan=0
   self.mark_tool_estimate()
   if self.lite_use.get():
    self.lite_use.set(False);self.change_lite_use()
@@ -872,6 +873,7 @@ class App:
     guild.enabled.set(True);guild.toggle()
    session=self.loot.insights.session
    if session.grinding and session.clock.running:session.pause_resume(self.loot.insights.gate())
+   if not self.loot.crafting.get():self.loot.generation+=1;self.loot.last_scan=0
    self.loot.crafting.set(True)
    self.loot.recording.set(True)
    if self.loot.region:self.loot.enabled.set(True)

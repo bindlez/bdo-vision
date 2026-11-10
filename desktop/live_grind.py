@@ -50,8 +50,11 @@ class LiveGrind:
         from item_names import canonical_item
         prices=g.insights.prices.all();key=(s.id,g.tracker.ledger.revision,id(prices))
         if getattr(self,'cache_key',None)!=key:
-            grouped=s.db.execute('SELECT MAX(l.id),MAX(l.recorded_at),l.item,SUM(l.quantity),NULL,NULL,l.kind FROM loot l JOIN insight_members m ON l.id=m.loot_id WHERE m.session=? GROUP BY l.item,l.kind',(s.id,)).fetchall()
+            grouped=s.db.execute('SELECT MAX(l.id),MAX(l.recorded_at),l.item,SUM(l.quantity),NULL,NULL,l.kind,COUNT(*) FROM loot l JOIN insight_members m ON l.id=m.loot_id WHERE m.session=? GROUP BY l.item,l.kind',(s.id,)).fetchall()
             self.stats=summarize(grouped,prices)
+            self.drop_counts={}
+            for group in grouped:
+                name=canonical_item(group[2]).casefold();self.drop_counts[name]=self.drop_counts.get(name,0)+group[7]
             recent=s.db.execute('SELECT l.item,l.quantity FROM loot l JOIN insight_members m ON l.id=m.loot_id WHERE m.session=? ORDER BY l.id DESC LIMIT 6',(s.id,)).fetchall()
             self.latest=[{'item':canonical_item(item),'quantity':quantity} for item,quantity in recent];self.cache_key=key
         data=self.stats;observed=s.clock.seconds;elapsed=max(observed,time.time()-meta['created_at'])
@@ -59,8 +62,11 @@ class LiveGrind:
         count=sum(p['quantity'] for p in data['items'] if canonical_item(p['item']).casefold()==canonical_item(target).casefold()) if target else 0
         goal=max(1,int(meta.get('goal',1)))
         from grind_ui import duration
+        from grind_identity import early_trash_rate
+        early=early_trash_rate(data['items'],self.drop_counts,observed,elapsed) if ready and s.clock.running else None
         return {'available':ready and s.clock.running,'status':('Observing' if ready and s.clock.running else 'Paused · '+(reason or 'manual pause'))+' · '+meta.get('spot',meta.get('label','Run')),
                 'value':data['value'],'rate':data['value']*3600/observed if data['value'] is not None and observed>=60 else None,
+                'earlyRate':early,
                 'time':duration(observed)+' / '+duration(max(0,elapsed-observed)),
                 'goal':target,'count':count,'required':goal,'progress':min(1,count/goal) if target else None,
                 'sessionActive':True,'unpriced':data['unpriced'],'latest':self.latest,'updatedAt':time.time(),'silverGoal':meta['silver_goal']}

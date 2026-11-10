@@ -1,3 +1,9 @@
+## 1.13.0-rc.41 — Feed calibration and capture ownership
+
+- Item Drop Log and Text Feed now keep separate capture areas. The popup reader reports a likely wrong area when it repeatedly sees personal text receipts. An isolated two-letter label needs quantity or a notification prefix to enter history.
+- An OCR attempt delivers once or expires. Switching between grind and craft invalidates in-flight loot from the previous mode.
+- Grind can show an early trash-only silver estimate after ten observed seconds, three verified vendor trash drops, and adequate capture coverage.
+
 ## 1.13.0-rc.40 — Grind capture and loot recovery
 
 - Start Grind enables recording and arms the configured loot capture area. Confirmed drops stay in the active run if the area is covered after capture.

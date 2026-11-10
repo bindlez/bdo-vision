@@ -20,6 +20,7 @@ class ItemEventTests(unittest.TestCase):
         self.assertEqual(parse_events('You have produced [16] Potato'),[ItemEvent('Potato',16,'Crafted')])
         self.assertEqual(parse_events('Potato x3',bare_items=True,rare_feed=True),[ItemEvent('Potato',3,'Rare drop')])
         self.assertEqual(parse_events('Bob has obtained [Black Stone] x2'),[])
+        self.assertEqual(parse_events('GO',bare_items=True),[])
         self.assertEqual(parse_events('You have obtained x2'),[])
         self.assertEqual(parse_events('Elixir of Demihuman Huntx4',bare_items=True,crafting=True),[ItemEvent('Elixir of Demihuman Hunt',4,'Crafted')])
         self.assertEqual(parse_events('Elixir of Demihuman Hunt x |',bare_items=True,crafting=True),[ItemEvent('Elixir of Demihuman Hunt',1,'Crafted')])

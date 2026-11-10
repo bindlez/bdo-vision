@@ -120,6 +120,7 @@ def parse_events(text, crafting=False, rare_feed=False, bare_items=False):
             if re.fullmatch(r'[\s.!,:;—–-]*',line[end+1:]):line=line[:end+1]
         if line.startswith('[') and line.endswith(']'):line=line[1:-1].strip()
         line=canonical_item(line)
+        if bare_items and not explicit and not verb and not tagged and len(line)<=2:continue
         if re.search(r'\b(?:has obtained|says|selling|failed|failure)\b',outside,re.I) and not known_item(line):continue
         if not 0<qty<=1_000_000 or not 1<=len(line)<=100 or not any(ch.isalpha() for ch in line):continue
         if re.fullmatch(r'[xX]\d+',line) or line.count('[')!=line.count(']'):continue

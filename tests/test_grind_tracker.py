@@ -16,6 +16,17 @@ from market_match import ItemDatabase
 
 
 class GrindTests(unittest.TestCase):
+    def test_early_rate_uses_repeatable_vendor_loot_and_adequate_coverage(self):
+        meta={'id':'run','created_at':0,'active_seconds':10}
+        rows=[(i,'1970-01-01T00:00:03+00:00','Corrupt Power Source',12,'OCR','s','Drop') for i in range(1,4)]
+        rows.append((4,'1970-01-01T00:00:05+00:00','GO',1,'OCR','s','Drop'))
+        prices={'Corrupt Power Source':{'unit_price':25190,'source':'NPC vendor (verified)'},
+                'GO':{'unit_price':10000000,'source':'NPC vendor (verified)'}}
+        live=grind_summary(meta,rows,prices,now=13,available=True)
+        self.assertIsNone(live['silver_hour'])
+        self.assertEqual(live['early_silver_hour'],36*25190*3600/10)
+        self.assertIsNone(grind_summary(meta,rows,prices,now=100,available=True)['early_silver_hour'])
+        self.assertIsNone(grind_summary(meta,rows[:1],prices,now=13,available=True)['early_silver_hour'])
     def test_observed_zero_drop_period_is_zero_rather_than_unpriced(self):
         meta={'id':'run','created_at':0,'active_seconds':60,'targets':'[]'}
         result=grind_summary(meta,[],{},now=60,available=True)

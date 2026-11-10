@@ -109,7 +109,8 @@ class LiveHUD:
             notes={CraftPhase.TRACKING:'Tool and quest recheck while visible',CraftPhase.VERIFYING:'Checking tool · countdown is estimated',CraftPhase.ESTIMATING:'Assumes crafting continues',CraftPhase.PAUSED:'Countdown paused',CraftPhase.FINISHED:'Scan the next tool to continue'}
             self.time.configure(text=notes[craft.phase]);self.bar.coords(self.fill,0,0,0,3);self.key=None;return
         self.pause.configure(command=self.live.grind.pause)
-        self.value_label.configure(text='RECORDED VALUE');self.rate_label.configure(text='SILVER / OBSERVED H')
+        early=data.get('earlyRate') if data.get('rate') is None else None
+        self.value_label.configure(text='RECORDED VALUE');self.rate_label.configure(text='EST. TRASH / H' if early is not None else 'SILVER / OBSERVED H')
         key = repr({k:v for k,v in data.items() if k != 'updatedAt'})
         if key == self.key:return
         self.key = key
@@ -118,7 +119,7 @@ class LiveHUD:
                               fg=TEAL if data.get('available') else GOLD)
         # Clip just the long labels; the full spot / item remains in the main app.
         self.status.configure(text=self.status.cget('text')[:48])
-        self.value.configure(text=compact_silver(data.get('value')));self.rate.configure(text=compact_silver(data.get('rate')))
+        self.value.configure(text=compact_silver(data.get('value')));self.rate.configure(text='~'+compact_silver(early) if early is not None else compact_silver(data.get('rate')))
         unpriced = data.get('unpriced', 0)
         target = data.get('silverGoal', 0);value = data.get('value')
         if target and value is not None:
@@ -131,7 +132,7 @@ class LiveHUD:
         self.bar.coords(self.fill, 0, 0, max(0, (self.width-26)*ratio), 3)
         recent = data.get('latest') or []
         self.latest.configure(text=(f"+{recent[0]['quantity']}  {recent[0]['item']}" if recent else 'Latest drop · Waiting for accepted loot')[:53])
-        self.time.configure(text='Observed / excluded  '+data.get('time','—')+(' · rate after 60s' if data.get('sessionActive') and data.get('rate') is None else ''))
+        self.time.configure(text='Observed / excluded  '+data.get('time','—'))
         self.pause.configure(text='PAUSE' if data.get('available') else 'PAUSE / RESUME')
 
     def close(self):

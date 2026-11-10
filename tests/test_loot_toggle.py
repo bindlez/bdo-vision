@@ -20,6 +20,18 @@ class LootToggleTests(unittest.TestCase):
     def tearDown(self):
         self.loot.close();self.root.destroy();self.temp.cleanup()
 
+    def test_capture_boxes_follow_the_selected_feed(self):
+        loot=self.loot
+        self.assertEqual(loot.capture_regions(),{'normal':[1,1,200,100]})
+        loot.feed.set('Text feed');loot.enabled.set(True);loot.toggle()
+        self.assertFalse(loot.enabled.get())
+        self.assertEqual(loot.capture_regions(),{})
+        loot.set_region([20,20,300,150])
+        self.assertEqual(loot.capture_regions(),{'chat':[20,20,300,150]})
+        loot.feed.set('Item Drop logs')
+        self.assertEqual(loot.capture_regions(),{'normal':[1,1,200,100]})
+        self.assertEqual(loot.settings()['text_feed_region'],[20,20,300,150])
+
     def test_automatic_baseline_new_events_and_ambiguous_skip(self):
         loot=self.loot;loot.enabled.set(True);loot.toggle();token=loot.generation
         loot.finish([('Stone',1)],token)

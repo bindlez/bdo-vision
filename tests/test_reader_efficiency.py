@@ -88,5 +88,29 @@ class QuietOCRTests(unittest.TestCase):
             self.assertEqual(len(result['events']),3)
             self.assertFalse(diagnostics.exists())
 
+    def test_popup_reader_refuses_a_personal_chat_capture(self):
+        raw=b'System You have obtained [Milk] x4.\nSystem You have obtained [Milk] x4.'
+        response=types.SimpleNamespace(stdout=raw,stderr=b'',returncode=0)
+        with patch('loot_capture.run_ocr',return_value=response):
+            result=recognize_feed(Image.new('RGB',(100,50),'black'),'ocr','normal',False,'.',diagnostics=False)
+        self.assertEqual(result['events'],[])
+        self.assertIn('text feed',result['mismatch'])
+
+    def test_read_attempt_delivers_at_most_once_across_deadline_orders(self):
+        from itertools import permutations
+        from ocr_runtime import ReadPhase, ReaderAttempt
+        for order in permutations(('deliver','expire','repeat')):
+            now=[0.0]
+            with patch('ocr_runtime.time.monotonic',side_effect=lambda:now[0]):
+                attempt=ReaderAttempt(5)
+                published=0
+                for event in order:
+                    if event=='expire':
+                        now[0]=5;attempt.expire()
+                    else:published+=attempt.claim()
+                self.assertLessEqual(published,1)
+                self.assertEqual(attempt.phase,ReadPhase.DELIVERED if published else ReadPhase.EXPIRED)
+                self.assertFalse(attempt.claim())
+
 
 if __name__=='__main__':unittest.main()
