@@ -152,6 +152,8 @@ class PriceBook:
         treasure=BY_NAME.get(key(name))
         if treasure and treasure['category']=='Treasure':return treasure['item']
         observed=canonical_item(name)
+        from grind_identity import TRASH
+        if observed.casefold() in TRASH:return observed.title()
         if self._item_database is None:return EXACT.get(observed.casefold())
         candidates=self._item_database.candidates(observed)
         names={item['name'] for item in candidates}

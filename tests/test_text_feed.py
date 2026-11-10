@@ -33,6 +33,12 @@ class TextFeedTests(unittest.TestCase):
         self.assertEqual(tracker.ingest_slots(list(map(event,range(10,18)))),([],True))
         self.assertEqual(tracker.ingest_slots([None]*8),([],False))
 
+    def test_confirmed_empty_baseline_records_first_drop_once(self):
+        tracker=TextFeedSnapshots()
+        tracker.ingest_capture([],[],empty=True)
+        self.assertEqual(tracker.ingest_capture([event(10)],None),([event(10)],False))
+        self.assertEqual(tracker.ingest_capture([event(10)],None),([],False))
+
     def test_identical_rows_are_conservative(self):
         tracker=TextFeedSnapshots();tracker.ingest_slots([event(7)]*8)
         self.assertEqual(tracker.ingest_slots([event(7)]*8),([],False))

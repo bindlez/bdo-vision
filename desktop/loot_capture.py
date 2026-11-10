@@ -88,14 +88,27 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics
         prepared=prepare_ink(image)
         passes=[(notification_ink(image,80,prepared=prepared),6),
                 (notification_ink(image,110,prepared=prepared),6),
-                (notification_ink(image,95,False,prepared=prepared),6)]
+                (notification_ink(image,135,prepared=prepared),6),
+                (notification_ink(image,135,False,prepared=prepared),6)]
     else:
         gray=ImageOps.autocontrast(ImageOps.grayscale(image.resize((image.width*3,image.height*3))))
         passes=[(gray,6),(ImageOps.invert(gray),6),(gray,11)]
-    readings=[];logs=[];raws=[];slots=[]
+    readings=[];logs=[];raws=[];slots=[];inset_slots=[]
+    normal_passes=len(passes)
+    if kind=='chat' and image.width>=300:
+        # Retry without the System badge column when whole-panel OCR fails.
+        for variant,_ in passes[-2:]:
+            passes=passes+[(variant.crop((round(variant.width*.145),0,variant.width,variant.height)),6)]
     for variant,psm in passes:
+        inset=len(raws)>=normal_passes
+        if inset and agreed_events(readings[:normal_passes]):break
         blob=io.BytesIO();variant.save(blob,format='PNG')
-        result=recognize([tess,'stdin','stdout','--psm',str(psm),'-l','eng'],input=blob.getvalue(),capture_output=True,timeout=4)
+        try:
+            result=recognize([tess,'stdin','stdout','--psm',str(psm),'-l','eng'],input=blob.getvalue(),capture_output=True,timeout=4)
+        except (TimeoutError,subprocess.TimeoutExpired):
+            if not readings:raise
+            logs.append('OCR pass timed out; keeping completed passes.')
+            break
         raw=result.stdout.decode('utf-8','replace');raws.append(raw)
         if result.returncode:raise RuntimeError(result.stderr.decode('utf-8','replace')[:160])
         rows=parse_events(raw,crafting=crafting,rare_feed=kind=='rare',bare_items=kind!='chat')
@@ -113,7 +126,7 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics
                     resolved=resolve_name(event.item)
                     event=replace(event,item=resolved) if resolved else None
                 frame.append(event)
-            slots.append(frame)
+            (inset_slots if inset else slots).append(frame)
             if len(slots)==2 and len(frame)>=3 and all(frame) and frame==slots[0]:
                 logs.append('Early exit: two complete ordered message reads agree.')
                 break
@@ -125,6 +138,9 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics
         # Compare the same physical message row, preserving repeats and order.
         # A global multiset vote can otherwise move a rare item to the end and
         # make retained chat rows look like new drops on the following scan.
+        if len(inset_slots)==2 and len(inset_slots[0])==len(inset_slots[1]) and any(a and a==b for a,b in zip(*inset_slots)):
+            slots=inset_slots
+            logs.append('Retry without the System badge recovered matching rows.')
         size=Counter(map(len,slots)).most_common(1)[0][0]
         aligned=[frame for frame in slots if len(frame)==size]
         if len(aligned)>=2:
@@ -135,15 +151,17 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics
                 agreed_slots.append(event if count>=2 else None)
             wide_events=[event for event in agreed_slots if event is not None]
     verified_events=[]
-    if kind!='chat' and max(map(len,readings),default=0)>0:
+    if kind!='chat' and deadline-time.monotonic()>1 and max(map(len,readings),default=0)>0:
         blob=io.BytesIO();gray.save(blob,format='PNG')
-        tsv=recognize([tess,'stdin','stdout','--psm','11','-l','eng','tsv'],input=blob.getvalue(),capture_output=True,timeout=4)
+        try:tsv=recognize([tess,'stdin','stdout','--psm','11','-l','eng','tsv'],input=blob.getvalue(),capture_output=True,timeout=2)
+        except (TimeoutError,subprocess.TimeoutExpired):tsv=None
         groups=defaultdict(list)
-        for word in csv.DictReader(io.StringIO(tsv.stdout.decode('utf-8','replace')),delimiter='\t'):
+        for word in csv.DictReader(io.StringIO(tsv.stdout.decode('utf-8','replace') if tsv else ''),delimiter='\t'):
             if word.get('text','').strip() and word.get('level')=='5':
                 groups[(word['block_num'],word['par_num'],word['line_num'])].append(word)
         verified=[[],[]]
         for words in groups.values():
+            if deadline-time.monotonic()<1:break
             line=' '.join(word['text'] for word in words)
             if not parse_events(line,crafting=crafting,rare_feed=kind=='rare',bare_items=True):continue
             left=max(0,min(int(w['left']) for w in words)-8);top=max(0,min(int(w['top']) for w in words)-8)
@@ -152,7 +170,8 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics
             crop=gray.crop((left,top,right,bottom))
             for index,variant in enumerate((crop,ImageOps.invert(crop))):
                 blob=io.BytesIO();variant.save(blob,format='PNG')
-                result=recognize([tess,'stdin','stdout','--psm','7','-l','eng'],input=blob.getvalue(),capture_output=True,timeout=3)
+                try:result=recognize([tess,'stdin','stdout','--psm','7','-l','eng'],input=blob.getvalue(),capture_output=True,timeout=1)
+                except (TimeoutError,subprocess.TimeoutExpired):break
                 raw=result.stdout.decode('utf-8','replace')
                 verified[index].extend(parse_events(raw,crafting=crafting,rare_feed=kind=='rare',bare_items=True))
                 logs.append('Notification line: '+raw)
@@ -169,7 +188,9 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics
         # A crop that loses x4 must never replace the explicit count with implicit 1.
         explicit_narrow=[e for e in narrow if e.quantity_explicit]
         explicit_wide=[e for e in wide if e.quantity_explicit]
-        events.extend(explicit_narrow or explicit_wide or narrow or wide)
+        if explicit_narrow and not (Counter(explicit_narrow)-Counter(explicit_wide)):
+            events.extend(explicit_wide)
+        else:events.extend(explicit_narrow or explicit_wide or narrow or wide)
     # Restore screen order after resolving implicit versus explicit quantities.
     order={e.item:i for i,e in reversed(list(enumerate(max(readings,key=len))))}
     events.sort(key=lambda e:order.get(e.item,999))
@@ -186,5 +207,5 @@ def recognize_feed(image,tess,kind,crafting,folder,resolve_name=None,diagnostics
     if diagnostics:(folder/'ocr_log.txt').write_text(debug,encoding='utf-8')
     # Empty text on all passes is only a candidate empty panel. UI requires two
     # consecutive empty captures before allowing identical notifications again.
-    empty=all(not raw.strip() for raw in raws)
+    empty=len(raws)>=2 and all(not raw.strip() for raw in raws)
     return {'events':events,'slots':agreed_slots,'empty':empty,'raw':raws[0],'recognized':max(map(len,readings)),'debug':debug}

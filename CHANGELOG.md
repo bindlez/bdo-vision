@@ -1,3 +1,9 @@
+## 1.13.0-rc.40 — Grind capture and loot recovery
+
+- Start Grind enables recording and arms the configured loot capture area. Confirmed drops stay in the active run if the area is covered after capture.
+- Recognize verified grind trash without requiring a Central Market listing. Recover noisy personal System receipts and keep agreed popup drops if an optional OCR pass times out.
+- Added a paired-feed benchmark for independently labeled drop sequences. A correct result requires the item and exact count, with extras and misses scored separately.
+
 ## 1.13.0-rc.39 — Shared craft state
 
 - Dock and Tracking use the same craft phases. Loot uses the accepted tool from that state. Guild quest estimates use its capture fallback signal.

@@ -77,8 +77,8 @@ class LootInsights:
         if self.session.ended:self.start();return
         self.session.pause_resume(self.gate());self.scope.set('Timed session');self.refresh();self.refresh_sessions()
 
-    def observe(self,row_id):
-        self.session.observe(row_id,self.gate())
+    def observe(self,row_id,*,captured=False):
+        self.session.observe(row_id,self.gate(),captured=captured)
 
     def tick(self):
         if self.closed:return

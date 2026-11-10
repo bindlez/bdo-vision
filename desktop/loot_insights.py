@@ -71,9 +71,9 @@ class InsightsSession:
         if time.monotonic()-self.last_persist>=5:self.save()
         return value
 
-    def observe(self,row_id,gate=True):
+    def observe(self,row_id,gate=True,*,captured=False):
         self.tick(gate)
-        if self.id and self.clock.running and gate:
+        if self.id and self.clock.running and (gate or captured):
             with self.db:self.db.execute('INSERT OR IGNORE INTO insight_members VALUES (?, ?)',(self.id,row_id))
 
     def rows(self,session_id=None):

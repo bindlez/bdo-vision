@@ -360,7 +360,7 @@ class LootTracker:
             self.capture_reason='OCR error; automatic retry pending'
             self.status.set('Item OCR failed: '+error)
 
-    def commit(self,event,feed,captured_context=None):
+    def commit(self,event,feed,captured_context=None,*,captured=False):
         if not self.recording.get():return False
         now=time.monotonic();self.recent=[r for r in self.recent if now-r['at']<=max(5,self.safe_interval()*3)]
         key=(event.item,event.quantity)
@@ -372,7 +372,7 @@ class LootTracker:
             return False
         observed_at=datetime.fromtimestamp(self.capture_time).astimezone().isoformat(timespec='milliseconds') if self.capture_time else None
         ident=self.ledger.add(event.item,event.quantity,{'normal':'Item Drop Log','rare':'Rare Drop Log','chat':'Text feed'}[feed],self.session,recorded_at=observed_at,kind=event.kind)
-        self.insights.observe(ident)
+        self.insights.observe(ident,captured=captured)
         self.grind.observe_spot(event.item)
         self.last_saved_at=time.time()
         self.auto_craft.observe(ident,event.item,event.quantity,self.capture_time,captured_context)
@@ -410,9 +410,9 @@ class LootTracker:
             baseline=tracker.previous is None
             if result['empty']:self.empty_counts[name]=self.empty_counts.get(name,0)+1
             else:self.empty_counts[name]=0
-            if name=='chat' and result.get('slots') is not None:
-                fresh,ambiguous=tracker.ingest_slots(result['slots'])
-            else:fresh,ambiguous=tracker.ingest(rows) if name=='chat' else tracker.ingest(rows,empty=self.empty_counts[name]>=2)
+            empty=self.empty_counts[name]>=2
+            if name=='chat':fresh,ambiguous=tracker.ingest_capture(rows,result.get('slots'),empty=empty)
+            else:fresh,ambiguous=tracker.ingest(rows,empty=empty)
             if tracker.previous is not None:
                 baseline_key=tuple(tracker.previous);persisted=self._baseline_persisted.get(name);saved_at=time.time()
                 if not persisted or persisted[0]!=baseline_key or saved_at-persisted[1]>=30:
@@ -425,7 +425,7 @@ class LootTracker:
             if ambiguous:skipped+=len(rows)
             else:
                 for event in fresh:
-                    if self.commit(event,name,captured_context):saved+=1;saved_items.append(f'{event.item} ×{event.quantity}')
+                    if self.commit(event,name,captured_context,captured=captured_at is not None):saved+=1;saved_items.append(f'{event.item} ×{event.quantity}')
         self.last_read.set('Read at '+time.strftime('%H:%M:%S')+': '+('; '.join(f'{e.item} ×{e.quantity}' for e,_ in visible) or 'No item identified — see Live OCR reader.'))
         if saved_items:self.last_saved.set('Saved: '+', '.join(saved_items))
         elif not self.recording.get():self.last_saved.set('Preview only — recording is OFF.')

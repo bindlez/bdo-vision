@@ -13,6 +13,7 @@ class ItemEventTests(unittest.TestCase):
         self.assertEqual(parse_events('Elixir of Demihuman Hunt x 4: Tage',bare_items=True,crafting=True),[wanted])
         self.assertEqual(parse_events('System Youhave obtained & [Elixir of Demihuman\nHunt]\nx4.',crafting=True),[wanted])
         self.assertEqual(parse_events('Elixir of Demihuman Hunt x 4',bare_items=True),[ItemEvent(wanted.item,4,'Drop')])
+        self.assertEqual(parse_events('* System *. You have obtained & [Corrupt Power Source] x10.'),[ItemEvent('Corrupt Power Source',10,'Drop')])
 
     def test_rare_production_prefix_quantity_and_other_player_guard(self):
         self.assertEqual(parse_events('[Rare Item Drop] [Black Stone] x2'),[ItemEvent('Black Stone',2,'Rare drop')])

@@ -538,6 +538,12 @@ class App:
  def enter_grind_tracking(self):
   self._craft_epoch+=1;self._pending_tool_scan=None
   self.mark_tool_estimate()
+  if self.lite_use.get():
+   self.lite_use.set(False);self.change_lite_use()
+  self.loot.recording.set(True)
+  if self.loot.region:self.loot.enabled.set(True)
+  else:self.loot.capture_state.set('Grind waiting · select an item capture area in Capture Setup')
+  self.save_quietly()
   self.loot.grind.live.refresh()
 
  def open_planning_page(self,section):

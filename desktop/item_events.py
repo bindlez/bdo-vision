@@ -21,6 +21,9 @@ def joined_messages(text):
         line=' '.join(raw.replace('\ufffd',' ').split()).strip()
         if not line:continue
         if re.fullmatch(r'\[?system\]?\W*',line,re.I):continue
+        # The outlined System badge can leave punctuation on either side.
+        # Strip only that badge immediately before a personal receipt.
+        line=re.sub(r'^\W{0,5}system\W{0,6}(?=you\s*(?:have|obtained|received|acquired|produced|crafted|created))','',line,flags=re.I)
         start=re.search(r'you\s*(?:have\s*)?(?:successfully\s*)?(?:obtained|received|acquired|produced|crafted|created)|^(?:(?:successfully\s+)?(?:obtained|received|produced|crafted)\b|(?:crafting|production)\s+(?:succeeded|complete)\b|\[?(?:rare item drop|item drop|crafting|production)\]?)',line,re.I)
         if start:
             if current:output.append(current)

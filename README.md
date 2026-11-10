@@ -1,4 +1,4 @@
-# BDO Vision · current test candidate 1.13.0-rc.39
+# BDO Vision · current test candidate 1.13.0-rc.40
 
 Dock **Apps → Detailed Craft Tracking** opens a compact silver and loot panel.
 **Apps → Screenshot Lab** opens a separate, on-demand workspace for reviewing

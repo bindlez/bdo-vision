@@ -52,6 +52,13 @@ class TextFeedSnapshots(LootSnapshots):
     def __init__(self):
         super().__init__();self.pending=[]
 
+    def ingest_capture(self,rows,slots,empty=False):
+        if empty and self.previous is None:
+            self.previous=[]
+        if slots is not None or self.previous==[]:
+            return self.ingest_slots(slots if slots is not None else rows)
+        return self.ingest(rows)
+
     def ingest_slots(self,rows):
         rows=list(rows)
         if not any(row is not None for row in rows):return [],False
@@ -59,6 +66,9 @@ class TextFeedSnapshots(LootSnapshots):
         if old is None:
             self.previous=rows;self.pending=[False]*len(rows)
             return [],False
+        if not old:
+            self.previous=rows;self.pending=[row is None for row in rows]
+            return [row for row in rows if row is not None],False
         pending=self.pending if len(self.pending)==len(old) else [False]*len(old)
         overlap=0
         minimum=min(3,len(old),len(rows))

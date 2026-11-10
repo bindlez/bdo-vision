@@ -57,5 +57,7 @@ class GrindTests(unittest.TestCase):
             book._item_database=ItemDatabase([{'id':678,'name':'Elixir of Demihuman Hunt'},{'id':999,'name':'Ancient Treasure Piece'}])
             self.assertEqual(book.resolve_name('Elixir of Demihuman Hunt'),'Elixir of Demihuman Hunt')
             self.assertEqual(book.resolve_name('Ancient Treasure Piece'),'Ancient Treasure Piece')
+            self.assertEqual(book.resolve_name('Corrupt Power Source'),'Corrupt Power Source')
+            self.assertIsNone(book.resolve_name('Corrupt Power Souree'))
             self.assertIsNone(book.resolve_name('21,500,000,000 funt'))
             self.assertIsNone(book.resolve_name('Amount +100%'))
