@@ -19,7 +19,7 @@ class GuildQuestTracker:
         self.missing_alert=tk.BooleanVar(value=bool(settings.get('guild_quest_missing_alert',True)))
         self.missing_gate=ReminderGate();self.last_absence={};self.reminder_payload=None;self._reminder_stamp=None;self._last_alert_sound=0;self._last_sound_key=None
         self.watch=tk.BooleanVar(value=bool(settings.get('guild_quest_watch',False)))
-        self.watch_pending=None;self.watch_box=None;self.watch_context=None;self._watch_read=False
+        self.watch_pending=None;self.watch_box=None;self.watch_context=None;self.watch_widget=None;self._watch_read=False
         self.sound=tk.BooleanVar(value=bool(settings.get('guild_quest_sound',True)))
         self.threshold=tk.StringVar(value=str(settings.get('guild_quest_threshold',95)))
         self.units_per_craft=tk.StringVar(value=str(settings.get('guild_units_per_craft',''))[:20])
@@ -141,19 +141,32 @@ class GuildQuestTracker:
         self.notice.set('Switch to BDO. Reading the tool and last-seen guild widget together…')
         self.app.rescan_tools()
 
+    def saved_widget(self,bounds):
+        auto_align=getattr(self.tracker,'auto_align',None)
+        if auto_align is None or not auto_align.get() or not bounds:return None
+        try:
+            from loot_layout import find_saved_layout
+            return find_saved_layout(bounds).get('quest_widget')
+        except (OSError,ValueError):
+            return None
+
     def capture_region(self):
+        bounds=visible_bdo_capture_bounds()
+        quest=self.saved_widget(bounds)
         if self._watch_read and self.watch_box:
-            bounds=visible_bdo_capture_bounds()
-            if bounds==self.watch_context:
+            if bounds==self.watch_context and quest==self.watch_widget:
                 a,b,c,d=self.watch_box;ready,reason=item_regions_visible([(a,b,c-a,d-b)])
                 if not ready:raise RuntimeError(reason)
                 return self.watch_box
-            self.watch_box=None;self.watch_context=None
+            self.watch_box=None;self.watch_context=None;self.watch_widget=None
+        if quest:
+            ready,reason=item_regions_visible([quest])
+            if not ready:raise RuntimeError(reason)
+            x,y,w,h=quest;return (x,y,x+w,y+h)
         if self.region:
             ready,reason=item_regions_visible([self.region])
             if not ready:raise RuntimeError(reason)
             x,y,w,h=self.region;return (x,y,x+w,y+h)
-        bounds=visible_bdo_capture_bounds()
         if bounds is None:raise RuntimeError('Bring BDO to the front with the alchemy guild objective visible.')
         _,left,top,right,bottom=bounds;w=right-left;h=bottom-top
         box=(left+int(w*.80),top+int(h*.32),left+int(w*.995),top+int(h*.94))
@@ -252,6 +265,7 @@ class GuildQuestTracker:
                 self.phase='confirming';self.pipeline.set('A different quest counter was seen · saved progress is retained until a second verified read, or use NEXT QUEST after accepting a new mission')
             if reading.get('_card_region'):
                 self.watch_box=tuple(reading['_card_region']);self.watch_context=visible_bdo_capture_bounds()
+                self.watch_widget=self.saved_widget(self.watch_context)
         else:
             if absent:
                 self._forecast=None;self._estimated_alert=False;self._unclaimed_since=None;self._unclaimed_alert=False

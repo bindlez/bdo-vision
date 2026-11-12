@@ -39,6 +39,22 @@ class LootTracker:
             # Older profiles stored one box for whichever reader was selected.
             self.regions={'chat':None,'normal':None};self.region=legacy
         self.rare_region=settings.get('rare_drop_region')
+        self.auto_align=tk.BooleanVar(value=bool(settings.get('loot_auto_align',True)))
+        auto_found = False
+        if not self.region:
+            from loot_layout import find_saved_layout
+            from windows_bdo import visible_bdo_capture_bounds
+            try:
+                layout = find_saved_layout(visible_bdo_capture_bounds())
+                if not self.regions['normal']:
+                    self.regions['normal'] = layout['item_log']
+                if not self.regions['chat']:
+                    self.regions['chat'] = layout['text_feed']
+                if not self.rare_region:
+                    self.rare_region = layout['rare_log']
+                auto_found = bool(self.region)
+            except (OSError, ValueError, AttributeError):
+                pass
         self.crafting=tk.BooleanVar(value=bool(settings.get('craft_tracking',False)))
         self.craft_economy=settings.get('craft_economy',{})
         self.platform_preferences=settings.get('platform_preferences',{})
@@ -49,7 +65,12 @@ class LootTracker:
         self.share_loot=tk.BooleanVar(value=bool(settings.get('share_crafting_loot',False)))
         self.diagnostics=tk.BooleanVar(value=bool(settings.get('loot_diagnostics',False)))
         self.frame_cache=FeedCache()
-        self.status=tk.StringVar(value='Select Item Drop Log. Optionally select Rare Item Drop Log above it. Then turn tracking ON.')
+        if auto_found:
+            initial_status = ('Saved loot area found. Return to BDO and check the reader.' if self.enabled.get()
+                              else 'Saved loot area found. Turn on Track loot to start reading.')
+        else:
+            initial_status = 'Select Item Drop Log. Optionally select Rare Item Drop Log above it. Then turn tracking ON.'
+        self.status=tk.StringVar(value=initial_status)
         self.capture_state=tk.StringVar(value='Item tracking: ON' if self.enabled.get() else 'Item tracking: OFF')
         self.summary=tk.StringVar();self.raw=tk.StringVar(value='No item notifications read yet.')
         self.last_read=tk.StringVar(value='Last read: no item identified yet')
@@ -73,7 +94,7 @@ class LootTracker:
         self.root.after(250,self.poll)
 
     def settings(self):
-        return {'platform_preferences':self.platform_preferences,'craft_economy':self.craft_economy,'loot_region':self.region,'item_drop_region':self.regions['normal'],'text_feed_region':self.regions['chat'],'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings(),**self.cp_info.settings(),**self.imperial.settings()}
+        return {'platform_preferences':self.platform_preferences,'craft_economy':self.craft_economy,'loot_region':self.region,'item_drop_region':self.regions['normal'],'text_feed_region':self.regions['chat'],'rare_drop_region':self.rare_region,'loot_enabled':self.enabled.get(),'loot_feed':self.feed.get(),'loot_auto_align':self.auto_align.get(),'craft_tracking':self.crafting.get(),'track_rare':self.track_rare.get(),'loot_interval':self.safe_interval(),'record_loot':self.recording.get(),'share_crafting_loot':self.share_loot.get(),'loot_diagnostics':self.diagnostics.get(),**self.guild.settings(),**self.cp_info.settings(),**self.imperial.settings()}
 
     @property
     def region(self):
@@ -106,17 +127,20 @@ class LootTracker:
         setup_holder=tk.Frame(main,bg=c['bg']);setup_holder.pack(fill='x')
         self.setup_frame=tk.Frame(setup_holder,bg=c['bg']);self.setup_frame.pack(fill='x')
         controls=tk.Frame(self.setup_frame,bg=c['bg']);controls.pack(fill='x')
+        self.app.action(controls,'FIND ITEM LOGS',self.find_item_logs).pack(side='left',padx=(0,8))
+        self.app.action(controls,'SHOW UI MAP',self.show_ui_map).pack(side='left',padx=(0,8))
         self.app.action(controls,'SELECT AREA FOR ACTIVE FEED',self.select_region).pack(side='left')
         self.app.action(controls,'SELECT RARE DROP LOG',lambda:self.select_region(True)).pack(side='left',padx=8)
         ttk.Checkbutton(controls,text='Record loot',variable=self.recording,command=self.toggle_recording,style='Vision.TCheckbutton').pack(side='left',padx=8)
         options=tk.Frame(self.setup_frame,bg=c['bg']);options.pack(fill='x',pady=(12,0))
+        ttk.Checkbutton(options,text='Align to saved UI',variable=self.auto_align,command=self.app.save_quietly,style='Vision.TCheckbutton').pack(side='left',padx=(0,12))
         ttk.Checkbutton(options,text='Crafting mode',variable=self.crafting,command=self.toggle,style='Vision.TCheckbutton').pack(side='left')
         ttk.Checkbutton(options,text='Include rare log',variable=self.track_rare,command=self.toggle,style='Vision.TCheckbutton').pack(side='left',padx=12)
         ttk.Combobox(options,style='Vision.TCombobox',textvariable=self.feed,values=('Item Drop logs','Text feed'),state='readonly',width=17).pack(side='left')
         options.winfo_children()[-1].bind('<<ComboboxSelected>>',lambda e:self.toggle())
         tk.Label(options,text='Scan seconds',bg=c['bg'],fg=c['secondary']).pack(side='left',padx=(12,5))
         picker=ttk.Combobox(options,style='Vision.TCombobox',textvariable=self.interval,values=('0.5','1','2','3','5','10'),state='readonly',width=4);picker.pack(side='left');picker.bind('<<ComboboxSelected>>',lambda e:self.toggle())
-        tk.Label(self.setup_frame,text='Choose Item Drop logs for the large popups or Text feed for the personal “You have obtained…” panel. Each feed saves its own area. Keep complete rows visible.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(10,5))
+        tk.Label(self.setup_frame,text='Item logs and the quest widget follow your saved BDO layout. Save changes in Edit UI first. Show UI Map displays the detected areas. Text feed has its own area.',bg=c['bg'],fg=c['muted'],font=('Segoe UI',9),wraplength=700,justify='left').pack(anchor='w',pady=(10,5))
         ttk.Checkbutton(self.setup_frame,text='Save OCR diagnostic images locally (for troubleshooting)',variable=self.diagnostics,command=self.app.save_quietly,style='Vision.TCheckbutton').pack(anchor='w',pady=(0,8))
         self.setup_frame.pack_forget()
         state_row=tk.Frame(main,bg=c['bg']);state_row.pack(fill='x',pady=(0,10))
@@ -254,7 +278,83 @@ class LootTracker:
 
     def select_region(self,rare=False):
         if self.app.busy or self.busy:self.status.set('Wait for the current scan to finish.');return
+        self.auto_align.set(False)
         self.enabled.set(False);self.toggle();self.app.select_region('loot_rare' if rare else 'loot')
+
+    def find_item_logs(self):
+        if self.app.busy or self.busy:
+            self.status.set('Wait for the current scan to finish.')
+            return
+        from loot_layout import find_saved_layout
+        from windows_bdo import visible_bdo_capture_bounds
+        try:
+            layout = find_saved_layout(visible_bdo_capture_bounds())
+            normal, rare = layout['item_log'], layout['rare_log']
+            if normal is None:
+                raise ValueError('Saved Item Log position is unavailable')
+        except (OSError, ValueError) as exc:
+            self.status.set(str(exc) + '. Use manual selection if needed.')
+            return
+        self.feed.set('Item Drop logs')
+        self.regions['normal'] = normal
+        if layout['text_feed'] is not None:
+            self.regions['chat'] = layout['text_feed']
+        if rare is not None:
+            self.rare_region = rare
+        self.toggle()
+        detail = 'Saved Item Log areas found.' if rare else 'Saved Item Log found. Select the rare log manually if needed.'
+        self.status.set(detail + (' Return to BDO and check the reader.' if self.enabled.get()
+                                  else ' Turn on Track loot to start reading.'))
+
+    def show_ui_map(self):
+        from loot_layout import find_saved_layout
+        from windows_bdo import visible_bdo_capture_bounds
+        from loot_layout_map import show_layout_map
+        try:
+            bounds = visible_bdo_capture_bounds()
+            layout = find_saved_layout(bounds)
+            show_layout_map(self.root, bounds, layout, self.app.colors)
+        except (OSError, ValueError) as exc:
+            self.status.set(str(exc))
+
+    def align_saved_layout(self):
+        if not self.auto_align.get():
+            return True
+        from loot_layout import find_saved_layout
+        from windows_bdo import visible_bdo_capture_bounds
+        try:
+            layout = find_saved_layout(visible_bdo_capture_bounds())
+        except (OSError, ValueError):
+            self.capture_state.set('Waiting for a saved BDO layout and visible game window.')
+            return False
+        normal, rare, chat = layout['item_log'], layout['rare_log'], layout['text_feed']
+        selected = chat if self.feed.get() == 'Text feed' else normal
+        if selected is None:
+            self.capture_state.set('Saved loot feed unavailable. Check BDO Edit UI and chat filters.')
+            return False
+        if normal is None:
+            normal = self.regions['normal']
+        if chat is None:
+            chat = self.regions['chat']
+        if (tuple(self.regions['normal'] or ()) == tuple(normal or ()) and
+                tuple(self.rare_region or ()) == tuple(rare or ()) and
+                tuple(self.regions['chat'] or ()) == tuple(chat or ())):
+            return True
+        active_moved = tuple(self.region or ()) != tuple(selected)
+        rare_moved = (self.feed.get() != 'Text feed' and self.track_rare.get() and
+                      tuple(self.rare_region or ()) != tuple(rare or ()))
+        self.regions['normal'] = normal
+        self.regions['chat'] = chat
+        self.rare_region = rare
+        if active_moved or rare_moved:
+            self.toggle()
+            self.last_scan_finished = 0
+            self.last_scan_ok = None
+        else:
+            self.app.save_quietly()
+        self.status.set('Item areas aligned to your saved BDO layout.' if rare
+                        else 'Item Log aligned. Rare Item Log is unavailable in the saved layout.')
+        return True
 
     def set_region(self,region,rare=False):
         if rare:self.rare_region=region
@@ -290,7 +390,8 @@ class LootTracker:
                         interval=self.auto_craft.capture_interval(self.safe_interval(),now)
                         delay=max(0,interval-(now-self.last_scan))
                         if delay<=0:
-                            if self.scan() is False:next_poll=1000
+                            if not self.align_saved_layout():next_poll=1000
+                            elif self.scan() is False:next_poll=1000
                         else:self.capture_state.set('Tracking ON · next scan in %.1fs'%delay)
         except Exception as exc:self.status.set('Item OCR retry pending: '+str(exc))
         finally:

@@ -1,3 +1,10 @@
+# 1.13.0-rc.42 — Saved UI alignment
+
+- Find the Item Log, Rare Item Log, personal loot feed, quest widget and minimap from the saved BDO UI layout. Capture Setup includes a live UI map.
+- Loot capture follows saved position changes and re-establishes its baseline when the active area moves. The quest reader follows the saved widget and refreshes its cached card after a move.
+- Saved-layout detection requires a visible game window, matching saved resolution and a unique personal loot feed. Save changes in BDO Edit UI. Manual selection remains available.
+- Glyph recognition remains experimental. Live tracking accuracy above 99.7% has not been established.
+
 # 1.13.0-rc.36 — Detailed craft tracking and estimated quest alerts
 
 - Timer-only mode can estimate when to check a guild quest using verified progress or an entered units-per-craft assumption. It never marks estimated completion as verified.

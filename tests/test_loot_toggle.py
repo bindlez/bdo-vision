@@ -4,7 +4,7 @@ import tkinter as tk
 import types
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock,patch
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'desktop'))
 from loot_ui import LootTracker
@@ -82,3 +82,28 @@ class LootToggleTests(unittest.TestCase):
         self.loot.close()
         self.loot=LootTracker(self.app,Path(self.temp.name),{'loot_region':[1,1,200,100],'loot_enabled':True})
         self.assertTrue(self.loot.enabled.get())
+
+    def test_missing_item_region_uses_saved_layout_without_enabling_tracking(self):
+        self.loot.close()
+        with patch('windows_bdo.visible_bdo_capture_bounds',return_value=(1,0,0,1920,1080)), \
+             patch('loot_layout.find_saved_layout',return_value={'item_log':(519,265,350,300),'rare_log':(357,134,420,84),'text_feed':None}):
+            self.loot=LootTracker(self.app,Path(self.temp.name),{})
+        self.assertEqual(self.loot.regions['normal'],(519,265,350,300))
+        self.assertEqual(self.loot.rare_region,(357,134,420,84))
+        self.assertFalse(self.loot.enabled.get())
+
+    def test_existing_region_is_never_replaced_at_start(self):
+        self.loot.close()
+        with patch('loot_layout.find_saved_layout') as find:
+            self.loot=LootTracker(self.app,Path(self.temp.name),{'loot_region':[1,1,200,100]})
+        find.assert_not_called()
+        self.assertEqual(self.loot.region,[1,1,200,100])
+
+    def test_missing_text_feed_is_located_from_saved_layout(self):
+        self.loot.close()
+        layout={'item_log':(519,265,350,300),'rare_log':None,'text_feed':(1149,726,475,278)}
+        with patch('windows_bdo.visible_bdo_capture_bounds',return_value=(1,0,0,1920,1080)), \
+             patch('loot_layout.find_saved_layout',return_value=layout):
+            self.loot=LootTracker(self.app,Path(self.temp.name),{'loot_feed':'Text feed'})
+        self.assertEqual(self.loot.region,(1149,726,475,278))
+        self.assertEqual(self.loot.regions['normal'],(519,265,350,300))

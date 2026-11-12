@@ -18,11 +18,50 @@ Precision asks whether accepted events are correct. Recall asks how much real lo
 
 Two transformations of the same image are not statistically independent observations. Their agreement is a practical consistency check, not a proof of truth. Timed frames add evidence of change but can still be affected by camera motion, occlusion and correlated recognition errors.
 
+## Fixed-position glyph experiments
+
+`scripts/analyze_glyph_renders.py` compares raw crop hashes and thresholded
+text masks for labeled single-row images. Supply a fixed pixel box and label
+file from a private recording. A contiguous run counts adjacent accepted
+frames, not unique drops. Background motion affects raw hashes. Text color,
+fade, UI scale, antialiasing, occlusion and label errors affect masks. Treat
+machine-generated labels as hypotheses rather than ground truth.
+
+`scripts/benchmark_glyph_masks.py` compares masked templates from a separate
+recording against labeled single-row observations. It reports matches,
+disagreements, abstentions and total wall time including image loading. It is
+a research benchmark, not a production reader or a session-accuracy test.
+Use independently transcribed labels and score distinct events before drawing
+accuracy conclusions. Keep capture images and labels private.
+
+`scripts/analyze_capture_manifest.py` summarizes saved capture gaps, timing,
+and exact pixel changes in each feed. Changes include background motion and
+cannot be equated with loot arrivals. Older manifests do not count OCR calls.
+
 ## Coordinates and capture time
 
 Windows capture bounds are `(window_id,left,top,right,bottom)`. User-selected regions are generally `(x,y,width,height)`. Tool regions are relative to the verified client image; adapters add the client origin exactly once. A crop stored in image coordinates must not be reinterpreted as desktop coordinates. Test nonzero monitor origins and moved windows.
 
 Use the screenshot's timestamp to anchor accepted values. Worker completion time includes OCR latency and cannot be substituted. When BDO loses focus during a tool crop batch, discard the batch. Quest reading may use a visible uncovered background game area, but must verify the exact region is not occluded.
+
+Capture Setup reads the newest account-level `gamevariable.xml` from BDO's
+saved Documents layout. **Align to saved UI** checks the Item Log, Rare Item
+Log and personal text-feed positions before each loot capture. It resets feed
+baselines when the active capture area moves. The default guild quest reader
+also follows the saved quest widget. Its cached small card is discarded if the
+widget moves. A UI map shows these areas and the minimap, refreshing when the
+saved layout changes. Save changes in BDO Edit UI before discovery. On first
+setup, a visible game and valid saved layout populate missing item areas
+automatically. Existing tracking remains off until the user enables it.
+
+The map requires a visible verified BDO window, matching saved resolution,
+supported corner anchors and valid UI scale. The resulting boxes use the
+current client origin. Unknown and hidden areas remain unavailable. Selecting
+a loot area manually turns off automatic alignment. A saved location is a
+candidate until the reader sees loot, and an overlapping window still blocks
+screen capture. Text-feed discovery requires one visible separate chat panel
+with personal item messages enabled. Tool labels are located separately in
+the current game image.
 
 ## Debugging a miss
 

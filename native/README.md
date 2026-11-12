@@ -25,7 +25,17 @@ build\native\native-self-test.exe
 build\native\bdo-native-bench.exe --image PRIVATE_CAPTURE.png --ensemble --repeat 20
 build\native\bdo-native-bench.exe --sequence PRIVATE_CAPTURE_DIRECTORY
 python native/evaluate.py --exe build/native/bdo-native-bench.exe --frames PRIVATE_DIRECTORY --labels PRIVATE_LABELS.json --output PRIVATE_REPORT.json
+build\native\bdo-native-bench.exe --events PRIVATE_DIRECTORY 100 56
 ```
+
+`--events` replays numbered `*-chat.png` frames through the experimental
+reader and snapshot tracker, emitting JSON events. The optional numbers limit
+frames and remove pixels from the left of each crop, respectively. The latter
+allows experiments on recordings that include a system badge before the text.
+The tracker re-establishes its baseline after a numbered frame gap. Use
+`scripts/score_native_events.py` with the recording manifest and a reference
+audit to compare the trace. A reference that omits events is a lower bound,
+and matching it is not a complete accuracy measurement.
 
 Catalog JSON input is also supported: a list of objects with a `name` string. The SQLite input expects `catalog_items(name)`. The builder locates Visual Studio through `vswhere`. `--tests-only` skips rebuilding the interactive executable while it is open. The import audit is in `build/native/imports.txt`. `--smoke IMAGE` runs the GUI recognition path invisibly, prints resource measurements, then exits; `--image IMAGE` opens the preview with a saved image.
 

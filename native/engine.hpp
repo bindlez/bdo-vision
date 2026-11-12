@@ -30,7 +30,7 @@ public:
   if(lines.empty()){result.milliseconds=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();return result;}
   if(!ready||image.w!=width||image.h!=height){
    only_face.clear();only_height=0;only_weight=0;header=calibrate(neutral,lines);models.clear();cache.clear();width=image.w;height=image.h;
-   if(header.error>.22)return result;
+   if(header.error>.22){result.header_error=header.error;result.milliseconds=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();return result;}
    Raster raster;raster.select(header);header_glyph=raster.draw(L"You have obtained");
    double scale=double(header.height)/14;models.push_back(make_model(neutral,lines,L"Times New Roman",int(std::round(15*scale)),400));models.push_back(make_model(neutral,lines,L"Arial",int(std::round(14*scale)),400));models.push_back(make_model(neutral,lines,L"Trebuchet MS",int(std::round(13*scale)),400));
    ready=true;

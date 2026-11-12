@@ -9,11 +9,15 @@ int main(){
  for(auto& token:std::vector<std::string>{"0","1,00","1,","1.5","2/3","4 x5","1000001","999999999999999999","?"})check(extract("[Black Stone] x"+token,catalog).item.empty(),token.c_str());
  auto good=extract("[Black Stone] x1,234.",catalog);check(good.item=="Black Stone"&&good.quantity==1234,"grouped count");
  check(extract("[Desert Seal x12 Reward Bundle] x17",catalog).quantity==17,"external count");
+ auto implicit=extract("[Laila's Petal].",catalog);check(implicit.item=="Laila's Petal"&&implicit.quantity==1,"implicit one with intact closing bracket");
+ check(extract("[Laila's Petal",catalog).item.empty(),"missing closing bracket does not imply one");
+ check(extract("[Laila's Petal] x?",catalog).item.empty(),"unreadable explicit quantity does not imply one");
  // Blank, random background and unrelated chat must not produce accepted rows.
  for(int scenario=0;scenario<3;scenario++){
   Image image;image.w=400;image.h=190;image.pixels.resize(size_t(image.w)*image.h);uint32_t seed=87921;
   for(auto& pixel:image.pixels){seed=seed*1664525+1013904223;pixel=scenario==0?0xff101010:scenario==1?seed:0xff998866;}
   NativeReader reader;auto result=reader.recognize(image);check(std::none_of(result.rows.begin(),result.rows.end(),[](auto& r){return !r.item.empty();}),"negative image");
+  check(result.milliseconds>0,"negative image reports elapsed time");
  }
  FeedSnapshots feed;std::vector<FeedEvent> rows;for(int i=0;i<8;i++)rows.push_back({"sample",i+1});
  check(feed.ingest(rows).fresh.empty(),"initial baseline");

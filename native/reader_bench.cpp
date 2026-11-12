@@ -1,4 +1,41 @@
 #include "engine.hpp"
+#include "snapshots.hpp"
+#include <cwchar>
+static int events(const wchar_t* directory,size_t limit,int inset){
+ std::wstring prefix=directory;if(!prefix.empty()&&prefix.back()!=L'\\'&&prefix.back()!=L'/')prefix+=L'\\';
+ std::vector<std::wstring> paths;
+ for(const wchar_t* pattern:{L"chat-*.png",L"*-chat.png"}){
+  WIN32_FIND_DATAW data{};HANDLE search=FindFirstFileW((prefix+pattern).c_str(),&data);
+  if(search!=INVALID_HANDLE_VALUE){do{if(!(data.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY))paths.push_back(data.cFileName);}while(FindNextFileW(search,&data));FindClose(search);}
+ }
+ if(paths.empty()){std::puts("{\"error\":\"No chat PNG frames\"}");return 1;}
+ std::sort(paths.begin(),paths.end());NativeReader reader;FeedSnapshots tracker;
+ std::printf("{\"frames\":[");bool first=true;long previous_index=-1;
+ for(const auto& name:paths){
+  if(limit==0)break;
+  --limit;
+  long index=-1;
+  if(name.size()>6&&name[6]==L'-'&&std::all_of(name.begin(),name.begin()+6,[](wchar_t c){return c>=L'0'&&c<=L'9';}))index=std::wcstol(name.c_str(),nullptr,10);
+  bool gap=index>=0&&previous_index>=0&&index!=previous_index+1;
+  if(gap)tracker=FeedSnapshots{};
+  previous_index=index;
+  Image image=load_image((prefix+name).c_str());if(!image.w||inset>=image.w)return 2;
+  if(inset>0){
+   Image crop;crop.w=image.w-inset;crop.h=image.h;crop.pixels.resize(size_t(crop.w)*crop.h);
+   for(int y=0;y<image.h;y++)std::copy_n(image.pixels.begin()+size_t(y)*image.w+inset,crop.w,crop.pixels.begin()+size_t(y)*crop.w);
+   image=std::move(crop);
+  }
+  auto result=reader.recognize(image);std::vector<FeedEvent> rows;
+  for(const auto& row:result.rows)rows.push_back({row.item,row.quantity});
+  auto update=tracker.ingest(rows);
+  if(!first)std::putchar(',');first=false;
+  auto accepted=std::count_if(result.rows.begin(),result.rows.end(),[](const Observation& row){return !row.item.empty();});
+  std::printf("{\"file\":\"%s\",\"gap_before\":%s,\"ambiguous\":%s,\"calibrated\":%s,\"header_error\":%.4f,\"visible_rows\":%zu,\"recognized_rows\":%zu,\"reader_ms\":%.3f,\"events\":[",escape(utf8(name)).c_str(),gap?"true":"false",update.ambiguous?"true":"false",result.calibrated?"true":"false",result.header_error,result.rows.size(),size_t(accepted),result.milliseconds);
+  for(size_t i=0;i<update.fresh.size();i++){if(i)std::putchar(',');auto& row=update.fresh[i];std::printf("[\"%s\",%d]",escape(row.item).c_str(),row.quantity);}
+  std::printf("]}");
+ }
+ std::puts("]}");return 0;
+}
 static int sequence(const wchar_t* directory){
  std::wstring prefix=directory;if(!prefix.empty()&&prefix.back()!=L'\\'&&prefix.back()!=L'/')prefix+=L'\\';
  WIN32_FIND_DATAW data{};HANDLE search=FindFirstFileW((prefix+L"chat-*.png").c_str(),&data);std::vector<std::wstring> paths;
@@ -14,6 +51,12 @@ static int sequence(const wchar_t* directory){
 int wmain(int argc,wchar_t** argv){
  CoInitializeEx(nullptr,COINIT_MULTITHREADED);
  if(argc==3&&std::wstring(argv[1])==L"--sequence"){int result=sequence(argv[2]);CoUninitialize();return result;}
+ if(argc>=3&&argc<=5&&std::wstring(argv[1])==L"--events"){
+  size_t limit=argc==4?size_t(std::clamp(_wtoi(argv[3]),1,1000000)):SIZE_MAX;
+  if(argc==5)limit=size_t(std::clamp(_wtoi(argv[3]),1,1000000));
+  int inset=argc==5?std::clamp(_wtoi(argv[4]),0,1600):0;
+  int result=events(argv[2],limit,inset);CoUninitialize();return result;
+ }
  if(argc<2){std::puts("BDO Vision native OCR benchmark --image <PNG> [--font-file <TTF>]");return 2;}
  bool ensemble=false;int repeat=1;const wchar_t* input=nullptr;for(int i=1;i<argc;i++){if(std::wstring(argv[i])==L"--image"&&i+1<argc)input=argv[++i];else if(std::wstring(argv[i])==L"--ensemble")ensemble=true;else if(std::wstring(argv[i])==L"--repeat"&&i+1<argc)repeat=std::clamp(_wtoi(argv[++i]),1,10000);else if(std::wstring(argv[i])==L"--color")use_color=true;else if(std::wstring(argv[i])==L"--face"&&i+1<argc)only_face=argv[++i];else if(std::wstring(argv[i])==L"--size"&&i+1<argc)only_height=_wtoi(argv[++i]);else if(std::wstring(argv[i])==L"--weight"&&i+1<argc)only_weight=_wtoi(argv[++i]);else if(std::wstring(argv[i])==L"--font-file"&&i+1<argc)AddFontResourceExW(argv[++i],FR_PRIVATE,nullptr);}
  if(!input)return 2;
