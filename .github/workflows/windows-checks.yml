@@ -75,7 +75,7 @@ jobs:
           name: Windows-test-report
           path: build/test-report.txt
   prerelease:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/gear-planner')
     needs: windows
     runs-on: ubuntu-latest
     permissions:
@@ -96,7 +96,7 @@ jobs:
             echo 'Release already exists; refusing to overwrite it.'
             exit 1
           fi
-          gh release create "v$version" release-packages/*.zip release-packages/*.sha256 --target "$GITHUB_SHA" --prerelease --title "BDO Vision $version · friend test" --notes-file docs/FRIEND-TEST.md
+          gh release create "v$version" release-packages/*.zip release-packages/*.sha256 --target "$GITHUB_SHA" --prerelease --title "BDO Vision $version · friend test" --notes-file docs/LOOT-TRACKER-CANDIDATE.md
   first_release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/gear-planner'
     needs: windows

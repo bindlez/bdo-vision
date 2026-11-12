@@ -260,7 +260,7 @@ class LootTracker:
 
     def can_capture(self):
         if getattr(self.app,'lite_use',None) is not None and self.app.lite_use.get():return False,'Lite Use · loot OCR paused'
-        regions=list(self.capture_regions().values())
+        regions=[region for name,region in self.capture_regions().items() if name!='rare']
         ready,reason=capture_budget(regions)
         return item_regions_visible(regions) if ready else (False,reason)
 
@@ -413,21 +413,16 @@ class LootTracker:
             generation=self.generation;crafting=self.crafting.get();diagnostics=self.diagnostics.get()
             def work():
                 try:
-                    regions=list(feeds.values())
-                    ready,reason=item_regions_visible(regions)
-                    if not ready:raise RuntimeError(reason)
+                    from loot_panels import capture_panels
                     captured_at=time.time()
-                    images={name:ImageGrab.grab(bbox=(x,y,x+w,y+h),all_screens=True)
-                            for name,(x,y,w,h) in feeds.items()}
-                    ready,reason=item_regions_visible(regions)
-                    if not ready:raise RuntimeError(reason)
+                    images,capture_errors=capture_panels(feeds,item_regions_visible,ImageGrab.grab)
                     preview=next(iter(images.values())).copy() if show_preview else None
                     if preview is not None:preview.thumbnail((820,180))
                 except Exception as exc:
                     error=str(exc)
                     if not self.closed:self.root.after(0,lambda:self.finish_attempt(attempt,self.failed,error,generation))
                     return
-                self.recognize(images,tess,generation,crafting,diagnostics,context,attempt,captured_at,preview)
+                self.recognize(images,tess,generation,crafting,diagnostics,context,attempt,captured_at,preview,capture_errors)
             threading.Thread(target=lambda:attempt.run(work),daemon=True).start()
         except Exception as exc:
             self._loot_attempt=None
@@ -439,10 +434,10 @@ class LootTracker:
             self._loot_attempt=None
         callback(*args)
 
-    def recognize(self,images,tess,generation,crafting,diagnostics=False,captured_context=None,attempt=None,captured_at=None,preview=None):
+    def recognize(self,images,tess,generation,crafting,diagnostics=False,captured_context=None,attempt=None,captured_at=None,preview=None,capture_errors=None):
         started=time.monotonic()
         try:
-            results={}
+            results=dict(capture_errors or {})
             for name,image in images.items():
                 try:
                     cache=getattr(self,'frame_cache',None)

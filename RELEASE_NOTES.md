@@ -1,3 +1,11 @@
+# 1.13.0-rc.43 — Independent loot panels and production replay
+
+- A covered or invalid optional rare panel no longer blocks the visible main loot feed. Every captured panel is checked before and after capture.
+- Accuracy replay uses the shipped production reader for both feeds, including optional Windows positioned recovery. Experimental popup results are no longer silently substituted.
+- JSON replay reports record exact expected/emitted events, ambiguous overlap, unreadable rows, and per-frame reader duration. Invalid or missing ground truth fails validation.
+- The empirical gate includes the requested 99.7% boundary and penalizes wrong quantities, missed events and extras. Offline replay does not prove live coverage or long-run reliability.
+- Live 99.7% accuracy remains unverified. This is a release candidate, not a validated final accuracy release.
+
 # 1.13.0-rc.42 â€” Saved UI alignment
 
 - Find the Item Log, Rare Item Log, personal loot feed, quest widget and minimap from the saved BDO UI layout. Capture Setup includes a live UI map.

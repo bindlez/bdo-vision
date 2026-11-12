@@ -99,3 +99,18 @@ capture and uses the accepted ledger event for craft attribution. A tool swap
 before OCR returns can leave the loot row saved without attaching it to the
 replacement tool. Expired attempts release their UI state and cannot publish
 late results. A stalled worker must exit before its reader starts another one.
+
+
+## Independent panels and production accuracy replay
+
+The primary loot feed controls capture availability. Optional rare-panel visibility and size are checked independently, before and after its capture. An unavailable rare panel produces an explicit error while main-feed events continue. Its previous baseline is retained; unavailable pixels never become an empty panel. This avoids letting a covered optional panel stop all tracking, but does not recover loot that disappeared while covered.
+
+The replay engine uses `recognize_feed` for both chat and popup feeds. `--windows-ocr` enables the same positioned recovery used by the app; it does not substitute the experimental popup reader. Start recordings with two independently verified empty frames. Label new events for every paired frame; `null` is unreviewed, while `[]` means reviewed with no new events. Repeated identical drops remain separate events. Incorrect quantities count as both a missed expected event and an extra emitted event.
+
+Run from a source checkout, with your local manifest and installed catalog:
+
+```powershell
+python scripts/benchmark_loot.py recording/manifest.json --tesseract "C:/Program Files/Tesseract-OCR/tesseract.exe" --catalog catalog.json --report replay-report.json --gate
+```
+
+Omit `--catalog` to use built-in names. For optional OS recovery add `--windows-ocr build/native/vision-windows-ocr.exe`. Reports contain per-frame outputs and reader timings. The gate requires uninterrupted timestamped capture and at least 300 labeled drops, with exact-event accuracy at least 99.7%. This is an empirical sample gate, not a statistical population guarantee. Measure sustained live capture separately: a slow offline replay can read every frame even when the live app could not keep up. Keep recordings, labels, reports and screenshots private; never include them in release assets.
